@@ -195,6 +195,7 @@ void Shutdown()
 #endif
     MapPort(false);
     UnregisterValidationInterface(peerLogic.get());
+    if(g_connman) g_connman->Stop();
     peerLogic.reset();
     g_connman.reset();
 
