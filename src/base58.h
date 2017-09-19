@@ -14,11 +14,11 @@
 #ifndef PAICOIN_BASE58_H
 #define PAICOIN_BASE58_H
 
-#include "chainparams.h"
-#include "key.h"
-#include "pubkey.h"
-#include "script/standard.h"
-#include "support/allocators/zeroafterfree.h"
+#include <chainparams.h>
+#include <key.h>
+#include <pubkey.h>
+#include <script/standard.h>
+#include <support/allocators/zeroafterfree.h>
 
 #include <string>
 #include <vector>
@@ -94,21 +94,8 @@ public:
     bool operator> (const CBase58Data& b58) const { return CompareTo(b58) >  0; }
 };
 
-/**
- * A base58-encoded secret key
- */
-class CPAIcoinSecret : public CBase58Data
-{
-public:
-    void SetKey(const CKey& vchSecret);
-    CKey GetKey();
-    bool IsValid() const;
-    bool SetString(const char* pszSecret);
-    bool SetString(const std::string& strSecret);
-
-    CPAIcoinSecret(const CKey& vchSecret) { SetKey(vchSecret); }
-    CPAIcoinSecret() {}
-};
+CKey DecodeSecret(const std::string& str);
+std::string EncodeSecret(const CKey& key);
 
 template<typename K, int Size, CChainParams::Base58Type Type> class CPAIcoinExtKeyBase : public CBase58Data
 {

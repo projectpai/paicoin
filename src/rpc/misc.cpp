@@ -357,12 +357,10 @@ UniValue signmessagewithprivkey(const JSONRPCRequest& request)
     const auto& strPrivkey = request.params[0].get_str();
     const auto& strMessage = request.params[1].get_str();
 
-    CPAIcoinSecret vchSecret;
-    if (!vchSecret.SetString(strPrivkey))
+    CKey key = DecodeSecret(strPrivkey);
+    if (!key.IsValid()) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key");
-    const auto key = vchSecret.GetKey();
-    if (!key.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+    }
 
     CHashWriter ss{SER_GETHASH, 0};
     ss << strMessageMagic;
