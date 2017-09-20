@@ -6,7 +6,7 @@
 #include "config/paicoin-config.h"
 #endif
 
-#include "base58.h"
+#include <key_io.h>
 #include "clientversion.h"
 #include "coins.h"
 #include "consensus/consensus.h"

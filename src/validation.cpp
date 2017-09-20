@@ -6,7 +6,7 @@
 #include "validation.h"
 
 #include "arith_uint256.h"
-#include "base58.h"
+#include <key_io.h>
 #include "chain.h"
 #include "chainparams.h"
 #include "checkpoints.h"
@@ -257,7 +257,7 @@ bool CheckSequenceLocks(const CTransaction &tx, int flags, LockPoints* lp, bool 
 
     CBlockIndex* tip = chainActive.Tip();
     assert(tip != nullptr);
-    
+
     CBlockIndex index;
     index.pprev = tip;
     // CheckSequenceLocks() uses chainActive.Height()+1 to evaluate

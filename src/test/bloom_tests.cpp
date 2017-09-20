@@ -4,7 +4,7 @@
 
 #include "bloom.h"
 
-#include "base58.h"
+#include <key_io.h>
 #include "clientversion.h"
 #include "key.h"
 #include "merkleblock.h"
