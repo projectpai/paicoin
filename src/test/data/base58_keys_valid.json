@@ -4,7 +4,7 @@
         "76a91402261a951768ea73fa9626d961cfe557a037cb4d88ac",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -12,7 +12,7 @@
         "a9144911fdfe23c1a8fe2eba3a02b15283c48f3be34487",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -20,7 +20,7 @@
         "76a914d95c18b68a084af20c32a5d28500d7026767028c88ac",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -28,7 +28,15 @@
         "a914a2b293c3e084995e2038d5ee6e892986d3cffc9c87",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "regtest"
+        }
+    ],
+    [
+        "McvP9ELi7SN4rE2JU5X9E2h7txQyH7nUQd",
+        "76a9143e56d738ff93d5476aaae208c2b471877b9183e288ac",
+        {
+            "isPrivkey": false,
+            "chain": "test"
         }
     ],
     [
@@ -37,7 +45,7 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -46,7 +54,7 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -55,7 +63,16 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
+        }
+    ],
+    [
+        "8c4c4WMHQ3DkekZGBNxJaUSVmgwowu7TQCVDMBnE7Ji5GhVUr85",
+        "e62997b4b19d0b39ec24ef4c3ad8ac2a2db25e220b0588cb3b697592087f257a",
+        {
+            "isCompressed": false,
+            "isPrivkey": true,
+            "chain": "regtest"
         }
     ],
     [
@@ -64,7 +81,16 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
+        }
+    ],
+    [
+        "aXCCrUBUgRb8wsrBcgsJejDTBvWzr3NjsCpiP8dwhfZDXYQbKoP5",
+        "99a9b5aa04288b20a888a12bebd3ea1342b13983fbf5b109aff1a5046843e030",
+        {
+            "isCompressed": true,
+            "isPrivkey": true,
+            "chain": "regtest"
         }
     ],
     [
@@ -72,7 +98,7 @@
         "76a914e7e84b083027ff640f518ff053196759187a730688ac",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -80,7 +106,7 @@
         "a914fe20cbea658c99d22993d4181bb0eec59d51f64d87",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -88,7 +114,7 @@
         "76a9140842d3ed336b0b0f848248b39518b44b86400ede88ac",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -96,7 +122,7 @@
         "a91440122fcd8d13f10f42f95747f38b6ba3187e8fd887",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -105,7 +131,7 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -114,7 +140,7 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -123,7 +149,7 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -132,7 +158,7 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -140,7 +166,7 @@
         "76a914fa07f1f82992ba64dca3c814c7e9a6281ea2e88b88ac",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -148,7 +174,7 @@
         "a9148cf0197b048039a816dc7f5584da96d1b7276e2187",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -156,7 +182,7 @@
         "76a914a5d7aa3139a7823e26499e04cacb3972e7585cec88ac",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -164,7 +190,7 @@
         "a914ed1764b1c0954da769f9ed7341b5b93e71c0530387",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -173,7 +199,7 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -182,7 +208,7 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -191,7 +217,7 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -200,7 +226,7 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -208,7 +234,7 @@
         "76a914530c3c577915a5eaf92cf07a24e4b5253790ea7988ac",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -216,7 +242,7 @@
         "a914f92589f19e52925bd5283664e7bbec389561c50887",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -224,7 +250,7 @@
         "76a914bafb774ebbb28e73ab258035a13417ceddefdc3388ac",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -232,7 +258,7 @@
         "a9148869c498efef80f608192e074531e8e72dae6e6887",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -241,7 +267,7 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -250,7 +276,7 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -259,7 +285,16 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
+        }
+    ],
+    [
+        "8ag61bbFdw7DYTLmZY3MbF555o5Dmtp5sxfwmzsihjro2dDv6LU",
+        "2f56152e2c2685ebd8c3d74c9ef26ac0b47d438e51783641947b4b6966563616",
+        {
+            "isCompressed": false,
+            "isPrivkey": true,
+            "chain": "regtest"
         }
     ],
     [
@@ -268,7 +303,7 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -276,7 +311,7 @@
         "76a91484fe6f824f2e68237467d76eed49eb3da961fe9388ac",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -284,7 +319,7 @@
         "a914bdcde7be23163c346a57d12276be2f911143f5ac87",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -292,7 +327,7 @@
         "76a914072740adab9de290e665c31cc6c0daa3d4154ec188ac",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -300,7 +335,7 @@
         "a9145585bac4282ad14af5be9d6846f61381d4a808a387",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -309,7 +344,7 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -318,7 +353,7 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -327,7 +362,7 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -336,7 +371,7 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -344,7 +379,7 @@
         "76a914fb3bfaf7d203827861cc0f58ad16ef67ac7b718e88ac",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -352,7 +387,7 @@
         "a9143b3eb4e9f5caad768aee12b7831be73afb72679d87",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -360,7 +395,7 @@
         "76a914ed0b62264748ddb67d8ceb345951e801301b211488ac",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -368,7 +403,7 @@
         "a91479a12e85677ec41b3a9b11be0af462e77acdc6d387",
         {
             "isPrivkey": false,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -377,7 +412,7 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -386,7 +421,7 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -395,7 +430,7 @@
         {
             "isCompressed": false,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -404,7 +439,7 @@
         {
             "isCompressed": true,
             "isPrivkey": true,
-            "chain": "testnet"
+            "chain": "test"
         }
     ],
     [
@@ -412,7 +447,7 @@
         "76a914b4f6c13c32bf194d454168ad3d1272bb2990851188ac",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ],
     [
@@ -420,7 +455,7 @@
         "a914d1653767fc2df987e30d0919176f0ebfadd96e7487",
         {
             "isPrivkey": false,
-            "chain": "mainnet"
+            "chain": "main"
         }
     ]
 ]
