@@ -24,6 +24,8 @@ import subprocess
 from test_framework.test_framework import PAIcoinTestFramework
 from test_framework.util import (
     assert_equal,
+    assert_greater_than,
+    assert_greater_than_or_equal,
     assert_raises,
     assert_raises_jsonrpc,
     assert_is_hex_string,
@@ -33,9 +35,10 @@ from test_framework.util import (
 class BlockchainTest(PAIcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
-        self.extra_args = [['-stopatheight=207']]
+        self.extra_args = [['-stopatheight=207', '-prune=1']]
 
     def run_test(self):
+        self._test_getblockchaininfo()
         self._test_getchaintxstats()
         self._test_gettxoutsetinfo()
         self._test_getblockheader()
@@ -43,6 +46,33 @@ class BlockchainTest(PAIcoinTestFramework):
         self._test_getnetworkhashps()
         self._test_stopatheight()
         assert self.nodes[0].verifychain(4, 0)
+
+    def _test_getblockchaininfo(self):
+        self.log.info("Test getblockchaininfo")
+
+        keys = [
+            'bestblockhash',
+            'bip9_softforks',
+            'blocks',
+            'chain',
+            'chainwork',
+            'difficulty',
+            'headers',
+            'mediantime',
+            'pruned',
+            'softforks',
+            'verificationprogress',
+        ]
+        res = self.nodes[0].getblockchaininfo()
+        # result should have pruneheight and default keys if pruning is enabled
+        assert_equal(sorted(res.keys()), sorted(['pruneheight'] + keys))
+        # pruneheight should be greater or equal to 0
+        assert res['pruneheight'] >= 0
+
+        self.restart_node(0, ['-stopatheight=207'])
+        res = self.nodes[0].getblockchaininfo()
+        # should have exact keys
+        assert_equal(sorted(res.keys()), keys)
 
     def _test_getchaintxstats(self):
         chaintxstats = self.nodes[0].getchaintxstats(1)
