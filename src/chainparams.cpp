@@ -152,6 +152,8 @@ public:
         
         consensus.hashGenesisBlock = genesis.GetHash();
 
+        LogPrintf("- new genesis block: %s\n", genesis.ToString().c_str());
+
 #else
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
@@ -284,6 +286,8 @@ public:
         
         consensus.hashGenesisBlock = genesis.GetHash();
 
+        LogPrintf("- new genesis block: %s\n", genesis.ToString().c_str());
+
 #else
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
@@ -400,6 +404,8 @@ public:
         LogPrintf("- new regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
         
         consensus.hashGenesisBlock = genesis.GetHash();
+
+        LogPrintf("- new genesis block: %s\n", genesis.ToString().c_str());
 
 #else
 
