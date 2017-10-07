@@ -20,11 +20,40 @@
  */
 //#define MINE_FOR_THE_GENESIS_BLOCK 1
 
+// Uncomment the following define in order to lower the complexity of the block generating algorithm
+//#define EASY_LIVE_SERVER_MINING 1
+
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
+#endif // MINE_FOR_THE_GENESIS_BLOCK
+
+#ifdef EASY_LIVE_SERVER_MINING
+#   define CONSENSUS_MINIMUM_CHAIN_WORK                 uint256S("0x0000000000000000000000000000000000000000000000000000000000000001")
+#   define CONSENSUS_POW_LIMIT                          uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+#   define CONSENSUS_POW_TARGET_TIMESPAN                1
+#   define CONSENSUS_POW_TARGET_SPACING                 1
+#   define CONSENSUS_ALOOW_MIN_DIFFICULTY_BLOCKS        true
+#   define CONSENSUS_POW_NO_RETARGETING                 true
+#   define CONSENSUS_RULE_CHANGE_ACTIVATION_THRESHOLD   0
+#   define CONSENSUS_MINER_CONFORMATION_WINDOW          1
+
+#   define GENESIS_BLOCK_PROOF_OF_WORK 1    // aka, the difficulty, from 0 to 255
+#   define GENESIS_BLOCK_NBITS 0x207fffff
+#   define GENESIS_BLOCK_NONCE 0
+#else
+#   define CONSENSUS_MINIMUM_CHAIN_WORK                 uint256S("0x000000000000000000000000000000000000000000723d3581fe1bd55373540a")
+#   define CONSENSUS_POW_LIMIT                          uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+#   define CONSENSUS_POW_TARGET_TIMESPAN                14 * 24 * 60 * 60
+#   define CONSENSUS_POW_TARGET_SPACING                 10 * 60
+#   define CONSENSUS_ALOOW_MIN_DIFFICULTY_BLOCKS        false
+#   define CONSENSUS_POW_NO_RETARGETING                 false
+#   define CONSENSUS_RULE_CHANGE_ACTIVATION_THRESHOLD   1916
+#   define CONSENSUS_MINER_CONFORMATION_WINDOW          2016
 
 #   define GENESIS_BLOCK_PROOF_OF_WORK 32 // aka, the difficulty, from 0 to 255
-#endif  // MINE_FOR_THE_GENESIS_BLOCK
+#   define GENESIS_BLOCK_NBITS 0x1d00ffff
+#   define GENESIS_BLOCK_NONCE 224587492
+#endif // EASY_LIVE_SERVER_MINING
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
@@ -32,7 +61,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     txNew.nVersion = 1;
     txNew.vin.resize(1);
     txNew.vout.resize(1);
-    txNew.vin[0].scriptSig = CScript() << 486604799 << CScriptNum(4) << std::vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+    txNew.vin[0].scriptSig = CScript() << nBits << CScriptNum(4) << std::vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
     txNew.vout[0].nValue = genesisReward;
     txNew.vout[0].scriptPubKey = genesisOutputScript;
 
@@ -91,13 +120,13 @@ public:
         consensus.BIP34Hash = uint256S("0x000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8");
         consensus.BIP65Height = 388381; // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
         consensus.BIP66Height = 363725; // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
-        consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
-        consensus.nPowTargetSpacing = 10 * 60;
-        consensus.fPowAllowMinDifficultyBlocks = false;
-        consensus.fPowNoRetargeting = false;
-        consensus.nRuleChangeActivationThreshold = 1916; // 95% of 2016
-        consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
+        consensus.powLimit = CONSENSUS_POW_LIMIT;
+        consensus.nPowTargetTimespan = CONSENSUS_POW_TARGET_TIMESPAN; // two weeks
+        consensus.nPowTargetSpacing = CONSENSUS_POW_TARGET_SPACING;
+        consensus.fPowAllowMinDifficultyBlocks = CONSENSUS_ALOOW_MIN_DIFFICULTY_BLOCKS;
+        consensus.fPowNoRetargeting = CONSENSUS_POW_NO_RETARGETING;
+        consensus.nRuleChangeActivationThreshold = CONSENSUS_RULE_CHANGE_ACTIVATION_THRESHOLD; // 95% of 2016
+        consensus.nMinerConfirmationWindow = CONSENSUS_MINER_CONFORMATION_WINDOW; // nPowTargetTimespan / nPowTargetSpacing
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
@@ -113,7 +142,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 1510704000; // November 15th, 2017.
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x000000000000000000000000000000000000000000723d3581fe1bd55373540a");
+        consensus.nMinimumChainWork = CONSENSUS_MINIMUM_CHAIN_WORK;
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000000000000003b9ce759c2a087d52abc4266f8f4ebd6d768b89defa50a"); //477890
@@ -133,7 +162,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(1507377164, 0, 0x1d00ffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 0, GENESIS_BLOCK_NBITS, 1, 50 * COIN);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> GENESIS_BLOCK_PROOF_OF_WORK);
 
@@ -157,7 +186,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1507377164, 224587492, 0x1d00ffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, GENESIS_BLOCK_NONCE, GENESIS_BLOCK_NBITS, 1, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
 
