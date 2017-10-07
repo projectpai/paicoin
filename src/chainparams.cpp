@@ -18,7 +18,7 @@
  * To initialize the block chain by mining a new genesis block uncomment the following define.
  * WARNING: this should only be done once and prior to release in production!
  */
-#define MINE_FOR_THE_GENESIS_BLOCK 1
+//#define MINE_FOR_THE_GENESIS_BLOCK 1
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
@@ -151,7 +151,7 @@ public:
         
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        LogPrintf("- new genesis block: %s\n", genesis.ToString().c_str());
+        LogPrintf("- new mainnet genesis block: %s\n", genesis.ToString().c_str());
 
 #else
 
@@ -266,7 +266,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(1504728900, 414098458, 0x1d00ffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 0, 0x1d00ffff, 1, 50 * COIN);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> GENESIS_BLOCK_PROOF_OF_WORK);
 
@@ -278,28 +278,26 @@ public:
         // deliberately empty for loop finds nonce value.
         for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
 
-        genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
-
         LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
         LogPrintf("- new testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
         
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        LogPrintf("- new genesis block: %s\n", genesis.ToString().c_str());
+        LogPrintf("- new testnet genesis block: %s\n", genesis.ToString().c_str());
 
 #else
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1504728900, 414098458, 0x1d00ffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 224587492, 0x1d00ffff, 1, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
 
         // TODO: Update the values below with the data from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        assert(consensus.hashGenesisBlock == uint256S("0x000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
-        assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
+        assert(consensus.hashGenesisBlock == uint256S("0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8"));
+        assert(genesis.hashMerkleRoot == uint256S("0x608c387879649b45c6588c243d50fe81ea9c8e162aa9787d872ceb561f4798e7"));
 
 #endif  // MINE_FOR_THE_GENESIS_BLOCK
 
@@ -386,9 +384,9 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(1504728900, 2, 0x207fffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 2, 0x207fffff, 1, 50 * COIN);
 
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> GENESIS_BLOCK_PROOF_OF_WORK);
+        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> 1);
 
         LogPrintf("Recalculating params for regtest.\n");
         LogPrintf("- old regtest genesis nonce: %u\n", genesis.nNonce);
@@ -398,28 +396,26 @@ public:
         // deliberately empty for loop finds nonce value.
         for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
 
-        genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
-
         LogPrintf("- new regtest genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new regtest genesis hash: %s\n", genesis.GetHash().ToString().c_str());
         LogPrintf("- new regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
         
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        LogPrintf("- new genesis block: %s\n", genesis.ToString().c_str());
+        LogPrintf("- new regtest genesis block: %s\n", genesis.ToString().c_str());
 
 #else
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1504728900, 2, 0x207fffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 1, 0x207fffff, 1, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
 
         // TODO: Update the values below with the data from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        assert(consensus.hashGenesisBlock == uint256S("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
-        assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
+        assert(consensus.hashGenesisBlock == uint256S("0x0a9f0c7316691559d1c1f4b1d2de2fd45761190c0beb4ad3409b50f1c62e2fc5"));
+        assert(genesis.hashMerkleRoot == uint256S("0x608c387879649b45c6588c243d50fe81ea9c8e162aa9787d872ceb561f4798e7"));
 
 #endif  // MINE_FOR_THE_GENESIS_BLOCK
 
