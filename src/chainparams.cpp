@@ -61,7 +61,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
     const char* pszTimestamp = "09/06/2017 - Create your own avatar twin that talks like you";
-    const CScript genesisOutputScript = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
+    const CScript genesisOutputScript = CScript() << ParseHex("00BAA4D7E64F21135D61324C7B59D00FC5B8EB1BCC8194D256AF4BDF93CBD8D631A713C66A4D3D9E7F7330BA3DBF7DE1C1CA458DBF552C60AA1C07FB45C4AE6087") << OP_CHECKSIG;
     return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
 }
 
@@ -133,7 +133,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(1504728900, 2083236893, 0x1d00ffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 0, 0x1d00ffff, 1, 50 * COIN);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> GENESIS_BLOCK_PROOF_OF_WORK);
 
@@ -144,8 +144,6 @@ public:
 
         // deliberately empty for loop finds nonce value.
         for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
-
-        genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
 
         LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
@@ -159,14 +157,14 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1504728900, 2083236893, 0x1d00ffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 224587492, 0x1d00ffff, 1, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
 
         // TODO: Update the values below with the data from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        assert(consensus.hashGenesisBlock == uint256S("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"));
-        assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
+        assert(consensus.hashGenesisBlock == uint256S("0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8"));
+        assert(genesis.hashMerkleRoot == uint256S("0x608c387879649b45c6588c243d50fe81ea9c8e162aa9787d872ceb561f4798e7"));
 
 #endif  // MINE_FOR_THE_GENESIS_BLOCK
                 
