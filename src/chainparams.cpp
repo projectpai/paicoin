@@ -214,6 +214,21 @@ public:
                         //   (the tx=... number in the SetBestChain debug.log lines)
             3.1         // * estimated number of transactions per second after that timestamp
         };
+        */
+
+        checkpointData = (CCheckpointData) {
+            {
+                { 0, uint256S("0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8")}
+            }
+        };
+
+        chainTxData = ChainTxData{
+            // Data as of block 000000000000000000d97e53664d17967bd4ee50b23abb92e54a34eb222d15ae (height 478913).
+            1507377164, // * UNIX timestamp of last known number of transactions
+            0,          // * total number of transactions between genesis and that timestamp
+                        //   (the tx=... number in the SetBestChain debug.log lines)
+            3.1         // * estimated number of transactions per second after that timestamp
+        };
     }
 };
 
@@ -335,6 +350,20 @@ public:
             14706531,
             0.15
         };
+*/
+
+        checkpointData = (CCheckpointData) {
+            {
+                {0, uint256S("0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8")},
+            }
+        };
+
+        chainTxData = ChainTxData{
+            // Data as of block 0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8 (height 0)
+            1507377164,
+            0,
+            0.15
+        };
 
     }
 };
@@ -438,6 +467,18 @@ public:
             0
         };
 */
+
+        checkpointData = (CCheckpointData) {
+            {
+                {0, uint256S("0x0a9f0c7316691559d1c1f4b1d2de2fd45761190c0beb4ad3409b50f1c62e2fc5")},
+            }
+        };
+
+        chainTxData = ChainTxData{
+            1507377164,
+            0,
+            0
+        };
 
         // same as for the CTestNetParams
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
