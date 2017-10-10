@@ -54,6 +54,9 @@ static int AppInitRPC(int argc, char* argv[])
     //
     // Parameters
     //
+    const auto defaultBaseParams = CreateBaseChainParams(CBaseChainParams::MAIN);
+    const auto testnetBaseParams = CreateBaseChainParams(CBaseChainParams::TESTNET);
+
     gArgs.ParseParameters(argc, argv);
     if (argc<3 || gArgs.IsArgSet("-?") || gArgs.IsArgSet("-h") || gArgs.IsArgSet("-help") || gArgs.IsArgSet("-version")) {
         std::string strUsage = strprintf(_("%s RPC client version"), _(PACKAGE_NAME)) + " " + FormatFullVersion() + "\n";
@@ -68,6 +71,28 @@ static int AppInitRPC(int argc, char* argv[])
             return EXIT_FAILURE;
         }
         return EXIT_SUCCESS;
+    }
+    if (!fs::is_directory(GetDataDir(false))) {
+        fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", gArgs.GetArg("-datadir", "").c_str());
+        return EXIT_FAILURE;
+    }
+    try {
+        gArgs.ReadConfigFile(gArgs.GetArg("-conf", BITCOIN_CONF_FILENAME));
+    } catch (const std::exception& e) {
+        fprintf(stderr,"Error reading configuration file: %s\n", e.what());
+        return EXIT_FAILURE;
+    }
+    // Check for -testnet or -regtest parameter (BaseParams() calls are only valid after this clause)
+    try {
+        SelectBaseParams(ChainNameFromCommandLine());
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Error: %s\n", e.what());
+        return EXIT_FAILURE;
+    }
+    if (gArgs.GetBoolArg("-rpcssl", false))
+    {
+        fprintf(stderr, "Error: SSL mode for RPC (-rpcssl) is no longer supported.\n");
+        return EXIT_FAILURE;
     }
     return CONTINUE_EXECUTION;
 }
