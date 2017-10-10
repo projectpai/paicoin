@@ -294,55 +294,82 @@ int CommandLineRPC(int argc, char *argv[])
             params = RPCConvertValues(strMethod, args);
         }
 
-        // Execute and handle connection failures with -rpcwait
-        const bool fWait = gArgs.GetBoolArg("-rpcwait", false);
-        do {
-            try {
-                const UniValue reply = CallRPC(strMethod, params);
+        // trigger processing of the remaining blocks
+        size_t generated = 0;
 
-                // Parse reply
-                const UniValue& result = find_value(reply, "result");
-                const UniValue& error  = find_value(reply, "error");
+        size_t goal = 0;
+        std::stringstream stringGoal(args[0]);
+        stringGoal >> goal;
 
-                if (!error.isNull()) {
-                    // Error
-                    int code = error["code"].get_int();
-                    if (fWait && code == RPC_IN_WARMUP)
-                        throw CConnectionFailed("server in warmup");
-                    strPrint = "error: " + error.write();
-                    nRet = abs(code);
-                    if (error.isObject())
-                    {
-                        UniValue errCode = find_value(error, "code");
-                        UniValue errMsg  = find_value(error, "message");
-                        strPrint = errCode.isNull() ? "" : "error code: "+errCode.getValStr()+"\n";
+        size_t difference = goal;
 
-                        if (errMsg.isStr())
-                            strPrint += "error message:\n"+errMsg.get_str();
+        while (difference > 0) {
+            // Execute and handle connection failures with -rpcwait
+            const bool fWait = gArgs.GetBoolArg("-rpcwait", false);
+            do {
+                try {
+                    const UniValue reply = CallRPC(strMethod, params);
 
-                        if (errCode.isNum() && errCode.get_int() == RPC_WALLET_NOT_SPECIFIED) {
-                            strPrint += "\nTry adding \"-rpcwallet=<filename>\" option to paichain-block-generator command line.";
+                    // Parse reply
+                    const UniValue& result = find_value(reply, "result");
+                    const UniValue& error  = find_value(reply, "error");
+
+                    if (!error.isNull()) {
+                        // Error
+                        int code = error["code"].get_int();
+                        if (fWait && code == RPC_IN_WARMUP)
+                            throw CConnectionFailed("server in warmup");
+                        strPrint = "error: " + error.write();
+                        nRet = abs(code);
+                        if (error.isObject())
+                        {
+                            UniValue errCode = find_value(error, "code");
+                            UniValue errMsg  = find_value(error, "message");
+                            strPrint = errCode.isNull() ? "" : "error code: "+errCode.getValStr()+"\n";
+
+                            if (errMsg.isStr())
+                                strPrint += "error message:\n"+errMsg.get_str();
+
+                            if (errCode.isNum() && errCode.get_int() == RPC_WALLET_NOT_SPECIFIED) {
+                                strPrint += "\nTry adding \"-rpcwallet=<filename>\" option to paichain-block-generator command line.";
+                            }
                         }
+                    } else {
+                        // Result
+                        if (result.isNull())
+                            strPrint = "";
+                        else if (result.isStr())
+                            strPrint = result.get_str();
+                        else if (result.isArray()) {
+                            //strPrint = result.write(2);
+
+                            // trigger processing of the remaining blocks
+                            generated += result.size();
+
+                            difference = (goal - generated);
+
+                            fprintf((nRet == 0 ? stdout : stderr), "Generated %zu blocks, Remaining: %zu blocks\n", generated, difference);
+
+                            if (difference > 0) {
+                                std::stringstream stringDifference;
+                                stringDifference << difference;
+                                args[0] = stringDifference.str();
+                            }
+                        }
+                        else
+                            strPrint = result.write(2);
                     }
-                } else {
-                    // Result
-                    if (result.isNull())
-                        strPrint = "";
-                    else if (result.isStr())
-                        strPrint = result.get_str();
-                    else
-                        strPrint = result.write(2);
+                    // Connection succeeded, no need to retry.
+                    break;
                 }
-                // Connection succeeded, no need to retry.
-                break;
-            }
-            catch (const CConnectionFailed&) {
-                if (fWait)
-                    MilliSleep(1000);
-                else
-                    throw;
-            }
-        } while (fWait);
+                catch (const CConnectionFailed&) {
+                    if (fWait)
+                        MilliSleep(1000);
+                    else
+                        throw;
+                }
+            } while (fWait);
+        }
     }
     catch (const boost::thread_interrupted&) {
         throw;
