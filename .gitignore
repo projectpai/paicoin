@@ -1,14 +1,14 @@
 *.tar.gz
 
 *.exe
-src/bitcoin
-src/bitcoind
-src/bitcoin-cli
+src/paicoin
+src/paicoind
+src/paicoin-cli
 src/paichain-block-generator
-src/bitcoin-tx
-src/test/test_bitcoin
-src/test/test_bitcoin_fuzzy
-src/qt/test/test_bitcoin-qt
+src/paicoin-tx
+src/test/test_paicoin
+src/test/test_paicoin_fuzzy
+src/qt/test/test_paicoin-qt
 
 # autoreconf
 Makefile.in
@@ -31,8 +31,8 @@ config.log
 config.status
 configure
 libtool
-src/config/bitcoin-config.h
-src/config/bitcoin-config.h.in
+src/config/paicoin-config.h
+src/config/paicoin-config.h.in
 src/config/stamp-h1
 share/setup.nsi
 share/qt/Info.plist
@@ -75,12 +75,12 @@ src/qt/test/moc*.cpp
 # Compilation and Qt preprocessor part
 *.qm
 Makefile
-bitcoin-qt
-Bitcoin-Qt.app
+paicoin-qt
+PAIcoin-Qt.app
 
 # Unit-tests
 Makefile.test
-bitcoin-qt_test
+paicoin-qt_test
 
 # Resources cpp
 qrc_*.cpp
@@ -93,7 +93,7 @@ build
 *.gcno
 *.gcda
 /*.info
-test_bitcoin.coverage/
+test_paicoin.coverage/
 total.coverage/
 coverage_percent.txt
 
@@ -108,5 +108,5 @@ test/cache/*
 
 /doc/doxygen/
 
-libbitcoinconsensus.pc
+libpaicoinconsensus.pc
 contrib/devtools/split-debug.sh

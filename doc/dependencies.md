@@ -1,7 +1,7 @@
 Dependencies
 ============
 
-These are the dependencies currently used by Bitcoin Core. You can find instructions for installing them in the `build-*.md` file for your platform.
+These are the dependencies currently used by PAIcoin Core. You can find instructions for installing them in the `build-*.md` file for your platform.
 
 | Dependency | Version used | Minimum Required | CVEs? | Shared | [Bundled Qt Library](https://doc.qt.io/qt-5/configure-options.html) |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -10,7 +10,7 @@ These are the dependencies currently used by Bitcoin Core. You can find instruct
 | libevent | [2.1.8-stable](https://github.com/libevent/libevent/releases) | 2.0.22 | No |  |  |
 | Qt | [5.7.1](https://download.qt.io/official_releases/qt/) | 4.7+ | No |  |  |
 | Freetype | [2.7.1](http://download.savannah.gnu.org/releases/freetype) |  | No |  |  |
-| Boost | [1.64.0](http://www.boost.org/users/download/) | [1.47.0](https://github.com/bitcoin/bitcoin/pull/8920) | No |  |  |
+| Boost | [1.64.0](http://www.boost.org/users/download/) | [1.47.0](https://github.com/paicoin/paicoin/pull/8920) | No |  |  |
 | Protobuf | [2.6.3](https://github.com/google/protobuf/releases) |  | No |  |  |
 | Zeromq | [4.1.5](https://github.com/zeromq/libzmq/releases) |  | No |  |  |
 | miniupnpc | [2.0.20170509](http://miniupnp.free.fr/files) |  | No |  |  |
@@ -19,13 +19,13 @@ These are the dependencies currently used by Bitcoin Core. You can find instruct
 | dbus | [1.10.18](https://cgit.freedesktop.org/dbus/dbus/tree/NEWS?h=dbus-1.10) |  | No | yes |  |
 | expat | [2.2.1](https://libexpat.github.io/) |  | No | yes |  |
 | fontconfig | [2.12.1](https://www.freedesktop.org/software/fontconfig/release/) |  | No | yes |  |
-| freetype |  |  |  |  | [no](https://github.com/bitcoin/bitcoin/blob/master/depends/packages/qt.mk#L38) (linux uses system) |
+| freetype |  |  |  |  | [no](https://github.com/paicoin/paicoin/blob/master/depends/packages/qt.mk#L38) (linux uses system) |
 | zlib | [1.2.11](http://zlib.net/) |  |  |  | no |
-| libjpeg |  |  |  |  | [yes](https://github.com/bitcoin/bitcoin/blob/master/depends/packages/qt.mk#L75) |
-| libpng |  |  |  |  | [yes](https://github.com/bitcoin/bitcoin/blob/master/depends/packages/qt.mk#L74) |
-| PCRE |  |  |  |  | [yes](https://github.com/bitcoin/bitcoin/blob/master/depends/packages/qt.mk#L76) |
-| xcb |  |  |  |  | [yes](https://github.com/bitcoin/bitcoin/blob/master/depends/packages/qt.mk#L94) (linux only) |
-| xkbcommon |  |  |  |  | [yes](https://github.com/bitcoin/bitcoin/blob/master/depends/packages/qt.mk#L93) (linux only) |
+| libjpeg |  |  |  |  | [yes](https://github.com/paicoin/paicoin/blob/master/depends/packages/qt.mk#L75) |
+| libpng |  |  |  |  | [yes](https://github.com/paicoin/paicoin/blob/master/depends/packages/qt.mk#L74) |
+| PCRE |  |  |  |  | [yes](https://github.com/paicoin/paicoin/blob/master/depends/packages/qt.mk#L76) |
+| xcb |  |  |  |  | [yes](https://github.com/paicoin/paicoin/blob/master/depends/packages/qt.mk#L94) (linux only) |
+| xkbcommon |  |  |  |  | [yes](https://github.com/paicoin/paicoin/blob/master/depends/packages/qt.mk#L93) (linux only) |
 | HarfBuzz-NG |  |  |  |  | ? |
 | Python (tests) |  | [3.4](https://www.python.org/downloads) |  |  |  |
 | GCC |  | [4.7+](https://gcc.gnu.org/) |  |  |  |

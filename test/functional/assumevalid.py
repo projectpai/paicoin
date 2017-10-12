@@ -5,7 +5,7 @@
 """Test logic for skipping signature validation on old blocks.
 
 Test logic for skipping signature validation on blocks which we've assumed
-valid (https://github.com/bitcoin/bitcoin/pull/9484)
+valid (https://github.com/paicoin/paicoin/pull/9484)
 
 We build a chain that includes and invalid signature for one of the
 transactions:
@@ -44,7 +44,7 @@ from test_framework.mininode import (CBlockHeader,
                                      msg_block,
                                      msg_headers)
 from test_framework.script import (CScript, OP_TRUE)
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import PAIcoinTestFramework
 from test_framework.util import (p2p_port, assert_equal)
 
 class BaseNode(NodeConnCB):
@@ -53,7 +53,7 @@ class BaseNode(NodeConnCB):
         headers_message.headers = [CBlockHeader(b) for b in new_blocks]
         self.send_message(headers_message)
 
-class AssumeValidTest(BitcoinTestFramework):
+class AssumeValidTest(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3

@@ -197,14 +197,14 @@ public:
 
 #endif  // MINE_FOR_THE_GENESIS_BLOCK
                 
-        //commented by subodh to remove bitcoin seed nodes
+        //commented by subodh to remove paicoin seed nodes
         // Note that of those with the service bits flag, most only support a subset of possible options
-        vSeeds.emplace_back("seed.bitcoin.sipa.be", true); // Pieter Wuille, only supports x1, x5, x9, and xd
-        vSeeds.emplace_back("dnsseed.bluematt.me", true); // Matt Corallo, only supports x9
-        vSeeds.emplace_back("dnsseed.bitcoin.dashjr.org", false); // Luke Dashjr
-        vSeeds.emplace_back("seed.bitcoinstats.com", true); // Christian Decker, supports x1 - xf
-        vSeeds.emplace_back("seed.bitcoin.jonasschnelli.ch", true); // Jonas Schnelli, only supports x1, x5, x9, and xd
-        vSeeds.emplace_back("seed.btc.petertodd.org", true); // Peter Todd, only supports x1, x5, x9, and xd
+        //vSeeds.emplace_back("seed.paicoin.sipa.be", true); // Pieter Wuille, only supports x1, x5, x9, and xd
+        //vSeeds.emplace_back("dnsseed.bluematt.me", true); // Matt Corallo, only supports x9
+        //vSeeds.emplace_back("dnsseed.paicoin.dashjr.org", false); // Luke Dashjr
+        //vSeeds.emplace_back("seed.paicoinstats.com", true); // Christian Decker, supports x1 - xf
+        //vSeeds.emplace_back("seed.paicoin.jonasschnelli.ch", true); // Jonas Schnelli, only supports x1, x5, x9, and xd
+        //vSeeds.emplace_back("seed.PAI.petertodd.org", true); // Peter Todd, only supports x1, x5, x9, and xd
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,44);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,131);
@@ -213,6 +213,9 @@ public:
         base58Prefixes[EXT_SECRET_KEY] = {0x0F, 0x7F, 0xA6, 0x89};
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
+
+        //cleared by subodh to remove paicoin seed nodes
+         vFixedSeeds.clear();
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
@@ -347,11 +350,13 @@ public:
 
         vFixedSeeds.clear();
         vSeeds.clear();
+
+        //commented by subodh to remove paicoin seed nodes
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.emplace_back("testnet-seed.bitcoin.jonasschnelli.ch", true);
-        vSeeds.emplace_back("seed.tbtc.petertodd.org", true);
-        vSeeds.emplace_back("testnet-seed.bluematt.me", false);
-        vSeeds.emplace_back("testnet-seed.bitcoin.schildbach.de", false);
+        //vSeeds.emplace_back("testnet-seed.paicoin.jonasschnelli.ch", true);
+        //vSeeds.emplace_back("seed.tPAI.petertodd.org", true);
+        //vSeeds.emplace_back("testnet-seed.bluematt.me", false);
+        //vSeeds.emplace_back("testnet-seed.paicoin.schildbach.de", false);
 
         // same as for the CRegTestParams
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
@@ -361,6 +366,8 @@ public:
         base58Prefixes[EXT_SECRET_KEY] = {0xA5, 0x96, 0x46, 0x79};
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
+        //cleared by  subodh to remove paicoin seed nodes
+        vFixedSeeds.clear();
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;

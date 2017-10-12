@@ -1,0 +1,11 @@
+[Protocol]
+exec=paicoin-qt '%u'
+protocol=paicoin
+input=none
+output=none
+helper=true
+listing=
+reading=false
+writing=false
+makedir=false
+deleting=false
