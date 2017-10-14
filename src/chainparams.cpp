@@ -29,14 +29,12 @@
 
 #ifdef EASY_LIVE_SERVER_MINING
 #   define CONSENSUS_MINIMUM_CHAIN_WORK                 uint256S("0x0000000000000000000000000000000000000000000000000000000000000001")
-#   define CONSENSUS_ALLOW_MIN_DIFFICULTY_BLOCKS        true
 
 #   define GENESIS_BLOCK_PROOF_OF_WORK 1    // aka, the difficulty, from 0 to 255
 #   define GENESIS_BLOCK_NBITS 0x207fffff
 #   define GENESIS_BLOCK_NONCE 0
 #else
 #   define CONSENSUS_MINIMUM_CHAIN_WORK                 uint256S("0x000000000000000000000000000000000000000000723d3581fe1bd55373540a")
-#   define CONSENSUS_ALLOW_MIN_DIFFICULTY_BLOCKS        false
 
 #   define GENESIS_BLOCK_PROOF_OF_WORK 32 // aka, the difficulty, from 0 to 255
 #   define GENESIS_BLOCK_NBITS 0x1d00ffff
@@ -110,7 +108,7 @@ public:
         consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
-        consensus.fPowAllowMinDifficultyBlocks = CONSENSUS_ALLOW_MIN_DIFFICULTY_BLOCKS;
+        consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1916; // 95% of 2016
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
