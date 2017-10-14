@@ -32,7 +32,7 @@
 #   define CONSENSUS_POW_LIMIT                          uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #   define CONSENSUS_POW_TARGET_TIMESPAN                1
 #   define CONSENSUS_POW_TARGET_SPACING                 1
-#   define CONSENSUS_ALOOW_MIN_DIFFICULTY_BLOCKS        true
+#   define CONSENSUS_ALLOW_MIN_DIFFICULTY_BLOCKS        true
 #   define CONSENSUS_POW_NO_RETARGETING                 true
 #   define CONSENSUS_RULE_CHANGE_ACTIVATION_THRESHOLD   0
 #   define CONSENSUS_MINER_CONFORMATION_WINDOW          1
@@ -45,7 +45,7 @@
 #   define CONSENSUS_POW_LIMIT                          uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #   define CONSENSUS_POW_TARGET_TIMESPAN                14 * 24 * 60 * 60
 #   define CONSENSUS_POW_TARGET_SPACING                 10 * 60
-#   define CONSENSUS_ALOOW_MIN_DIFFICULTY_BLOCKS        false
+#   define CONSENSUS_ALLOW_MIN_DIFFICULTY_BLOCKS        false
 #   define CONSENSUS_POW_NO_RETARGETING                 false
 #   define CONSENSUS_RULE_CHANGE_ACTIVATION_THRESHOLD   1916
 #   define CONSENSUS_MINER_CONFORMATION_WINDOW          2016
@@ -123,7 +123,7 @@ public:
         consensus.powLimit = CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = CONSENSUS_POW_TARGET_TIMESPAN; // two weeks
         consensus.nPowTargetSpacing = CONSENSUS_POW_TARGET_SPACING;
-        consensus.fPowAllowMinDifficultyBlocks = CONSENSUS_ALOOW_MIN_DIFFICULTY_BLOCKS;
+        consensus.fPowAllowMinDifficultyBlocks = CONSENSUS_ALLOW_MIN_DIFFICULTY_BLOCKS;
         consensus.fPowNoRetargeting = CONSENSUS_POW_NO_RETARGETING;
         consensus.nRuleChangeActivationThreshold = CONSENSUS_RULE_CHANGE_ACTIVATION_THRESHOLD; // 95% of 2016
         consensus.nMinerConfirmationWindow = CONSENSUS_MINER_CONFORMATION_WINDOW; // nPowTargetTimespan / nPowTargetSpacing
