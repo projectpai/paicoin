@@ -28,14 +28,10 @@
 #endif // MINE_FOR_THE_GENESIS_BLOCK
 
 #ifdef EASY_LIVE_SERVER_MINING
-#   define CONSENSUS_MINIMUM_CHAIN_WORK                 uint256S("0x0000000000000000000000000000000000000000000000000000000000000001")
-
 #   define GENESIS_BLOCK_PROOF_OF_WORK 1    // aka, the difficulty, from 0 to 255
 #   define GENESIS_BLOCK_NBITS 0x207fffff
 #   define GENESIS_BLOCK_NONCE 0
 #else
-#   define CONSENSUS_MINIMUM_CHAIN_WORK                 uint256S("0x000000000000000000000000000000000000000000723d3581fe1bd55373540a")
-
 #   define GENESIS_BLOCK_PROOF_OF_WORK 32 // aka, the difficulty, from 0 to 255
 #   define GENESIS_BLOCK_NBITS 0x1d00ffff
 #   define GENESIS_BLOCK_NONCE 224587492
@@ -127,7 +123,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 1510704000; // November 15th, 2017.
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = CONSENSUS_MINIMUM_CHAIN_WORK;
+        consensus.nMinimumChainWork = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000000000000003b9ce759c2a087d52abc4266f8f4ebd6d768b89defa50a"); //477890
@@ -284,7 +280,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 1493596800; // May 1st 2017
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000002830dab7f76dbb7d63");
+        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000002e9e7b00e1f6dc5123a04aad68dd0f0968d8c7aa45f6640795c37b1"); //1135275
@@ -421,7 +417,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x00");
+        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x00");
