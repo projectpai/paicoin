@@ -30,12 +30,7 @@
 #ifdef EASY_LIVE_SERVER_MINING
 #   define CONSENSUS_MINIMUM_CHAIN_WORK                 uint256S("0x0000000000000000000000000000000000000000000000000000000000000001")
 #   define CONSENSUS_POW_LIMIT                          uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
-#   define CONSENSUS_POW_TARGET_TIMESPAN                1
-#   define CONSENSUS_POW_TARGET_SPACING                 1
 #   define CONSENSUS_ALLOW_MIN_DIFFICULTY_BLOCKS        true
-#   define CONSENSUS_POW_NO_RETARGETING                 true
-#   define CONSENSUS_RULE_CHANGE_ACTIVATION_THRESHOLD   0
-#   define CONSENSUS_MINER_CONFORMATION_WINDOW          1
 
 #   define GENESIS_BLOCK_PROOF_OF_WORK 1    // aka, the difficulty, from 0 to 255
 #   define GENESIS_BLOCK_NBITS 0x207fffff
@@ -43,12 +38,7 @@
 #else
 #   define CONSENSUS_MINIMUM_CHAIN_WORK                 uint256S("0x000000000000000000000000000000000000000000723d3581fe1bd55373540a")
 #   define CONSENSUS_POW_LIMIT                          uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
-#   define CONSENSUS_POW_TARGET_TIMESPAN                14 * 24 * 60 * 60
-#   define CONSENSUS_POW_TARGET_SPACING                 10 * 60
 #   define CONSENSUS_ALLOW_MIN_DIFFICULTY_BLOCKS        false
-#   define CONSENSUS_POW_NO_RETARGETING                 false
-#   define CONSENSUS_RULE_CHANGE_ACTIVATION_THRESHOLD   1916
-#   define CONSENSUS_MINER_CONFORMATION_WINDOW          2016
 
 #   define GENESIS_BLOCK_PROOF_OF_WORK 32 // aka, the difficulty, from 0 to 255
 #   define GENESIS_BLOCK_NBITS 0x1d00ffff
@@ -120,12 +110,12 @@ public:
         consensus.BIP65Height = 0;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 0;  // BIP66 is activated from the genesis block
         consensus.powLimit = CONSENSUS_POW_LIMIT;
-        consensus.nPowTargetTimespan = CONSENSUS_POW_TARGET_TIMESPAN; // two weeks
-        consensus.nPowTargetSpacing = CONSENSUS_POW_TARGET_SPACING;
+        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
+        consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = CONSENSUS_ALLOW_MIN_DIFFICULTY_BLOCKS;
-        consensus.fPowNoRetargeting = CONSENSUS_POW_NO_RETARGETING;
-        consensus.nRuleChangeActivationThreshold = CONSENSUS_RULE_CHANGE_ACTIVATION_THRESHOLD; // 95% of 2016
-        consensus.nMinerConfirmationWindow = CONSENSUS_MINER_CONFORMATION_WINDOW; // nPowTargetTimespan / nPowTargetSpacing
+        consensus.fPowNoRetargeting = false;
+        consensus.nRuleChangeActivationThreshold = 1916; // 95% of 2016
+        consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
