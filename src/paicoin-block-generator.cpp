@@ -347,7 +347,7 @@ int CommandLineRPC(int argc, char *argv[])
                             // trigger processing of the remaining blocks
                             generated += result.size();
 
-                            difference = (goal - generated);
+                            difference = ((goal > generated) ? (goal - generated) : 0);
 
                             fprintf((nRet == 0 ? stdout : stderr), "Generated %zu blocks, Remaining: %zu blocks\n", generated, difference);
 
