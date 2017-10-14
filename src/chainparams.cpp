@@ -18,7 +18,7 @@
  * To initialize the block chain by mining a new genesis block uncomment the following define.
  * WARNING: this should only be done once and prior to release in production!
  */
-//#define MINE_FOR_THE_GENESIS_BLOCK 1
+#define MINE_FOR_THE_GENESIS_BLOCK 1
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
@@ -403,7 +403,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
-        
+
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
