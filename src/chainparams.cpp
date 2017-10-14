@@ -116,10 +116,9 @@ public:
     CMainParams() {
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 210000;
-        consensus.BIP34Height = 227931;
-        consensus.BIP34Hash = uint256S("0x000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8");
-        consensus.BIP65Height = 388381; // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
-        consensus.BIP66Height = 363725; // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
+        consensus.BIP34Height = 0;  // BIP34 is activated from the genesis block
+        consensus.BIP65Height = 0;  // BIP65 is activated from the genesis block
+        consensus.BIP66Height = 0;  // BIP66 is activated from the genesis block
         consensus.powLimit = CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = CONSENSUS_POW_TARGET_TIMESPAN; // two weeks
         consensus.nPowTargetSpacing = CONSENSUS_POW_TARGET_SPACING;
@@ -162,7 +161,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(1507377164, 0, GENESIS_BLOCK_NBITS, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 0, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> GENESIS_BLOCK_PROOF_OF_WORK);
 
@@ -179,6 +178,7 @@ public:
         LogPrintf("- new mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
         
         consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.BIP34Hash = consensus.hashGenesisBlock;
 
         LogPrintf("- new mainnet genesis block: %s\n", genesis.ToString().c_str());
 
@@ -186,9 +186,10 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1507377164, GENESIS_BLOCK_NONCE, GENESIS_BLOCK_NBITS, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, GENESIS_BLOCK_NONCE, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.BIP34Hash = consensus.hashGenesisBlock;
 
         // TODO: Update the values below with the data from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
@@ -272,10 +273,9 @@ public:
     CTestNetParams() {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 210000;
-        consensus.BIP34Height = 21111;
-        consensus.BIP34Hash = uint256S("0x0000000023b3a96d3484e5abb3755c413e7d41500f8e2a5c3f0dd01299cd8ef8");
-        consensus.BIP65Height = 581885; // 00000000007f6655f22f98e72ed80d8b06dc761d5da09df0fa1dc4be4f861eb6
-        consensus.BIP66Height = 330776; // 000000002104c8c45e99a8853285a3b592602a3ccde2b832481da85e9e4ba182
+        consensus.BIP34Height = 0;  // BIP34 is activated from the genesis block
+        consensus.BIP65Height = 0;  // BIP65 is activated from the genesis block
+        consensus.BIP66Height = 0;  // BIP66 is activated from the genesis block
         consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -313,7 +313,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(1507377164, 0, 0x1d00ffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 0, 0x1d00ffff, 4, 50 * COIN);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> GENESIS_BLOCK_PROOF_OF_WORK);
 
@@ -330,6 +330,7 @@ public:
         LogPrintf("- new testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
         
         consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.BIP34Hash = consensus.hashGenesisBlock;
 
         LogPrintf("- new testnet genesis block: %s\n", genesis.ToString().c_str());
 
@@ -337,9 +338,10 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1507377164, 224587492, 0x1d00ffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 224587492, 0x1d00ffff, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.BIP34Hash = consensus.hashGenesisBlock;
 
         // TODO: Update the values below with the data from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
@@ -412,10 +414,9 @@ public:
     CRegTestParams() {
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
-        consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
-        consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
-        consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
+        consensus.BIP34Height = 0;  // BIP34 is activated from the genesis block
+        consensus.BIP65Height = 0;  // BIP65 is activated from the genesis block
+        consensus.BIP66Height = 0;  // BIP66 is activated from the genesis block
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -449,7 +450,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(1507377164, 2, 0x207fffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 2, 0x207fffff, 4, 50 * COIN);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> 1);
 
@@ -466,6 +467,7 @@ public:
         LogPrintf("- new regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
         
         consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.BIP34Hash = consensus.hashGenesisBlock;
 
         LogPrintf("- new regtest genesis block: %s\n", genesis.ToString().c_str());
 
@@ -473,9 +475,10 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1507377164, 1, 0x207fffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 1, 0x207fffff, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.BIP34Hash = consensus.hashGenesisBlock;
 
         // TODO: Update the values below with the data from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
