@@ -20,18 +20,9 @@
  */
 //#define MINE_FOR_THE_GENESIS_BLOCK 1
 
-// Uncomment the following define in order to lower the complexity of the block generating algorithm
-//#define EASY_LIVE_SERVER_MINING 1
-
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
 #endif // MINE_FOR_THE_GENESIS_BLOCK
-
-#ifdef EASY_LIVE_SERVER_MINING
-#   define GENESIS_BLOCK_NONCE 0
-#else
-#   define GENESIS_BLOCK_NONCE 224587492
-#endif // EASY_LIVE_SERVER_MINING
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
@@ -164,7 +155,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1507377164, GENESIS_BLOCK_NONCE, 0x1d00ffff, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 224587492, 0x1d00ffff, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
@@ -453,7 +444,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1507377164, 1, 0x207fffff, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 2, 0x207fffff, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
