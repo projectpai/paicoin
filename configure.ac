@@ -17,7 +17,7 @@ AC_CONFIG_MACRO_DIR([build-aux/m4])
 PAICOIN_DAEMON_NAME=paicoind
 PAICOIN_GUI_NAME=paicoin-qt
 PAICOIN_CLI_NAME=paicoin-cli
-PAICHAIN_BLOCK_GENERATOR_NAME=paichain-block-generator
+PAICOIN_BLOCK_GENERATOR_NAME=paicoin-block-generator
 PAICOIN_TX_NAME=paicoin-tx
 
 dnl Unless the user specified ARFLAGS, force it to be cr
@@ -292,7 +292,7 @@ CPPFLAGS="$CPPFLAGS -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS"
 
 AC_ARG_WITH([utils],
   [AS_HELP_STRING([--with-utils],
-  [build paicoin-cli paichain-block-generator paicoin-tx (default=yes)])],
+  [build paicoin-cli paicoin-block-generator paicoin-tx (default=yes)])],
   [build_paicoin_utils=$withval],
   [build_paicoin_utils=yes])
 
@@ -1035,7 +1035,7 @@ AC_MSG_CHECKING([whether to build paicoind])
 AM_CONDITIONAL([BUILD_PAICOIND], [test x$build_paicoind = xyes])
 AC_MSG_RESULT($build_paicoind)
 
-AC_MSG_CHECKING([whether to build utils (paicoin-cli paichain-block-generator paicoin-tx)])
+AC_MSG_CHECKING([whether to build utils (paicoin-cli paicoin-block-generator paicoin-tx)])
 AM_CONDITIONAL([BUILD_PAICOIN_UTILS], [test x$build_paicoin_utils = xyes])
 AC_MSG_RESULT($build_paicoin_utils)
 
@@ -1204,7 +1204,7 @@ AC_SUBST(COPYRIGHT_HOLDERS_FINAL, "_COPYRIGHT_HOLDERS_FINAL")
 AC_SUBST(PAICOIN_DAEMON_NAME)
 AC_SUBST(PAICOIN_GUI_NAME)
 AC_SUBST(PAICOIN_CLI_NAME)
-AC_SUBST(PAICHAIN_BLOCK_GENERATOR_NAME)
+AC_SUBST(PAICOIN_BLOCK_GENERATOR_NAME)
 AC_SUBST(PAICOIN_TX_NAME)
 
 AC_SUBST(RELDFLAGS)

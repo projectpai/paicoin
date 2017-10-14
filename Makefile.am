@@ -20,7 +20,7 @@ endif
 PAICOIND_BIN=$(top_builddir)/src/$(PAICOIN_DAEMON_NAME)$(EXEEXT)
 PAICOIN_QT_BIN=$(top_builddir)/src/qt/$(PAICOIN_GUI_NAME)$(EXEEXT)
 PAICOIN_CLI_BIN=$(top_builddir)/src/$(PAICOIN_CLI_NAME)$(EXEEXT)
-PAICHAIN_BLOCK_GENERATOR_BIN=$(top_builddir)/src/$(PAICHAIN_BLOCK_GENERATOR_NAME)$(EXEEXT)
+PAICOIN_BLOCK_GENERATOR_BIN=$(top_builddir)/src/$(PAICOIN_BLOCK_GENERATOR_NAME)$(EXEEXT)
 PAICOIN_WIN_INSTALLER=$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-setup$(EXEEXT)
 
 empty :=
@@ -73,7 +73,7 @@ $(PAICOIN_WIN_INSTALLER): all-recursive
 	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(PAICOIND_BIN) $(top_builddir)/release
 	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(PAICOIN_QT_BIN) $(top_builddir)/release
 	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(PAICOIN_CLI_BIN) $(top_builddir)/release
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(PAICHAIN_BLOCK_GENERATOR_BIN) $(top_builddir)/release
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(PAICOIN_BLOCK_GENERATOR_BIN) $(top_builddir)/release
 	@test -f $(MAKENSIS) && $(MAKENSIS) -V2 $(top_builddir)/share/setup.nsi || \
 	  echo error: could not build $@
 	@echo built $@
@@ -167,7 +167,7 @@ $(PAICOIND_BIN): FORCE
 $(PAICOIN_CLI_BIN): FORCE
 	$(MAKE) -C src $(@F)
 
-$(PAICHAIN_BLOCK_GENERATOR_BIN): FORCE
+$(PAICOIN_BLOCK_GENERATOR_BIN): FORCE
 	$(MAKE) -C src $(@F)
 
 if USE_LCOV

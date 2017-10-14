@@ -4,7 +4,7 @@
 src/paicoin
 src/paicoind
 src/paicoin-cli
-src/paichain-block-generator
+src/paicoin-block-generator
 src/paicoin-tx
 src/test/test_paicoin
 src/test/test_paicoin_fuzzy

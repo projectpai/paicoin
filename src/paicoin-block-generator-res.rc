@@ -17,13 +17,13 @@ BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
             VALUE "CompanyName",        "Oben"
-            VALUE "FileDescription",    "paichain-block-generator (JSON-RPC block generator for " PACKAGE_NAME ")"
+            VALUE "FileDescription",    "paicoin-block-generator (JSON-RPC block generator for " PACKAGE_NAME ")"
             VALUE "FileVersion",        VER_FILEVERSION_STR
-            VALUE "InternalName",       "paichain-block-generator"
+            VALUE "InternalName",       "paicoin-block-generator"
             VALUE "LegalCopyright",     COPYRIGHT_STR
             VALUE "LegalTrademarks1",   "All right reserved"
-            VALUE "OriginalFilename",   "paichain-block-generator.exe"
-            VALUE "ProductName",        "paichain-block-generator"
+            VALUE "OriginalFilename",   "paicoin-block-generator.exe"
+            VALUE "ProductName",        "paicoin-block-generator"
             VALUE "ProductVersion",     VER_PRODUCTVERSION_STR
         END
     END

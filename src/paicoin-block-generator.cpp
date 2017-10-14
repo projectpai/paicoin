@@ -58,15 +58,15 @@ static int AppInitRPC(int argc, char* argv[])
     const auto testnetBaseParams = CreateBaseChainParams(CBaseChainParams::TESTNET);
 
     gArgs.ParseParameters(argc, argv);
-    if (argc<3 || gArgs.IsArgSet("-?") || gArgs.IsArgSet("-h") || gArgs.IsArgSet("-help") || gArgs.IsArgSet("-version")) {
+    if (argc<2 || gArgs.IsArgSet("-?") || gArgs.IsArgSet("-h") || gArgs.IsArgSet("-help") || gArgs.IsArgSet("-version")) {
         std::string strUsage = strprintf(_("%s RPC client version"), _(PACKAGE_NAME)) + " " + FormatFullVersion() + "\n";
         if (!gArgs.IsArgSet("-version")) {
-            strUsage += "\n" + _("Usage:") + "\n" + "  paichain-block-generator <number of blocks>  " + strprintf(_("Generates the specified number of blocks")) + "\n";
+            strUsage += "\n" + _("Usage:") + "\n" + "  paicoin-block-generator <number of blocks>  " + strprintf(_("Generates the specified number of blocks")) + "\n";
             strUsage += "\n";
         }
 
         fprintf(stdout, "%s", strUsage.c_str());
-        if (argc < 3) {
+        if (argc < 2) {
             fprintf(stderr, "Error: too few parameters\n");
             return EXIT_FAILURE;
         }
@@ -284,8 +284,9 @@ int CommandLineRPC(int argc, char *argv[])
         if (args.size() < 1) {
             throw std::runtime_error("too few parameters (need at least command)");
         }
-        std::string strMethod = args[0];
-        args.erase(args.begin()); // Remove trailing method name from arguments vector
+        //std::string strMethod = args[0];
+        //args.erase(args.begin()); // Remove trailing method name from arguments vector
+        std::string strMethod = "generate";
 
         UniValue params;
         if(gArgs.GetBoolArg("-named", DEFAULT_NAMED)) {
@@ -331,7 +332,7 @@ int CommandLineRPC(int argc, char *argv[])
                                 strPrint += "error message:\n"+errMsg.get_str();
 
                             if (errCode.isNum() && errCode.get_int() == RPC_WALLET_NOT_SPECIFIED) {
-                                strPrint += "\nTry adding \"-rpcwallet=<filename>\" option to paichain-block-generator command line.";
+                                strPrint += "\nTry adding \"-rpcwallet=<filename>\" option to paicoin-block-generator command line.";
                             }
                         }
                     } else {
@@ -397,15 +398,8 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    int paichain_argc = 3;
-    char *count = (char*)"1";
-    if (argc > 1) {
-        count = argv[1];
-    }
-    char *paichain_argv[] = {argv[0], (char*)"generate", count};
-
     try {
-        int ret = AppInitRPC(paichain_argc, paichain_argv);
+        int ret = AppInitRPC(argc, argv);
         if (ret != CONTINUE_EXECUTION)
             return ret;
     }
@@ -419,7 +413,7 @@ int main(int argc, char* argv[])
 
     int ret = EXIT_FAILURE;
     try {
-        ret = CommandLineRPC(paichain_argc, paichain_argv);
+        ret = CommandLineRPC(argc, argv);
     }
     catch (const std::exception& e) {
         PrintExceptionContinue(&e, "CommandLineRPC()");

@@ -69,7 +69,7 @@ if BUILD_PAICOIND
 endif
 
 if BUILD_PAICOIN_UTILS
-  bin_PROGRAMS += paicoin-cli paichain-block-generator paicoin-tx
+  bin_PROGRAMS += paicoin-cli paicoin-block-generator paicoin-tx
 endif
 
 .PHONY: FORCE check-symbols check-security
@@ -361,7 +361,7 @@ if GLIBC_BACK_COMPAT
 libpaicoin_util_a_SOURCES += compat/glibc_compat.cpp
 endif
 
-# cli: shared between paicoin-cli, paichain-block-generator and paicoin-qt
+# cli: shared between paicoin-cli, paicoin-block-generator and paicoin-qt
 libpaicoin_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES)
 libpaicoin_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpaicoin_cli_a_SOURCES = \
@@ -416,23 +416,23 @@ paicoin_cli_LDADD = \
 paicoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
-# paichain-block-generator binary #
-paichain_block_generator_SOURCES = paichain-block-generator.cpp
-paichain_block_generator_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES) $(EVENT_CFLAGS)
-paichain_block_generator_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-paichain_block_generator_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# paicoin-block-generator binary #
+paicoin_block_generator_SOURCES = paicoin-block-generator.cpp
+paicoin_block_generator_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES) $(EVENT_CFLAGS)
+paicoin_block_generator_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+paicoin_block_generator_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-paichain_block_generator_SOURCES += paichain-block-generator-res.rc
+paicoin_block_generator_SOURCES += paicoin-block-generator-res.rc
 endif
 
-paichain_block_generator_LDADD = \
+paicoin_block_generator_LDADD = \
   $(LIBPAICOIN_CLI) \
   $(LIBUNIVALUE) \
   $(LIBPAICOIN_UTIL) \
   $(LIBPAICOIN_CRYPTO)
 
-paichain_block_generator_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
+paicoin_block_generator_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
 # paicoin-tx binary #

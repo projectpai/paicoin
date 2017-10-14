@@ -10,7 +10,7 @@
 #include <vector>
 
 /**
- * CBaseChainParams defines the base parameters (shared between paicoin-cli, paichain-block-generator and paicoind)
+ * CBaseChainParams defines the base parameters (shared between paicoin-cli, paicoin-block-generator and paicoind)
  * of a given instance of the PAIcoin system.
  */
 class CBaseChainParams
