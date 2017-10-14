@@ -28,12 +28,8 @@
 #endif // MINE_FOR_THE_GENESIS_BLOCK
 
 #ifdef EASY_LIVE_SERVER_MINING
-#   define GENESIS_BLOCK_PROOF_OF_WORK 1    // aka, the difficulty, from 0 to 255
-#   define GENESIS_BLOCK_NBITS 0x207fffff
 #   define GENESIS_BLOCK_NONCE 0
 #else
-#   define GENESIS_BLOCK_PROOF_OF_WORK 32 // aka, the difficulty, from 0 to 255
-#   define GENESIS_BLOCK_NBITS 0x1d00ffff
 #   define GENESIS_BLOCK_NONCE 224587492
 #endif // EASY_LIVE_SERVER_MINING
 
@@ -143,9 +139,9 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(1507377164, 0, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, 0, 0x1d00ffff, 4, 50 * COIN);
 
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> GENESIS_BLOCK_PROOF_OF_WORK);
+        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> 32);
 
         LogPrintf("Recalculating params for mainnet.\n");
         LogPrintf("- old mainnet genesis nonce: %u\n", genesis.nNonce);
@@ -168,7 +164,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1507377164, GENESIS_BLOCK_NONCE, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(1507377164, GENESIS_BLOCK_NONCE, 0x1d00ffff, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
@@ -297,7 +293,7 @@ public:
 
         genesis = CreateGenesisBlock(1507377164, 0, 0x1d00ffff, 4, 50 * COIN);
 
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> GENESIS_BLOCK_PROOF_OF_WORK);
+        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> 32);
 
         LogPrintf("Recalculating params for testnet.\n");
         LogPrintf("- old testnet genesis nonce: %u\n", genesis.nNonce);
