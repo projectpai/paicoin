@@ -15,10 +15,36 @@
 #include "chainparamsseeds.h"
 
 /**
+ * Make sure that you select the appropriate initial difficulty level, to be applied only prior to the initial blocks generation, or when the mining gets too low
+ */
+#define INITIAL_DIFFICULTY_LEVEL_LOW    0
+#define INITIAL_DIFFICULTY_LEVEL_MEDIUM 1
+#define INITIAL_DIFFICULTY_LEVEL_HIGH   2
+
+#define INITIAL_DIFFICULTY_LEVEL INITIAL_DIFFICULTY_LEVEL_LOW
+
+/**
  * To initialize the block chain by mining a new genesis block uncomment the following define.
  * WARNING: this should only be done once and prior to release in production!
  */
-#define MINE_FOR_THE_GENESIS_BLOCK 1
+#define MINE_FOR_THE_GENESIS_BLOCK
+#define GENESIS_BLOCK_UNIX_TIMESTAMP    1507377164
+#define GENESIS_BLOCK_TIMESTAMP_STRING  "09/06/2017 - Create your own avatar twin that talks like you"
+#define GENESIS_BLOCK_SIGNATURE         "00BAA4D7E64F21135D61324C7B59D00FC5B8EB1BCC8194D256AF4BDF93CBD8D631A713C66A4D3D9E7F7330BA3DBF7DE1C1CA458DBF552C60AA1C07FB45C4AE6087"
+
+#if (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_LOW)
+#   define CONSENSUS_POW_LIMIT      uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+#   define GENESIS_BLOCK_POW_BITS   16
+#   define GENESIS_BLOCK_NBITS      0x200000ff
+#elif (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_MEDIUM)
+#   define CONSENSUS_POW_LIMIT      uint256S("000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+#   define GENESIS_BLOCK_POW_BITS   24
+#   define GENESIS_BLOCK_NBITS      0x1dffffff
+#elif (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_HIGH)
+#   define CONSENSUS_POW_LIMIT      uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+#   define GENESIS_BLOCK_POW_BITS   32
+#   define GENESIS_BLOCK_NBITS      0x1d00ffff
+#endif
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
@@ -58,8 +84,8 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
-    const char* pszTimestamp = "09/06/2017 - Create your own avatar twin that talks like you";
-    const CScript genesisOutputScript = CScript() << ParseHex("00BAA4D7E64F21135D61324C7B59D00FC5B8EB1BCC8194D256AF4BDF93CBD8D631A713C66A4D3D9E7F7330BA3DBF7DE1C1CA458DBF552C60AA1C07FB45C4AE6087") << OP_CHECKSIG;
+    const char* pszTimestamp = GENESIS_BLOCK_TIMESTAMP_STRING;
+    const CScript genesisOutputScript = CScript() << ParseHex(GENESIS_BLOCK_SIGNATURE) << OP_CHECKSIG;
     return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
 }
 
@@ -88,7 +114,7 @@ public:
         consensus.BIP34Height = 0;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 0;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 0;  // BIP66 is activated from the genesis block
-        consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit = CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = false;
@@ -131,9 +157,9 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(1507377164, 0, 0x1d00ffff, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 0, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
 
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> 32);
+        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> GENESIS_BLOCK_POW_BITS);
 
         LogPrintf("Recalculating params for mainnet.\n");
         LogPrintf("- old mainnet genesis nonce: %u\n", genesis.nNonce);
@@ -156,7 +182,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1507377164, 224587492, 0x1d00ffff, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 224587492, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
@@ -246,7 +272,7 @@ public:
         consensus.BIP34Height = 0;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 0;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 0;  // BIP66 is activated from the genesis block
-        consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit = CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
@@ -284,9 +310,9 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(1507377164, 0, 0x1d00ffff, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 0, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
 
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> 32);
+        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> GENESIS_BLOCK_POW_BITS);
 
         LogPrintf("Recalculating params for testnet.\n");
         LogPrintf("- old testnet genesis nonce: %u\n", genesis.nNonce);
@@ -309,7 +335,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1507377164, 224587492, 0x1d00ffff, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 224587492, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
@@ -424,7 +450,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(1507377164, 2, 0x207fffff, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 2, 0x207fffff, 4, 50 * COIN);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> 1);
 
@@ -449,7 +475,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(1507377164, 2, 0x207fffff, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 2, 0x207fffff, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
