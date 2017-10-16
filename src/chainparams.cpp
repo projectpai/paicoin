@@ -36,14 +36,24 @@
 #   define CONSENSUS_POW_LIMIT      uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #   define GENESIS_BLOCK_POW_BITS   16
 #   define GENESIS_BLOCK_NBITS      0x200000ff
+#   define GENESIS_BLOCK_NONCE      29452
+
+#   define CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00007ab0dc3c307c46ddd96db67b32a923d3f509e0ea59b1e56dc1bb148701e9")
+#   define GENESIS_HASH_MERKLE_ROOT     uint256S("0xc3e0a19d810c40ea59a86c4d740a337cec107606ea87af241f5df67f078faf88")
 #elif (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_MEDIUM)
 #   define CONSENSUS_POW_LIMIT      uint256S("000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #   define GENESIS_BLOCK_POW_BITS   24
 #   define GENESIS_BLOCK_NBITS      0x1dffffff
+
+#   define CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00007ab0dc3c307c46ddd96db67b32a923d3f509e0ea59b1e56dc1bb148701e9")
+#   define GENESIS_HASH_MERKLE_ROOT     uint256S("0xc3e0a19d810c40ea59a86c4d740a337cec107606ea87af241f5df67f078faf88")
 #elif (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_HIGH)
 #   define CONSENSUS_POW_LIMIT      uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #   define GENESIS_BLOCK_POW_BITS   32
 #   define GENESIS_BLOCK_NBITS      0x1d00ffff
+
+#   define CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00007ab0dc3c307c46ddd96db67b32a923d3f509e0ea59b1e56dc1bb148701e9")
+#   define GENESIS_HASH_MERKLE_ROOT     uint256S("0xc3e0a19d810c40ea59a86c4d740a337cec107606ea87af241f5df67f078faf88")
 #endif
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
@@ -76,11 +86,12 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  * transaction cannot be spent since it did not originally exist in the
  * database.
  *
- * CBlock(hash=000000000019d6, ver=1, hashPrevBlock=00000000000000, hashMerkleRoot=4a5e1e, nTime=1231006505, nBits=1d00ffff, nNonce=2083236893, vtx=1)
- *   CTransaction(hash=4a5e1e, ver=1, vin.size=1, vout.size=1, nLockTime=0)
- *     CTxIn(COutPoint(000000, -1), coinbase 04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73)
- *     CTxOut(nValue=50.00000000, scriptPubKey=0x5F1DF16B2B704C8A578D0B)
- *   vMerkleTree: 4a5e1e
+ * Low difficulty:
+ * CBlock(hash=00007ab0dc3c307c46ddd96db67b32a923d3f509e0ea59b1e56dc1bb148701e9, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=c3e0a19d810c40ea59a86c4d740a337cec107606ea87af241f5df67f078faf88, nTime=1507377164, nBits=200000ff, nNonce=29452, vtx=1)
+ *  CTransaction(hash=c3e0a19d81, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+ *    CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ff00002001043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
+ *    CScriptWitness()
+ *    CTxOut(nValue=50.00000000, scriptPubKey=4100baa4d7e64f21135d61324c7b59)
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
@@ -182,15 +193,15 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 224587492, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, GENESIS_BLOCK_NONCE, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
 
         // TODO: Update the values below with the data from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        assert(consensus.hashGenesisBlock == uint256S("0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8"));
-        assert(genesis.hashMerkleRoot == uint256S("0x608c387879649b45c6588c243d50fe81ea9c8e162aa9787d872ceb561f4798e7"));
+        assert(consensus.hashGenesisBlock == CONSENSUS_HASH_GENESIS_BLOCK);
+        assert(genesis.hashMerkleRoot == GENESIS_HASH_MERKLE_ROOT);
 
 #endif  // MINE_FOR_THE_GENESIS_BLOCK
                 
@@ -335,15 +346,15 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 224587492, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, GENESIS_BLOCK_NONCE, GENESIS_BLOCK_NBITS, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
 
         // TODO: Update the values below with the data from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        assert(consensus.hashGenesisBlock == uint256S("0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8"));
-        assert(genesis.hashMerkleRoot == uint256S("0x608c387879649b45c6588c243d50fe81ea9c8e162aa9787d872ceb561f4798e7"));
+        assert(consensus.hashGenesisBlock == CONSENSUS_HASH_GENESIS_BLOCK);
+        assert(genesis.hashMerkleRoot == GENESIS_HASH_MERKLE_ROOT);
 
 #endif  // MINE_FOR_THE_GENESIS_BLOCK
 
