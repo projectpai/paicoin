@@ -27,33 +27,41 @@
  * To initialize the block chain by mining a new genesis block uncomment the following define.
  * WARNING: this should only be done once and prior to release in production!
  */
-#define MINE_FOR_THE_GENESIS_BLOCK
+//#define MINE_FOR_THE_GENESIS_BLOCK
 #define GENESIS_BLOCK_UNIX_TIMESTAMP    1507377164
 #define GENESIS_BLOCK_TIMESTAMP_STRING  "09/06/2017 - Create your own avatar twin that talks like you"
 #define GENESIS_BLOCK_SIGNATURE         "00BAA4D7E64F21135D61324C7B59D00FC5B8EB1BCC8194D256AF4BDF93CBD8D631A713C66A4D3D9E7F7330BA3DBF7DE1C1CA458DBF552C60AA1C07FB45C4AE6087"
 
 #if (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_LOW)
+
 #   define CONSENSUS_POW_LIMIT      uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #   define GENESIS_BLOCK_POW_BITS   16
 #   define GENESIS_BLOCK_NBITS      0x200000ff
-#   define GENESIS_BLOCK_NONCE      29452
 
+#   define GENESIS_BLOCK_NONCE      29452
 #   define CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00007ab0dc3c307c46ddd96db67b32a923d3f509e0ea59b1e56dc1bb148701e9")
 #   define GENESIS_HASH_MERKLE_ROOT     uint256S("0xc3e0a19d810c40ea59a86c4d740a337cec107606ea87af241f5df67f078faf88")
+
 #elif (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_MEDIUM)
+
 #   define CONSENSUS_POW_LIMIT      uint256S("000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #   define GENESIS_BLOCK_POW_BITS   24
 #   define GENESIS_BLOCK_NBITS      0x1dffffff
 
+#   define GENESIS_BLOCK_NONCE      29452
 #   define CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00007ab0dc3c307c46ddd96db67b32a923d3f509e0ea59b1e56dc1bb148701e9")
 #   define GENESIS_HASH_MERKLE_ROOT     uint256S("0xc3e0a19d810c40ea59a86c4d740a337cec107606ea87af241f5df67f078faf88")
+
 #elif (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_HIGH)
+
 #   define CONSENSUS_POW_LIMIT      uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #   define GENESIS_BLOCK_POW_BITS   32
 #   define GENESIS_BLOCK_NBITS      0x1d00ffff
 
+#   define GENESIS_BLOCK_NONCE      29452
 #   define CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00007ab0dc3c307c46ddd96db67b32a923d3f509e0ea59b1e56dc1bb148701e9")
 #   define GENESIS_HASH_MERKLE_ROOT     uint256S("0xc3e0a19d810c40ea59a86c4d740a337cec107606ea87af241f5df67f078faf88")
+
 #endif
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
