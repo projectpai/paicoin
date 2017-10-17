@@ -46,11 +46,11 @@
 
 #   define CONSENSUS_POW_LIMIT      uint256S("000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #   define GENESIS_BLOCK_POW_BITS   24
-#   define GENESIS_BLOCK_NBITS      0x1dffffff
+#   define GENESIS_BLOCK_NBITS      0x1e00ffff
 
-#   define GENESIS_BLOCK_NONCE      29452
-#   define CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00007ab0dc3c307c46ddd96db67b32a923d3f509e0ea59b1e56dc1bb148701e9")
-#   define GENESIS_HASH_MERKLE_ROOT     uint256S("0xc3e0a19d810c40ea59a86c4d740a337cec107606ea87af241f5df67f078faf88")
+#   define GENESIS_BLOCK_NONCE      29647447
+#   define CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x000000c3bcadb98a581ae21489302f93dada493b38abe69add776e7f5a8c0778")
+#   define GENESIS_HASH_MERKLE_ROOT     uint256S("0x32d635437ebda5da7c1f412c7e0ef6804c73d0e4a2e9c015ce6e519db29d5172")
 
 #elif (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_HIGH)
 
@@ -100,6 +100,13 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  *    CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ff00002001043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
  *    CScriptWitness()
  *    CTxOut(nValue=50.00000000, scriptPubKey=4100baa4d7e64f21135d61324c7b59)
+ *
+ * Medium difficulty:
+ * CBlock(hash=000000c3bcadb98a581ae21489302f93dada493b38abe69add776e7f5a8c0778, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=32d635437ebda5da7c1f412c7e0ef6804c73d0e4a2e9c015ce6e519db29d5172, nTime=1507377164, nBits=1e00ffff, nNonce=29647447, vtx=1)
+ * CTransaction(hash=32d635437e, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+ *   CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff001e01043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
+ *   CScriptWitness()
+ *   CTxOut(nValue=50.00000000, scriptPubKey=4100baa4d7e64f21135d61324c7b59)
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
