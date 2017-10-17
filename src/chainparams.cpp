@@ -273,14 +273,21 @@ public:
 
         checkpointData = (CCheckpointData) {
             {
-                { 0, uint256S("0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8")}
+                { 0, uint256S("0x000000c3bcadb98a581ae21489302f93dada493b38abe69add776e7f5a8c0778")},
+                { 20, uint256S("0x000000289611c8629be74ba1a2940f288d6ab92c9ffed853d02779c1fa798274")},
+                { 50, uint256S("0x000000d3a1a43a25a6714b2e6941cf117a8193f8e5522f08caaacd629360d480")},
+                { 100, uint256S("0x000000bae1f5e415ee5a4067153d71e77efd6c177e7e596901c5b37ac406fedb")},
+                { 120, uint256S("0x0000004b340346172e9e6a40fff5212761a310a1299c7d6e12244b502e6f0fe5")},
+                { 150, uint256S("0x000000a6b02c9ca7845e2197eb079c30156c97fc8b2c078d6524c28a2ba3f241")},
+                { 180, uint256S("0x0000004b64317228df6590aec6d5c27bf614eb409bcc441d85697453ef107c5c")},
+                { 200, uint256S("0x000000ca18d42b881951d3c1171fd3ea5258d8b10805be2b41f2f7dd8730eddf")}
             }
         };
 
-        chainTxData = ChainTxData{
-            // Data as of block 000000000000000000d97e53664d17967bd4ee50b23abb92e54a34eb222d15ae (height 478913).
-            1507377164, // * UNIX timestamp of last known number of transactions
-            0,          // * total number of transactions between genesis and that timestamp
+        chainTxData = ChainTxData {
+            // Data as of block 000000ca18d42b881951d3c1171fd3ea5258d8b10805be2b41f2f7dd8730eddf (height 200).
+            1508268361, // * UNIX timestamp of last known number of transactions
+            200,        // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
             3.1         // * estimated number of transactions per second after that timestamp
         };
