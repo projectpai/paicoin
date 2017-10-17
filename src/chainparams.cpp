@@ -423,35 +423,69 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
 
-        // commented by subodh- will add checkpoints when testing
-/*
-        checkpointData = (CCheckpointData) {
-            {
-                {546, uint256S("000000002a936ca763904c3c35fce2f3556c559c0214345d31b1bcebf76acb70")},
-            }
-        };
-
-        chainTxData = ChainTxData{
-            // Data as of block 00000000000001c200b9790dc637d3bb141fe77d155b966ed775b17e109f7c6c (height 1156179)
-            1501802953,
-            14706531,
-            0.15
-        };
-*/
+#if (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_LOW)
 
         checkpointData = (CCheckpointData) {
             {
-                {0, uint256S("0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8")},
+                { 0, uint256S("0x00007ab0dc3c307c46ddd96db67b32a923d3f509e0ea59b1e56dc1bb148701e9")},
+                { 504, uint256S("0x0000eb049d920fb62d83d83eee2e2e62c86f82fc12ea6ecf88943136fffb55bb")},
+                { 1002, uint256S("0x0000993d4cf3d409f21845e6d9b8884bb61fd41ce3abda90fe71271c67d78b38")},
+                { 1200, uint256S("0x0000bd2424ff19e01d58a9cf56887f0dbf4b201500f922706b3d7afa0862a039")},
+                { 1500, uint256S("0x0000f99c3e65143b5e809db909ce487c719741f5f754650dba5bd42dc8249882")},
+                { 1800, uint256S("0x0000b7adcfea3ce92d610fe32ceeded5baf8faaffd86aff0c832272c06cbb0be")},
+                { 1903, uint256S("0x00003d58e056adedda72ccc68d4652fb8ecb14ecbb10940a9bfb0b45a451e4d2")},
+                { 2030, uint256S("0x0000014b9b012e62dd8610424ed8e538c93b624577bc64cd5c157541c9ec337d")}
             }
         };
 
-        chainTxData = ChainTxData{
-            // Data as of block 0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8 (height 0)
-            1507377164,
-            0,
-            0.15
+        chainTxData = ChainTxData {
+            // Data as of block 0000014b9b012e62dd8610424ed8e538c93b624577bc64cd5c157541c9ec337d (height 2030).
+            1508184002, // * UNIX timestamp of last known number of transactions
+            2030,       // * total number of transactions between genesis and that timestamp
+                        //   (the tx=... number in the SetBestChain debug.log lines)
+            3.1         // * estimated number of transactions per second after that timestamp
         };
 
+#elif (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_MEDIUM)
+
+        checkpointData = (CCheckpointData) {
+            {
+                { 0, uint256S("0x000000c3bcadb98a581ae21489302f93dada493b38abe69add776e7f5a8c0778")},
+                { 20, uint256S("0x000000289611c8629be74ba1a2940f288d6ab92c9ffed853d02779c1fa798274")},
+                { 50, uint256S("0x000000d3a1a43a25a6714b2e6941cf117a8193f8e5522f08caaacd629360d480")},
+                { 100, uint256S("0x000000bae1f5e415ee5a4067153d71e77efd6c177e7e596901c5b37ac406fedb")},
+                { 120, uint256S("0x0000004b340346172e9e6a40fff5212761a310a1299c7d6e12244b502e6f0fe5")},
+                { 150, uint256S("0x000000a6b02c9ca7845e2197eb079c30156c97fc8b2c078d6524c28a2ba3f241")},
+                { 180, uint256S("0x0000004b64317228df6590aec6d5c27bf614eb409bcc441d85697453ef107c5c")},
+                { 200, uint256S("0x000000ca18d42b881951d3c1171fd3ea5258d8b10805be2b41f2f7dd8730eddf")}
+            }
+        };
+
+        chainTxData = ChainTxData {
+            // Data as of block 000000ca18d42b881951d3c1171fd3ea5258d8b10805be2b41f2f7dd8730eddf (height 200).
+            1508268361, // * UNIX timestamp of last known number of transactions
+            200,        // * total number of transactions between genesis and that timestamp
+                        //   (the tx=... number in the SetBestChain debug.log lines)
+            3.1         // * estimated number of transactions per second after that timestamp
+        };
+
+#elif (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_HIGH)
+
+        // checkpointData = (CCheckpointData) {
+        //     {
+        //         { 0, uint256S("0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8")}
+        //     }
+        // };
+
+        // chainTxData = ChainTxData{
+        //     // Data as of block 000000000000000000d97e53664d17967bd4ee50b23abb92e54a34eb222d15ae (height 478913).
+        //     1507377164, // * UNIX timestamp of last known number of transactions
+        //     0,          // * total number of transactions between genesis and that timestamp
+        //                 //   (the tx=... number in the SetBestChain debug.log lines)
+        //     3.1         // * estimated number of transactions per second after that timestamp
+        // };
+
+#endif
     }
 };
 
