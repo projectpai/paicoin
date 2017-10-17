@@ -60,9 +60,9 @@
 #   define GENESIS_BLOCK_POW_BITS   32
 #   define GENESIS_BLOCK_NBITS      0x1d00ffff
 
-#   define GENESIS_BLOCK_NONCE      29452
-#   define CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00007ab0dc3c307c46ddd96db67b32a923d3f509e0ea59b1e56dc1bb148701e9")
-#   define GENESIS_HASH_MERKLE_ROOT     uint256S("0xc3e0a19d810c40ea59a86c4d740a337cec107606ea87af241f5df67f078faf88")
+#   define GENESIS_BLOCK_NONCE      2143301838
+#   define CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x0000000065ab7ac018583243e617f1f7003cedd67be2ab23eac14d6209e4e840")
+#   define GENESIS_HASH_MERKLE_ROOT     uint256S("0x608c387879649b45c6588c243d50fe81ea9c8e162aa9787d872ceb561f4798e7")
 
 #endif
 
@@ -294,19 +294,19 @@ public:
 
 #elif (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_HIGH)
 
-        // checkpointData = (CCheckpointData) {
-        //     {
-        //         { 0, uint256S("0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8")}
-        //     }
-        // };
+        checkpointData = (CCheckpointData) {
+            {
+                { 0, uint256S("0x0000000065ab7ac018583243e617f1f7003cedd67be2ab23eac14d6209e4e840")}
+            }
+        };
 
-        // chainTxData = ChainTxData{
-        //     // Data as of block 000000000000000000d97e53664d17967bd4ee50b23abb92e54a34eb222d15ae (height 478913).
-        //     1507377164, // * UNIX timestamp of last known number of transactions
-        //     0,          // * total number of transactions between genesis and that timestamp
-        //                 //   (the tx=... number in the SetBestChain debug.log lines)
-        //     3.1         // * estimated number of transactions per second after that timestamp
-        // };
+        chainTxData = ChainTxData{
+            // Data as of block 000000000000000000d97e53664d17967bd4ee50b23abb92e54a34eb222d15ae (height 478913).
+            1507377164, // * UNIX timestamp of last known number of transactions
+            0,          // * total number of transactions between genesis and that timestamp
+                        //   (the tx=... number in the SetBestChain debug.log lines)
+            3.1         // * estimated number of transactions per second after that timestamp
+        };
 
 #endif
     }
