@@ -42,11 +42,11 @@ reachable from the Tor network. Add these lines to your /etc/tor/torrc (or equiv
 config file):
 
 	HiddenServiceDir /var/lib/tor/paicoin-service/
-	HiddenServicePort 8333 127.0.0.1:8333
-	HiddenServicePort 18333 127.0.0.1:18333
+	HiddenServicePort 8567 127.0.0.1:8567
+	HiddenServicePort 18567 127.0.0.1:18567
 
 The directory can be different of course, but (both) port numbers should be equal to
-your paicoind's P2P listen port (8333 by default).
+your paicoind's P2P listen port (8567 by default).
 
 	-externalip=X   You can tell paicoin about its publicly reachable address using
 	                this option, and this can be a .onion address. Given the above
@@ -81,7 +81,7 @@ as well, use `discover` instead:
 
 	./paicoind ... -discover
 
-and open port 8333 on your firewall (or use -upnp).
+and open port 8567 on your firewall (or use -upnp).
 
 If you only want to use Tor to reach onion addresses, but not use it as a proxy
 for normal IPv4/IPv6 communication, use:

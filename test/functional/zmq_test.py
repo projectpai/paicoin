@@ -37,7 +37,7 @@ class ZMQTest (PAIcoinTestFramework):
         self.zmqSubSocket.set(zmq.RCVTIMEO, 60000)
         self.zmqSubSocket.setsockopt(zmq.SUBSCRIBE, b"hashblock")
         self.zmqSubSocket.setsockopt(zmq.SUBSCRIBE, b"hashtx")
-        ip_address = "tcp://127.0.0.1:28332"
+        ip_address = "tcp://127.0.0.1:28566"
         self.zmqSubSocket.connect(ip_address)
         self.extra_args = [['-zmqpubhashtx=%s' % ip_address, '-zmqpubhashblock=%s' % ip_address], []]
         self.add_nodes(self.num_nodes, self.extra_args)

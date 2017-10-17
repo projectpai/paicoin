@@ -332,12 +332,12 @@ if [ `%{_sbindir}/sestatus |grep -c "disabled"` -eq 0 ]; then
 for selinuxvariant in %{selinux_variants}; do
 	%{_sbindir}/semodule -s ${selinuxvariant} -i %{_datadir}/selinux/${selinuxvariant}/paicoin.pp &> /dev/null || :
 done
-%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 8332
-%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 8333
-%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 18332
-%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 18333
-%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 18443
-%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 18444
+%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 8566
+%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 8567
+%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 18566
+%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 18567
+%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 19565
+%{_sbindir}/semanage port -a -t paicoin_port_t -p tcp 19566
 %{_sbindir}/fixfiles -R paicoin-server restore &> /dev/null || :
 %{_sbindir}/restorecon -R %{_localstatedir}/lib/paicoin || :
 fi
@@ -353,12 +353,12 @@ fi
 # SELinux
 if [ $1 -eq 0 ]; then
 	if [ `%{_sbindir}/sestatus |grep -c "disabled"` -eq 0 ]; then
-	%{_sbindir}/semanage port -d -p tcp 8332
-	%{_sbindir}/semanage port -d -p tcp 8333
-	%{_sbindir}/semanage port -d -p tcp 18332
-	%{_sbindir}/semanage port -d -p tcp 18333
-	%{_sbindir}/semanage port -d -p tcp 18443
-	%{_sbindir}/semanage port -d -p tcp 18444
+	%{_sbindir}/semanage port -d -p tcp 8566
+	%{_sbindir}/semanage port -d -p tcp 8567
+	%{_sbindir}/semanage port -d -p tcp 18566
+	%{_sbindir}/semanage port -d -p tcp 18567
+	%{_sbindir}/semanage port -d -p tcp 19565
+	%{_sbindir}/semanage port -d -p tcp 19566
 	for selinuxvariant in %{selinux_variants}; do
 		%{_sbindir}/semodule -s ${selinuxvariant} -r paicoin &> /dev/null || :
 	done
