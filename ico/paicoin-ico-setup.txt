@@ -38,4 +38,17 @@ Blockchain initialization
 
 11. Repeat steps 1.2, 1.5, 1.7 to 1.10 for the testnet and regtest, if needed
 
-12. Run ./paicoin-qt to visually use the blockchain
+12. Add the checkpoints
+	Examine the generated blockchain and select as many blocks that meet the informal requirements for a checkpoint as you want, and add them in the checkpointData variable in the corresponding section of the chain parameters class.
+	/**
+	 * What makes a good checkpoint block?
+ 	 * + Is surrounded by blocks with reasonable timestamps
+ 	 *   (no blocks before with a timestamp after, none after with
+ 	 *    timestamp before)
+ 	 * + Contains no strange transactions
+ 	 */
+
+13. Add TxData
+	Select the appropriate chekpoint and extract its Unix timestamp, total number of transactions from the genesis block up to that block and and the estimated number of transations afterwards and fill in the this data into the chainTxData variable in the corresponding section of the chain parameters class.
+
+14. Run ./paicoin-qt to visually use the blockchain
