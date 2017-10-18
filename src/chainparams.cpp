@@ -109,6 +109,13 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  *   CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff001e01043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
  *   CScriptWitness()
  *   CTxOut(nValue=50.00000000, scriptPubKey=4100baa4d7e64f21135d61324c7b59)
+ *
+ * High difficulty:
+ * CBlock(hash=0000000065ab7ac018583243e617f1f7003cedd67be2ab23eac14d6209e4e840, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=608c387879649b45c6588c243d50fe81ea9c8e162aa9787d872ceb561f4798e7, nTime=1507377164, nBits=1d00ffff, nNonce=2143301838, vtx=1)
+ * CTransaction(hash=608c387879, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+ *   CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff001d01043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
+ *   CScriptWitness()
+ *   CTxOut(nValue=50.00000000, scriptPubKey=4100baa4d7e64f21135d61324c7b59)
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
