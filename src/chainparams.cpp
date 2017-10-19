@@ -23,7 +23,7 @@
 #define INITIAL_DIFFICULTY_LEVEL_MEDIUM 1
 #define INITIAL_DIFFICULTY_LEVEL_HIGH   2
 
-#define INITIAL_DIFFICULTY_LEVEL INITIAL_DIFFICULTY_LEVEL_LOW
+#define INITIAL_DIFFICULTY_LEVEL INITIAL_DIFFICULTY_LEVEL_MEDIUM
 
 /**
  * To initialize the block chain by mining a new genesis block uncomment the following define.
