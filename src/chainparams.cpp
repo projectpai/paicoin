@@ -467,20 +467,20 @@ public:
 
         checkpointData = (CCheckpointData) {
             {
-                { 0, uint256S("0x000000c3bcadb98a581ae21489302f93dada493b38abe69add776e7f5a8c0778")},
-                { 20, uint256S("0x000000289611c8629be74ba1a2940f288d6ab92c9ffed853d02779c1fa798274")},
-                { 50, uint256S("0x000000d3a1a43a25a6714b2e6941cf117a8193f8e5522f08caaacd629360d480")},
-                { 100, uint256S("0x000000bae1f5e415ee5a4067153d71e77efd6c177e7e596901c5b37ac406fedb")},
-                { 120, uint256S("0x0000004b340346172e9e6a40fff5212761a310a1299c7d6e12244b502e6f0fe5")},
-                { 150, uint256S("0x000000a6b02c9ca7845e2197eb079c30156c97fc8b2c078d6524c28a2ba3f241")},
-                { 180, uint256S("0x0000004b64317228df6590aec6d5c27bf614eb409bcc441d85697453ef107c5c")},
-                { 200, uint256S("0x000000ca18d42b881951d3c1171fd3ea5258d8b10805be2b41f2f7dd8730eddf")}
+                { 0, uint256S("0x000000d8bb5aed8fb8092953119c41c086618b21f9d2a07e4dd6c4daa50ace57")},
+                { 20, uint256S("0x000000356f5b476a800724b1f397d9c2fd055e1924d49c7f360706fcf0a4c3b2")},
+                { 50, uint256S("0x0000004073d25ff0365066171813b4af15cd2851836d89a3ac698c3c23c6ec47")},
+                { 100, uint256S("0x00000095a4c1a619bf0f113dae044d20da64f721a56130e0dfb97e4715d86397")},
+                { 120, uint256S("0x0000002f872d7d9736dd492d7fd8075c5f994865bd56249880e9576ed142c89d")},
+                { 150, uint256S("0x000000274a24ee1fa3190bc4966c8c36841372fefb21d766119d37a25aea90c0")},
+                { 180, uint256S("0x000000c392fd8e378e2ccda37d4d366df969b39ae39f3c501214708d62b31dfe")},
+                { 200, uint256S("0x00000004e96638bc0329e21e14b0ae905610e8253a2a3d5472863f07ffa8c3a4")}
             }
         };
 
         chainTxData = ChainTxData {
             // Data as of block 000000ca18d42b881951d3c1171fd3ea5258d8b10805be2b41f2f7dd8730eddf (height 200).
-            1508268361, // * UNIX timestamp of last known number of transactions
+            1508448029, // * UNIX timestamp of last known number of transactions
             200,        // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
             3.1         // * estimated number of transactions per second after that timestamp
