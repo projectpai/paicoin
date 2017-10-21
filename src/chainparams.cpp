@@ -239,25 +239,19 @@ public:
 
 #endif  // MINE_FOR_THE_GENESIS_BLOCK
                 
-        //commented by subodh to remove paicoin seed nodes
         // Note that of those with the service bits flag, most only support a subset of possible options
-        //vSeeds.emplace_back("seed.paicoin.sipa.be", true); // Pieter Wuille, only supports x1, x5, x9, and xd
-        //vSeeds.emplace_back("dnsseed.bluematt.me", true); // Matt Corallo, only supports x9
-        //vSeeds.emplace_back("dnsseed.paicoin.dashjr.org", false); // Luke Dashjr
-        //vSeeds.emplace_back("seed.paicoinstats.com", true); // Christian Decker, supports x1 - xf
-        //vSeeds.emplace_back("seed.paicoin.jonasschnelli.ch", true); // Jonas Schnelli, only supports x1, x5, x9, and xd
-        //vSeeds.emplace_back("seed.PAI.petertodd.org", true); // Peter Todd, only supports x1, x5, x9, and xd
+        // TODO_PAICOIN These IPSs should be changed with their corresponding DNSes once available
+        vSeeds.emplace_back("34.215.125.66", true); // Oregon
+        vSeeds.emplace_back("13.58.110.183", true); // Ohio
+        vSeeds.emplace_back("13.124.177.237", true); // Seoul
+
+        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,44);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,131);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x0F, 0x7F, 0x7D, 0x55};
         base58Prefixes[EXT_SECRET_KEY] = {0x0F, 0x7F, 0xA6, 0x89};
-
-        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
-
-        //cleared by subodh to remove paicoin seed nodes
-         vFixedSeeds.clear();
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
@@ -418,12 +412,13 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
 
-        //commented by subodh to remove paicoin seed nodes
         // nodes with support for servicebits filtering should be at the top
-        //vSeeds.emplace_back("testnet-seed.paicoin.jonasschnelli.ch", true);
-        //vSeeds.emplace_back("seed.tPAI.petertodd.org", true);
-        //vSeeds.emplace_back("testnet-seed.bluematt.me", false);
-        //vSeeds.emplace_back("testnet-seed.paicoin.schildbach.de", false);
+        // TODO_PAICOIN These IPSs should be changed with their corresponding DNSes once available
+        vSeeds.emplace_back("34.215.125.66", true); // Oregon
+        vSeeds.emplace_back("13.58.110.183", true); // Ohio
+        vSeeds.emplace_back("13.124.177.237", true); // Seoul
+
+        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 
         // same as for the CRegTestParams
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
@@ -431,10 +426,6 @@ public:
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
         base58Prefixes[EXT_PUBLIC_KEY] = {0xA5, 0x96, 0xE3, 0xF8};
         base58Prefixes[EXT_SECRET_KEY] = {0xA5, 0x96, 0x46, 0x79};
-
-        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
-        //cleared by  subodh to remove paicoin seed nodes
-        vFixedSeeds.clear();
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
@@ -597,20 +588,12 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = true;
 
-        // commented by subodh- will add checkpoints when testing
-        /*
-        checkpointData = (CCheckpointData) {
-            {
-                {0, uint256S("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")},
-            }
-        };
-
-        chainTxData = ChainTxData{
-            0,
-            0,
-            0
-        };
-*/
+        // same as for the CTestNetParams
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
+        base58Prefixes[EXT_PUBLIC_KEY] = {0xA5, 0x96, 0xE3, 0xF8};
+        base58Prefixes[EXT_SECRET_KEY] = {0xA5, 0x96, 0x46, 0x79};
 
         checkpointData = (CCheckpointData) {
             {
@@ -623,13 +606,6 @@ public:
             1,
             0
         };
-
-        // same as for the CTestNetParams
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
-        base58Prefixes[EXT_PUBLIC_KEY] = {0xA5, 0x96, 0xE3, 0xF8};
-        base58Prefixes[EXT_SECRET_KEY] = {0xA5, 0x96, 0x46, 0x79};
     }
 };
 
