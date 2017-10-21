@@ -488,19 +488,19 @@ public:
 
 #elif (INITIAL_DIFFICULTY_LEVEL == INITIAL_DIFFICULTY_LEVEL_HIGH)
 
-        // checkpointData = (CCheckpointData) {
-        //     {
-        //         { 0, uint256S("0x000000007822691fb5a61ed358644e51246e27fa755252c9a6dc6be9859937d8")}
-        //     }
-        // };
+        checkpointData = (CCheckpointData) {
+            {
+                { 0, uint256S("0x0000000065ab7ac018583243e617f1f7003cedd67be2ab23eac14d6209e4e840")}
+            }
+        };
 
-        // chainTxData = ChainTxData{
-        //     // Data as of block 000000000000000000d97e53664d17967bd4ee50b23abb92e54a34eb222d15ae (height 478913).
-        //     1507377164, // * UNIX timestamp of last known number of transactions
-        //     0,          // * total number of transactions between genesis and that timestamp
-        //                 //   (the tx=... number in the SetBestChain debug.log lines)
-        //     3.1         // * estimated number of transactions per second after that timestamp
-        // };
+        chainTxData = ChainTxData{
+            // Data as of block 000000000000000000d97e53664d17967bd4ee50b23abb92e54a34eb222d15ae (height 478913).
+            1507377164, // * UNIX timestamp of last known number of transactions
+            0,          // * total number of transactions between genesis and that timestamp
+                        //   (the tx=... number in the SetBestChain debug.log lines)
+            3.1         // * estimated number of transactions per second after that timestamp
+        };
 
 #endif
     }
