@@ -36,55 +36,93 @@ struct TestVector {
     }
 };
 
+/**
+ * For updating the following test vectors:
+ * - clone bip32utils from https://github.com/prusnak/bip32utils.git;
+ * - in BIP32Key.py (lines 26-29), update the EX_MAIN_PRIVATE, EX_MAIN_PUBLIC, EX_TEST_PRIVATE and EX_TEST_PUBLIC with their corresponding base58Prefixes from chainparams.cpp;
+ * - in BIP32Key.py (line 43), change the hmac seed to "PAIcoin seed";
+ * - in BIP32Key.py (at the end of file) add the following lines:
+
+# BIP0032 Test vector 3
+    entropy = '4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be'.decode('hex')
+    m = BIP32Key.fromEntropy(entropy)
+    print("Test vector 3:")
+    print("Master (hex):", entropy.encode('hex'))
+    print("* [Chain m]")
+    m.dump()
+
+    print("* [Chain m/0]")
+    m = m.ChildKey(0)
+    m.dump()
+
+ * - in bip0032-vectors.sh (at the end of file) add the following lines:
+ # BIP0032 Test vector #3
+
+echo Generating BIP0032 test vector 3:
+echo 4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be | \
+    ../bip32gen -v \
+    -i entropy -f - -x -n 512 \
+    -o privkey,wif,pubkey,addr,xprv,xpub -F - -X \
+    m \
+    m/0
+
+ * - run the bip0032-vectors.sh script with the following command line:
+
+ ./bip0032-vectors.sh > bip0032-vectors.out
+
+  * - copy the public and private keys from the bip0032-vectors.out file into the three vectors below (test1, test2 and test3).
+  * - run make check
+ */
+
 TestVector test1 =
   TestVector("000102030405060708090a0b0c0d0e0f")
-    ("xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8",
-     "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
+    ("4Hpp25sKpXYN8GWRbPSpdoTP9TeJ4cuCej4JNKJSjLroyktJ2LDZ6mDrrgTg5FWLE3FizzYhQsabWQ7mgMku9jpP8H3we8HwCTnCJ9FsN6AhGUEW",
+     "4HqG4V6QyNQ3pBdQvjC9CtH9aTKg9Uiam2zdqKbwZQvqB9mMTvyPMSTRJ5TLBHGzQxzC4jYnv4acxvWog9Dmu8YyCDWh9azfsCrGWiwPtJoP6qhb",
      0x80000000)
-    ("xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw",
-     "xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7",
+    ("4Hpp25vsen4jV1xrqnuRdVGxeNNwXreGw5YTur5rd5XgSraH6UX314bJ72wdGXuWaKDDqH67hcmBLT9sZhJRMZW7afEypPocywYv9x6HFHsqm56W",
+     "4HqG4V9xocvRAw5rB8ekCa6j5N4KciTf3PUoNrPMT9bheFTLY5GsFjprYRwHNZgPDABsiTu7KiT9pBuzeS5wKHty5wRpsewGm8bGdhvJNXB1sm4X",
      1)
-    ("xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ",
-     "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs",
+    ("4Hpp25xe6HB89c21iu4NSK6Wnjc2mZ5a7J9thdp3a88J7aCDwoss5ZZwuijQE7oVrocySpawpnphKjenk9F6dVfwfG9qkmuwjdJj6LFmKGJ3K1JQ",
+     "4HqG4VBjF82oqX914Eoh1PvHDjHQrQtxDc6EAe7YQCCKJy5HPQdhLEoWM7j4L9aEhBUnmwQJc9zdR9xnyif7D4MWjuKuL5Q4iKRmxpEqSSQobkFT",
      0x80000002)
-    ("xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5",
-     "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM",
+    ("4Hpp25y4NSzpzPsgXziSvZZ9thFc4dhxh8jPWP4McNzLpPGLHMtSuhr9ovQNCPNm7bws6mNyrfmn4GitRfmSFFiSbNAUEc4r1uSpZrKeAQEg2hoY",
+     "4HqG4VC9XHrWgJzfsLTmVeNvKgvz9VXLoSfiyPMrST4N1n9PixeHAP5iFKQ2JR9PGRpnZ7aM4BxCjzGYNvWfGfysaPFYsJpFa8RtZQWaw5eKoxHD",
      2)
-    ("xpub6FHa3pjLCk84BayeJxFW2SP4XRrFd1JYnxeLeU8EqN3vDfZmbqBqaGJAyiLjTAwm6ZLRQUMv1ZACTj37sR62cfN7fe5JnJ7dh8zL4fiyLHV",
-     "xprvA2JDeKCSNNZky6uBCviVfJSKyQ1mDYahRjijr5idH2WwLsEd4Hsb2Tyh8RfQMuPh7f7RtyzTtdrbdqqsunu5Mm3wDvUAKRHSC34sJ7in334",
+    ("4Hpp2613ioycyytvwQTV46XMwxaUt4toAarjUved6k71QRg1vUvzw1NkM6sFzk78cNMUUR2ePM8pzfDYZUGbFvLcBkkHVpcM9ncuZGmbQWoYDMVS",
+     "4HqG4VE8seqJfu1vGkCodBM8NxFrxviBGto4wvx7vpB2bpZ5N5gqBgcJnVrv6mqSFDq9s5CzqS8vPzMmAnzafyRBXkeoudqmSnbpK5dz2b9qvEkS",
      1000000000)
-    ("xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy",
-     "xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76",
+    ("4Hpp262jajzDe9q8i3bRRDLCs9W8b9RoJpQ2GJLHNFZdLRN2ki7trn8X37NvJLtX8pGpNP5wh85GttE5Z8obiaw41df2xznXMzd4yJ2VdGPfAbAv",
+     "4HqG4VFpjaquL4x83PLjzJ9yJ9BWg1FBR8LMjJdnCKdeXpF6CJsj7TN5UWNaQNeuUWooUHzEHkJxiH7gwmRpeAcdqYdVAKgLJY18GD5fktLpAsHP",
      0);
 
 TestVector test2 =
   TestVector("fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542")
-    ("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB",
-     "xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U",
+    ("4Hpp25sKpXYN8GWRbMMXBzMgsjoicCSWsqjZ4pzWgPoBiWaCWurW4w3tBAiNR1BeY56DFhYp6rYrXuJuj6QkxXDYN9AUBAdJVyXwvKs6j1LJ6jCv",
+     "4HqG4V6QyNQ3pBdQvh6qm5BTJjV6h4Ftz9ftXqJ1WTsCuuTFxWcLKcHScZi2X2yANqmfcWsM9UBEWUiB7u3WNQXCJc3FS6G3y5g2qfbsxydvKv9W",
      0)
-    ("xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH",
-     "xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt",
+    ("4Hpp25vAgWpwhyK4vVpgDwPDiHUmiLWAmSsSNgNLb6ZPHMhRVoX1oBKSg5UMb5wqJZ3rvjwKPtPn9JPkycCMuKWkzfBXaQkHW6JdnLgc9gFGBnn4",
+     "4HqG4V9FqMgdPtS4FqZzo2Cz9HA9oCKYskomqgfqRAdQUkaUwQGr3rZ17UU1h7gTNcqqpvfSauMuJ1mNvhaU7FRsJyvAkJ6hnoJFC5W6xxefbSQs",
      0xFFFFFFFF)
-    ("xpub6ASAVgeehLbnwdqV6UKMHVzgqAG8Gr6riv3Fxxpj8ksbH9ebxaEyBLZ85ySDhKiLDBrQSARLq1uNRts8RuJiHjaDMBU4Zn9h8LZNnBC5y4a",
-     "xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9",
+    ("4Hpp25xC2GQqcvUxXiHi7Vxx4YrfW3dGd7798PPi1rMfngTzcAJLsiWfuKa8XbpBEYKSvVhRdyHYVfJrJZ21LkiCLHDqvaiscHkbLyeQBdrMjig2",
+     "4HqG4VBHB7GXJqbws432ganiVYY3auSejR3UbPhCqvRgz5M43m4B8PkELiZnddYAo6WwL9orbXay3tN1SY7x6vnAbDQrUHNt3BxUp18pxx9jvYct",
      1)
-    ("xpub6DF8uhdarytz3FWdA8TvFSvvAh8dP3283MY7p2V4SeE2wyWmG5mg5EwVvmdMVCQcoNJxGoWaU9DCWh89LojfZ537wTfunKau47EL2dhHKon",
-     "xprv9zFnWC6h2cLgpmSA46vutJzBcfJ8yaJGg8cX1e5StJh45BBciYTRXSd25UEPVuesF9yog62tGAQtHjXajPPdbRCHuWS6T8XA2ECKADdw4Ef",
+    ("4Hpp25zRb6iHE3zGtY9NvThhvRjF2iz3dGWv1m15hDDNSqsGBNgCL6ugvHnKnBvvjEJFzaJE5bJzKsxav9ZBUPxLprh69WzNCdJ94ZFKWMyM8sMf",
+     "4HqG4VDWjwZxuy7GDsthVYXUMRQd7aoRjaTFUmJaXHHPeEkKcyS2an9FMgmytDgQ7TBtt7bbLsBoZX8ejagrNRdJazcDT9gWFFaaRCLuLUXWcFpQ",
      0xFFFFFFFE)
-    ("xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL",
-     "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc",
+    ("4Hpp2629ekiBLKnPwQmLqhoXNRtizXQnFt9ubQFwi5wcqnX7DeF61UYYL3HbRiZECiEwHaemMk9LCoumnHqDnb4dkNRFzPFFxv5AcRWhwZBwzv9g",
+     "4HqG4VFEobZs2EuPGkWfQndHoRa75PEANC6F4QZSYA1e3BQAfEzvG9n6mSHFXkGyaB6JtAt6hP1SMqwE1EKyVeNVAywb5V9QWcb7rHS48inmX6z2",
      2)
-    ("xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt",
-     "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
+    ("4Hpp2632Mo3oGsYv6K9QFYUvTA6ksQt4mfSt46pFwPzEyQPf9EaKLJkmbpNVKATkaEmX8Jb5F58Tg7HoKLKZ6npNAvePtaBLpYYR1XecDkESDaUd",
+     "4HqG4VG7WduUxnfuRetipdJgt9n8xGhSsyPDX77kmU4GAoGiaqL9ayzL3DN9RCB4S9gHBcNUchYheVK98qrHDhJL278DempbkqUeXizpTqPxEr5z",
      0);
 
 TestVector test3 =
   TestVector("4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be")
-    ("xpub661MyMwAqRbcEZVB4dScxMAdx6d4nFc9nvyvH3v4gJL378CSRZiYmhRoP7mBy6gSPSCYk6SzXPTf3ND1cZAceL7SfJ1Z3GC8vBgp2epUt13",
-     "xprv9s21ZrQH143K25QhxbucbDDuQ4naNntJRi4KUfWT7xo4EKsHt2QJDu7KXp1A3u7Bi1j8ph3EGsZ9Xvz9dGuVrtHHs7pXeTzjuxBrCmmhgC6",
+    ("4Hpp25sKpXYN8GWRbPsbLZcFPVfgms6CQgC5mwiW5BBnEXaGb5i97A5ndrzXsCE7LUjJF1mBDyEGL5hP6AgZDaoQZdHP5Yr9wk4fygyNq2CBMW55",
+     "4HqG4V6QyNQ3pBdQvjcuueS1pVM4riuaWz8REx1zuFFoRvTL2gTyMqKM5FzByDxjz17PiRd6m99peaXj5YnDktJX4wRAFC4eqxsHozUXN9iupfVU",
       0x80000000)
-    ("xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y",
-     "xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L",
+    ("4Hpp25v8PgSX9W2BGzXceaxRxmSF37GQdWdfhcxCdWpJ8qps515o1jze6Jv7EHuEHJWizhGh43VconvjsJtLivKyFAGdjuPadKMrHWLB4yKZxatv",
+     "4HqG4V9DYXJCqR9AcLGwDfnCPm7d7y5njpa1AdFhTatKLEhvWbqdGRECXhumLKh3TNwcSREZvMFoU6YN6ENMZ67M5vL93EMtgh2JyJYCYNMnpURz",
       0);
 
 void RunTest(const TestVector &test) {
