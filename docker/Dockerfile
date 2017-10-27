@@ -13,4 +13,4 @@ VOLUME /root/.paicoin
 
 EXPOSE 8566 8567 18566 18567 19566 19567
 
-CMD paicoind -daemon && tail -F /root/.paicoin/debug.log
+CMD paicoind -daemon && tail -n +1 -F /root/.paicoin/debug.log
