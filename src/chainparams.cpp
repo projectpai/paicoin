@@ -119,13 +119,19 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  *   CScriptWitness()
  *   CTxOut(nValue=50.00000000, scriptPubKey=4100dae69f877c357a193bb782beba)
  *
- *
  * High difficulty:
  * CBlock(hash=0000000065ab7ac018583243e617f1f7003cedd67be2ab23eac14d6209e4e840, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=608c387879649b45c6588c243d50fe81ea9c8e162aa9787d872ceb561f4798e7, nTime=1507377164, nBits=1d00ffff, nNonce=2143301838, vtx=1)
  * CTransaction(hash=608c387879, ver=1, vin.size=1, vout.size=1, nLockTime=0)
  *   CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff001d01043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
  *   CScriptWitness()
  *   CTxOut(nValue=50.00000000, scriptPubKey=4100baa4d7e64f21135d61324c7b59)
+ *
+ * Regtest:
+ * CBlock(hash=49ef40b82df5f405142f002fef63fd41169b402448b6cf35804e0b26440cdfe2, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=9ca8cf48f8068061101cecd1258bd72b99f7c473c05023fd5f50857ff201f909, nTime=1507377164, nBits=207fffff, nNonce=0, vtx=1)
+ *  CTransaction(hash=9ca8cf48f8, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+ *    CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff7f2001043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
+ *    CScriptWitness()
+ *    CTxOut(nValue=50.00000000, scriptPubKey=4100dae69f877c357a193bb782beba)
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
@@ -576,8 +582,8 @@ public:
 
         // TODO: Update the values below with the data from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        assert(consensus.hashGenesisBlock == uint256S("0x0a9f0c7316691559d1c1f4b1d2de2fd45761190c0beb4ad3409b50f1c62e2fc5"));
-        assert(genesis.hashMerkleRoot == uint256S("0x608c387879649b45c6588c243d50fe81ea9c8e162aa9787d872ceb561f4798e7"));
+        assert(consensus.hashGenesisBlock == uint256S("0x49ef40b82df5f405142f002fef63fd41169b402448b6cf35804e0b26440cdfe2"));
+        assert(genesis.hashMerkleRoot == uint256S("0x9ca8cf48f8068061101cecd1258bd72b99f7c473c05023fd5f50857ff201f909"));
 
 #endif  // MINE_FOR_THE_GENESIS_BLOCK
 
@@ -597,7 +603,7 @@ public:
 
         checkpointData = (CCheckpointData) {
             {
-                {0, uint256S("0x0a9f0c7316691559d1c1f4b1d2de2fd45761190c0beb4ad3409b50f1c62e2fc5")},
+                {0, uint256S("0x49ef40b82df5f405142f002fef63fd41169b402448b6cf35804e0b26440cdfe2")},
             }
         };
 
