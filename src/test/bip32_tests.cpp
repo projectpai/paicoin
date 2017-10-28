@@ -52,7 +52,7 @@ struct TestVector {
     m.dump()
 
     print("* [Chain m/0]")
-    m = m.ChildKey(0)
+    m = m.ChildKey(0+BIP32_HARDEN)
     m.dump()
 
  * - in bip0032-vectors.sh (at the end of file) add the following lines:
@@ -64,7 +64,7 @@ echo 4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319
     -i entropy -f - -x -n 512 \
     -o privkey,wif,pubkey,addr,xprv,xpub -F - -X \
     m \
-    m/0
+    m/0h
 
  * - run the bip0032-vectors.sh script with the following command line:
 
@@ -121,8 +121,8 @@ TestVector test3 =
     ("4Hpp25sKpXYN8GWRbPsbLZcFPVfgms6CQgC5mwiW5BBnEXaGb5i97A5ndrzXsCE7LUjJF1mBDyEGL5hP6AgZDaoQZdHP5Yr9wk4fygyNq2CBMW55",
      "4HqG4V6QyNQ3pBdQvjcuueS1pVM4riuaWz8REx1zuFFoRvTL2gTyMqKM5FzByDxjz17PiRd6m99peaXj5YnDktJX4wRAFC4eqxsHozUXN9iupfVU",
       0x80000000)
-    ("4Hpp25v8PgSX9W2BGzXceaxRxmSF37GQdWdfhcxCdWpJ8qps515o1jze6Jv7EHuEHJWizhGh43VconvjsJtLivKyFAGdjuPadKMrHWLB4yKZxatv",
-     "4HqG4V9DYXJCqR9AcLGwDfnCPm7d7y5njpa1AdFhTatKLEhvWbqdGRECXhumLKh3TNwcSREZvMFoU6YN6ENMZ67M5vL93EMtgh2JyJYCYNMnpURz",
+    ("4Hpp25v8PgSXHqgiF91GMVLbZ7bd8CWjNtdE9DzbMyiHakydagYYqKGsiN8FWQq6uw5seF4tFkCiT36MVGofZEyuUpwkq2Ld5SfcLVT96AXbbVLX",
+     "4HqG4V9DYXJCykohaUkavaAMz7H1D4L7VCZZcEJ6C3nJn9rh2HJP5zWS9m7ucSZsgqjm7aNbrNUyLxCXe8pUU6TiAsBpKBbbwQrTc683W6qotRJs",
       0);
 
 void RunTest(const TestVector &test) {
