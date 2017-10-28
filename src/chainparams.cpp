@@ -550,7 +550,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 2, 0x207fffff, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 0, 0x207fffff, 4, 50 * COIN);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> 1);
 
@@ -575,7 +575,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 2, 0x207fffff, 4, 50 * COIN);
+        genesis = CreateGenesisBlock(GENESIS_BLOCK_UNIX_TIMESTAMP, 0, 0x207fffff, 4, 50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
