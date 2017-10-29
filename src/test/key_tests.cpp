@@ -16,16 +16,30 @@
 
 #include <boost/test/unit_test.hpp>
 
-static const std::string strSecret1 = "5HxWvvfubhXpYYpS3tJkw6fq9jE9j18THftkZjHHfmFiWtmAbrj";
-static const std::string strSecret2 = "5KC4ejrDjv152FGwP386VD1i2NYc5KkfSMyv1nGy1VGDxGHqVY3";
-static const std::string strSecret1C = "Kwr371tjA9u2rFSMZjTNun2PXXP3WPZu2afRHTcta6KxEUdm1vEw";
-static const std::string strSecret2C = "L3Hq7a8FEQwJkW1M2GNKDW28546Vp5miewcCzSqUD9kCAXrJdS3g";
-static const std::string addr1 = "1QFqqMUD55ZV3PJEJZtaKCsQmjLT6JkjvJ";
-static const std::string addr2 = "1F5y5E5FMc5YzdJtB9hLaUe43GDxEKXENJ";
-static const std::string addr1C = "1NoJrossxPBKfCHuJXT4HadJrXRE9Fxiqs";
-static const std::string addr2C = "1CRj2HyM1CXWzHAXLQtiGLyggNT9WQqsDs";
+/**
+ * Updating methodology:
+ * Helpers:
+ * - http://incoherency.co.uk/base58/
+ * - http://www.fileformat.info/tool/hash.htm
+ * - http://gobittest.appspot.com/Address
+ * Secret
+ * - strSecret1 -> un-Base58 -> replace first byte with the network's one (base58Prefixes[PUBKEY_ADDRESS]) -> replace the last 4 bytes with the starting 4 bytes of the double SHA256 of the string -> Base58 -> strSecret1
+ * Address uncompressed:
+ * - addr1 -> un-Base58 -> remove first byte -> remove the last 4 bytes -> get the public key for the private one (the remaining hex so far) -> prefix with 04 -> SHA256 -> RIPEMD160 -> prefix with network's byte (base58Prefixes[PUBKEY_ADDRESS]) -> append the first 4 bytes of the double SHA256 of the string -> Base58 -> addr1
+ * Address compressed:
+ * - addr1 -> un-Base58 -> remove first byte -> remove the last 6 bytes (4 for the double SHA256 checksum and 2 for the private compressed indicator 01) -> get the public key for the private one (the remaining hex so far) -> prefix with 03 or 02 according to the lobe of the elliptic curve -> SHA256 -> RIPEMD160 -> prefix with network's byte (base58Prefixes[PUBKEY_ADDRESS]) -> append the first 4 bytes of the double SHA256 of the string -> Base58 -> addr1
+ */
 
-static const std::string strAddressBad = "1HV9Lc3sNHZxwj4Zk6fB38tEmBryq2cBiF";
+static const std::string strSecret1 = "9HH6vX5i1L1mbAyMvsAfSG1z8JWc5oQevjKZbZ8xxk3sEtJG3SV";
+static const std::string strSecret2 = "9JWeeLG29YV24sRsG1yzzNMrzwq4S82s5RQj3c8eJU4NgGzLRGB";
+static const std::string strSecret1C = "dYr59DmmzSvPoq1mNkReeVHM9EHfrBqQQ9nvsWrA131ejsMPvbKq";
+static const std::string strSecret2C = "deHs9n1J4hxfi5akqHLaxDH5gm189t3E2WjiaW4je6RtfvaHkdhs";
+static const std::string addr1 = "K78PA8atK1x32TS3P2Ybeir2TvfxQRa8BZ";
+static const std::string addr2 = "JwxWQ1BvbYU6yhShFcMMuzcfjTZTZbfHgj";
+static const std::string addr1C = "K5frBazZCKZseGRiNz75d6bvYikjRRg1BN";
+static const std::string addr2C = "JuJGM562F8v4yMJLQsYjbrxJNZneoZSGZU";
+
+static const std::string strAddressBad = "JzMgfPAYcDxWvoCNpZKCNerrTPCV7LGqdR";
 
 
 BOOST_FIXTURE_TEST_SUITE(key_tests, BasicTestingSetup)
