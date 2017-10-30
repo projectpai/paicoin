@@ -24,7 +24,7 @@
  * - http://www.fileformat.info/tool/hash.htm
  * - http://gobittest.appspot.com/Address
  * Secret
- * - strSecret1 -> un-Base58 -> replace first byte with the network's one (base58Prefixes[PUBKEY_ADDRESS]) -> replace the last 4 bytes with the starting 4 bytes of the double SHA256 of the string -> Base58 -> strSecret1
+ * - strSecret1 -> un-Base58 -> replace first byte with the network's one (base58Prefixes[SECRET_KEY]) -> replace the last 4 bytes with the starting 4 bytes of the double SHA256 of the string -> Base58 -> strSecret1
  * Address uncompressed:
  * - addr1 -> un-Base58 -> remove first byte -> remove the last 4 bytes -> get the public key for the private one (the remaining hex so far) -> prefix with 04 -> SHA256 -> RIPEMD160 -> prefix with network's byte (base58Prefixes[PUBKEY_ADDRESS]) -> append the first 4 bytes of the double SHA256 of the string -> Base58 -> addr1
  * Address compressed:
