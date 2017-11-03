@@ -31,7 +31,7 @@
 #define MAINNET_GENESIS_BLOCK_POW_BITS   32
 #define MAINNET_GENESIS_BLOCK_NBITS      0x1d00ffff
 
-#define MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1509129402
+#define MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1509731667
 #define MAINNET_GENESIS_BLOCK_NONCE          2164441073
 #define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000cc4f1cc9054912958b3af35a13d5c923ac64736a06c4c42a686759dc")
 #define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x2901f40ce41cf3cafce7885335d36c92c09c78522239614724fd103c4de7b1c4")
@@ -51,8 +51,8 @@
 
 #define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509640836
 #define REGTEST_GENESIS_BLOCK_NONCE          0
-#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x6585216518f7b3d8365df27060eee31e0562c534fddafcb421a6a1859679fd0c")
-#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0x5e7cf6dd770598790e7e25b66414828582438dfd6ec3ee56c528a150314557dc")
+#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x360b3b49d3da34c0da5b644e1b8a521eb0f8970217215e2bda04c84d8eccebaf")
+#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0x2901f40ce41cf3cafce7885335d36c92c09c78522239614724fd103c4de7b1c4")
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
@@ -64,7 +64,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     txNew.nVersion = 1;
     txNew.vin.resize(1);
     txNew.vout.resize(1);
-    txNew.vin[0].scriptSig = CScript(ParseHex("3045022100df91a7700a32d1e5dea6324ab44adc23358de09d67f16a64ab187c226671a5250220757a965b27084bb7fc20215b1e885ff63221e3d0692cf204395b24a04dc87a15"));
+    txNew.vin[0].scriptSig = CScript() << 486604799 << CScriptNum(4) << std::vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
     txNew.vout[0].nValue = genesisReward;
     txNew.vout[0].scriptPubKey = genesisOutputScript;
 
