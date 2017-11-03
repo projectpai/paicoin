@@ -32,27 +32,27 @@
 #define MAINNET_GENESIS_BLOCK_NBITS      0x1d00ffff
 
 #define MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1509129402
-#define MAINNET_GENESIS_BLOCK_NONCE          1893660553	
-#define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x000000002e3be372f34ba37015782caa3dd08c8c73e2c57ccf8ab94dfa1fd120")
-#define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0xce46c8efa3add92c525d04114ee85fe827bff375aabbd78bd765eb9545e32430")
+#define MAINNET_GENESIS_BLOCK_NONCE          2164441073
+#define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000cc4f1cc9054912958b3af35a13d5c923ac64736a06c4c42a686759dc")
+#define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x2901f40ce41cf3cafce7885335d36c92c09c78522239614724fd103c4de7b1c4")
 
 #define TESTNET_CONSENSUS_POW_LIMIT      uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   32
 #define TESTNET_GENESIS_BLOCK_NBITS      0x1d00ffff
 
-#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1509138081
-#define TESTNET_GENESIS_BLOCK_NONCE          1846734536
-#define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x000000005a041e30ab052c6a58e963372614397ad50759665ae80eacaa0d25f1")
-#define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0xce46c8efa3add92c525d04114ee85fe827bff375aabbd78bd765eb9545e32430")
+#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1509633012
+#define TESTNET_GENESIS_BLOCK_NONCE          481655242
+#define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000da12afa7a1ef2e0fba43550ab61cadad0b9bbbc4cc0b88f41b54b10e")
+#define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x2ccb68a7688c190164fef2f40e837e2a4a0e8138f9b9210e4fe479a609ed7679")
 
 #define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define REGTEST_GENESIS_BLOCK_POW_BITS   1
 #define REGTEST_GENESIS_BLOCK_NBITS      0x207fffff
 
-#define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509142070
+#define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509640836
 #define REGTEST_GENESIS_BLOCK_NONCE          0
-#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x729f5e13428a421769f9d578d447483a12bab8b754def999572cf12f4ac31130")
-#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0xce46c8efa3add92c525d04114ee85fe827bff375aabbd78bd765eb9545e32430")
+#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x6585216518f7b3d8365df27060eee31e0562c534fddafcb421a6a1859679fd0c")
+#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0x5e7cf6dd770598790e7e25b66414828582438dfd6ec3ee56c528a150314557dc")
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
@@ -64,7 +64,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     txNew.nVersion = 1;
     txNew.vin.resize(1);
     txNew.vout.resize(1);
-    txNew.vin[0].scriptSig = CScript() << 486604799 << CScriptNum(4) << std::vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+    txNew.vin[0].scriptSig = CScript(ParseHex("3045022100df91a7700a32d1e5dea6324ab44adc23358de09d67f16a64ab187c226671a5250220757a965b27084bb7fc20215b1e885ff63221e3d0692cf204395b24a04dc87a15"));
     txNew.vout[0].nValue = genesisReward;
     txNew.vout[0].scriptPubKey = genesisOutputScript;
 
@@ -84,11 +84,11 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  * transaction cannot be spent since it did not originally exist in the
  * database.
  *
- * CBlock(hash=000000002e3be372f34ba37015782caa3dd08c8c73e2c57ccf8ab94dfa1fd120, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=ce46c8efa3add92c525d04114ee85fe827bff375aabbd78bd765eb9545e32430, nTime=1509129402, nBits=1d00ffff, nNonce=1893660553, vtx=1)
- * CTransaction(hash=ce46c8efa3, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+ * CBlock(hash=00000000cc4f1cc9054912958b3af35a13d5c923ac64736a06c4c42a686759dc, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=2901f40ce41cf3cafce7885335d36c92c09c78522239614724fd103c4de7b1c4, nTime=1509129402, nBits=1d00ffff, nNonce=2164441073, vtx=1)
+ *  CTransaction(hash=2901f40ce4, ver=1, vin.size=1, vout.size=1, nLockTime=0)
  *   CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff001d01043c31302f32382f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
  *   CScriptWitness()
- *   CTxOut(nValue=1000000.00000000, scriptPubKey=410439cc2db2636303ea74af82dea7)
+ *   CTxOut(nValue=10500000.00000000, scriptPubKey=410439cc2db2636303ea74af82dea7)
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
@@ -165,7 +165,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, MAINNET_GENESIS_BLOCK_NBITS, 4, 1000000 * COIN);
+        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, MAINNET_GENESIS_BLOCK_NBITS, 4, 10500000 * COIN);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> MAINNET_GENESIS_BLOCK_POW_BITS);
 
@@ -180,7 +180,7 @@ public:
         LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
         LogPrintf("- new mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
-        
+
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
 
@@ -190,7 +190,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, MAINNET_GENESIS_BLOCK_NONCE, MAINNET_GENESIS_BLOCK_NBITS, 4, 1000000 * COIN);
+        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, MAINNET_GENESIS_BLOCK_NONCE, MAINNET_GENESIS_BLOCK_NBITS, 4, 10500000 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
@@ -277,9 +277,9 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
 
-    	pchMessageStart[0] = 0x43;
-    	pchMessageStart[1] = 0x41;
-    	pchMessageStart[2] = 0x4b;
+        pchMessageStart[0] = 0x43;
+        pchMessageStart[1] = 0x41;
+        pchMessageStart[2] = 0x4b;
         pchMessageStart[3] = 0x54;
 
         nDefaultPort = 18567;
@@ -287,7 +287,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, TESTNET_GENESIS_BLOCK_NBITS, 4, 1000000 * COIN);
+        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, TESTNET_GENESIS_BLOCK_NBITS, 4, 10500000 * COIN);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> TESTNET_GENESIS_BLOCK_POW_BITS);
 
@@ -302,7 +302,7 @@ public:
         LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
         LogPrintf("- new testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
-        
+
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
 
@@ -312,7 +312,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, TESTNET_GENESIS_BLOCK_NONCE, TESTNET_GENESIS_BLOCK_NBITS, 4, 1000000 * COIN);
+        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, TESTNET_GENESIS_BLOCK_NONCE, TESTNET_GENESIS_BLOCK_NBITS, 4, 10500000 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
@@ -398,9 +398,9 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
 
-    	pchMessageStart[0] = 0x43;
-    	pchMessageStart[1] = 0x41;
-    	pchMessageStart[2] = 0x4b;
+        pchMessageStart[0] = 0x43;
+        pchMessageStart[1] = 0x41;
+        pchMessageStart[2] = 0x4b;
         pchMessageStart[3] = 0x52;
 
         nDefaultPort = 19567;
@@ -408,7 +408,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, REGTEST_GENESIS_BLOCK_NBITS, 4, 1000000 * COIN);
+        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, REGTEST_GENESIS_BLOCK_NBITS, 4, 10500000 * COIN);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> REGTEST_GENESIS_BLOCK_POW_BITS);
 
@@ -423,7 +423,7 @@ public:
         LogPrintf("- new regtest genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new regtest genesis hash: %s\n", genesis.GetHash().ToString().c_str());
         LogPrintf("- new regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
-        
+
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
 
@@ -433,7 +433,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, REGTEST_GENESIS_BLOCK_NONCE, REGTEST_GENESIS_BLOCK_NBITS, 4, 1000000 * COIN);
+        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, REGTEST_GENESIS_BLOCK_NONCE, REGTEST_GENESIS_BLOCK_NBITS, 4, 10500000 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
