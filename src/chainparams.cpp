@@ -213,15 +213,14 @@ public:
 
         vFixedSeeds.clear();
         vSeeds.clear();
-/*
         // Note that of those with the service bits flag, most only support a subset of possible options
         vSeeds.emplace_back("34.215.125.66", true);
         vSeeds.emplace_back("13.58.110.183", true);
         vSeeds.emplace_back("13.124.177.237", true);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
-*/
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,44);
+        
+	base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,44);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,131);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x0F, 0x7F, 0x7D, 0x55};
@@ -340,15 +339,15 @@ public:
 
         vFixedSeeds.clear();
         vSeeds.clear();
-/*
-        // nodes with support for servicebits filtering should be at the top
+       
+	 // nodes with support for servicebits filtering should be at the top
         vSeeds.emplace_back("52.37.189.65", true);
         vSeeds.emplace_back("13.59.205.159", true);
         vSeeds.emplace_back("52.78.224.215", true);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
-*/
-        // same as for the CRegTestParams
+        
+	// same as for the CRegTestParams
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
