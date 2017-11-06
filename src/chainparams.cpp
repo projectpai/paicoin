@@ -243,10 +243,9 @@ public:
 #endif  // MINE_FOR_THE_GENESIS_BLOCK
                 
         // Note that of those with the service bits flag, most only support a subset of possible options
-        // TODO_PAICOIN These IPSs should be changed with their corresponding DNSes once available
-        vSeeds.emplace_back("52.37.189.65", true); // Oregon
-        vSeeds.emplace_back("13.59.205.159", true); // Ohio
-        vSeeds.emplace_back("52.78.224.215", true); // Seoul
+        vSeeds.emplace_back("34.215.125.66", true);
+        vSeeds.emplace_back("13.58.110.183", true);
+        vSeeds.emplace_back("13.124.177.237", true);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
@@ -373,10 +372,9 @@ public:
         vSeeds.clear();
 
         // nodes with support for servicebits filtering should be at the top
-        // TODO_PAICOIN These IPSs should be changed with their corresponding DNSes once available
-        vSeeds.emplace_back("52.37.189.65", true); // Oregon
-        vSeeds.emplace_back("13.59.205.159", true); // Ohio
-        vSeeds.emplace_back("52.78.224.215", true); // Seoul
+        vSeeds.emplace_back("52.37.189.65", true);
+        vSeeds.emplace_back("13.59.205.159", true);
+        vSeeds.emplace_back("52.78.224.215", true);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 
