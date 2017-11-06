@@ -169,14 +169,11 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
 // NOTE: These tests rely on CreateNewBlock doing its own self-validation!
 BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 {
-    // TODO PAICOIN
-    // Delete the following line once the production data is available
-    return;
-
     // Note that by default, these tests run with size accounting enabled.
     const auto chainParams = CreateChainParams(CBaseChainParams::MAIN);
     const CChainParams& chainparams = *chainParams;
-    CScript scriptPubKey = CScript() << ParseHex("00dae69f877c357a193bb782beba2fe506c1179c21850b47dc5228c592cf800e05bcd515fd27937aaaf25bc44d8ef0e7ee0617cf7d9020b662d3ef08b863750cf4") << OP_CHECKSIG;
+    // TODO PAICOIN No need to update this address, it's just for testing purposes
+    CScript scriptPubKey = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
     std::unique_ptr<CBlockTemplate> pblocktemplate;
     CMutableTransaction tx,tx2;
     CScript script;

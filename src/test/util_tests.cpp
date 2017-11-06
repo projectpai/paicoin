@@ -39,24 +39,23 @@ BOOST_AUTO_TEST_CASE(util_criticalsection)
 }
 
 /**
- * TODO PAICOIN if unit test updating is needed
- * Get the correct genesis block signature and paste it into the result variable initialization (line 58)
- * and then write its numerical for for the ParseHex_expected constant (keep adding ", 0x" between the groups of two digits :))
+ * TODO PAICOIN no updating is required for this file, it's just about hex parser testing!
  */
 
 static const unsigned char ParseHex_expected[65] = {
-    0x00, 0xda, 0xe6, 0x9f, 0x87, 0x7c, 0x35, 0x7a, 0x19, 0x3b, 0xb7, 0x82, 0xbe, 0xba, 0x2f, 0xe5,
-    0x06, 0xc1, 0x17, 0x9c, 0x21, 0x85, 0x0b, 0x47, 0xdc, 0x52, 0x28, 0xc5, 0x92, 0xcf, 0x80, 0x0e,
-    0x05, 0xbc, 0xd5, 0x15, 0xfd, 0x27, 0x93, 0x7a, 0xaa, 0xf2, 0x5b, 0xc4, 0x4d, 0x8e, 0xf0, 0xe7,
-    0xee, 0x06, 0x17, 0xcf, 0x7d, 0x90, 0x20, 0xb6, 0x62, 0xd3, 0xef, 0x08, 0xb8, 0x63, 0x75, 0x0c,
-    0xf4
+    0x04, 0x67, 0x8a, 0xfd, 0xb0, 0xfe, 0x55, 0x48, 0x27, 0x19, 0x67, 0xf1, 0xa6, 0x71, 0x30, 0xb7,
+    0x10, 0x5c, 0xd6, 0xa8, 0x28, 0xe0, 0x39, 0x09, 0xa6, 0x79, 0x62, 0xe0, 0xea, 0x1f, 0x61, 0xde,
+    0xb6, 0x49, 0xf6, 0xbc, 0x3f, 0x4c, 0xef, 0x38, 0xc4, 0xf3, 0x55, 0x04, 0xe5, 0x1e, 0xc1, 0x12,
+    0xde, 0x5c, 0x38, 0x4d, 0xf7, 0xba, 0x0b, 0x8d, 0x57, 0x8a, 0x4c, 0x70, 0x2b, 0x6b, 0xf1, 0x1d,
+    0x5f
 };
+
 BOOST_AUTO_TEST_CASE(util_ParseHex)
 {
     std::vector<unsigned char> result;
     std::vector<unsigned char> expected(ParseHex_expected, ParseHex_expected + sizeof(ParseHex_expected));
     // Basic test vector
-    result = ParseHex("00dae69f877c357a193bb782beba2fe506c1179c21850b47dc5228c592cf800e05bcd515fd27937aaaf25bc44d8ef0e7ee0617cf7d9020b662d3ef08b863750cf4");
+    result = ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
 
     // Spaces between bytes must be supported
@@ -76,11 +75,11 @@ BOOST_AUTO_TEST_CASE(util_HexStr)
 {
     BOOST_CHECK_EQUAL(
         HexStr(ParseHex_expected, ParseHex_expected + sizeof(ParseHex_expected)),
-        "00dae69f877c357a193bb782beba2fe506c1179c21850b47dc5228c592cf800e05bcd515fd27937aaaf25bc44d8ef0e7ee0617cf7d9020b662d3ef08b863750cf4");
+        "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
 
     BOOST_CHECK_EQUAL(
         HexStr(ParseHex_expected, ParseHex_expected + 5, true),
-        "00 da e6 9f 87");
+        "04 67 8a fd b0");
 
     BOOST_CHECK_EQUAL(
         HexStr(ParseHex_expected, ParseHex_expected, true),
@@ -90,7 +89,7 @@ BOOST_AUTO_TEST_CASE(util_HexStr)
 
     BOOST_CHECK_EQUAL(
         HexStr(ParseHex_vec, true),
-        "00 da e6 9f 87");
+        "04 67 8a fd b0");
 }
 
 
