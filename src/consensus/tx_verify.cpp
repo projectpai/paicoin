@@ -222,7 +222,8 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
             assert(!coin.IsSpent());
 
             // If prev is coinbase, check that it's matured
-            if (prevout != COutPoint(::Params().GenesisBlock().hashMerkleRoot, 0)) {
+            const CChainParams& chainparams = ::Params();
+            if (!chainparams.HasGenesisBlockTxOutPoint(prevout)) {
                 if (coin.IsCoinBase()) {
                     if (nSpendHeight - coin.nHeight < COINBASE_MATURITY)
                         return state.Invalid(false,

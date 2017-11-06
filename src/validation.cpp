@@ -1427,12 +1427,18 @@ int ApplyTxInUndo(Coin&& undo, CCoinsViewCache& view, const COutPoint& out)
         // Missing undo metadata (height and coinbase). Older versions included this
         // information only in undo records for the last spend of a transactions'
         // outputs. This implies that it must be present for some other output of the same tx.
-        const Coin& alternate = AccessByTxid(view, out.hash);
-        if (!alternate.IsSpent()) {
-            undo.nHeight = alternate.nHeight;
-            undo.fCoinBase = alternate.fCoinBase;
+        const CChainParams& chainparams = Params();
+        if (chainparams.HasGenesisBlockTxOutPoint(out)) {
+            undo.nHeight = 0;
+            undo.fCoinBase = true;
         } else {
-            return DISCONNECT_FAILED; // adding output for transaction without known metadata
+            const Coin& alternate = AccessByTxid(view, out.hash);
+            if (!alternate.IsSpent()) {
+                undo.nHeight = alternate.nHeight;
+                undo.fCoinBase = alternate.fCoinBase;
+            } else {
+                return DISCONNECT_FAILED; // adding output for transaction without known metadata
+            }
         }
     }
     // The potential_overwrite parameter to AddCoin is only allowed to be false if we know for
