@@ -73,6 +73,7 @@ void RPCNestedTests::rpcNestedTests()
     QVERIFY(result == result2);
 
     RPCConsole::RPCExecuteCommandLine(result, "getblock(getbestblockhash())[tx][0]", &filtered);
+    // TODO PAICOIN Update the expected result with the genesis block merkle root, if needed
     QVERIFY(result == "cb201b1671423313ed67954904a83b4f2dce58aaef70b7748b4ecbd228cacc54");
     QVERIFY(filtered == "getblock(getbestblockhash())[tx][0]");
 
