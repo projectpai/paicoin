@@ -138,8 +138,8 @@ public:
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
 
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         // Deployment of BIP68, BIP112, and BIP113.
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
@@ -152,9 +152,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
+        // TODO PAICOIN Update when releasing with the appropriate information in the blockchain info
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
 
         // By default assume that the signatures in ancestors of this block are valid.
+        // TODO PAICOIN Update when releasing with the appropriate stable block information
         consensus.defaultAssumeValid = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
 
         /**
@@ -214,9 +216,9 @@ public:
 /*
         // Note that of those with the service bits flag, most only support a subset of possible options
         // TODO_PAICOIN These IPSs should be changed with their corresponding DNSes once available
-        vSeeds.emplace_back("34.215.125.66", true); // Oregon
-        vSeeds.emplace_back("13.58.110.183", true); // Ohio
-        vSeeds.emplace_back("13.124.177.237", true); // Seoul
+        vSeeds.emplace_back("52.37.189.65", true); // Oregon
+        vSeeds.emplace_back("13.59.205.159", true); // Ohio
+        vSeeds.emplace_back("52.78.224.215", true); // Seoul
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 */
@@ -230,12 +232,16 @@ public:
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
 
+        // TODO PAICOIN Update this when releasing, using the suitable blocks heights and corresponding hashes
+        // Check the above note for what make a good checkpoint
         checkpointData = (CCheckpointData) {
             {
                 { 0, MAINNET_CONSENSUS_HASH_GENESIS_BLOCK }
             }
         };
 
+        // TODO PAICOIN Update this when releasing, using the block timestamp and the number of transactions upto that block
+        // use the blockchain info
         chainTxData = ChainTxData{
             MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, // * UNIX timestamp of last known number of transactions
             0,          // * total number of transactions between genesis and that timestamp
@@ -265,8 +271,8 @@ public:
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
 
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         // Deployment of BIP68, BIP112, and BIP113.
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
@@ -279,9 +285,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
+        // TODO PAICOIN Update when releasing with the appropriate information in the blockchain info
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
 
         // By default assume that the signatures in ancestors of this block are valid.
+        // TODO PAICOIN Update when releasing with the appropriate stable block information
         consensus.defaultAssumeValid = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
 
         pchMessageStart[0] = 0x43;
@@ -336,9 +344,9 @@ public:
 /*
         // nodes with support for servicebits filtering should be at the top
         // TODO_PAICOIN These IPSs should be changed with their corresponding DNSes once available
-        vSeeds.emplace_back("34.215.125.66", true); // Oregon
-        vSeeds.emplace_back("13.58.110.183", true); // Ohio
-        vSeeds.emplace_back("13.124.177.237", true); // Seoul
+        vSeeds.emplace_back("52.37.189.65", true); // Oregon
+        vSeeds.emplace_back("13.59.205.159", true); // Ohio
+        vSeeds.emplace_back("52.78.224.215", true); // Seoul
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 */
@@ -353,12 +361,16 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
 
+        // TODO PAICOIN Update this when releasing, using the suitable blocks heights and corresponding hashes
+        // Check the above note for what make a good checkpoint
         checkpointData = (CCheckpointData) {
             {
                 { 0, TESTNET_CONSENSUS_HASH_GENESIS_BLOCK }
             }
         };
 
+        // TODO PAICOIN Update this when releasing, using the block timestamp and the number of transactions upto that block
+        // use the blockchain info
         chainTxData = ChainTxData{
             TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, // * UNIX timestamp of last known number of transactions
             0,          // * total number of transactions between genesis and that timestamp

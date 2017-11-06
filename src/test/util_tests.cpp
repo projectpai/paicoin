@@ -38,6 +38,10 @@ BOOST_AUTO_TEST_CASE(util_criticalsection)
     } while(0);
 }
 
+/**
+ * TODO PAICOIN no updating is required for this file, it's just about hex parser testing!
+ */
+
 static const unsigned char ParseHex_expected[65] = {
     0x04, 0x67, 0x8a, 0xfd, 0xb0, 0xfe, 0x55, 0x48, 0x27, 0x19, 0x67, 0xf1, 0xa6, 0x71, 0x30, 0xb7,
     0x10, 0x5c, 0xd6, 0xa8, 0x28, 0xe0, 0x39, 0x09, 0xa6, 0x79, 0x62, 0xe0, 0xea, 0x1f, 0x61, 0xde,
@@ -45,12 +49,13 @@ static const unsigned char ParseHex_expected[65] = {
     0xde, 0x5c, 0x38, 0x4d, 0xf7, 0xba, 0x0b, 0x8d, 0x57, 0x8a, 0x4c, 0x70, 0x2b, 0x6b, 0xf1, 0x1d,
     0x5f
 };
+
 BOOST_AUTO_TEST_CASE(util_ParseHex)
 {
     std::vector<unsigned char> result;
     std::vector<unsigned char> expected(ParseHex_expected, ParseHex_expected + sizeof(ParseHex_expected));
     // Basic test vector
-    result = ParseHex("00DAE69F877C357A193BB782BEBA2FE506C1179C21850B47DC5228C592CF800E05BCD515FD27937AAAF25BC44D8EF0E7EE0617CF7D9020B662D3EF08B863750CF4");
+    result = ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
 
     // Spaces between bytes must be supported
@@ -70,7 +75,7 @@ BOOST_AUTO_TEST_CASE(util_HexStr)
 {
     BOOST_CHECK_EQUAL(
         HexStr(ParseHex_expected, ParseHex_expected + sizeof(ParseHex_expected)),
-        "00DAE69F877C357A193BB782BEBA2FE506C1179C21850B47DC5228C592CF800E05BCD515FD27937AAAF25BC44D8EF0E7EE0617CF7D9020B662D3EF08B863750CF4");
+        "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
 
     BOOST_CHECK_EQUAL(
         HexStr(ParseHex_expected, ParseHex_expected + 5, true),
