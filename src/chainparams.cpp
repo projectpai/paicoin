@@ -20,9 +20,9 @@
  * To initialize the block chain by mining a new genesis block uncomment the following define.
  * WARNING: this should only be done once and prior to release in production!
  */
-//#define MINE_FOR_THE_GENESIS_BLOCK
+#define MINE_FOR_THE_GENESIS_BLOCK
 
-#define GENESIS_BLOCK_TIMESTAMP_STRING  "10/28/2017 - Create your own avatar twin that talks like you"
+#define GENESIS_BLOCK_TIMESTAMP_STRING  "09/06/2017 - Create your own avatar twin that talks like you"
 #define GENESIS_BLOCK_SIGNATURE         "0439cc2db2636303ea74af82dea750c44959ea968be1badf76428cf4cc25ae1c61127d642146e05a55880b163c061b5f81280800463c1d34da99af39dc1be879f4"
 
 #define MAINNET_CONSENSUS_POW_LIMIT      uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
@@ -34,9 +34,9 @@
 #define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x000000002481a995b14fd82195f7703727d42568e8356581783fff3977e874eb")
 #define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x2901f40ce41cf3cafce7885335d36c92c09c78522239614724fd103c4de7b1c4")
 
-#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
-#define TESTNET_GENESIS_BLOCK_POW_BITS   32
-#define TESTNET_GENESIS_BLOCK_NBITS      0x1d00ffff
+#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+#define TESTNET_GENESIS_BLOCK_POW_BITS   16 
+#define TESTNET_GENESIS_BLOCK_NBITS      0x200000ff
 
 #define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1509782712
 #define TESTNET_GENESIS_BLOCK_NONCE          1787693975
