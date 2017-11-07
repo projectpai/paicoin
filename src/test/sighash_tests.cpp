@@ -117,6 +117,16 @@ void static RandomTransaction(CMutableTransaction &tx, bool fSingle) {
 
 BOOST_FIXTURE_TEST_SUITE(sighash_tests, BasicTestingSetup)
 
+/**
+ *TODO PAICOIN If this unit test needs an update, follow this procedure:
+ * 1. uncomment the definition of PRINT_SIGHASH_JSON
+ * 2. make check
+ * 3. from test_paicoin.log copy the output json into sighash.json
+ * 4. comment the definition of PRINT_SIGHASH_JSON
+ * 5. make check
+ */ 
+//#define PRINT_SIGHASH_JSON
+
 BOOST_AUTO_TEST_CASE(sighash_test)
 {
     SeedInsecureRand(false);
