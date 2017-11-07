@@ -17,6 +17,7 @@ from base58 import b58encode_chk, b58decode_chk, b58chars
 import random
 from binascii import b2a_hex
 
+# TODO PAICOIN When modifying the base58prefixes in the chainparams.cpp, update the values below as well and regenerate the test vectors as indicated above.
 # key types
 PUBKEY_ADDRESS = 44
 SCRIPT_ADDRESS = 131
