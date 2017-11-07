@@ -1,0 +1,76 @@
+
+PAIcoin methodology to create a spendable genesis block with a large coinbase reward
+
+1. Create the private / public key pair (SK / PK), using an ECDSA generator (use the generate-keys files)
+
+2. Prepare the private keys:
+
+ - Private key to Private Key in Wallet Import Format (SK -> WIF):
+    - SK (store it safe)
+    - prefix with the hex representation of the value in base58Prefixes[SECRET_KEY]
+    - sufix with the first four bytes of the double SHA256 of the previous string
+    - Base58Check
+    - WIF (store it safe)
+
+ - Public Key to Paicoin Address (PK -> ADDR):
+    - PK (store it)
+    - SHA256
+    - RipeMD160
+    - prefix with the public key prefix base58Prefixes[PUBKEY_ADDRESS]
+    - sufix with the first four bytes of the double SHA256 of the previous string
+    - Base58Check
+    - ADDR (store it)
+
+ - Public Key to Public Key Hash (PK -> PKH):
+    - PK
+    - SHA256
+    - RipeMD160
+    - PKH (store it)
+
+2. In chainparams.cpp, set the public key (PK) as the GENESIS_BLOCK_SIGNATURE.
+
+3. Set the desired ammount of PAIs for the genesis block coinbase reward in the GENESIS_BLOCK_REWARD define in the chainparams.cpp file.
+
+4. Mine the new genesis block by:
+ - uncommenting the MINE_FOR_THE_GENESIS_BLOCK define in chainparams.cpp;
+ - building paicoin;
+ - running the paicoin until the new genesis block is revealed in the ~/.paicoin/debug.log file.
+
+5. Update the genesis block by:
+ - commenting the MINE_FOR_THE_GENESIS_BLOCK define in chainparams.cpp;
+ - modifying the (net)_GENESIS_BLOCK_NONCE, (net)_CONSENSUS_HASH_GENESIS_BLOCK and (net)_GENESIS_HASH_MERKLE_ROOT with the values in the new genesis block;
+ - buildin paicoin;
+ - running paicoin;
+
+6. (optional) Import the private key in wallet using the WIF representation:
+	./paicoin-cli importprivkey "<WIF>" "<a-name-you-choose-for-account>" true
+
+7. Get the genesis block details using the block-hash in (net)_CONSENSUS_HASH_GENESIS_BLOCK (without uint256 and the 0x)
+	./paicoin-cli getblock "<block-hash>" 2
+
+8. In the resulting JSON, note the following elements:
+	- tx->txid
+	- tx->vout->n
+	- tx->vout->scriptPubKey->hex
+
+9. Create a raw transaction using the above parameters (note the single and double quotes). If the receiver does not get all the coins in the geensis block, then another change receiver must be added (this can be the orignal genesis address, if desired). Please note, that it is important to use change in this situation, to avoid the warning of a too large fee. This will generate the transaction's hex representation, transaction-hex. You can inspect the result using decode raw transaction RPC.
+	./paicoin-cli createrawtransaction '[{"txid": "<tx->txid>", "vout": <tx->vout->n>, "scriptPubKey": "tx->vout->scriptPubKey->hex"}]' '{"<paicoin-address-of-the-receiver>": <amount>, "<ADDR>": <change-amount>}'
+	(optional) ./paicoin-cli decoderawtransaction 'transaction-hex'
+
+10. Sign the raw transaction using the above parameters and transaction hex (note the single and double quotes) and the genesis block private address in WIF. In the result, get the value of the "hex" key, as the signed-transaction-hex. You can inspect the result using decode raw transaction RPC.
+	./paicoin-cli signrawtransaction '<transaction-hex>' '[{"txid": "<tx->txid>", "vout": <tx->vout->n>, "scriptPubKey": "tx->vout->scriptPubKey->hex"}]' '["<WIF>"]' "ALL"
+	(optional) ./paicoin-cli decoderawtransaction 'signed-transaction-hex'
+
+11. Send the raw transaction using the above signed transaction hex (note the single and double quotes):
+	./paicoin-cli sendrawtransaction '<signed-transaction-hex>'
+
+12. You can mine another block to ensure the transaction is processed.
+	./paicoin-block-generator 1
+
+References:
+http://dillingers.com/blog/2015/04/23/adding-a-premine-to-an-altcoin/
+https://github.com/bitcoin/bitcoin/blob/v0.10.2/src/main.cpp#L1664-L1667
+https://en.bitcoin.it/wiki/Original_Bitcoin_client/API_calls_list
+https://en.bitcoin.it/wiki/Raw_Transactions
+https://en.bitcoin.it/wiki/Wallet_import_format
+https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses#How_to_create_Bitcoin_Address
