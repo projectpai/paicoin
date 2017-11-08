@@ -220,16 +220,9 @@ BOOST_FIXTURE_TEST_CASE(checkinputs_test, TestChain100Setup)
         CBlock block;
 
         block = CreateAndProcessBlock({spend_tx}, p2pk_scriptPubKey);
-
-        error("CreateAndProcessBlock: %s\n", block.ToString().c_str());
-        error("chainActive.Tip(): %s\n", chainActive.Tip()->ToString().c_str());
-        error("pcoinsTip->GetBestBlock(): %s\n", pcoinsTip->GetBestBlock().ToString().c_str());
-
         BOOST_CHECK(chainActive.Tip()->GetBlockHash() == block.GetHash());
         BOOST_CHECK(pcoinsTip->GetBestBlock() == block.GetHash());
     }
-
-    return;
 
     // Test P2SH: construct a transaction that is valid without P2SH, and
     // then test validity with P2SH.
