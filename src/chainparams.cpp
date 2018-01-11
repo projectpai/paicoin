@@ -240,7 +240,7 @@ public:
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,131);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xDD, 0x47, 0xAF};  // paip
-        base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xDD, 0x47, 0xD8};  // paiv
+        base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xDD, 0x47, 0xD9};  // paiv
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
