@@ -239,8 +239,8 @@ public:
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,44);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,131);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247);
-        base58Prefixes[EXT_PUBLIC_KEY] = {0x0F, 0x7F, 0x7D, 0x55};
-        base58Prefixes[EXT_SECRET_KEY] = {0x0F, 0x7F, 0xA6, 0x89};
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xDD, 0x47, 0xAF};  // paip
+        base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xDD, 0x47, 0xD8};  // paiv
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
@@ -367,8 +367,8 @@ public:
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
-        base58Prefixes[EXT_PUBLIC_KEY] = {0xA5, 0x96, 0xE3, 0xF8};
-        base58Prefixes[EXT_SECRET_KEY] = {0xA5, 0x96, 0x46, 0x79};
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xE3, 0xC5, 0x26};  // ptpu
+        base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xE3, 0xC5, 0x2D};  // ptpv
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
@@ -490,8 +490,8 @@ public:
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
-        base58Prefixes[EXT_PUBLIC_KEY] = {0xA5, 0x96, 0xE3, 0xF8};
-        base58Prefixes[EXT_SECRET_KEY] = {0xA5, 0x96, 0x46, 0x79};
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xE3, 0xC5, 0x26};  // ptpu
+        base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xE3, 0xC5, 0x2D};  // ptpv
 
         checkpointData = (CCheckpointData) {
             {
