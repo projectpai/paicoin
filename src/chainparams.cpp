@@ -180,10 +180,10 @@ public:
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
          * a large 32-bit integer with any alignment.
          */
-        pchMessageStart[0] = 0x43;
-        pchMessageStart[1] = 0x41;
-        pchMessageStart[2] = 0x4b;
-        pchMessageStart[3] = 0x45;
+        pchMessageStart[0] = 0xfe;
+        pchMessageStart[1] = 0xd0;
+        pchMessageStart[2] = 0xd5;
+        pchMessageStart[3] = 0xf2;
 
         nDefaultPort = 8567;
         nPruneAfterHeight = 100000;
@@ -306,10 +306,10 @@ public:
         // TODO PAICOIN Update when releasing with the appropriate stable block information
         consensus.defaultAssumeValid = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
 
-        pchMessageStart[0] = 0x43;
-        pchMessageStart[1] = 0x41;
-        pchMessageStart[2] = 0x4b;
-        pchMessageStart[3] = 0x54;
+        pchMessageStart[0] = 0x0b;
+        pchMessageStart[1] = 0x09;
+        pchMessageStart[2] = 0x11;
+        pchMessageStart[3] = 0x07;
 
         nDefaultPort = 18567;
         nPruneAfterHeight = 1000;
@@ -432,10 +432,10 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x00");
 
-        pchMessageStart[0] = 0x43;
-        pchMessageStart[1] = 0x41;
-        pchMessageStart[2] = 0x4b;
-        pchMessageStart[3] = 0x52;
+        pchMessageStart[0] = 0xff;
+        pchMessageStart[1] = 0xd1;
+        pchMessageStart[2] = 0xd6;
+        pchMessageStart[3] = 0xf3;
 
         nDefaultPort = 19567;
         nPruneAfterHeight = 1000;
