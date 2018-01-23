@@ -18,7 +18,7 @@ static void TestBlockSubsidyHalvings(const Consensus::Params& consensusParams)
     int maxHalvings = 64;
     // TODO PAICOIN If the initial block subsidy has been changed,
     // update the subsidy with the correct value
-    CAmount nInitialSubsidy = 15 * COIN;
+    CAmount nInitialSubsidy = 1500 * COIN;
 
     CAmount nPreviousSubsidy = nInitialSubsidy * 2; // for height == 0
     BOOST_CHECK_EQUAL(nPreviousSubsidy, nInitialSubsidy * 2);
@@ -55,13 +55,13 @@ BOOST_AUTO_TEST_CASE(subsidy_limit_test)
         CAmount nSubsidy = GetBlockSubsidy(nHeight, chainParams->GetConsensus());
         // TODO PAICOIN If the initial block subsidy has been changed,
         // update the subsidy with the correct value
-        BOOST_CHECK(nSubsidy <= 15 * COIN);
+        BOOST_CHECK(nSubsidy <= 1500 * COIN);
         nSum += nSubsidy * 1000;
         BOOST_CHECK(MoneyRange(nSum));
     }
     // TODO PAICOIN If the initial block subsidy has been changed,
     // update this sum with the correct value
-    BOOST_CHECK_EQUAL(nSum, 629999997480000ULL);
+    BOOST_CHECK_EQUAL(nSum, 62999999748000000ULL);
 }
 
 bool ReturnFalse() { return false; }
