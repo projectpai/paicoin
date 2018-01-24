@@ -74,7 +74,7 @@ void RPCNestedTests::rpcNestedTests()
 
     RPCConsole::RPCExecuteCommandLine(result, "getblock(getbestblockhash())[tx][0]", &filtered);
     // TODO PAICOIN Update the expected result with the genesis block merkle root, if needed
-    QVERIFY(result == "ff202fc6377ac26b4ea97145eba7f9aae5b2e7646cf6377ee13d3e103874c8ea");
+    QVERIFY(result == "4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e");
     QVERIFY(filtered == "getblock(getbestblockhash())[tx][0]");
 
     RPCConsole::RPCParseCommandLine(result, "importprivkey", false, &filtered);
