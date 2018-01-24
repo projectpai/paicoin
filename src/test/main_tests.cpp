@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(subsidy_limit_test)
     }
     // TODO PAICOIN If the initial block subsidy has been changed,
     // update this sum with the correct value
-    BOOST_CHECK_EQUAL(nSum, 62999999748000000ULL);
+    BOOST_CHECK_EQUAL(nSum, 62999999996850000ULL);
 }
 
 bool ReturnFalse() { return false; }
