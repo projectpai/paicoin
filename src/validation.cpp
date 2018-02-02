@@ -6,10 +6,12 @@
 #include "validation.h"
 
 #include "arith_uint256.h"
+#include "base58.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "checkqueue.h"
+#include "coinbase_addresses.h"
 #include "consensus/consensus.h"
 #include "consensus/merkle.h"
 #include "consensus/tx_verify.h"
@@ -2836,6 +2838,17 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
         if (!CheckTransaction(*tx, state, false))
             return state.Invalid(false, state.GetRejectCode(), state.GetRejectReason(),
                                  strprintf("Transaction check failed (tx hash %s) %s", tx->GetHash().ToString(), state.GetDebugMessage()));
+
+    if (block.GetHash() != consensusParams.hashGenesisBlock) {
+        CTxDestination address;
+        if (ExtractDestination(block.vtx[0]->vout[0].scriptPubKey, address)) {
+            std::string pubKey(EncodeDestination(address));
+            if (PUB_KEYS.find(pubKey) == PUB_KEYS.end()) {
+                return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
+                    REJECT_INVALID, "bad-coinbase-address");
+            }
+        }
+    }
 
     unsigned int nSigOps = 0;
     for (const auto& tx : block.vtx)
