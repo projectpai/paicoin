@@ -236,9 +236,9 @@ public:
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
         
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,44);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,131);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,56);  // P
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,130); // u
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247); // 2
         base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xDD, 0x47, 0xAF};  // paip
         base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xDD, 0x47, 0xD9};  // paiv
 
