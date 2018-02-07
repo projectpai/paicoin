@@ -238,7 +238,7 @@ public:
         
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,56);  // P
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,130); // u
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247); // 2
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247); // 9
         base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xDD, 0x47, 0xAF};  // paip
         base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xDD, 0x47, 0xD9};  // paiv
 
