@@ -5,7 +5,7 @@
 #include <unordered_set>
 
 static std::unordered_set<std::string> PUB_KEYS {
-    "MdEktEaxqtfuA84iAQHDdSt5rxZ6DmHNjQ"
+    "2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK"
 };
 
 #endif // COINBASE_ADDRESSES_H
