@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(rpc_rawsign)
      * - private key -> un-Base58 -> replace first byte with the network's one (base58Prefixes[SECRET_KEY]) -> replace the last 4 bytes with the starting 4 bytes of the double SHA256 of the string -> Base58 -> private key
      */
      r = CallRPC(std::string("createrawtransaction ")+prevout+" "+
-      "{\"uzRAhpuBpv8BvGuyHqWjcG63W8wPzWeKac\":11}");
+      "{\"ub5Ziibu7jfK6qmtGRBR88pFsdgTHv7S5a\":11}");
     std::string notsigned = r.get_str();
     std::string privkey1 = "\"dbsa1ohCZp7RLfEAL2Hkh8f4m1cWViG1UuwNGzTMWemZ1Yq74KhD\"";
     std::string privkey2 = "\"dahfhHDx9kTK2GDVxzZRvayRnDe7m7L2eXHqL5UfmkhzEf4S9BZ8\"";

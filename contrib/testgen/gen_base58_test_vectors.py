@@ -19,8 +19,8 @@ from binascii import b2a_hex
 
 # TODO PAICOIN When modifying the base58prefixes in the chainparams.cpp, update the values below as well and regenerate the test vectors as indicated above.
 # key types
-PUBKEY_ADDRESS = 44
-SCRIPT_ADDRESS = 131
+PUBKEY_ADDRESS = 56
+SCRIPT_ADDRESS = 130
 PUBKEY_ADDRESS_TEST = 51
 SCRIPT_ADDRESS_TEST = 180
 PRIVKEY = 247

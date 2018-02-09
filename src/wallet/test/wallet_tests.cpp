@@ -389,7 +389,7 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
         BOOST_CHECK_EQUAL(nullBlock, wallet.ScanForWalletTransactions(oldTip));
         // TODO PAICOIN If the initial block subsidy has been changed,
         // update this sum with the correct value
-        BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 30 * COIN);
+        BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 3000 * COIN);
     }
 
     // Prune the older block file.
@@ -404,7 +404,7 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
         BOOST_CHECK_EQUAL(oldTip, wallet.ScanForWalletTransactions(oldTip));
         // TODO PAICOIN If the initial block subsidy has been changed,
         // update the subsidy with the correct value
-        BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 15 * COIN);
+        BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 1500 * COIN);
     }
 
     // Verify importmulti RPC returns failure for a key whose creation time is
@@ -530,7 +530,7 @@ BOOST_FIXTURE_TEST_CASE(coin_mark_dirty_immature_credit, TestChain100Setup)
     wallet.AddKeyPubKey(coinbaseKey, coinbaseKey.GetPubKey());
     // TODO PAICOIN If the initial block subsidy has been changed,
     // update the subsidy with the correct value
-    BOOST_CHECK_EQUAL(wtx.GetImmatureCredit(), 15*COIN);
+    BOOST_CHECK_EQUAL(wtx.GetImmatureCredit(), 1500 * COIN);
 }
 
 static int64_t AddTx(CWallet& wallet, uint32_t lockTime, int64_t mockTime, int64_t blockTime)
@@ -656,7 +656,7 @@ BOOST_FIXTURE_TEST_CASE(ListCoins, ListCoinsTestingSetup)
     // Check initial balance from one mature coinbase transaction.
     // TODO PAICOIN If the initial block subsidy has been changed,
     // update the subsidy with the correct value
-    BOOST_CHECK_EQUAL(15 * COIN, wallet->GetAvailableBalance());
+    BOOST_CHECK_EQUAL(1500 * COIN, wallet->GetAvailableBalance());
 
     // Add a transaction creating a change address, and confirm ListCoins still
     // returns the coin associated with the change address underneath the
