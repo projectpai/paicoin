@@ -88,6 +88,7 @@ PAICOIN_CORE_H = \
   checkqueue.h \
   clientversion.h \
   coins.h \
+  coinbase_addresses.h \
   compat.h \
   compat/byteswap.h \
   compat/endian.h \
