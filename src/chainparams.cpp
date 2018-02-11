@@ -20,7 +20,7 @@
  * To initialize the block chain by mining a new genesis block uncomment the following define.
  * WARNING: this should only be done once and prior to release in production!
  */
-//#define MINE_FOR_THE_GENESIS_BLOCK
+#define MINE_FOR_THE_GENESIS_BLOCK
 
 #define GENESIS_BLOCK_TIMESTAMP_STRING  "09/06/2017 - Create your own avatar twin that talks like you"
 #define GENESIS_BLOCK_REWARD            1470000000
@@ -317,27 +317,50 @@ public:
         nPruneAfterHeight = 1000;
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
+        int threadCount = 2;
+        int pids[2];
+        int pid = 0;
+        for (int x = 0; x < threadCount; x++) {
+            pid = fork();
 
-        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+            if (pid > 0) {
+            	genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP + x, 0, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+                arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> TESTNET_GENESIS_BLOCK_POW_BITS);
 
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> TESTNET_GENESIS_BLOCK_POW_BITS);
+                LogPrintf("Recalculating params for testnet.\n");
+                LogPrintf("- old testnet genesis nonce: %u\n", genesis.nNonce);
+                LogPrintf("- old testnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
+                LogPrintf("- old testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        LogPrintf("Recalculating params for testnet.\n");
-        LogPrintf("- old testnet genesis nonce: %u\n", genesis.nNonce);
-        LogPrintf("- old testnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
-        LogPrintf("- old testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+                // deliberately empty for loop finds nonce value.
+                for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) {
+		  printf("Trying nonce: %d in pid: %d and timestamp: %d", genesis.nNonce, pid, TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP + x);
+		  sleep(1);
+		}
+                break;
+            }
+            else {
+            	pids[x] = pid;
+            }
+        }
 
-        // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+        if (pid == 0)
+        {
+   		while (true) {
+			sleep(100);
+		}
+        } else {
+            LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
+            LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
+            LogPrintf("- new testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
-        LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
-        LogPrintf("- new testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+            consensus.hashGenesisBlock = genesis.GetHash();
+            consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-        consensus.hashGenesisBlock = genesis.GetHash();
-        consensus.BIP34Hash = consensus.hashGenesisBlock;
+            LogPrintf("- new testnet genesis block: %s\n", genesis.ToString().c_str());
+        	
+        }
 
-        LogPrintf("- new testnet genesis block: %s\n", genesis.ToString().c_str());
 
 #else
 
