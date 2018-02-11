@@ -5,7 +5,7 @@
 
 #include "chainparams.h"
 #include "consensus/merkle.h"
-
+#include "rpc/server.h"
 #include "tinyformat.h"
 #include "util.h"
 #include "utilstrencodings.h"
@@ -35,15 +35,15 @@
 #define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x000000005bcab4d8d77d338d3719c1cda996c5181ffd1c46ee311a69ac3f9397")
 #define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e")
 
-#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
+#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe6100000000000000000000000000000000000000000000000000")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
-#define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
-#define TESTNET_GENESIS_BLOCK_SIGNATURE  "23103f0e2d2abbaad0d79b7a37759b1a382b7821"
+#define TESTNET_GENESIS_BLOCK_NBITS      0x1809fe61 // 0x1e00ffff
+#define TESTNET_GENESIS_BLOCK_SIGNATURE  "9a8abac6c3d97d37d627e6ebcaf68be72275168b"
 
 #define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706400
-#define TESTNET_GENESIS_BLOCK_NONCE          70790274
-#define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000011c4cc444bb57cb52be2fb5efd3609c40b12900be7d86876fb4bf73c92")
-#define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0xcaed1b804a2aa916d899cb398aed398fa9316d972f615903aafe06d10bedca44")
+#define TESTNET_GENESIS_BLOCK_NONCE          1694497436 
+#define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x428e4ba4a45f5388d991085d8540ba2675542e2791dd812aae09273ec785414f")
+#define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19")
 
 #define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define REGTEST_GENESIS_BLOCK_POW_BITS   1
@@ -347,6 +347,14 @@ public:
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
+
+        CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | 0);
+        ssBlock << genesis;
+        std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
+	printf("Genesis block hex: %s\r\n\r\n", strHex.c_str());
+        printf("- new testnet genesis nonce: %u\n", genesis.nNonce);
+        printf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
+        printf("- new testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
         // TODO: Update the values below with the data from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release

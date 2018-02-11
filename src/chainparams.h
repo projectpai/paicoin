@@ -9,6 +9,7 @@
 #include "chainparamsbase.h"
 #include "consensus/params.h"
 #include "primitives/block.h"
+#include "streams.h"
 #include "protocol.h"
 
 #include <memory>
