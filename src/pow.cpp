@@ -80,12 +80,16 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
     bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
 
     // Check range
-    if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit))
+    if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit)) {
+        printf("Invalid range...\r\n");
         return false;
-
+    }
     // Check proof of work matches claimed amount
-    if (UintToArith256(hash) > bnTarget)
+    if (UintToArith256(hash) > bnTarget) {
+        printf("Hash greater than target...Calculated hash: %s\r\n", hash.GetHex().c_str());
+        printf("Target hash: %s\r\n", bnTarget.GetHex().c_str());
         return false;
-
+    }
     return true;
 }
+

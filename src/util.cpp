@@ -91,7 +91,7 @@ const char * const PAICOIN_CONF_FILENAME = "paicoin.conf";
 const char * const PAICOIN_PID_FILENAME = "paicoind.pid";
 
 ArgsManager gArgs;
-bool fPrintToConsole = false;
+bool fPrintToConsole = true;
 bool fPrintToDebugLog = true;
 
 bool fLogTimestamps = DEFAULT_LOGTIMESTAMPS;
