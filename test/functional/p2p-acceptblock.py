@@ -49,16 +49,16 @@ The test:
 """
 
 from test_framework.mininode import *
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import PAIcoinTestFramework
 from test_framework.util import *
 import time
 from test_framework.blocktools import create_block, create_coinbase
 
-class AcceptBlockTest(BitcoinTestFramework):
+class AcceptBlockTest(PAIcoinTestFramework):
     def add_options(self, parser):
         parser.add_option("--testbinary", dest="testbinary",
-                          default=os.getenv("BITCOIND", "bitcoind"),
-                          help="bitcoind binary to test")
+                          default=os.getenv("PAICOIND", "paicoind"),
+                          help="paicoind binary to test")
 
     def set_test_params(self):
         self.setup_clean_chain = True

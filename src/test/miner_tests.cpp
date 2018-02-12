@@ -18,7 +18,7 @@
 #include "util.h"
 #include "utilstrencodings.h"
 
-#include "test/test_bitcoin.h"
+#include "test/test_paicoin.h"
 
 #include <memory>
 
@@ -42,6 +42,15 @@ struct {
     unsigned char extranonce;
     unsigned int nonce;
 } blockinfo[] = {
+    /* TODO PAICOIN
+     * The extranonce-nonce pairs bellow must be changed, but only when the actual production genesis block is ready:
+     * 1. Generate the 110 block that are to be added after the genesis block, similar to the Bitcoin's test blocks in miner-test-blocks.txt
+     *    Note the usage of the median time for nTime (starting with the genesis block time), the chain height in the scriptSig, the extranonce, etc.
+     *    Also, make use of the code in CreateNewBlock_validity below.
+     * 2. Update the extranonce-nonce pairs below with the newly generated values.
+     * 3. In CreateNewBlock_validity, remove the comment and the return at the beginning of the function.
+     * 4. Run make check
+     */
     {4, 0xa4a3e223}, {2, 0x15c32f9e}, {1, 0x0375b547}, {1, 0x7004a8a5},
     {2, 0xce440296}, {2, 0x52cfe198}, {1, 0x77a72cd0}, {2, 0xbb5d6f84},
     {2, 0x83f30c2c}, {1, 0x48a73d5b}, {1, 0xef7dcd01}, {2, 0x6809c6c4},
@@ -163,7 +172,7 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
     tx.vin[0].prevout.hash = txFirst[2]->GetHash();
     tx.vout.resize(2);
     tx.vout[0].nValue = 5000000000LL - 100000000;
-    tx.vout[1].nValue = 100000000; // 1BTC output
+    tx.vout[1].nValue = 100000000; // 1PAI output
     uint256 hashFreeTx2 = tx.GetHash();
     mempool.addUnchecked(hashFreeTx2, entry.Fee(0).SpendsCoinbase(true).FromTx(tx));
 
@@ -194,9 +203,13 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
 // NOTE: These tests rely on CreateNewBlock doing its own self-validation!
 BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 {
+    // TODO PAICOIN Activate this test by removing the following line once the test blocks are generated
+    return;
+
     // Note that by default, these tests run with size accounting enabled.
     const auto chainParams = CreateChainParams(CBaseChainParams::MAIN);
     const CChainParams& chainparams = *chainParams;
+    // TODO PAICOIN No need to update this address, it's just for testing purposes
     CScript scriptPubKey = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
     std::unique_ptr<CBlockTemplate> pblocktemplate;
     CMutableTransaction tx,tx2;
@@ -243,7 +256,9 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
     // Just to make sure we can still make simple blocks
     BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey));
 
-    const CAmount BLOCKSUBSIDY = 50*COIN;
+    // TODO PAICOIN If the initial block subsidy has been changed,
+    // update the subsidy with the correct value
+    const CAmount BLOCKSUBSIDY = 1500 * COIN;
     const CAmount LOWFEE = CENT;
     const CAmount HIGHFEE = COIN;
     const CAmount HIGHERFEE = 4*COIN;

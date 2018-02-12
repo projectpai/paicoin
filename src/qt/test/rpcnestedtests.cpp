@@ -11,7 +11,7 @@
 #include "rpc/register.h"
 #include "rpc/server.h"
 #include "rpcconsole.h"
-#include "test/test_bitcoin.h"
+#include "test/test_paicoin.h"
 #include "univalue.h"
 #include "util.h"
 
@@ -73,7 +73,8 @@ void RPCNestedTests::rpcNestedTests()
     QVERIFY(result == result2);
 
     RPCConsole::RPCExecuteCommandLine(result, "getblock(getbestblockhash())[tx][0]", &filtered);
-    QVERIFY(result == "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
+    // TODO PAICOIN Update the expected result with the genesis block merkle root, if needed
+    QVERIFY(result == "4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e");
     QVERIFY(filtered == "getblock(getbestblockhash())[tx][0]");
 
     RPCConsole::RPCParseCommandLine(result, "importprivkey", false, &filtered);

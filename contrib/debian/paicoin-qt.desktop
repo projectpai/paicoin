@@ -1,0 +1,13 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=PAIcoin Core
+Comment=Connect to the PAIcoin P2P Network
+Comment[de]=Verbinde mit dem PAIcoin peer-to-peer Netzwerk
+Comment[fr]=PAIcoin, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=PAIcoin, eşten eşe kriptografik sanal para birimi
+Exec=paicoin-qt %u
+Terminal=false
+Type=Application
+Icon=paicoin128
+MimeType=x-scheme-handler/paicoin;
+Categories=Office;Finance;

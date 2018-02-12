@@ -1,0 +1,6 @@
+usr/local/bin/paicoin-qt usr/bin
+share/pixmaps/paicoin32.xpm usr/share/pixmaps
+share/pixmaps/paicoin16.xpm usr/share/pixmaps
+share/pixmaps/paicoin128.png usr/share/pixmaps
+debian/paicoin-qt.desktop usr/share/applications
+debian/paicoin-qt.protocol usr/share/kde4/services/

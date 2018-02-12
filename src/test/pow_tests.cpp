@@ -7,7 +7,7 @@
 #include "pow.h"
 #include "random.h"
 #include "util.h"
-#include "test/test_bitcoin.h"
+#include "test/test_paicoin.h"
 
 #include <boost/test/unit_test.hpp>
 
@@ -25,14 +25,22 @@ BOOST_AUTO_TEST_CASE(get_next_work)
     BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, chainParams->GetConsensus()), 0x1d00d86a);
 }
 
+/**
+ * TODO PAICOIN if unit test updating is required
+ * Methodology:
+ * - update the nLastRetargetTime to the genesis block time;
+ * - update the pindexLast.nTime to a date at 2055491 seconds from nLastRetargetTime;
+ * - update the pindexLast.nBits to the value of genesis block nBits;
+ * - update the desired output of the call of CalculateNextWorkRequired to the value of genesis block nBits;
+ */
 /* Test the constraint on the upper bound for next work */
 BOOST_AUTO_TEST_CASE(get_next_work_pow_limit)
 {
     const auto chainParams = CreateChainParams(CBaseChainParams::MAIN);
-    int64_t nLastRetargetTime = 1231006505; // Block #0
+    int64_t nLastRetargetTime = 1509780574; // Block #0
     CBlockIndex pindexLast;
     pindexLast.nHeight = 2015;
-    pindexLast.nTime = 1233061996;  // Block #2015
+    pindexLast.nTime = 1511836065;  // Block #2015
     pindexLast.nBits = 0x1d00ffff;
     BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, chainParams->GetConsensus()), 0x1d00ffff);
 }

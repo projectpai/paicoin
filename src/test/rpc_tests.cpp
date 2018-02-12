@@ -9,7 +9,7 @@
 #include "core_io.h"
 #include "netbase.h"
 
-#include "test/test_bitcoin.h"
+#include "test/test_paicoin.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/test/unit_test.hpp>
@@ -112,11 +112,22 @@ BOOST_AUTO_TEST_CASE(rpc_rawsign)
       "[{\"txid\":\"b4cc287e58f87cdae59417329f710f3ecd75a4ee1d2872b7248f50977c8493f3\","
       "\"vout\":1,\"scriptPubKey\":\"a914b10c9df5f7edf436c697f02f1efdba4cf399615187\","
       "\"redeemScript\":\"512103debedc17b3df2badbcdd86d5feb4562b86fe182e5998abd8bcd4f122c6155b1b21027e940bb73ab8732bfdf7f9216ecefca5b94d6df834e77e108f68e66f126044c052ae\"}]";
-    r = CallRPC(std::string("createrawtransaction ")+prevout+" "+
-      "{\"3HqAe9LtNBjnsfM4CyYaWTnvCaUYT7v4oZ\":11}");
+    /**
+     * TODO PAICOIN if unit test updating is required
+     * Updating methodology:
+     * Helpers:
+     * - http://incoherency.co.uk/base58/
+     * - http://www.fileformat.info/tool/hash.htm
+     * Address:
+     * - address -> un-Base58 -> replace first byte with the network's one (base58Prefixes[SCRIPT_ADDRESS]) -> replace the last 4 bytes with the starting 4 bytes of the double SHA256 of the string -> Base58 -> address
+     * Private keys:
+     * - private key -> un-Base58 -> replace first byte with the network's one (base58Prefixes[SECRET_KEY]) -> replace the last 4 bytes with the starting 4 bytes of the double SHA256 of the string -> Base58 -> private key
+     */
+     r = CallRPC(std::string("createrawtransaction ")+prevout+" "+
+      "{\"ub5Ziibu7jfK6qmtGRBR88pFsdgTHv7S5a\":11}");
     std::string notsigned = r.get_str();
-    std::string privkey1 = "\"KzsXybp9jX64P5ekX1KUxRQ79Jht9uzW7LorgwE65i5rWACL6LQe\"";
-    std::string privkey2 = "\"Kyhdf5LuKTRx4ge69ybABsiUAWjVRK4XGxAKk2FQLp2HjGMy87Z4\"";
+    std::string privkey1 = "\"dbsa1ohCZp7RLfEAL2Hkh8f4m1cWViG1UuwNGzTMWemZ1Yq74KhD\"";
+    std::string privkey2 = "\"dahfhHDx9kTK2GDVxzZRvayRnDe7m7L2eXHqL5UfmkhzEf4S9BZ8\"";
     r = CallRPC(std::string("signrawtransaction ")+notsigned+" "+prevout+" "+"[]");
     BOOST_CHECK(find_value(r.get_obj(), "complete").get_bool() == false);
     r = CallRPC(std::string("signrawtransaction ")+notsigned+" "+prevout+" "+"["+privkey1+","+privkey2+"]");
@@ -232,7 +243,7 @@ BOOST_AUTO_TEST_CASE(json_parse_errors)
     // Invalid, trailing garbage
     BOOST_CHECK_THROW(ParseNonRFCJSONValue("1.0sds"), std::runtime_error);
     BOOST_CHECK_THROW(ParseNonRFCJSONValue("1.0]"), std::runtime_error);
-    // BTC addresses should fail parsing
+    // PAI addresses should fail parsing
     BOOST_CHECK_THROW(ParseNonRFCJSONValue("175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W"), std::runtime_error);
     BOOST_CHECK_THROW(ParseNonRFCJSONValue("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNL"), std::runtime_error);
 }
@@ -243,7 +254,7 @@ BOOST_AUTO_TEST_CASE(rpc_ban)
 
     UniValue r;
     BOOST_CHECK_NO_THROW(r = CallRPC(std::string("setban 127.0.0.0 add")));
-    BOOST_CHECK_THROW(r = CallRPC(std::string("setban 127.0.0.0:8334")), std::runtime_error); //portnumber for setban not allowed
+    BOOST_CHECK_THROW(r = CallRPC(std::string("setban 127.0.0.0:8568")), std::runtime_error); //portnumber for setban not allowed
     BOOST_CHECK_NO_THROW(r = CallRPC(std::string("listbanned")));
     UniValue ar = r.get_array();
     UniValue o1 = ar[0].get_obj();

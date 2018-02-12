@@ -1,0 +1,33 @@
+# /etc/conf.d/paicoind: config file for /etc/init.d/paicoind
+
+# Config file location
+#PAICOIND_CONFIGFILE="/etc/paicoin/paicoin.conf"
+
+# What directory to write pidfile to?  (created and owned by $PAICOIND_USER)
+#PAICOIND_PIDDIR="/var/run/paicoind"
+
+# What filename to give the pidfile
+#PAICOIND_PIDFILE="${PAICOIND_PIDDIR}/paicoind.pid"
+
+# Where to write paicoind data (be mindful that the blockchain is large)
+#PAICOIND_DATADIR="/var/lib/paicoind"
+
+# User and group to own paicoind process
+#PAICOIND_USER="paicoin"
+#PAICOIND_GROUP="paicoin"
+
+# Path to paicoind executable
+#PAICOIND_BIN="/usr/bin/paicoind"
+
+# Nice value to run paicoind under
+#PAICOIND_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#PAICOIND_OPTS=""
+
+# The timeout in seconds OpenRC will wait for paicoind to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+PAICOIND_SIGTERM_TIMEOUT=60

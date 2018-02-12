@@ -9,7 +9,7 @@
 #include "uint256.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#include "test/test_bitcoin.h"
+#include "test/test_paicoin.h"
 
 #include <string>
 #include <vector>
@@ -36,55 +36,94 @@ struct TestVector {
     }
 };
 
+/**
+ * TODO PAICOIN if unit test updating is required
+ * For updating the following test vectors:
+ * - clone bip32utils from https://github.com/prusnak/bip32utils.git;
+ * - in BIP32Key.py (lines 26-29), update the EX_MAIN_PRIVATE, EX_MAIN_PUBLIC, EX_TEST_PRIVATE and EX_TEST_PUBLIC with their corresponding base58Prefixes from chainparams.cpp;
+ * - in BIP32Key.py (line 43), change the hmac seed to "PAIcoin seed";
+ * - in BIP32Key.py (at the end of file) add the following lines:
+
+    # BIP0032 Test vector 3
+    entropy = '4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be'.decode('hex')
+    m = BIP32Key.fromEntropy(entropy)
+    print("Test vector 3:")
+    print("Master (hex):", entropy.encode('hex'))
+    print("* [Chain m]")
+    m.dump()
+
+    print("* [Chain m/0]")
+    m = m.ChildKey(0+BIP32_HARDEN)
+    m.dump()
+
+ * - in bip0032-vectors.sh (at the end of file) add the following lines:
+ # BIP0032 Test vector #3
+
+echo Generating BIP0032 test vector 3:
+echo 4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be | \
+    ../bip32gen -v \
+    -i entropy -f - -x -n 512 \
+    -o privkey,wif,pubkey,addr,xprv,xpub -F - -X \
+    m \
+    m/0h
+
+ * - run the bip0032-vectors.sh script with the following command line:
+
+ ./bip0032-vectors.sh > bip0032-vectors.out
+
+  * - copy the public and private keys from the bip0032-vectors.out file into the three vectors below (test1, test2 and test3).
+  * - run make check
+ */
+
 TestVector test1 =
   TestVector("000102030405060708090a0b0c0d0e0f")
-    ("xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8",
-     "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
+    ("paip6Nt6Wry8bUrjUJgwaB5mfZAobHkoMeic9HwtM3EZP6pG6QJLkjX8wc821h4BidygTyxU22iDwqvkcQdNeJ27i7fMkERLSixhWiaXQniWwPQ",
+     "paiv7CLsatDqdaCRhYkYcLaRJw8kK4KT8CJvtgKUiZoRYPycRK8UGamMWniBfmvJsbC2ZrHCFZewWpbCS34MqSH9p8SfdXpM2LGBBeUyDMdQvd4",
      0x80000000)
-    ("xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw",
-     "xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7",
+    ("paip6SRvmPLVLwHysmHwFzfGaHpGq2q5i8t9g5Mn5i72UnoLEhnF46xPJ65DJ6EXzbUWkXNkmDJ3zt2dwx9aTyka6JhY1k77vVgZKYzQcXkw1oT",
+     "paiv7FthqQbCP2dg71MYJA9vDfnDYoPjUgUURTjNTEfte5xgZccNZxCbsGfNxBK74nsgJCbbuSBnnDnAiuDmznH3Y3aPhUREx5GJAdPTRf1aNbC",
      1)
-    ("xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ",
-     "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs",
+    ("paip6UCNGVj9vzSryvEk5pDQwWuWXU8FvkJwToYj8JihCQkBa4cKZ5cBysrAszDpV1E8J2CswGp3HNwpPtprQ9aehDZUPrRscFVVhiUUazt2qMo",
+     "paiv7Hf9LWyry5nZDAJM7yi4atsTFEguhHuGDBvKVqHZMhuXtyST4vrQZ4SLY5Ab65njmhntLyfPkGaW1UPfmEphVwer7wDC8umdGwvXLyedDLi",
      0x80000002)
-    ("xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5",
-     "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM",
+    ("paip6UceSKRzir7g5aKELGrWuAUoc6WqmKokD3rmPAmQ1UrX85C9hMp6BYp99ZV5HL7nEpEupDtmpT3VvRAUAC5aoEBxE1L9tPayDnMKitLPe6p",
+     "paiv7J5RWLghkwTNJpNqNSMAYYSkKs5VXsQ4xSEMkhLGAn1sSz2HDD4JkjQJoeKALRnWwsqLNwEiaaKuDKwjNsBXysJPMMQ3wutDsDg1zB99t83",
      2)
-    ("xpub6FHa3pjLCk84BayeJxFW2SP4XRrFd1JYnxeLeU8EqN3vDfZmbqBqaGJAyiLjTAwm6ZLRQUMv1ZACTj37sR62cfN7fe5JnJ7dh8zL4fiyLHV",
-     "xprvA2JDeKCSNNZky6uBCviVfJSKyQ1mDYahRjijr5idH2WwLsEd4Hsb2Tyh8RfQMuPh7f7RtyzTtdrbdqqsunu5Mm3wDvUAKRHSC34sJ7in334",
+    ("paip6WbzoJDzJsN5VKMMsF4aAVMd3HMKDT9ike8FkHRz3tYAF7kAztQdN1hwWHra3jj9tTuSVawiCwhdivKUppFBBp1DSYqHmZfxeEJZqWBC2Zx",
+     "paiv7L4msKUhLxhmiZQxuQZDosKZm3uxyzk3W2Vr7ozrDBhWa2aJWjeqwCJ7ALN98S9puWV7d7xNafYh5os8gJVVMGZRgNuvc5oyYM57VmjD7n2",
      1000000000)
-    ("xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy",
-     "xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76",
+    ("paip6YHrjJpeUoZr8THiz3uVMR1L7pMTSzSW8KnXFk3v3aYzUJe6meBKNXNF75F6Vf53rXCkGXPcRxEdPTKwVQh14ikgcj1VyZqNfVCnb2gnJvT",
+     "paiv7MkdoL5MWtuYMhML2DQ8znyGqav7DY2psiA7dGcnCsiLoDUEHVRXwhxQm9qNRQoS8HiZwHzgsRUU4F76sVwo9FEgNDUnMV7vfnkqns2eytj",
      0);
 
 TestVector test2 =
   TestVector("fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542")
-    ("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB",
-     "xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U",
+    ("paip6Nt6Wry8bUrjSDPVm5PVwibMAq52UKyJez1qPycJ8nikg3FJvZYTRrpMmNNVkUTwAz59zzyFT34oM4VBRhBMaEBtnZndxUiKhKotKzGXieS",
+     "paiv7CLsatDqdaCRfTT6oEt9b6ZHtbdgEsZdQNPRmWBAJ5t6zx5SSQng13QXRU6GkNfaMAqRfAGV51xeBrnq7QWGCezx8oCSuA2W8Jy3tApQKnS",
      0)
-    ("xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH",
-     "xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt",
+    ("paip6RixW9YiJHW4agYXi6vLVPeTJtiv5TrcWMqk6joryuwjZhm3Aq6xLcoXr8ZGES7cDNaT2qtrr7v3rr68DzPz6FFJ2gme5FQBi9KJzpxwiPF",
+     "paiv7FBjaAoRLNqkovc8kGQz8mcQ2fHZr1SwFkDLUGNj9D75tcbAggMAuoPhWBPGXSqnkxvs6LwGc5ASzPkZxKBGaXvGLdrGcnErYDC3s6gdWL3",
      0xFFFFFFFF)
-    ("xpub6ASAVgeehLbnwdqV6UKMHVzgqAG8Gr6riv3Fxxpj8ksbH9ebxaEyBLZ85ySDhKiLDBrQSARLq1uNRts8RuJiHjaDMBU4Zn9h8LZNnBC5y4a",
-     "xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9",
+    ("paip6TkJFjSdFTPfo9aRGgegkmYF21pmjhZNDPDArY6NJgWqvV67i2LBaiaUMzuCDhhby8gh7jfDD31NofjZfBqKiHZeCfMkGhMkM77LxWV9qnF",
+     "paiv7HD5KkhLHYjN2Pe2Jr9LQ9WBjnPRWF9gxmamE4fETygCFPvFDsaQ9uAe236h17wHz7Lsia12UfnxpwEZdfUYp2bzKv2X1SUUTqv3rck5wS9",
      1)
-    ("xpub6DF8uhdarytz3FWdA8TvFSvvAh8dP3283MY7p2V4SeE2wyWmG5mg5EwVvmdMVCQcoNJxGoWaU9DCWh89LojfZ537wTfunKau47EL2dhHKon",
-     "xprv9zFnWC6h2cLgpmSA46vutJzBcfJ8yaJGg8cX1e5StJh45BBciYTRXSd25UEPVuesF9yog62tGAQtHjXajPPdbRCHuWS6T8XA2ECKADdw4Ef",
+    ("paip6Vys62tENxi2d1FEERQYde7mhNbmu7LFazarDPo2U5nR8rwa6RMCYvmix7egugWg3jV8jm73RgjzQCuhJRypHkos8vrLcEuTvi2fgj6TnXP",
+     "paiv7KSeA48wR43irFJqGauCH25iR9ARfevaLNxSavMtdNwmTmmhcGbR87MtcBL1Mntqwu5d4AqY7SSFsW8q8WcYbDxyCDej54a5f3zRP8a252J",
      0xFFFFFFFE)
-    ("xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL",
-     "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc",
+    ("paip6Xhvk2nLekq5VdD9UXDzdobjVoLQWkKqEFSs683RQjdTQRqFU4CcJS3NUjxAPdBy462QtbSvMdvrYUx1VYGjoUyi1Bk6u1w1nyR6stfeNeu",
+     "paiv7MAhp433grAmisGkWgieHBZgDZu4HHv9ydpTTecHa2nojLfNyuSpscdY8muU5hJr1BayZzULSF1XX9FxMFo8aZLbXgYzS57Wk99DdG3ygmQ",
      2)
-    ("xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt",
-     "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
+    ("paip6YadnNQHCXMEQ1GZKCd5N1dcPGcvJ3JHvom6QAfZ2cBNzm4aJGRt5WwFveUXv9mon2LJDaaPf1xPayHKhJ1AMi7cC7pxXVBQu7KP4wgWWyf",
+     "paiv7N3QrPezEcgvdFLAMN7j1PbZ73Ba4atcgC8gmhERBuLjKfthp7g6ehXRafzL4HH9SfxttXjd5cvf8fZgQBdyhjyApMkEexeCBhuYjwvLFCe",
      0);
 
 TestVector test3 =
   TestVector("4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be")
-    ("xpub661MyMwAqRbcEZVB4dScxMAdx6d4nFc9nvyvH3v4gJL378CSRZiYmhRoP7mBy6gSPSCYk6SzXPTf3ND1cZAceL7SfJ1Z3GC8vBgp2epUt13",
-     "xprv9s21ZrQH143K25QhxbucbDDuQ4naNntJRi4KUfWT7xo4EKsHt2QJDu7KXp1A3u7Bi1j8ph3EGsZ9Xvz9dGuVrtHHs7pXeTzjuxBrCmmhgC6",
+    ("paip6Nt6Wry8bUrjUjTeLKx1haZWqUkZJnW1mi1EBNCp9nnpqttM9bSv88yoxQqJA7YvVCSH7gP3dRYARLHSVH3Z4M6oAne5j1SP4S5zLwzGqGX",
+     "paiv7CLsatDqdaCRhyXFNVSfLxXTZFKD5L6LX6NpYtmgK5xBAoiUfSh8hKZycTfsuiPgFvb3L8rdAqWbqbWDbBq2Y2umEboKnMHUTBcT4CLC5SA",
       0x80000000)
-    ("xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y",
-     "xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L",
+    ("paip6Rgffm8JAf9PDs8fG4JBKWVsAuHXXDeP3z6WytiAPC9pSjJ5JnXzdGhTB1pscU8KiW9JteqAapWZXTPn9TYUG1UYeH7DRcNjrurFV9jhyy5",
+     "paiv7F9SjnP1CkV5T7CGJDnpxtTotfrBHmEhoNU7MRH2YVKAme8CpdnDCTHcq4oakLm5Qg68ZU1KYWKARdkvoM28ToZqE8kRELTGYq8b1MLSEoi",
       0);
 
 void RunTest(const TestVector &test) {
@@ -99,18 +138,18 @@ void RunTest(const TestVector &test) {
         pubkey.Encode(data);
 
         // Test private key
-        CBitcoinExtKey b58key; b58key.SetKey(key);
+        CPAIcoinExtKey b58key; b58key.SetKey(key);
         BOOST_CHECK(b58key.ToString() == derive.prv);
 
-        CBitcoinExtKey b58keyDecodeCheck(derive.prv);
+        CPAIcoinExtKey b58keyDecodeCheck(derive.prv);
         CExtKey checkKey = b58keyDecodeCheck.GetKey();
         assert(checkKey == key); //ensure a base58 decoded key also matches
 
         // Test public key
-        CBitcoinExtPubKey b58pubkey; b58pubkey.SetKey(pubkey);
+        CPAIcoinExtPubKey b58pubkey; b58pubkey.SetKey(pubkey);
         BOOST_CHECK(b58pubkey.ToString() == derive.pub);
 
-        CBitcoinExtPubKey b58PubkeyDecodeCheck(derive.pub);
+        CPAIcoinExtPubKey b58PubkeyDecodeCheck(derive.pub);
         CExtPubKey checkPubKey = b58PubkeyDecodeCheck.GetKey();
         assert(checkPubKey == pubkey); //ensure a base58 decoded pubkey also matches
 

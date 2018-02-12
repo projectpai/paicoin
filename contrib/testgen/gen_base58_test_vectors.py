@@ -17,13 +17,14 @@ from base58 import b58encode_chk, b58decode_chk, b58chars
 import random
 from binascii import b2a_hex
 
+# TODO PAICOIN When modifying the base58prefixes in the chainparams.cpp, update the values below as well and regenerate the test vectors as indicated above.
 # key types
-PUBKEY_ADDRESS = 0
-SCRIPT_ADDRESS = 5
-PUBKEY_ADDRESS_TEST = 111
-SCRIPT_ADDRESS_TEST = 196
-PRIVKEY = 128
-PRIVKEY_TEST = 239
+PUBKEY_ADDRESS = 56
+SCRIPT_ADDRESS = 130
+PUBKEY_ADDRESS_TEST = 51
+SCRIPT_ADDRESS_TEST = 180
+PRIVKEY = 247
+PRIVKEY_TEST = 226
 
 metadata_keys = ['isPrivkey', 'isTestnet', 'addrType', 'isCompressed']
 # templates for valid sequences
