@@ -25,15 +25,15 @@
 #define GENESIS_BLOCK_TIMESTAMP_STRING  "09/06/2017 - Create your own avatar twin that talks like you"
 #define GENESIS_BLOCK_REWARD            1470000000
 
-#define MAINNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe6100000000000000000000000000000000000000000000000000")
+#define MAINNET_CONSENSUS_POW_LIMIT      uint256S("0x0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff");
 #define MAINNET_GENESIS_BLOCK_POW_BITS   36 // 32
-#define MAINNET_GENESIS_BLOCK_NBITS      0x1809fe61
+#define MAINNET_GENESIS_BLOCK_NBITS      0x1c09fe61
 #define MAINNET_GENESIS_BLOCK_SIGNATURE  "95BA0161EB524F97D3847653057BAAEF7D7BA0FF"
 
-#define MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706400
-#define MAINNET_GENESIS_BLOCK_NONCE          2876968165
-#define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x000000005bcab4d8d77d338d3719c1cda996c5181ffd1c46ee311a69ac3f9397")
-#define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e")
+#define MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706776
+#define MAINNET_GENESIS_BLOCK_NONCE          460938808 
+#define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343")
+#define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x585ac65f505138efceefb3255086b6d7f63c606219b01f115a2941bb93c8362b")
 
 #define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
@@ -191,33 +191,62 @@ public:
         nPruneAfterHeight = 100000;
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
+        LogPrintf("Mining for the mainnet genesis block to log...\r\n");
+        int threadCount = 70;
+        int pids[70];
+        int pid = 0;
+        for (int x = 0; x < threadCount; x++) {
+            pid = fork();
 
-        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+            if (pid > 0) {
+                printf("[%d] Processing in thread with timestamp: %d\r\n", pid, MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP + x);
+                int timestamp = MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP + x;
+                genesis = CreateGenesisBlock(timestamp, 0, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+                arith_uint256 bnProofOfWorkLimit(~arith_uint256() >>MAINNET_GENESIS_BLOCK_POW_BITS);
 
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> MAINNET_GENESIS_BLOCK_POW_BITS);
+                // deliberately empty for loop finds nonce value.
+                for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) {
+                        if (genesis.nNonce > 4294967290) {
+                                printf("[%d] Nonce exceeded limit, resetting with new timestamp\r\n", pid);
+                                genesis.nNonce = 0;
+                                timestamp += threadCount;
+                                genesis = CreateGenesisBlock(timestamp, 0,MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+                        }
+                }
+                printf("NONCE FOUND, HURRAY!\r\n");
+                break;
+            }
+            else {
+                pids[x] = pid;
+            }
+        }
 
-        LogPrintf("Recalculating params for mainnet.\n");
-        LogPrintf("- old mainnet genesis nonce: %u\n", genesis.nNonce);
-        LogPrintf("- old mainnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
-        LogPrintf("- old mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+        if (pid == 0)
+        {
+                while (true) {
+                        sleep(100);
+                }
+        } else {
+            LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
+            LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
+            LogPrintf("- new mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+            consensus.hashGenesisBlock = genesis.GetHash();
+            consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-        LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
-        LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
-        LogPrintf("- new mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+            LogPrintf("- new mainnet genesis block: %s\n", genesis.ToString().c_str());
 
-        consensus.hashGenesisBlock = genesis.GetHash();
-        consensus.BIP34Hash = consensus.hashGenesisBlock;
-
-        LogPrintf("- new mainnet genesis block: %s\n", genesis.ToString().c_str());
+        }
 
 #else
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
         genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, MAINNET_GENESIS_BLOCK_NONCE, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+       
+        printf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
+        printf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
+        printf("- new mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
