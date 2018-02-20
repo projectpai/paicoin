@@ -20,7 +20,7 @@
  * To initialize the block chain by mining a new genesis block uncomment the following define.
  * WARNING: this should only be done once and prior to release in production!
  */
-#define MINE_FOR_THE_GENESIS_BLOCK
+//#define MINE_FOR_THE_GENESIS_BLOCK
 
 #define GENESIS_BLOCK_TIMESTAMP_STRING  "09/06/2017 - Create your own avatar twin that talks like you"
 #define GENESIS_BLOCK_REWARD            1470000000
@@ -35,14 +35,14 @@
 #define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x000000005bcab4d8d77d338d3719c1cda996c5181ffd1c46ee311a69ac3f9397")
 #define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e")
 
-#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe6100000000000000000000000000000000000000000000000000")
+#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
-#define TESTNET_GENESIS_BLOCK_NBITS      0x1809fe61 // 0x1e00ffff
+#define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
 #define TESTNET_GENESIS_BLOCK_SIGNATURE  "9a8abac6c3d97d37d627e6ebcaf68be72275168b"
 
-#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706400
-#define TESTNET_GENESIS_BLOCK_NONCE          1694497436 
-#define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x428e4ba4a45f5388d991085d8540ba2675542e2791dd812aae09273ec785414f")
+#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706516 
+#define TESTNET_GENESIS_BLOCK_NONCE          2253953817 
+#define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x0000000003976df1a1393912d10ea68fae1175ee2c7e6011a0dc4e05f18f8403")
 #define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19")
 
 #define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
@@ -317,26 +317,29 @@ public:
         nPruneAfterHeight = 1000;
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
-        int threadCount = 2;
-        int pids[2];
+	LogPrintf("Mining for the genesis block to log...\r\n");
+        int threadCount = 70;
+        int pids[70];
         int pid = 0;
         for (int x = 0; x < threadCount; x++) {
             pid = fork();
 
             if (pid > 0) {
-            	genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP + x, 0, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+		printf("[%d] Processing in thread with timestamp: %d\r\n", pid, TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP + x);
+		int timestamp = TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP + x;
+            	genesis = CreateGenesisBlock(timestamp, 0, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
                 arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> TESTNET_GENESIS_BLOCK_POW_BITS);
-
-                LogPrintf("Recalculating params for testnet.\n");
-                LogPrintf("- old testnet genesis nonce: %u\n", genesis.nNonce);
-                LogPrintf("- old testnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
-                LogPrintf("- old testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
                 // deliberately empty for loop finds nonce value.
                 for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) {
-		  printf("Trying nonce: %d in pid: %d and timestamp: %d", genesis.nNonce, pid, TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP + x);
-		  sleep(1);
+			if (genesis.nNonce > 4294967290) {
+				printf("[%d] Nonce exceeded limit, resetting with new timestamp\r\n", pid);
+				genesis.nNonce = 0;
+				timestamp += threadCount;
+				genesis = CreateGenesisBlock(timestamp, 0, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+			}	
 		}
+		printf("NONCE FOUND, HURRAY!\r\n");
                 break;
             }
             else {
