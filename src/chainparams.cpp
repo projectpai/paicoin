@@ -25,15 +25,15 @@
 #define GENESIS_BLOCK_TIMESTAMP_STRING  "09/06/2017 - Create your own avatar twin that talks like you"
 #define GENESIS_BLOCK_REWARD            1470000000
 
-#define MAINNET_CONSENSUS_POW_LIMIT      uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
-#define MAINNET_GENESIS_BLOCK_POW_BITS   32
-#define MAINNET_GENESIS_BLOCK_NBITS      0x1d00ffff
-#define MAINNET_GENESIS_BLOCK_SIGNATURE  "23103f0e2d2abbaad0d79b7a37759b1a382b7821"
+#define MAINNET_CONSENSUS_POW_LIMIT      uint256S("0x0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff");
+#define MAINNET_GENESIS_BLOCK_POW_BITS   36 // 32
+#define MAINNET_GENESIS_BLOCK_NBITS      0x1c09fe61
+#define MAINNET_GENESIS_BLOCK_SIGNATURE  "95ba0161eb524f97d3847653057baaef7d7ba0ff"
 
-#define MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706400
-#define MAINNET_GENESIS_BLOCK_NONCE          2876968165
-#define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x000000005bcab4d8d77d338d3719c1cda996c5181ffd1c46ee311a69ac3f9397")
-#define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e")
+#define MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706776
+#define MAINNET_GENESIS_BLOCK_NONCE          460938808
+#define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343")
+#define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x585ac65f505138efceefb3255086b6d7f63c606219b01f115a2941bb93c8362b")
 
 #define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
@@ -215,15 +215,11 @@ public:
 
 #else
 
-        // TODO: Update the values below with the nonce from the above mining for the genesis block
-        //       This should only be done once, after the mining and prior to production release
         genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, MAINNET_GENESIS_BLOCK_NONCE, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-        // TODO: Update the values below with the data from the above mining for the genesis block
-        //       This should only be done once, after the mining and prior to production release
         assert(consensus.hashGenesisBlock == MAINNET_CONSENSUS_HASH_GENESIS_BLOCK);
         assert(genesis.hashMerkleRoot == MAINNET_GENESIS_HASH_MERKLE_ROOT);
 
@@ -235,6 +231,7 @@ public:
         vSeeds.emplace_back("34.215.125.66", true);
         vSeeds.emplace_back("13.58.110.183", true);
         vSeeds.emplace_back("13.124.177.237", true);
+        vSeeds.emplace_back("193.112.7.193", true);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
         
@@ -341,15 +338,11 @@ public:
 
 #else
 
-        // TODO: Update the values below with the nonce from the above mining for the genesis block
-        //       This should only be done once, after the mining and prior to production release
         genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, TESTNET_GENESIS_BLOCK_NONCE, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-        // TODO: Update the values below with the data from the above mining for the genesis block
-        //       This should only be done once, after the mining and prior to production release
         assert(consensus.hashGenesisBlock == TESTNET_CONSENSUS_HASH_GENESIS_BLOCK);
         assert(genesis.hashMerkleRoot == TESTNET_GENESIS_HASH_MERKLE_ROOT);
 
@@ -362,6 +355,7 @@ public:
         vSeeds.emplace_back("52.37.189.65", true);
         vSeeds.emplace_back("13.59.205.159", true);
         vSeeds.emplace_back("52.78.224.215", true);
+        vSeeds.emplace_back("193.112.4.118", true);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
         
