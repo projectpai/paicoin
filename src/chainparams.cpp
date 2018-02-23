@@ -228,10 +228,10 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
         // Note that of those with the service bits flag, most only support a subset of possible options
-        vSeeds.emplace_back("34.215.125.66", true);
-        vSeeds.emplace_back("13.58.110.183", true);
-        vSeeds.emplace_back("13.124.177.237", true);
-        vSeeds.emplace_back("193.112.7.193", true);
+        vSeeds.emplace_back("34.215.125.66", false);
+        vSeeds.emplace_back("13.58.110.183", false);
+        vSeeds.emplace_back("13.124.177.237", false);
+        vSeeds.emplace_back("193.112.7.193", false);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
         
@@ -352,10 +352,10 @@ public:
         vSeeds.clear();
        
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.emplace_back("52.37.189.65", true);
-        vSeeds.emplace_back("13.59.205.159", true);
-        vSeeds.emplace_back("52.78.224.215", true);
-        vSeeds.emplace_back("193.112.4.118", true);
+        vSeeds.emplace_back("52.37.189.65", false);
+        vSeeds.emplace_back("13.59.205.159", false);
+        vSeeds.emplace_back("52.78.224.215", false);
+        vSeeds.emplace_back("193.112.4.118", false);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
         
