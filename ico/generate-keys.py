@@ -43,10 +43,10 @@ sk = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
 pk = sk.get_verifying_key()
 
 sk_bytes = sk.to_string()
-pk_bytes = pk.to_string()
+pk_bytes = "04".decode('hex') + pk.to_string()
 
 sk_string = binascii.hexlify(sk_bytes).decode('ascii').lower()
-pk_string = "04" + binascii.hexlify(pk_bytes).decode('ascii').lower()
+pk_string = binascii.hexlify(pk_bytes).decode('ascii').lower()
 
 addresses = base58prefix
 
