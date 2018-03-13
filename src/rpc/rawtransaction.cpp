@@ -60,6 +60,60 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry)
     }
 }
 
+UniValue searchrawtransactions(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 4)
+        throw std::runtime_error("searchrawtransactions <address> [verbose=1] [skip=0] [count=100]\n");
+
+    if (!fAddrIndex)
+        throw JSONRPCError(RPC_MISC_ERROR, "Address index not enabled");
+
+    CTxDestination dest(DecodeDestination(request.params[0].get_str()));
+    std::set<CExtDiskTxPos> setpos;
+    if (!FindTransactionsByDestination(dest, setpos))
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Cannot search for address");
+
+    int nSkip = 0;
+    int nCount = 100;
+    bool fVerbose = true;
+    if (request.params.size() > 1)
+        fVerbose = (request.params[1].get_int() != 0);
+    if (request.params.size() > 2)
+        nSkip = request.params[2].get_int();
+    if (request.params.size() > 3)
+        nCount = request.params[3].get_int();
+
+    if (nSkip < 0)
+        nSkip += setpos.size();
+    if (nSkip < 0)
+        nSkip = 0;
+    if (nCount < 0)
+        nCount = 0;
+
+    std::set<CExtDiskTxPos>::const_iterator it(setpos.begin());
+    while (it != setpos.end() && nSkip--)
+        ++it;
+
+    UniValue result(UniValue::VARR);
+    while (it != setpos.end() && nCount--) {
+        CTransactionRef tx;
+        uint256 hashBlock;
+        if (!ReadTransaction(tx, *it, hashBlock))
+            throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Cannot read transaction from disk");
+        std::string strHex = EncodeHexTx(*tx, RPCSerializationFlags());
+        if (fVerbose) {
+            UniValue object(UniValue::VOBJ);
+            TxToJSON(*tx, hashBlock, object);
+            object.push_back(Pair("hex", strHex));
+            result.push_back(object);
+        } else {
+            result.push_back(strHex);
+        }
+        ++it;
+    }
+    return result;
+}
+
 UniValue getrawtransaction(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
@@ -966,6 +1020,7 @@ static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
   //  --------------------- ------------------------  -----------------------  ----------
     { "rawtransactions",    "getrawtransaction",      &getrawtransaction,      {"txid","verbose"} },
+    { "rawtransactions",    "searchrawtransactions",  &searchrawtransactions,  {"address","verbose","skip","count"} },
     { "rawtransactions",    "createrawtransaction",   &createrawtransaction,   {"inputs","outputs","locktime","replaceable"} },
     { "rawtransactions",    "decoderawtransaction",   &decoderawtransaction,   {"hexstring"} },
     { "rawtransactions",    "decodescript",           &decodescript,           {"hexstring"} },

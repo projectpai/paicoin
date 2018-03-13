@@ -18,6 +18,7 @@
 class CBlockIndex;
 class CCoinsViewDBCursor;
 class uint256;
+struct CExtDiskTxPos;
 
 //! No need to periodic flush if at least this much space still available.
 static constexpr int MAX_BLOCK_COINSDB_USAGE = 10;
@@ -60,6 +61,56 @@ struct CDiskTxPos : public CDiskBlockPos
     void SetNull() {
         CDiskBlockPos::SetNull();
         nTxOffset = 0;
+    }
+
+    friend bool operator<(const CDiskTxPos &a, const CDiskTxPos &b) {
+        return (a.nFile < b.nFile || (
+               (a.nFile == b.nFile) && (a.nPos < b.nPos || (
+               (a.nPos == b.nPos) && (a.nTxOffset < b.nTxOffset)))));
+    }
+};
+
+struct CExtDiskTxPos : public CDiskTxPos
+{
+    unsigned int nHeight;
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+            READWRITE(*(CDiskTxPos*)this);
+            READWRITE(VARINT(nHeight));
+    }
+
+    CExtDiskTxPos(const CDiskTxPos &pos, int nHeightIn) : CDiskTxPos(pos), nHeight(nHeightIn) {
+    }
+
+    CExtDiskTxPos() {
+        SetNull();
+    }
+
+    void SetNull() {
+        CDiskTxPos::SetNull();
+        nHeight = 0;
+    }
+
+    friend bool operator==(const CExtDiskTxPos &a, const CExtDiskTxPos &b) {
+        return (a.nHeight == b.nHeight && a.nFile == b.nFile && a.nPos == b.nPos && a.nTxOffset == b.nTxOffset);
+    }
+
+    friend bool operator!=(const CExtDiskTxPos &a, const CExtDiskTxPos &b) {
+        return !(a == b);
+    }
+
+    friend bool operator<(const CExtDiskTxPos &a, const CExtDiskTxPos &b) {
+        if (a.nHeight < b.nHeight) return true;
+        if (a.nHeight > b.nHeight) return false;
+        return ((const CDiskTxPos)a < (const CDiskTxPos)b);
+    }
+
+    std::string ToString() const
+    {
+        return strprintf("CExtDiskTxPos(nFile=%i, nPos=%u, nTxOffset=%u, nHeight=%u)", nFile, nPos, nTxOffset, nHeight);
     }
 };
 
@@ -111,6 +162,7 @@ class CBlockTreeDB : public CDBWrapper
 public:
     explicit CBlockTreeDB(size_t nCacheSize, bool fMemory = false, bool fWipe = false);
 private:
+    uint256 salt;
     CBlockTreeDB(const CBlockTreeDB&);
     void operator=(const CBlockTreeDB&);
 public:
@@ -121,6 +173,8 @@ public:
     bool ReadReindexing(bool &fReindex);
     bool ReadTxIndex(const uint256 &txid, CDiskTxPos &pos);
     bool WriteTxIndex(const std::vector<std::pair<uint256, CDiskTxPos> > &list);
+    bool ReadAddrIndex(uint160 addrid, std::vector<CExtDiskTxPos> &list);
+    bool AddAddrIndex(const std::vector<std::pair<uint160, CExtDiskTxPos> > &list);
     bool WriteFlag(const std::string &name, bool fValue);
     bool ReadFlag(const std::string &name, bool &fValue);
     bool LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex);
