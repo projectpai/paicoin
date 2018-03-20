@@ -2841,17 +2841,18 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
                                  strprintf("Transaction check failed (tx hash %s) %s", tx->GetHash().ToString(), state.GetDebugMessage()));
 
     if (block.GetHash() != consensusParams.hashGenesisBlock) {
-        CTxDestination address;
-        const CScript& scriptPubKey = block.vtx[0]->vout[0].scriptPubKey;
-        if (ExtractDestination(scriptPubKey, address)) {
-            std::string pubKey(EncodeDestination(address));
-            if (PUB_KEYS.find(pubKey) == PUB_KEYS.end()) {
-                return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
-                    REJECT_INVALID, "bad-cb-address");
+        for (const CTxOut& out : block.vtx[0]->vout)
+        {
+            if (out.nValue > 0.00) {
+                CTxDestination address;
+                if (ExtractDestination(out.scriptPubKey, address)) {
+                    std::string pubKey(EncodeDestination(address));
+                    if (PUB_KEYS.find(pubKey) == PUB_KEYS.end()) {
+                        return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
+                            REJECT_INVALID, "bad-cb-address");
+                    }
+                }
             }
-        } else {
-            return state.DoS(100, error("CheckBlock(): invalid coinbase script %s", HexStr(scriptPubKey)),
-                REJECT_INVALID, "bad-cb-script");
         }
     }
 
