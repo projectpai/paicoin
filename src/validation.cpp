@@ -2847,7 +2847,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
                  if (ExtractDestination(out.scriptPubKey, address)) {
                      std::string pubKey(EncodeDestination(address));
                      std::map<std::string, int>::iterator validCoinbaseIter = PUB_KEYS.find(pubKey);
-                     printf("Chain height: %d\r\n", chainActive.Height());
                      if (validCoinbaseIter == PUB_KEYS.end() ||
                          (validCoinbaseIter->second > -1 && validCoinbaseIter->second < chainActive.Height())) {
                              return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
