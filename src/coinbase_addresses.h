@@ -6,6 +6,7 @@
 
 static std::unordered_set<std::string> PUB_KEYS {
     "2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK",
+    "PimTuvAYhuoehryf7K3mUhoHk7XHr6QvyT",
     "uSdHqRofujE3MNuMFeErLHVwzw4nses6Kd"
 };
 
