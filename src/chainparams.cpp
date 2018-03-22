@@ -144,9 +144,9 @@ public:
     CMainParams() {
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 210000;
-        consensus.BIP34Height = 0;  // BIP34 is activated from the genesis block
-        consensus.BIP65Height = 0;  // BIP65 is activated from the genesis block
-        consensus.BIP66Height = 0;  // BIP66 is activated from the genesis block
+        consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
+        consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
+        consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
         consensus.powLimit = MAINNET_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -160,7 +160,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         // Deployment of BIP68, BIP112, and BIP113.
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 1;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
 
@@ -170,12 +170,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
-        // TODO PAICOIN Update when releasing with the appropriate information in the blockchain info
-        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
+        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000058dbc3b60ba2df18");
 
         // By default assume that the signatures in ancestors of this block are valid.
-        // TODO PAICOIN Update when releasing with the appropriate stable block information
-        consensus.defaultAssumeValid = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
+        consensus.defaultAssumeValid = uint256S("0x00000000000005577fe466c07d7ccdc4abef3e262d2997043b3795dfe74a5f2b");
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -272,9 +270,9 @@ public:
     CTestNetParams() {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 210000;
-        consensus.BIP34Height = 0;  // BIP34 is activated from the genesis block
-        consensus.BIP65Height = 0;  // BIP65 is activated from the genesis block
-        consensus.BIP66Height = 0;  // BIP66 is activated from the genesis block
+        consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
+        consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
+        consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
         consensus.powLimit = TESTNET_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -288,7 +286,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         // Deployment of BIP68, BIP112, and BIP113.
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 1;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
 
@@ -298,12 +296,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
-        // TODO PAICOIN Update when releasing with the appropriate information in the blockchain info
-        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
+        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000c886e8450964");
 
         // By default assume that the signatures in ancestors of this block are valid.
-        // TODO PAICOIN Update when releasing with the appropriate stable block information
-        consensus.defaultAssumeValid = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
+        consensus.defaultAssumeValid = uint256S("0x0000000000b13e58c76917eb3b416fc284e36641d952a96c3422b0808d828646");
 
         pchMessageStart[0] = 0x0b;
         pchMessageStart[1] = 0x09;
@@ -414,7 +410,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 999999999999ULL;
 
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 1;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
 
