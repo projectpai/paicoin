@@ -2841,22 +2841,24 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
                                  strprintf("Transaction check failed (tx hash %s) %s", tx->GetHash().ToString(), state.GetDebugMessage()));
 
     if (block.GetHash() != consensusParams.hashGenesisBlock) {
-        for (const CTxOut& out : block.vtx[0]->vout)
-        {
-            if (out.nValue > 0.00) {
-                CTxDestination address;
-                if (ExtractDestination(out.scriptPubKey, address)) {
-                    std::string pubKey(EncodeDestination(address));
-                    if (PUB_KEYS.find(pubKey) == PUB_KEYS.end()) {
-                        return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
-                            REJECT_INVALID, "bad-cb-address");
-                    }
-                } else {
-			return state.DoS(100, error("CheckBlock(): invalid coinbase script: %s", HexStr(out.scriptPubKey)),
-			    REJECT_INVALID, "bad-cb-script");
-		}
-            }
-        }
+         for (const CTxOut& out : block.vtx[0]->vout) {
+             if (out.nValue > 0.00) {
+                 CTxDestination address;
+                 if (ExtractDestination(out.scriptPubKey, address)) {
+                     std::string pubKey(EncodeDestination(address));
+                     std::map<std::string, int>::iterator validCoinbaseIter = PUB_KEYS.find(pubKey);
+                     printf("Chain height: %d\r\n", chainActive.Height());
+                     if (validCoinbaseIter == PUB_KEYS.end() ||
+                         (validCoinbaseIter->second > -1 && validCoinbaseIter->second < chainActive.Height())) {
+                             return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
+                                 REJECT_INVALID, "bad-cb-address");
+		      }
+                 } else {
+                     return state.DoS(100, error("CheckBlock(): invalid coinbase script: %s", HexStr(out.scriptPubKey)),
+                         REJECT_INVALID, "bad-cb-script");
+                 }
+             }
+	}
     }
 
     unsigned int nSigOps = 0;
