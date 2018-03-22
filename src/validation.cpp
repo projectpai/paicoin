@@ -2851,7 +2851,10 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
                         return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
                             REJECT_INVALID, "bad-cb-address");
                     }
-                }
+                } else {
+			return state.DoS(100, error("CheckBlock(): invalid coinbase script: %s", HexStr(out.scriptPubKey)),
+			    REJECT_INVALID, "bad-cb-script");
+		}
             }
         }
     }
