@@ -2848,7 +2848,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
                      std::string pubKey(EncodeDestination(address));
                      std::map<std::string, int>::iterator validCoinbaseIter = PUB_KEYS.find(pubKey);
                      if (validCoinbaseIter == PUB_KEYS.end() ||
-                         (validCoinbaseIter->second > -1 && validCoinbaseIter->second < chainActive.Height())) {
+                         (validCoinbaseIter->second > -1 && validCoinbaseIter->second < chainActive.Height() + 1)) {
                              return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
                                  REJECT_INVALID, "bad-cb-address");
 		      }
