@@ -1,8 +1,8 @@
 # List of fixed seed nodes for testnet
 
-52.37.189.65:18567
-13.59.205.159:18567
-52.78.224.215:18567
+18.236.46.6:18567
+13.251.4.241:18567
+18.217.107.153:18567
 
 # TODO_PAICOIN Add the corresponding Onion nodes if needed
 # Onion nodes
