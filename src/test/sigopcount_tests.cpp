@@ -29,15 +29,15 @@ BOOST_AUTO_TEST_CASE(GetSigOpCount)
 {
     // Test CScript::GetSigOpCount()
     CScript s1;
-    BOOST_CHECK_EQUAL(s1.GetSigOpCount(false), 0U);
-    BOOST_CHECK_EQUAL(s1.GetSigOpCount(true), 0U);
+    BOOST_CHECK_EQUAL(s1.GetSigOpCount(false, 0), 0U);
+    BOOST_CHECK_EQUAL(s1.GetSigOpCount(true, 0), 0U);
 
     uint160 dummy;
     s1 << OP_1 << ToByteVector(dummy) << ToByteVector(dummy) << OP_2 << OP_CHECKMULTISIG;
-    BOOST_CHECK_EQUAL(s1.GetSigOpCount(true), 2U);
+    BOOST_CHECK_EQUAL(s1.GetSigOpCount(true, 0), 2U);
     s1 << OP_IF << OP_CHECKSIG << OP_ENDIF;
-    BOOST_CHECK_EQUAL(s1.GetSigOpCount(true), 3U);
-    BOOST_CHECK_EQUAL(s1.GetSigOpCount(false), 21U);
+    BOOST_CHECK_EQUAL(s1.GetSigOpCount(true, 0), 3U);
+    BOOST_CHECK_EQUAL(s1.GetSigOpCount(false, 0), 21U);
 
     CScript p2sh = GetScriptForDestination(CScriptID(s1));
     CScript scriptSig;
@@ -52,12 +52,12 @@ BOOST_AUTO_TEST_CASE(GetSigOpCount)
         keys.push_back(k.GetPubKey());
     }
     CScript s2 = GetScriptForMultisig(1, keys);
-    BOOST_CHECK_EQUAL(s2.GetSigOpCount(true), 3U);
-    BOOST_CHECK_EQUAL(s2.GetSigOpCount(false), 20U);
+    BOOST_CHECK_EQUAL(s2.GetSigOpCount(true, 0), 3U);
+    BOOST_CHECK_EQUAL(s2.GetSigOpCount(false, 0), 20U);
 
     p2sh = GetScriptForDestination(CScriptID(s2));
-    BOOST_CHECK_EQUAL(p2sh.GetSigOpCount(true), 0U);
-    BOOST_CHECK_EQUAL(p2sh.GetSigOpCount(false), 0U);
+    BOOST_CHECK_EQUAL(p2sh.GetSigOpCount(true, 0), 0U);
+    BOOST_CHECK_EQUAL(p2sh.GetSigOpCount(false, 0), 0U);
     CScript scriptSig2;
     scriptSig2 << OP_1 << ToByteVector(dummy) << ToByteVector(dummy) << Serialize(s2);
     BOOST_CHECK_EQUAL(p2sh.GetSigOpCount(scriptSig2), 3U);
@@ -168,9 +168,9 @@ BOOST_AUTO_TEST_CASE(GetTxSigOpCost)
         assert(GetTransactionSigOpCost(CTransaction(spendingTx), coins, flags & ~SCRIPT_VERIFY_WITNESS) == 0);
         assert(VerifyWithFlag(creationTx, spendingTx, flags) == SCRIPT_ERR_EQUALVERIFY);
 
-        // The sig op cost for witness version != 0 is zero.
+        // The sig op cost for witness version != 0 && version != 1 is zero.
         assert(scriptPubKey[0] == 0x00);
-        scriptPubKey[0] = 0x51;
+        scriptPubKey[0] = 0x52;
         BuildTxs(spendingTx, coins, creationTx, scriptPubKey, scriptSig, scriptWitness);
         assert(GetTransactionSigOpCost(CTransaction(spendingTx), coins, flags) == 0);
         scriptPubKey[0] = 0x00;

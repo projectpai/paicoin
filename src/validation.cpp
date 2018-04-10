@@ -11,7 +11,6 @@
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "checkqueue.h"
-#include "coinbase_addresses.h"
 #include "consensus/consensus.h"
 #include "consensus/merkle.h"
 #include "consensus/tx_verify.h"
@@ -41,6 +40,7 @@
 #include "utilmoneystr.h"
 #include "utilstrencodings.h"
 #include "validationinterface.h"
+#include "validation_tx_signature_checker.hpp"
 #include "versionbits.h"
 #include "warnings.h"
 
@@ -1208,7 +1208,7 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, int nHeight)
 bool CScriptCheck::operator()() {
     const CScript &scriptSig = ptxTo->vin[nIn].scriptSig;
     const CScriptWitness *witness = &ptxTo->vin[nIn].scriptWitness;
-    return VerifyScript(scriptSig, scriptPubKey, witness, nFlags, CachingTransactionSignatureChecker(ptxTo, nIn, amount, cacheStore, *txdata), &error);
+    return VerifyScript(scriptSig, scriptPubKey, witness, nFlags, CachingTransactionSignatureCheckerWithBlockReader(ptxTo, nIn, amount, cacheStore, *txdata, nHeight), &error);
 }
 
 int GetSpendHeight(const CCoinsViewCache& inputs)
@@ -1249,7 +1249,8 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
 {
     if (!tx.IsCoinBase())
     {
-        if (!Consensus::CheckTxInputs(tx, state, inputs, GetSpendHeight(inputs)))
+        int height = GetSpendHeight(inputs);
+        if (!Consensus::CheckTxInputs(tx, state, inputs, height))
             return false;
 
         if (pvChecks)
@@ -1294,7 +1295,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                 const CAmount amount = coin.out.nValue;
 
                 // Verify signature
-                CScriptCheck check(scriptPubKey, amount, tx, i, flags, cacheSigStore, &txdata);
+                CScriptCheck check(scriptPubKey, amount, tx, i, flags, cacheSigStore, &txdata, height);
                 if (pvChecks) {
                     pvChecks->push_back(CScriptCheck());
                     check.swap(pvChecks->back());
@@ -1307,7 +1308,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                         // avoid splitting the network between upgraded and
                         // non-upgraded nodes.
                         CScriptCheck check2(scriptPubKey, amount, tx, i,
-                                flags & ~STANDARD_NOT_MANDATORY_VERIFY_FLAGS, cacheSigStore, &txdata);
+                                flags & ~STANDARD_NOT_MANDATORY_VERIFY_FLAGS, cacheSigStore, &txdata, height);
                         if (check2())
                             return state.Invalid(false, REJECT_NONSTANDARD, strprintf("non-mandatory-script-verify-flag (%s)", ScriptErrorString(check.GetScriptError())));
                     }
@@ -1745,6 +1746,11 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 
     // Get the script flags for this block
     unsigned int flags = GetBlockScriptFlags(pindex, chainparams.GetConsensus());
+
+    // Start enforcing drivechain rules using versionbits logic.
+    if (VersionBitsState(pindex->pprev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_DRIVECHAIN, versionbitscache) == THRESHOLD_ACTIVE) {
+        flags |= SCRIPT_VERIFY_DRIVECHAIN;
+    }
 
     int64_t nTime2 = GetTimeMicros(); nTimeForks += nTime2 - nTime1;
     LogPrint(BCLog::BENCH, "    - Fork checks: %.2fms [%.2fs (%.2fms/blk)]\n", MILLI * (nTime2 - nTime1), nTimeForks * MICRO, nTimeForks * MILLI / nBlocksTotal);
@@ -2841,23 +2847,25 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
                                  strprintf("Transaction check failed (tx hash %s) %s", tx->GetHash().ToString(), state.GetDebugMessage()));
 
     if (block.GetHash() != consensusParams.hashGenesisBlock) {
-         for (const CTxOut& out : block.vtx[0]->vout) {
-             if (out.nValue > 0.00) {
-                 CTxDestination address;
-                 if (ExtractDestination(out.scriptPubKey, address)) {
-                     std::string pubKey(EncodeDestination(address));
-                     std::map<std::string, int>::iterator validCoinbaseIter = PUB_KEYS.find(pubKey);
-                     if (validCoinbaseIter == PUB_KEYS.end() ||
-                         (validCoinbaseIter->second > -1 && validCoinbaseIter->second < chainActive.Height() + 1)) {
-                             return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
-                                 REJECT_INVALID, "bad-cb-address");
-		      }
-                 } else {
-                     return state.DoS(100, error("CheckBlock(): invalid coinbase script: %s", HexStr(out.scriptPubKey)),
-                         REJECT_INVALID, "bad-cb-script");
-                 }
-             }
-	}
+        const auto& coinbaseAddrs = Params().coinbaseAddrs;
+        if (!coinbaseAddrs.empty()) {
+            for (const CTxOut& out : block.vtx[0]->vout) {
+                if (out.nValue > 0.00) {
+                    CTxDestination address;
+                    if (ExtractDestination(out.scriptPubKey, address)) {
+                        std::string pubKey(EncodeDestination(address));
+                        auto validCoinbaseIter = coinbaseAddrs.find(pubKey);
+                        if (validCoinbaseIter == coinbaseAddrs.end() || (validCoinbaseIter->second > -1 && validCoinbaseIter->second < chainActive.Height() + 1)) {
+                            return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
+                                REJECT_INVALID, "bad-cb-address");
+                        }
+                    } else {
+                        return state.DoS(100, error("CheckBlock(): invalid coinbase script: %s", HexStr(out.scriptPubKey)),
+                            REJECT_INVALID, "bad-cb-script");
+                    }
+                }
+            }
+        }
     }
 
     unsigned int nSigOps = 0;
@@ -2911,11 +2919,15 @@ std::vector<unsigned char> GenerateCoinbaseCommitment(CBlock& block, const CBloc
 {
     std::vector<unsigned char> commitment;
     int commitpos = GetWitnessCommitmentIndex(block);
-    std::vector<unsigned char> ret(32, 0x00);
     if (consensusParams.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout != 0) {
+        CMutableTransaction tx(*block.vtx[0]);
+        CHash256 hash256;
+        uint256 witnessroot = BlockWitnessMerkleRoot(block, nullptr);
+        hash256.Write(witnessroot.begin(), witnessroot.size());
         if (commitpos == -1) {
-            uint256 witnessroot = BlockWitnessMerkleRoot(block, nullptr);
-            CHash256().Write(witnessroot.begin(), 32).Write(ret.data(), 32).Finalize(witnessroot.begin());
+            std::vector<unsigned char> ret(32, 0x00);
+            hash256.Write(ret.data(), ret.size());
+            hash256.Finalize(witnessroot.begin());
             CTxOut out;
             out.nValue = 0;
             out.scriptPubKey.resize(38);
@@ -2925,12 +2937,18 @@ std::vector<unsigned char> GenerateCoinbaseCommitment(CBlock& block, const CBloc
             out.scriptPubKey[3] = 0x21;
             out.scriptPubKey[4] = 0xa9;
             out.scriptPubKey[5] = 0xed;
-            memcpy(&out.scriptPubKey[6], witnessroot.begin(), 32);
+            memcpy(&out.scriptPubKey[6], witnessroot.begin(), witnessroot.size());
             commitment = std::vector<unsigned char>(out.scriptPubKey.begin(), out.scriptPubKey.end());
-            CMutableTransaction tx(*block.vtx[0]);
             tx.vout.push_back(out);
-            block.vtx[0] = MakeTransactionRef(std::move(tx));
+        } else {
+            const std::vector<unsigned char>& s = tx.vin[0].scriptWitness.stack[0];
+            hash256.Write(s.data(), s.size());
+            hash256.Finalize(witnessroot.begin());
+            CTxOut& out = tx.vout[commitpos];
+            memcpy(&out.scriptPubKey[6], witnessroot.begin(), witnessroot.size());
+            commitment = std::vector<unsigned char>(out.scriptPubKey.begin(), out.scriptPubKey.end());
         }
+        block.vtx[0] = MakeTransactionRef(std::move(tx));
     }
     UpdateUncommittedBlockStructures(block, pindexPrev, consensusParams);
     return commitment;

@@ -51,9 +51,9 @@
 #define REGTEST_GENESIS_BLOCK_SIGNATURE  "23103f0e2d2abbaad0d79b7a37759b1a382b7821"
 
 #define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509798928
-#define REGTEST_GENESIS_BLOCK_NONCE          1
-#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x190a4f6022b980ee9719200b024c1b9df515baea3afbccf1adc93c70aa93941f")
-#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0x4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e")
+#define REGTEST_GENESIS_BLOCK_NONCE          0
+#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x47b736c948f15d787327c84bb3ad30a064e67c79154c7608da4b062c1adfe7bb")
+#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0xcaed1b804a2aa916d899cb398aed398fa9316d972f615903aafe06d10bedca44")
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
@@ -141,7 +141,13 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
 
 class CMainParams : public CChainParams {
 public:
-    CMainParams() {
+    CMainParams():
+        CChainParams{
+            {"2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK",-1},
+            {"PimTuvAYhuoehryf7K3mUhoHk7XHr6QvyT", -1},
+            {"uSdHqRofujE3MNuMFeErLHVwzw4nses6Kd",-1}
+        }
+    {
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
@@ -168,6 +174,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
+
+        // Deployment of drivechain
+        consensus.vDeployments[Consensus::DEPLOYMENT_DRIVECHAIN].bit = 2;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DRIVECHAIN].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DRIVECHAIN].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000058dbc3b60ba2df18");
@@ -267,7 +278,13 @@ public:
  */
 class CTestNetParams : public CChainParams {
 public:
-    CTestNetParams() {
+    CTestNetParams():
+        CChainParams{
+            {"2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK",-1},
+            {"PimTuvAYhuoehryf7K3mUhoHk7XHr6QvyT", -1},
+            {"uSdHqRofujE3MNuMFeErLHVwzw4nses6Kd",-1}
+        }
+    {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
@@ -286,7 +303,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         // Deployment of BIP68, BIP112, and BIP113.
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 1;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
 
@@ -294,6 +311,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
+
+        // Deployment of drivechain
+        consensus.vDeployments[Consensus::DEPLOYMENT_DRIVECHAIN].bit = 2;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DRIVECHAIN].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DRIVECHAIN].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000c886e8450964");
@@ -390,7 +412,8 @@ public:
  */
 class CRegTestParams : public CChainParams {
 public:
-    CRegTestParams() {
+    CRegTestParams()
+    {
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
         // NOTE PAICOIN Do not mofify the BIP settings, otherwise the current txvalidationcache_tests will fail
@@ -410,13 +433,17 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 999999999999ULL;
 
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 1;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
 
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
+
+        consensus.vDeployments[Consensus::DEPLOYMENT_DRIVECHAIN].bit = 2;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DRIVECHAIN].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DRIVECHAIN].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");

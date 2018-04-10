@@ -106,6 +106,10 @@ enum
     // Public keys in segregated witness scripts must be compressed
     //
     SCRIPT_VERIFY_WITNESS_PUBKEYTYPE = (1U << 15),
+
+    // Support drivechain merge mining
+    //
+    SCRIPT_VERIFY_DRIVECHAIN = (1U << 16),
 };
 
 bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, unsigned int flags, ScriptError* serror);
@@ -121,6 +125,7 @@ enum SigVersion
 {
     SIGVERSION_BASE = 0,
     SIGVERSION_WITNESS_V0 = 1,
+    SIGVERSION_WITNESS_V1 = 2,
 };
 
 uint256 SignatureHash(const CScript &scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache = nullptr);
@@ -141,6 +146,11 @@ public:
     virtual bool CheckSequence(const CScriptNum& nSequence) const
     {
          return false;
+    }
+
+    virtual bool CountAcks(const std::vector<unsigned char>& chainId, int periodAck, int periodLiveness, int& positiveAcks, int& negativeAcks) const
+    {
+        return -1;
     }
 
     virtual ~BaseSignatureChecker() {}

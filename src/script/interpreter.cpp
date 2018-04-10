@@ -10,6 +10,7 @@
 #include "crypto/sha1.h"
 #include "crypto/sha256.h"
 #include "pubkey.h"
+#include "script/drivechain.h"
 #include "script/script.h"
 #include "uint256.h"
 
@@ -423,8 +424,45 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
 
                     break;
                 }
+                case OP_COUNT_ACKS:
+                {
+                    if (!(flags & SCRIPT_VERIFY_DRIVECHAIN)) {
+                        // not enabled; treat as a NOP4
+                        if (flags & SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+                            return set_error(serror, SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS);
+                        break;
+                    }
+                    // (secondary_chain_id ack_period liveness_period -- )
+                    if (stack.size() < 3)
+                        return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
 
-                case OP_NOP1: case OP_NOP4: case OP_NOP5:
+                    valtype& secondaryChainId = stacktop(-3);
+                    if (secondaryChainId.size() < 1 || secondaryChainId.size() > MAX_CHAIN_ID_LENGTH)
+                        return set_error(serror, SCRIPT_ERR_COUNT_ACKS_INVALID_PARAM);
+
+                    CScriptNum periodAck(stacktop(-2), fRequireMinimal);
+                    if (periodAck < 1 || periodAck > MAX_ACK_PERIOD)
+                        return set_error(serror, SCRIPT_ERR_COUNT_ACKS_INVALID_PARAM);
+
+                    CScriptNum periodLiveness(stacktop(-1), fRequireMinimal);
+                    if (periodLiveness < MIN_LIVENESS_PERIOD || periodLiveness > MAX_LIVENESS_PERIOD)
+                        return set_error(serror, SCRIPT_ERR_COUNT_ACKS_INVALID_PARAM);
+
+                    int positiveAcks, negativeAcks;
+                    if (checker.CountAcks(secondaryChainId, periodAck.getint(), periodLiveness.getint(), positiveAcks, negativeAcks)) {
+                        popstack(stack);
+                        popstack(stack);
+                        popstack(stack);
+                        stack.push_back(CScriptNum(positiveAcks).getvch());
+                        stack.push_back(CScriptNum(negativeAcks).getvch());
+                    } else {
+                        return set_error(serror, SCRIPT_ERR_COUNT_ACKS_INVALID_PARAM);
+                    }
+
+                    break;
+                }
+
+                case OP_NOP1: case OP_NOP5:
                 case OP_NOP6: case OP_NOP7: case OP_NOP8: case OP_NOP9: case OP_NOP10:
                 {
                     if (flags & SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
@@ -1175,7 +1213,7 @@ PrecomputedTransactionData::PrecomputedTransactionData(const CTransaction& txTo)
 
 uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache)
 {
-    if (sigversion == SIGVERSION_WITNESS_V0) {
+    if ((sigversion == SIGVERSION_WITNESS_V0) || (sigversion == SIGVERSION_WITNESS_V1)) {
         uint256 hashPrevouts;
         uint256 hashSequence;
         uint256 hashOutputs;
@@ -1356,7 +1394,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
     std::vector<std::vector<unsigned char> > stack;
     CScript scriptPubKey;
 
-    if (witversion == 0) {
+    if ((witversion == 0) || (witversion == 1)) {
         if (program.size() == 32) {
             // Version 0 segregated witness program: SHA256(CScript) inside the program, CScript + inputs in witness
             if (witness.stack.size() == 0) {
@@ -1392,7 +1430,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
             return set_error(serror, SCRIPT_ERR_PUSH_SIZE);
     }
 
-    if (!EvalScript(stack, scriptPubKey, flags, checker, SIGVERSION_WITNESS_V0, serror)) {
+    if (!EvalScript(stack, scriptPubKey, flags, checker, (witversion == 1) ? SIGVERSION_WITNESS_V1 : SIGVERSION_WITNESS_V0, serror)) {
         return false;
     }
 
@@ -1525,13 +1563,13 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
 
 size_t static WitnessSigOps(int witversion, const std::vector<unsigned char>& witprogram, const CScriptWitness& witness, int flags)
 {
-    if (witversion == 0) {
+    if ((witversion == 0) || (witversion == 1)) {
         if (witprogram.size() == 20)
             return 1;
 
         if (witprogram.size() == 32 && witness.stack.size() > 0) {
             CScript subscript(witness.stack.back().begin(), witness.stack.back().end());
-            return subscript.GetSigOpCount(true);
+            return subscript.GetSigOpCount(true, witversion);
         }
     }
 
