@@ -6,6 +6,7 @@ TARGET = paicoin-qt
 TEMPLATE = app
 
 DEFINES += \
+    QT_IDE_BUILD \
     HAVE_CONFIG_H \
     __x86_64__ \
     USE_ASM

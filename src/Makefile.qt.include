@@ -235,7 +235,8 @@ PAICOIN_QT_H = \
   qt/walletmodel.h \
   qt/walletmodeltransaction.h \
   qt/walletview.h \
-  qt/winshutdownmonitor.h
+  qt/winshutdownmonitor.h \
+  qt/qrimagewidget.h
 
 RES_ICONS = \
   qt/res/icons/add.png \
@@ -346,7 +347,8 @@ PAICOIN_QT_WALLET_CPP = \
   qt/walletframe.cpp \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
-  qt/walletview.cpp
+  qt/walletview.cpp \
+  qt/qrimagewidget.cpp
 
 PAICOIN_QT_CPP = $(PAICOIN_QT_BASE_CPP)
 if TARGET_WINDOWS
@@ -356,7 +358,7 @@ if ENABLE_WALLET
 PAICOIN_QT_CPP += $(PAICOIN_QT_WALLET_CPP)
 endif
 
-RES_IMAGES = 
+RES_IMAGES =
 
 RES_MOVIES = $(wildcard $(srcdir)/qt/res/movies/spinner-*.png)
 
