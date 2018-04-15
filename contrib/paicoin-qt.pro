@@ -161,6 +161,7 @@ SOURCES += \
     ../src/qt/qrimagewidget.cpp \
     ../src/qt/qvalidatedlineedit.cpp \
     ../src/qt/qvaluecombobox.cpp \
+    ../src/qt/qrc_paicoin_locale.cpp \
     ../src/qt/receivecoinsdialog.cpp \
     ../src/qt/receiverequestdialog.cpp \
     ../src/qt/recentrequeststablemodel.cpp \
