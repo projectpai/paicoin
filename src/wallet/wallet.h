@@ -1100,6 +1100,9 @@ public:
 
     /* Generates a new HD master key (will not be activated) */
     CPubKey GenerateNewHDMasterKey();
+
+    /* Generates a new HD master key using the BIP39 key of 64 bytes (will not be activated) */
+    CPubKey GenerateNewHDMasterKey(const unsigned char *key64);
     
     /* Set the current HD master key (will reset the chain child index counters)
        Sets the master key's version based on the current wallet version (so the
