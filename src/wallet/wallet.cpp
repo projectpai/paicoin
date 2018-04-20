@@ -1392,14 +1392,17 @@ CPubKey CWallet::GenerateNewHDMasterKey()
 CPubKey CWallet::GenerateNewHDMasterKey(const unsigned char *key64)
 {
     CExtKey extKey;
-    extKey.SetMaster(key64, sizeof(key64));
+    extKey.SetMaster(key64, 64);
 
     int64_t nCreationTime = GetTime();
     CKeyMetadata metadata(nCreationTime);
 
     // calculate the pubkey
-    CPubKey pubkey = extKey.key.GetPubKey();
-    assert(extKey.key.VerifyPubKey(pubkey));
+    CKey key;
+    ChainCode chainCode;
+    extKey.key.Derive(key, chainCode, 0 | BIP32_HARDENED_KEY_LIMIT, extKey.chaincode);
+    CPubKey pubkey = key.GetPubKey();
+    assert(key.VerifyPubKey(pubkey));
 
     // set the hd keypath to "m" -> Master, refers the masterkeyid to itself
     metadata.hdKeypath     = "m";
@@ -1412,7 +1415,7 @@ CPubKey CWallet::GenerateNewHDMasterKey(const unsigned char *key64)
         mapKeyMetadata[pubkey.GetID()] = metadata;
 
         // write the key&metadata to the database
-        if (!AddKeyPubKey(extKey.key, pubkey))
+        if (!AddKeyPubKey(key, pubkey))
             throw std::runtime_error(std::string(__func__) + ": AddKeyPubKey failed");
     }
 
