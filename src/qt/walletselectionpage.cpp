@@ -23,5 +23,5 @@ void WalletSelectionPage::on_pushButtonCreate_clicked()
 
 void WalletSelectionPage::on_pushButtonRestore_clicked()
 {
-    Q_EMIT toToRestoreWallet();
+    Q_EMIT goToRestoreWallet();
 }

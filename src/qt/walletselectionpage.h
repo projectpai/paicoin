@@ -17,7 +17,7 @@ public:
 
 Q_SIGNALS:
     void goToCreateNewWallet();
-    void toToRestoreWallet();
+    void goToRestoreWallet();
 
 private Q_SLOTS:
     void on_pushButtonCreate_clicked();
