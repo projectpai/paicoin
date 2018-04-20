@@ -1688,7 +1688,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+554"/>
+        <location filename="../paicoin.cpp" line="+560"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4047,6 +4047,39 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
     <message>
         <location line="+0"/>
         <source>The wallet data was successfully saved to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>WelcomePage</name>
+    <message>
+        <location filename="../forms/welcomepage.ui" line="+14"/>
+        <source>Form</source>
+        <translation type="unfinished">Form</translation>
+    </message>
+    <message>
+        <location line="+62"/>
+        <source>Welcome to PAI Up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Send and receive PAIcoin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+46"/>
+        <source>Easy Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+51"/>
+        <source>Advanced Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>  By using this application I agree to the &lt;a href=&quot;https://lanier.ai/terms-of-service/&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://lanier.ai/privacy-policy/&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
