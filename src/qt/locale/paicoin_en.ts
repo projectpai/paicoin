@@ -1302,12 +1302,12 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Sign &amp;message...</translation>
     </message>
     <message>
-        <location line="+435"/>
+        <location line="+438"/>
         <source>Synchronizing with network...</source>
         <translation>Synchronizing with network...</translation>
     </message>
     <message>
-        <location line="-513"/>
+        <location line="-516"/>
         <source>&amp;Overview</source>
         <translation>&amp;Overview</translation>
     </message>
@@ -1402,7 +1402,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+365"/>
+        <location line="+368"/>
         <source>Click to disable network activity.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1427,7 +1427,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Reindexing blocks on disk...</translation>
     </message>
     <message>
-        <location line="-516"/>
+        <location line="-519"/>
         <source>Send coins to a PAIcoin address</source>
         <translation>Send coins to a PAIcoin address</translation>
     </message>
@@ -1457,12 +1457,12 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>&amp;Verify message...</translation>
     </message>
     <message>
-        <location line="+522"/>
+        <location line="+525"/>
         <source>PAIcoin</source>
         <translation>PAIcoin</translation>
     </message>
     <message>
-        <location line="-747"/>
+        <location line="-750"/>
         <source>Wallet</source>
         <translation>Wallet</translation>
     </message>
@@ -1502,7 +1502,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Verify messages to ensure they were signed with specified PAIcoin addresses</translation>
     </message>
     <message>
-        <location line="+58"/>
+        <location line="+61"/>
         <source>&amp;File</source>
         <translation>&amp;File</translation>
     </message>
@@ -1522,7 +1522,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Tabs toolbar</translation>
     </message>
     <message>
-        <location line="-158"/>
+        <location line="-161"/>
         <source>Request payments (generates QR codes and paicoin: URIs)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1547,7 +1547,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location line="+362"/>
+        <location line="+365"/>
         <source>%n active connection(s) to PAIcoin network</source>
         <translation>
             <numerusform>%n active connection to PAIcoin network</numerusform>
@@ -1608,12 +1608,12 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Up to date</translation>
     </message>
     <message>
-        <location line="-446"/>
+        <location line="-449"/>
         <source>Show the %1 help message to get a list with possible PAIcoin command-line options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+200"/>
+        <location line="+203"/>
         <source>%1 client</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1688,7 +1688,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+534"/>
+        <location filename="../paicoin.cpp" line="+554"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3980,6 +3980,34 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
     </message>
 </context>
 <context>
+    <name>WalletSelectionPage</name>
+    <message>
+        <location filename="../forms/walletselectionpage.ui" line="+14"/>
+        <source>Form</source>
+        <translation type="unfinished">Form</translation>
+    </message>
+    <message>
+        <location line="+122"/>
+        <source>Send and receive PAIcoin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+42"/>
+        <source>Create New Wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+51"/>
+        <source>Restore Wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>  By using this application I agree to the &lt;a href=&quot;https://lanier.ai/terms-of-service/&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://lanier.ai/privacy-policy/&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>WalletView</name>
     <message>
         <location filename="../walletview.cpp" line="+46"/>
@@ -4095,12 +4123,12 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Run in the background as a daemon and accept commands</translation>
     </message>
     <message>
-        <location line="+38"/>
+        <location line="+37"/>
         <source>Unable to start HTTP server. See debug log for details.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-386"/>
+        <location line="-385"/>
         <source>PAIcoin Core</source>
         <translation type="unfinished">PAIcoin Core</translation>
     </message>
@@ -4540,11 +4568,6 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Unable to generate initial keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location line="+3"/>
         <source>Unsupported argument -benchmark ignored, use -debug=bench.</source>
         <translation type="unfinished"></translation>
@@ -4610,7 +4633,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-389"/>
+        <location line="-388"/>
         <source>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4840,7 +4863,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+8"/>
         <source>Upgrade wallet to latest format on startup</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4885,7 +4908,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-78"/>
+        <location line="-77"/>
         <source>Password for JSON-RPC connections</source>
         <translation>Password for JSON-RPC connections</translation>
     </message>
@@ -5210,12 +5233,12 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+6"/>
         <source>Unknown network specified in -onlynet: &apos;%s&apos;</source>
         <translation>Unknown network specified in -onlynet: &apos;%s&apos;</translation>
     </message>
     <message>
-        <location line="-83"/>
+        <location line="-82"/>
         <source>Insufficient funds</source>
         <translation>Insufficient funds</translation>
     </message>

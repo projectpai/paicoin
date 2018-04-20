@@ -129,6 +129,7 @@ SOURCES += \
     ../src/support/lockedpool.cpp \
     ../src/wallet/crypter.cpp \
     ../src/wallet/db.cpp \
+#    ../src/wallet/init.cpp \
     ../src/wallet/wallet.cpp \
     ../src/wallet/walletdb.cpp \
     ../src/qt/addressbookpage.cpp \
@@ -185,7 +186,8 @@ SOURCES += \
     ../src/qt/walletview.cpp \
     ../src/qt/winshutdownmonitor.cpp \
     ../src/qt/paymentrequest.pb.cc \
-    ../src/qt/fundsinholdingdialog.cpp
+    ../src/qt/fundsinholdingdialog.cpp \
+    ../src/qt/walletselectionpage.cpp
 
 HEADERS += \
     ../src/qt/addressbookpage.h \
@@ -241,7 +243,8 @@ HEADERS += \
     ../src/qt/walletmodeltransaction.h \
     ../src/qt/walletview.h \
     ../src/qt/winshutdownmonitor.h \
-    ../src/qt/fundsinholdingdialog.h
+    ../src/qt/fundsinholdingdialog.h \
+    ../src/qt/walletselectionpage.h
 
 UI_DIR = ../src/qt/forms
 
@@ -262,7 +265,8 @@ FORMS += \
     ../src/qt/forms/sendcoinsentry.ui \
     ../src/qt/forms/signverifymessagedialog.ui \
     ../src/qt/forms/transactiondescdialog.ui \
-    ../src/qt/forms/fundsinholdingdialog.ui
+    ../src/qt/forms/fundsinholdingdialog.ui \
+    ../src/qt/forms/walletselectionpage.ui
 
 RESOURCES += \
     ../src/qt/paicoin.qrc
