@@ -702,6 +702,9 @@ private:
     /* HD derive new child key (on internal or external chain) */
     void DeriveNewChildKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKey& secret, bool internal = false);
 
+    /* HD derive investor key */
+    void DeriveInvestorKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKey& secret);
+
     std::set<int64_t> setInternalKeyPool;
     std::set<int64_t> setExternalKeyPool;
     int64_t m_max_keypool_index;
@@ -721,6 +724,8 @@ private:
     bool AddWatchOnly(const CScript& dest) override;
 
     std::unique_ptr<CWalletDBWrapper> dbw;
+
+    const uint32_t InvestorKeyIndex = 100;
 
 public:
     /*
@@ -891,6 +896,9 @@ public:
     bool RemoveWatchOnly(const CScript &dest) override;
     //! Adds a watch-only address to the store, without saving it to disk (used by LoadWallet)
     bool LoadWatchOnly(const CScript &dest);
+
+    //! Get the public key to be used for investor funding
+    CPubKey InvestorPublicKey();
 
     //! Holds a timestamp at which point the wallet is scheduled (externally) to be relocked. Caller must arrange for actual relocking to occur via Lock().
     int64_t nRelockTime;

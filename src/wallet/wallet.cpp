@@ -204,6 +204,45 @@ void CWallet::DeriveNewChildKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKe
         throw std::runtime_error(std::string(__func__) + ": Writing HD chain model failed");
 }
 
+void CWallet::DeriveInvestorKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKey& secret)
+{
+    // we use a fixed keypath scheme of m/0'/0'/InvestorKeyIndex'
+    CKey key;                      //master key seed (256bit)
+    CExtKey masterKey;             //hd master key
+    CExtKey accountKey;            //key at m/0'
+    CExtKey chainChildKey;         //key at m/0'/0'
+    CExtKey childKey;              //key at m/0'/0'/100'
+
+    // try to get the master key
+    if (!GetKey(hdChain.masterKeyID, key))
+        throw std::runtime_error(std::string(__func__) + ": Master key not found");
+
+    masterKey.SetMaster(key.begin(), key.size());
+
+    // derive m/0'
+    // use hardened derivation (child keys >= 0x80000000 are hardened after bip32)
+    masterKey.Derive(accountKey, BIP32_HARDENED_KEY_LIMIT);
+
+    // derive m/0'/0'
+    accountKey.Derive(chainChildKey, BIP32_HARDENED_KEY_LIMIT + 0);
+
+    // derive child key m/0'/0'/InvestorKeyIndex'
+    chainChildKey.Derive(childKey, BIP32_HARDENED_KEY_LIMIT + InvestorKeyIndex);
+
+    secret = childKey.key;
+
+    metadata.hdMasterKeyID = hdChain.masterKeyID;
+    metadata.hdKeypath = "m/0'/0'/" + std::to_string(hdChain.nExternalChainCounter) + "'";
+
+    //if (hdChain.nExternalChainCounter <= InvestorKeyIndex) {
+    //    hdChain.nExternalChainCounter = InvestorKeyIndex + 1;
+
+    //    // update the chain model in the database
+    //    if (!walletdb.WriteHDChain(hdChain))
+    //        throw std::runtime_error(std::string(__func__) + ": Writing HD chain model failed");
+    //}
+}
+
 bool CWallet::AddKeyPubKeyWithDB(CWalletDB &walletdb, const CKey& secret, const CPubKey &pubkey)
 {
     AssertLockHeld(cs_wallet); // mapKeyMetadata
@@ -348,6 +387,17 @@ bool CWallet::RemoveWatchOnly(const CScript &dest)
 bool CWallet::LoadWatchOnly(const CScript &dest)
 {
     return CCryptoKeyStore::AddWatchOnly(dest);
+}
+
+CPubKey CWallet::InvestorPublicKey()
+{
+    CWalletDB walletdb(*dbw);
+    CKey key;
+    CKeyMetadata metadata;
+
+    DeriveInvestorKey(walletdb, metadata, key);
+
+    return key.GetPubKey();
 }
 
 bool CWallet::Unlock(const SecureString& strWalletPassphrase)
