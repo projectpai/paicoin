@@ -8,6 +8,7 @@
 #include "../crypto/common.h"
 #include "../crypto/sha256.h"
 #include "../crypto/hmac_sha512.h"
+#include <assert.h>
 #include <fstream>
 #include <stdio.h>
 #include <string.h>

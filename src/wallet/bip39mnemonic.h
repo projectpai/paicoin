@@ -10,6 +10,7 @@
 #define BIP39MNEMONIC_H
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #define BIP39_CREATION_TIME  1388534400 // oldest possible BIP39 phrase creation time, seconds after unix epoch
 #define BIP39_WORDLIST_COUNT 2048       // number of words in a BIP39 wordlist
