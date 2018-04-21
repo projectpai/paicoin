@@ -188,7 +188,8 @@ SOURCES += \
     ../src/qt/paymentrequest.pb.cc \
     ../src/qt/fundsinholdingdialog.cpp \
     ../src/qt/walletselectionpage.cpp \
-    ../src/qt/welcomepage.cpp
+    ../src/qt/welcomepage.cpp \
+    ../src/qt/setpinpage.cpp
 
 HEADERS += \
     ../src/qt/addressbookpage.h \
@@ -246,7 +247,8 @@ HEADERS += \
     ../src/qt/winshutdownmonitor.h \
     ../src/qt/fundsinholdingdialog.h \
     ../src/qt/walletselectionpage.h \
-    ../src/qt/welcomepage.h
+    ../src/qt/welcomepage.h \
+    ../src/qt/setpinpage.h
 
 UI_DIR = ../src/qt/forms
 
@@ -269,7 +271,8 @@ FORMS += \
     ../src/qt/forms/transactiondescdialog.ui \
     ../src/qt/forms/fundsinholdingdialog.ui \
     ../src/qt/forms/walletselectionpage.ui \
-    ../src/qt/forms/welcomepage.ui
+    ../src/qt/forms/welcomepage.ui \
+    ../src/qt/forms/setpinpage.ui
 
 RESOURCES += \
     ../src/qt/paicoin.qrc

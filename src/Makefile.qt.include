@@ -114,7 +114,8 @@ QT_FORMS_UI = \
   qt/forms/transactiondescdialog.ui \
   qt/forms/fundsinholdingdialog.ui \
   qt/forms/walletselectionpage.ui \
-  qt/forms/welcomepage.ui
+  qt/forms/welcomepage.ui \
+  qt/forms/setpinpage.ui
 
 QT_MOC_CPP = \
   qt/moc_addressbookpage.cpp \
@@ -165,7 +166,8 @@ QT_MOC_CPP = \
   qt/moc_walletview.cpp \
   qt/moc_fundsinholdingdialog.cpp \
   qt/moc_walletselectionpage.cpp \
-  qt/moc_welcomepage.cpp
+  qt/moc_welcomepage.cpp \
+  qt/moc_setpinpage.cpp
 
 PAICOIN_MM = \
   qt/macdockiconhandler.mm \
@@ -245,7 +247,8 @@ PAICOIN_QT_H = \
   qt/qrimagewidget.h \
   qt/fundsinholdingdialog.h \
   qt/walletselectionpage.h \
-  qt/welcomepage.h
+  qt/welcomepage.h \
+  qt/setpinpage.h
 
 RES_ICONS = \
   qt/res/icons/add.png \
@@ -330,7 +333,8 @@ PAICOIN_QT_BASE_CPP = \
   qt/utilitydialog.cpp \
   qt/fundsinholdingdialog.cpp \
   qt/walletselectionpage.cpp \
-  qt/welcomepage.cpp
+  qt/welcomepage.cpp \
+  qt/setpinpage.cpp
 
 PAICOIN_QT_WINDOWS_CPP = qt/winshutdownmonitor.cpp
 

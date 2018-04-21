@@ -1688,7 +1688,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+560"/>
+        <location filename="../paicoin.cpp" line="+562"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3095,6 +3095,40 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <location filename="../sendcoinsdialog.cpp" line="+83"/>
         <location line="+5"/>
         <source>Yes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SetPinPage</name>
+    <message>
+        <location filename="../forms/setpinpage.ui" line="+14"/>
+        <source>Form</source>
+        <translation type="unfinished">Form</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>&lt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+37"/>
+        <location filename="../setpinpage.cpp" line="+92"/>
+        <source>Set PIN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Your PIN will be used to unlock your PAIcoin Wallet and send money. Use only numbers to create your PIN.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+158"/>
+        <source>Remember this PIN. If you forget it, you won&apos;t be able to access your PAIcoin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../setpinpage.cpp" line="+7"/>
+        <source>Re-Enter PIN</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
