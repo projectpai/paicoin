@@ -80,7 +80,7 @@
        </property>
       </widget>
      </item>
-     <item>
+     <item alignment="Qt::AlignHCenter">
       <widget class="QLabel" name="labelSend">
        <property name="minimumSize">
         <size>
@@ -201,7 +201,7 @@ alignment:center;</string>
        </property>
       </widget>
      </item>
-     <item>
+     <item alignment="Qt::AlignHCenter">
       <widget class="QLabel" name="labelLegal">
        <property name="minimumSize">
         <size>
