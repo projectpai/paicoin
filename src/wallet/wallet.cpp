@@ -1501,6 +1501,65 @@ bool CWallet::IsHDEnabled() const
     return !hdChain.masterKeyID.IsNull();
 }
 
+bool CWallet::CreateMultisig(std::string& address, std::vector<unsigned char>& redeemScript, const size_t required, const CPubKey pubKeys[], const size_t count)
+{
+    // validation
+
+    assert(required >= 0 && required <= 16 && count >= 0 && count <= 16);
+
+    if (required > 16 || count > 16) {
+        return false;
+    }
+
+    size_t scriptLen = 1;                   // required opcode
+    for (uint8_t i = 0; i < count; ++i) {
+        scriptLen += 1;                     // key size value
+        if (pubKeys[i].IsCompressed())
+            scriptLen += 33;                // key size
+        else
+            scriptLen += 65;                // key size
+    }
+    scriptLen += 1;                         // count opcode
+    scriptLen += 1;                         // checkmultisig opcode
+
+    // script
+
+    unsigned char script[scriptLen];
+    size_t idx = 0;
+
+    script[idx++] = CScript::EncodeOP_N(required);
+
+    unsigned char keySize = 0;
+    for (unsigned char i = 0; i < count; ++i) {
+        keySize = (pubKeys[i].IsCompressed() ? 33 : 65);
+        script[idx] = keySize;
+        memcpy(&script[idx+1], pubKeys[i].begin(), keySize);
+        idx += (1 + keySize);
+    }
+
+    script[idx++] = CScript::EncodeOP_N(count);
+
+    script[idx] = OP_CHECKMULTISIG;
+
+    // address
+
+    std::vector<unsigned char> addr;
+    addr.resize(21);
+
+    addr[0] = Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS)[0];
+
+    CHash160 hash160;
+    hash160.Write((const unsigned char *)script, scriptLen);
+    hash160.Finalize(&addr[1]);
+
+    redeemScript.resize(scriptLen);
+    redeemScript.assign(script, script + scriptLen);
+
+    address = EncodeBase58Check(addr);
+
+    return true;
+}
+
 int64_t CWalletTx::GetTxTime() const
 {
     int64_t n = nTimeSmart;
