@@ -3,7 +3,6 @@
 
 #include <set>
 #include <random>
-#include <iostream>
 
 PaperKeyCompletionPage::PaperKeyCompletionPage(QStringList words, QWidget *parent) :
     QWidget(parent),
@@ -44,14 +43,14 @@ void PaperKeyCompletionPage::SelectRandomKeys()
         verificationIndexes.insert(uniformDistribution(generator));
 
     auto it = verificationIndexes.begin();
+
     std::advance(it, 1);
     firstIndex = *it;
     firstWord = paperKeyList.at(firstIndex - 1);
-    std::cout << "First: " << firstIndex << " " << firstWord.toStdString().c_str() << std::endl;
+
     std::advance(it, 1);
     secondIndex = *it;
     secondWord = paperKeyList.at(secondIndex - 1);
-    std::cout << "Second: " << secondIndex << " " << secondWord.toStdString().c_str() << std::endl;
 }
 
 void PaperKeyCompletionPage::EnableSubmitIfEqual()
