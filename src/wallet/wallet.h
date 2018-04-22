@@ -1117,13 +1117,6 @@ public:
        caller must ensure the current wallet version is correct before calling
        this function). */
     bool SetHDMasterKey(const CPubKey& key);
-
-    /*
-     * Writes the multisig address of type M-of-N to addr and the corresponding redeem script to redeemScript
-     * pubKeys can contain the public keys to be used in the address
-     * returns true if addr and redeemScript contain the correct information, false otherwise
-     */
-    bool CreateMultisig(std::string& addr, std::vector<unsigned char>& redeemScript, const size_t required, const CPubKey pubKeys[], const size_t count);
 };
 
 /** A key allocated from the key pool. */
