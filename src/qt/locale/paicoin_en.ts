@@ -1688,7 +1688,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+571"/>
+        <location filename="../paicoin.cpp" line="+573"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2723,6 +2723,34 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+42"/>
         <source>Requested</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RestoreWalletPage</name>
+    <message>
+        <location filename="../forms/restorewalletpage.ui" line="+14"/>
+        <source>Form</source>
+        <translation type="unfinished">Form</translation>
+    </message>
+    <message>
+        <location line="+83"/>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Enter the Paper Key of the wallet you want to restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+241"/>
+        <source>Restore Wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../restorewalletpage.cpp" line="+12"/>
+        <source>Word #%1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
