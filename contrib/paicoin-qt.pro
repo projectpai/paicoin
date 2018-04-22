@@ -192,7 +192,8 @@ SOURCES += \
     ../src/qt/welcomepage.cpp \
     ../src/qt/setpinpage.cpp \
     ../src/qt/paperkeyintropage.cpp \
-    ../src/qt/paperkeywritedownpage.cpp
+    ../src/qt/paperkeywritedownpage.cpp \
+    ../src/qt/paperkeycompletionpage.cpp
 
 HEADERS += \
     ../src/qt/addressbookpage.h \
@@ -253,7 +254,8 @@ HEADERS += \
     ../src/qt/welcomepage.h \
     ../src/qt/setpinpage.h \
     ../src/qt/paperkeyintropage.h \
-    ../src/qt/paperkeywritedownpage.h
+    ../src/qt/paperkeywritedownpage.h \
+    ../src/qt/paperkeycompletionpage.h
 
 UI_DIR = ../src/qt/forms
 
@@ -279,7 +281,8 @@ FORMS += \
     ../src/qt/forms/welcomepage.ui \
     ../src/qt/forms/setpinpage.ui \
     ../src/qt/forms/paperkeyintropage.ui \
-    ../src/qt/forms/paperkeywritedownpage.ui
+    ../src/qt/forms/paperkeywritedownpage.ui \
+    ../src/qt/forms/paperkeycompletionpage.ui
 
 RESOURCES += \
     ../src/qt/paicoin.qrc

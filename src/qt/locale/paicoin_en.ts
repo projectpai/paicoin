@@ -1688,8 +1688,37 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+569"/>
+        <location filename="../paicoin.cpp" line="+571"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyCompletionPage</name>
+    <message>
+        <location filename="../forms/paperkeycompletionpage.ui" line="+14"/>
+        <source>Form</source>
+        <translation type="unfinished">Form</translation>
+    </message>
+    <message>
+        <location line="+76"/>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>To make sure everything was written down correctly, please enter the following words from your paper key.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+82"/>
+        <source>Submit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../paperkeycompletionpage.cpp" line="+20"/>
+        <location line="+1"/>
+        <source>Word #%1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

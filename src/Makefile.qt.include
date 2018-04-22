@@ -117,7 +117,8 @@ QT_FORMS_UI = \
   qt/forms/welcomepage.ui \
   qt/forms/setpinpage.ui \
   qt/forms/paperkeyintropage.ui \
-  qt/forms/paperkeywritedownpage.ui
+  qt/forms/paperkeywritedownpage.ui \
+  qt/forms/paperkeycompletionpage.ui
 
 QT_MOC_CPP = \
   qt/moc_addressbookpage.cpp \
@@ -171,7 +172,8 @@ QT_MOC_CPP = \
   qt/moc_welcomepage.cpp \
   qt/moc_setpinpage.cpp \
   qt/moc_paperkeyintropage.cpp \
-  qt/moc_paperkeywritedownpage.cpp
+  qt/moc_paperkeywritedownpage.cpp \
+  qt/moc_paperkeycompletionpage.cpp
 
 PAICOIN_MM = \
   qt/macdockiconhandler.mm \
@@ -254,7 +256,8 @@ PAICOIN_QT_H = \
   qt/welcomepage.h \
   qt/setpinpage.h \
   qt/paperkeyintropage.h \
-  qt/paperkeywritedownpage.h
+  qt/paperkeywritedownpage.h \
+  qt/paperkeycompletionpage.h
 
 RES_ICONS = \
   qt/res/icons/add.png \
@@ -342,7 +345,8 @@ PAICOIN_QT_BASE_CPP = \
   qt/welcomepage.cpp \
   qt/setpinpage.cpp \
   qt/paperkeyintropage.cpp \
-  qt/paperkeywritedownpage.cpp
+  qt/paperkeywritedownpage.cpp \
+  qt/paperkeycompletionpage.cpp
 
 PAICOIN_QT_WINDOWS_CPP = qt/winshutdownmonitor.cpp
 
