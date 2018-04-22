@@ -342,7 +342,7 @@ bool Investor::CreateMultisig(std::string& address, CScript& redeemScript, const
 {
     // validation
 
-    assert((required >= 0) && (required <= 16) && (pubKeys.size() >= 0) && (pubKeys.size() <= 16));
+    assert((required >= 0) && (required <= 16) && (pubKeys.size() <= 16));
 
     if ((required > 16) || (pubKeys.size() > 16)) {
         return false;
