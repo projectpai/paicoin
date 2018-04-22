@@ -132,6 +132,7 @@ SOURCES += \
 #    ../src/wallet/init.cpp \
     ../src/wallet/wallet.cpp \
     ../src/wallet/walletdb.cpp \
+    ../src/wallet/bip39mnemonic.cpp \
     ../src/qt/addressbookpage.cpp \
     ../src/qt/addresstablemodel.cpp \
     ../src/qt/askpassphrasedialog.cpp \
@@ -190,7 +191,8 @@ SOURCES += \
     ../src/qt/walletselectionpage.cpp \
     ../src/qt/welcomepage.cpp \
     ../src/qt/setpinpage.cpp \
-    ../src/qt/paperkeyintropage.cpp
+    ../src/qt/paperkeyintropage.cpp \
+    ../src/qt/paperkeywritedownpage.cpp
 
 HEADERS += \
     ../src/qt/addressbookpage.h \
@@ -250,7 +252,8 @@ HEADERS += \
     ../src/qt/walletselectionpage.h \
     ../src/qt/welcomepage.h \
     ../src/qt/setpinpage.h \
-    ../src/qt/paperkeyintropage.h
+    ../src/qt/paperkeyintropage.h \
+    ../src/qt/paperkeywritedownpage.h
 
 UI_DIR = ../src/qt/forms
 
@@ -275,7 +278,8 @@ FORMS += \
     ../src/qt/forms/walletselectionpage.ui \
     ../src/qt/forms/welcomepage.ui \
     ../src/qt/forms/setpinpage.ui \
-    ../src/qt/forms/paperkeyintropage.ui
+    ../src/qt/forms/paperkeyintropage.ui \
+    ../src/qt/forms/paperkeywritedownpage.ui
 
 RESOURCES += \
     ../src/qt/paicoin.qrc

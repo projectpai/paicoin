@@ -1688,8 +1688,76 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+562"/>
+        <location filename="../paicoin.cpp" line="+569"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyIntroPage</name>
+    <message>
+        <location filename="../forms/paperkeyintropage.ui" line="+14"/>
+        <source>Form</source>
+        <translation type="unfinished">Form</translation>
+    </message>
+    <message>
+        <location line="+108"/>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Your paper key is the only way to restore your PAIcoin Wallet if your phone is lost, stolen, broken, or updated.
+
+We will show you a list of words to write down on a piece of paper and keep safe.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Write down paper key</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyWritedownPage</name>
+    <message>
+        <location filename="../forms/paperkeywritedownpage.ui" line="+14"/>
+        <source>Form</source>
+        <translation type="unfinished">Form</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>&lt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Write down each word in order and store it in a safe place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>Word</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Previous</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../paperkeywritedownpage.cpp" line="+55"/>
+        <source>%1 of %2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3112,7 +3180,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
     </message>
     <message>
         <location line="+37"/>
-        <location filename="../setpinpage.cpp" line="+92"/>
+        <location filename="../setpinpage.cpp" line="+88"/>
         <source>Set PIN</source>
         <translation type="unfinished"></translation>
     </message>
