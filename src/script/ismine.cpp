@@ -10,8 +10,7 @@
 #include "script/script.h"
 #include "script/standard.h"
 #include "script/sign.h"
-#import "wallet/investor.h"
-
+#include "wallet/investor.h"
 
 typedef std::vector<unsigned char> valtype;
 
