@@ -9,13 +9,24 @@
 #include <string>
 #include <vector>
 #include "key.h"
-#include "wallet.h"
+#include "sync.h"
 #include "script/script.h"
+
+class CWallet;
+class CWalletTx;
+class CScript;
+class CPubKey;
+class CKey;
+struct CMutableTransaction;
+class CTxIn;
+class CTxOut;
+class CCriticalSection;
+class uint256;
 
 class Investor final {
 public:
     // Singleton
-    static Investor& getInstance();
+    static Investor& GetInstance();
 
     /*
      * Writes the multisig address of type M-of-N to addr and the corresponding redeem script to redeemScript
@@ -33,13 +44,13 @@ public:
     /*
      * Gets all the multisig addresses for the investor
      */
-    void AllMultisigAddresses(std::vector<std::string>& addresses);
+    std::vector<std::string> AllMultisigAddresses();
 
     /* Gets the balance for all the investor's multisig addresses */
     uint64_t GlobalBalance(void);
 
     /* Adds or delete the amount in the investor output or input of the transaction to or from the balance for the corresponding multisig address */
-    void UpdateBalanceInTransaction(const CWallet& wallet, const CWalletTx* tx);
+    void UpdateBalanceInTransaction(const CWallet& wallet, const CWalletTx& tx);
 
     /* Returns true if the transaction has an output that refers to one of the investor's multisig addresses */
     bool TransactionIsMyInvestment(const CWalletTx* tx);
@@ -50,20 +61,23 @@ public:
     /* Returns true if the address is one of the investor's multisig addresses */
     bool AddressIsMyMultisig(std::string& address);
 
+    /* Returns true if the Hash160 is one of the investor's multisig keys */
+    bool Hash160IsMyMultisig(const uint160& hash160);
+
     /* Get the number of seconds until the soonest period expiration in which the investor has funds (non-zero balance) */
     uint64_t SecondsUntilHoldingPeriodExpires(void);
 
     /* Returns true if the user should be prompted with the popup to update the application */
-    bool ShouldUpdateApplication(const CWallet& wallet, const std::vector<CWalletTx*> transactions);
+    bool ShouldUpdateApplication(const CWallet& wallet);
 
     /* Returns true if the user should be prompted with the popup to unlock the investment */
-    bool ShouldUnlockInvestment(const CWallet& wallet, const std::vector<CWalletTx*> transactions);
+    bool ShouldUnlockInvestment(const CWallet& wallet);
 
     /*
      * Creates a transaction that sends all the investor funds that are unlocked to a specified public key
      * returns true if transaction created successfully
      */
-    bool CreateUnlockTransaction(CWallet& wallet, const CKey& privateKey, const std::vector<CWalletTx*>& lockedTransactions, const CPubKey& pubKey, CMutableTransaction& unlockTransaction);
+    bool CreateUnlockTransaction(CWallet& wallet, const CKey& privateKey, const CPubKey& pubKey, CMutableTransaction& unlockTransaction);
 
     /* Returns true if this an the unlock transaction (all inputs are from the holding period multisig addresses) */
     bool IsUnlockTransaction(const CWallet& wallet, const CWalletTx* tx);

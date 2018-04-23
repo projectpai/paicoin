@@ -10,7 +10,7 @@
 #include "script/script.h"
 #include "script/standard.h"
 #include "script/sign.h"
-
+#include "wallet/investor.h"
 
 typedef std::vector<unsigned char> valtype;
 
@@ -97,6 +97,11 @@ isminetype IsMine(const CKeyStore &keystore, const CScript& scriptPubKey, bool& 
     case TX_SCRIPTHASH:
     {
         CScriptID scriptID = CScriptID(uint160(vSolutions[0]));
+
+        if (Investor::GetInstance().Hash160IsMyMultisig(scriptID)) {
+            return ISMINE_SPENDABLE;
+        }
+
         CScript subscript;
         if (keystore.GetCScript(scriptID, subscript)) {
             isminetype ret = IsMine(keystore, subscript, isInvalid);
