@@ -1297,17 +1297,17 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
 <context>
     <name>PAIcoinGUI</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+359"/>
+        <location filename="../paicoingui.cpp" line="+358"/>
         <source>Sign &amp;message...</source>
         <translation>Sign &amp;message...</translation>
     </message>
     <message>
-        <location line="+438"/>
+        <location line="+435"/>
         <source>Synchronizing with network...</source>
         <translation>Synchronizing with network...</translation>
     </message>
     <message>
-        <location line="-516"/>
+        <location line="-513"/>
         <source>&amp;Overview</source>
         <translation>&amp;Overview</translation>
     </message>
@@ -1387,7 +1387,17 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>&amp;Change Passphrase...</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+7"/>
+        <source>&amp;View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>&amp;Sending addresses...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1402,7 +1412,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+368"/>
+        <location line="+362"/>
         <source>Click to disable network activity.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1427,7 +1437,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Reindexing blocks on disk...</translation>
     </message>
     <message>
-        <location line="-519"/>
+        <location line="-516"/>
         <source>Send coins to a PAIcoin address</source>
         <translation>Send coins to a PAIcoin address</translation>
     </message>
@@ -1442,7 +1452,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Change the passphrase used for wallet encryption</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+9"/>
         <source>&amp;Debug window</source>
         <translation>&amp;Debug window</translation>
     </message>
@@ -1452,17 +1462,17 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Open debugging and diagnostic console</translation>
     </message>
     <message>
-        <location line="-4"/>
+        <location line="-7"/>
         <source>&amp;Verify message...</source>
         <translation>&amp;Verify message...</translation>
     </message>
     <message>
-        <location line="+525"/>
+        <location line="+522"/>
         <source>PAIcoin</source>
         <translation>PAIcoin</translation>
     </message>
     <message>
-        <location line="-750"/>
+        <location line="-747"/>
         <source>Wallet</source>
         <translation>Wallet</translation>
     </message>
@@ -1502,7 +1512,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Verify messages to ensure they were signed with specified PAIcoin addresses</translation>
     </message>
     <message>
-        <location line="+61"/>
+        <location line="+62"/>
         <source>&amp;File</source>
         <translation>&amp;File</translation>
     </message>
@@ -1512,7 +1522,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>&amp;Settings</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>&amp;Help</source>
         <translation>&amp;Help</translation>
     </message>
@@ -1522,12 +1532,12 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Tabs toolbar</translation>
     </message>
     <message>
-        <location line="-161"/>
+        <location line="-163"/>
         <source>Request payments (generates QR codes and paicoin: URIs)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+73"/>
         <source>Show the list of used sending addresses and labels</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1547,7 +1557,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location line="+365"/>
+        <location line="+359"/>
         <source>%n active connection(s) to PAIcoin network</source>
         <translation>
             <numerusform>%n active connection to PAIcoin network</numerusform>
@@ -1608,17 +1618,17 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Up to date</translation>
     </message>
     <message>
-        <location line="-449"/>
+        <location line="-443"/>
         <source>Show the %1 help message to get a list with possible PAIcoin command-line options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+203"/>
+        <location line="+202"/>
         <source>%1 client</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+232"/>
+        <location line="+227"/>
         <source>Connecting to peers...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1688,7 +1698,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+573"/>
+        <location filename="../paicoin.cpp" line="+534"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1716,7 +1726,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../paperkeycompletionpage.cpp" line="+20"/>
+        <location filename="../paperkeycompletionpage.cpp" line="+19"/>
         <location line="+1"/>
         <source>Word #%1</source>
         <translation type="unfinished"></translation>
@@ -2749,7 +2759,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../restorewalletpage.cpp" line="+12"/>
+        <location filename="../restorewalletpage.cpp" line="+10"/>
         <source>Word #%1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4076,6 +4086,24 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
 </context>
 <context>
+    <name>ViewInvestorKeyDialog</name>
+    <message>
+        <location filename="../forms/viewinvestorkeydialog.ui" line="+14"/>
+        <source>View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Investor key copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+62"/>
+        <source>Copy Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>WalletFrame</name>
     <message>
         <location filename="../walletframe.cpp" line="+27"/>
@@ -4091,7 +4119,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished">Send Coins</translation>
     </message>
     <message>
-        <location line="+388"/>
+        <location line="+393"/>
         <location line="+46"/>
         <location line="+9"/>
         <source>Fee bump error</source>
@@ -4169,7 +4197,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>WalletView</name>
     <message>
-        <location filename="../walletview.cpp" line="+46"/>
+        <location filename="../walletview.cpp" line="+49"/>
         <source>&amp;Export</source>
         <translation type="unfinished">&amp;Export</translation>
     </message>
@@ -4315,12 +4343,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>Run in the background as a daemon and accept commands</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+38"/>
         <source>Unable to start HTTP server. See debug log for details.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-385"/>
+        <location line="-386"/>
         <source>PAIcoin Core</source>
         <translation type="unfinished">PAIcoin Core</translation>
     </message>
@@ -4760,6 +4788,11 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Unable to generate initial keys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location line="+3"/>
         <source>Unsupported argument -benchmark ignored, use -debug=bench.</source>
         <translation type="unfinished"></translation>
@@ -4825,7 +4858,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-388"/>
+        <location line="-389"/>
         <source>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5055,7 +5088,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>Upgrade wallet to latest format on startup</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5100,7 +5133,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-77"/>
+        <location line="-78"/>
         <source>Password for JSON-RPC connections</source>
         <translation>Password for JSON-RPC connections</translation>
     </message>
@@ -5425,12 +5458,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Unknown network specified in -onlynet: &apos;%s&apos;</source>
         <translation>Unknown network specified in -onlynet: &apos;%s&apos;</translation>
     </message>
     <message>
-        <location line="-82"/>
+        <location line="-83"/>
         <source>Insufficient funds</source>
         <translation>Insufficient funds</translation>
     </message>

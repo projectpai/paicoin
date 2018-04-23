@@ -119,7 +119,8 @@ QT_FORMS_UI = \
   qt/forms/paperkeyintropage.ui \
   qt/forms/paperkeywritedownpage.ui \
   qt/forms/paperkeycompletionpage.ui \
-  qt/forms/restorewalletpage.ui
+  qt/forms/restorewalletpage.ui \
+  qt/forms/viewinvestorkeydialog.ui
 
 QT_MOC_CPP = \
   qt/moc_addressbookpage.cpp \
@@ -175,7 +176,8 @@ QT_MOC_CPP = \
   qt/moc_paperkeyintropage.cpp \
   qt/moc_paperkeywritedownpage.cpp \
   qt/moc_paperkeycompletionpage.cpp \
-  qt/moc_restorewalletpage.cpp
+  qt/moc_restorewalletpage.cpp \
+  qt/moc_viewinvestorkeydialog.cpp
 
 PAICOIN_MM = \
   qt/macdockiconhandler.mm \
@@ -260,7 +262,8 @@ PAICOIN_QT_H = \
   qt/paperkeyintropage.h \
   qt/paperkeywritedownpage.h \
   qt/paperkeycompletionpage.h \
-  qt/restorewalletpage.h
+  qt/restorewalletpage.h \
+  qt/viewinvestorkeydialog.h
 
 RES_ICONS = \
   qt/res/icons/add.png \
@@ -350,7 +353,8 @@ PAICOIN_QT_BASE_CPP = \
   qt/paperkeyintropage.cpp \
   qt/paperkeywritedownpage.cpp \
   qt/paperkeycompletionpage.cpp \
-  qt/restorewalletpage.cpp
+  qt/restorewalletpage.cpp \
+  qt/viewinvestorkeydialog.cpp
 
 PAICOIN_QT_WINDOWS_CPP = qt/winshutdownmonitor.cpp
 

@@ -113,6 +113,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     openRPCConsoleAction(0),
     openAction(0),
     showHelpMessageAction(0),
+    viewInvestorKeyAction(0),
     trayIcon(0),
     trayIconMenu(0),
     notificator(0),
@@ -359,6 +360,9 @@ void PAIcoinGUI::createActions()
     verifyMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/verify"), tr("&Verify message..."), this);
     verifyMessageAction->setStatusTip(tr("Verify messages to ensure they were signed with specified PAIcoin addresses"));
 
+    viewInvestorKeyAction = new QAction(tr("&View Investor Key"), this);
+    viewInvestorKeyAction->setStatusTip(tr("View Investor Key"));
+
     openRPCConsoleAction = new QAction(platformStyle->TextColorIcon(":/icons/debugwindow"), tr("&Debug window"), this);
     openRPCConsoleAction->setStatusTip(tr("Open debugging and diagnostic console"));
     // initially disable the debug window menu item
@@ -397,6 +401,7 @@ void PAIcoinGUI::createActions()
         connect(usedSendingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedSendingAddresses()));
         connect(usedReceivingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedReceivingAddresses()));
         connect(openAction, SIGNAL(triggered()), this, SLOT(openClicked()));
+        connect(viewInvestorKeyAction, SIGNAL(triggered()), walletFrame, SLOT(viewInvestorKey()));
     }
 #endif // ENABLE_WALLET
 
@@ -434,6 +439,7 @@ void PAIcoinGUI::createMenuBar()
     {
         settings->addAction(encryptWalletAction);
         settings->addAction(changePassphraseAction);
+        settings->addAction(viewInvestorKeyAction);
         settings->addSeparator();
     }
     settings->addAction(optionsAction);

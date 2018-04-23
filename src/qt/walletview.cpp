@@ -18,6 +18,7 @@
 #include "transactiontablemodel.h"
 #include "transactionview.h"
 #include "walletmodel.h"
+#include "viewinvestorkeydialog.h"
 
 #include "ui_interface.h"
 
@@ -28,6 +29,8 @@
 #include <QProgressDialog>
 #include <QPushButton>
 #include <QVBoxLayout>
+
+#include <sstream>
 
 WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     QStackedWidget(parent),
@@ -279,6 +282,14 @@ void WalletView::unlockWallet()
         dlg.setModel(walletModel);
         dlg.exec();
     }
+}
+
+void WalletView::viewInvestorKey()
+{
+    QString investorKey = GUIUtil::formatPubKey(walletModel->getInvestorKey());
+    ViewInvestorKeyDialog dlg(investorKey, this);
+    dlg.setModel(walletModel);
+    dlg.exec();
 }
 
 void WalletView::usedSendingAddresses()

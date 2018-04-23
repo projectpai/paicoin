@@ -194,7 +194,8 @@ SOURCES += \
     ../src/qt/paperkeyintropage.cpp \
     ../src/qt/paperkeywritedownpage.cpp \
     ../src/qt/paperkeycompletionpage.cpp \
-    ../src/qt/restorewalletpage.cpp
+    ../src/qt/restorewalletpage.cpp \
+    ../src/qt/viewinvestorkeydialog.cpp
 
 HEADERS += \
     ../src/qt/addressbookpage.h \
@@ -257,7 +258,8 @@ HEADERS += \
     ../src/qt/paperkeyintropage.h \
     ../src/qt/paperkeywritedownpage.h \
     ../src/qt/paperkeycompletionpage.h \
-    ../src/qt/restorewalletpage.h
+    ../src/qt/restorewalletpage.h \
+    ../src/qt/viewinvestorkeydialog.h
 
 UI_DIR = ../src/qt/forms
 
@@ -285,7 +287,8 @@ FORMS += \
     ../src/qt/forms/paperkeyintropage.ui \
     ../src/qt/forms/paperkeywritedownpage.ui \
     ../src/qt/forms/paperkeycompletionpage.ui \
-    ../src/qt/forms/restorewalletpage.ui
+    ../src/qt/forms/restorewalletpage.ui \
+    ../src/qt/forms/viewinvestorkeydialog.ui
 
 RESOURCES += \
     ../src/qt/paicoin.qrc

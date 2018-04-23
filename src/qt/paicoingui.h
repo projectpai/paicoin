@@ -111,6 +111,7 @@ private:
     QAction *openRPCConsoleAction;
     QAction *openAction;
     QAction *showHelpMessageAction;
+    QAction *viewInvestorKeyAction;
 
     QSystemTrayIcon *trayIcon;
     QMenu *trayIconMenu;

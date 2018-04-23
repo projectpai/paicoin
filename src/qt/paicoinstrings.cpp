@@ -42,6 +42,9 @@ QT_TRANSLATE_NOOP("paicoin-core", ""
 QT_TRANSLATE_NOOP("paicoin-core", ""
 "Cannot obtain a lock on data directory %s. %s is probably already running."),
 QT_TRANSLATE_NOOP("paicoin-core", ""
+"Cannot provide specific connections and have addrman find outgoing "
+"connections at the same."),
+QT_TRANSLATE_NOOP("paicoin-core", ""
 "Connect only to the specified node(s); -connect=0 disables automatic "
 "connections"),
 QT_TRANSLATE_NOOP("paicoin-core", ""
@@ -250,14 +253,11 @@ QT_TRANSLATE_NOOP("paicoin-core", ""
 QT_TRANSLATE_NOOP("paicoin-core", ""
 "You need to rebuild the database using -reindex to go back to unpruned "
 "mode.  This will redownload the entire blockchain"),
-QT_TRANSLATE_NOOP("paicoin-core", ""
-"You need to rebuild the database using -reindex-chainstate to change -txindex"),
 QT_TRANSLATE_NOOP("paicoin-core", "%d of last 100 blocks have unexpected version"),
 QT_TRANSLATE_NOOP("paicoin-core", "%s corrupt, salvage failed"),
 QT_TRANSLATE_NOOP("paicoin-core", "%s is set very high!"),
 QT_TRANSLATE_NOOP("paicoin-core", "(default: %s)"),
 QT_TRANSLATE_NOOP("paicoin-core", "(default: %u)"),
-QT_TRANSLATE_NOOP("paicoin-core", "(press q to shutdown and continue later)"),
 QT_TRANSLATE_NOOP("paicoin-core", "-maxmempool must be at least %d MB"),
 QT_TRANSLATE_NOOP("paicoin-core", "<category> can be:"),
 QT_TRANSLATE_NOOP("paicoin-core", "Accept command line and JSON-RPC commands"),
@@ -272,7 +272,6 @@ QT_TRANSLATE_NOOP("paicoin-core", "Automatically create Tor hidden service (defa
 QT_TRANSLATE_NOOP("paicoin-core", "Block creation options:"),
 QT_TRANSLATE_NOOP("paicoin-core", "Cannot downgrade wallet"),
 QT_TRANSLATE_NOOP("paicoin-core", "Cannot resolve -%s address: '%s'"),
-QT_TRANSLATE_NOOP("paicoin-core", "Cannot write default address"),
 QT_TRANSLATE_NOOP("paicoin-core", "Chain selection options:"),
 QT_TRANSLATE_NOOP("paicoin-core", "Change index out of range"),
 QT_TRANSLATE_NOOP("paicoin-core", "Connect through SOCKS5 proxy"),
@@ -395,6 +394,7 @@ QT_TRANSLATE_NOOP("paicoin-core", "Transaction too large for fee policy"),
 QT_TRANSLATE_NOOP("paicoin-core", "Transaction too large"),
 QT_TRANSLATE_NOOP("paicoin-core", "Unable to bind to %s on this computer (bind returned error %s)"),
 QT_TRANSLATE_NOOP("paicoin-core", "Unable to bind to %s on this computer. %s is probably already running."),
+QT_TRANSLATE_NOOP("paicoin-core", "Unable to generate initial keys"),
 QT_TRANSLATE_NOOP("paicoin-core", "Unable to start HTTP server. See debug log for details."),
 QT_TRANSLATE_NOOP("paicoin-core", "Unknown network specified in -onlynet: '%s'"),
 QT_TRANSLATE_NOOP("paicoin-core", "Unsupported argument -benchmark ignored, use -debug=bench."),
@@ -416,6 +416,7 @@ QT_TRANSLATE_NOOP("paicoin-core", "Wallet options:"),
 QT_TRANSLATE_NOOP("paicoin-core", "Warning"),
 QT_TRANSLATE_NOOP("paicoin-core", "Warning: unknown new rules activated (versionbit %i)"),
 QT_TRANSLATE_NOOP("paicoin-core", "Whether to operate in a blocks only mode (default: %u)"),
+QT_TRANSLATE_NOOP("paicoin-core", "You need to rebuild the database using -reindex to change -txindex"),
 QT_TRANSLATE_NOOP("paicoin-core", "Zapping all transactions from wallet..."),
 QT_TRANSLATE_NOOP("paicoin-core", "ZeroMQ notification options:"),
 };

@@ -1009,6 +1009,27 @@ QString formatNiceTimeOffset(qint64 secs)
     return timeBehindText;
 }
 
+char digitToChar(uint8_t digit)
+{
+    return (((digit) & 0x0f) + ((((digit) & 0x0f) <= 9) ? '0' : 'a' - 0x0a));
+}
+
+QString formatPubKey(const CPubKey &pubKey)
+{
+    QString formattedPubKey;
+    for (int i = 0; i < 65; ++i)
+    {
+        if (pubKey[i] == 0x00)
+            break;
+        else
+        {
+            formattedPubKey.append(digitToChar(pubKey[i] >> 4));
+            formattedPubKey.append(digitToChar(pubKey[i]));
+        }
+    }
+    return formattedPubKey;
+}
+
 void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_EMIT clicked(event->pos());

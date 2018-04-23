@@ -6,6 +6,7 @@
 #define PAICOIN_QT_WALLETVIEW_H
 
 #include "amount.h"
+#include "pubkey.h"
 
 #include <QStackedWidget>
 
@@ -98,6 +99,9 @@ public Q_SLOTS:
     void changePassphrase();
     /** Ask for passphrase to unlock wallet temporarily */
     void unlockWallet();
+
+    /** Show investor key */
+    void viewInvestorKey();
 
     /** Show used sending addresses */
     void usedSendingAddresses();

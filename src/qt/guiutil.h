@@ -7,6 +7,7 @@
 
 #include "amount.h"
 #include "fs.h"
+#include "pubkey.h"
 
 #include <QEvent>
 #include <QHeaderView>
@@ -203,6 +204,12 @@ namespace GUIUtil
     QString formatTimeOffset(int64_t nTimeOffset);
 
     QString formatNiceTimeOffset(qint64 secs);
+
+    /* Converts a digit to a user-readable char. */
+    char digitToChar(uint8_t digit);
+
+    /* Format a CPubKey into a user-readable string. */
+    QString formatPubKey(const CPubKey &pubKey);
 
     class ClickableLabel : public QLabel
     {
