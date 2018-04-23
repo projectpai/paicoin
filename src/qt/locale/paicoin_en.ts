@@ -590,7 +590,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="+47"/>
         <source>Funds in Holding</source>
         <translation type="unfinished"></translation>
     </message>
@@ -602,7 +602,7 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+54"/>
+        <location line="+59"/>
         <source>Okay</source>
         <translation type="unfinished"></translation>
     </message>

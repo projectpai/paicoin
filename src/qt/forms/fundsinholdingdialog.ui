@@ -57,6 +57,7 @@ color:#000;</string>
       <widget class="QLabel" name="titleLabel">
        <property name="font">
         <font>
+         <pointsize>16</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
@@ -127,10 +128,15 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
            <height>40</height>
           </size>
          </property>
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
          <property name="styleSheet">
-          <string notr="true">background:#9b9b9b;
-color:#fff;
-font-weight:600;</string>
+          <string notr="true">background:#1972ea;
+color:#fff;</string>
          </property>
          <property name="text">
           <string>Okay</string>
