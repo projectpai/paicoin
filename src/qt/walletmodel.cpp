@@ -572,7 +572,7 @@ bool WalletModel::getPrivKey(const CKeyID &address, CKey& vchPrivKeyOut) const
 
 CPubKey WalletModel::getInvestorKey() const
 {
-    return wallet->InvestorPublicKey();
+    return wallet->GetInvestorPublicKey();
 }
 
 // returns a list of COutputs from COutPoints
