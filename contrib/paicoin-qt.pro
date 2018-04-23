@@ -129,8 +129,10 @@ SOURCES += \
     ../src/support/lockedpool.cpp \
     ../src/wallet/crypter.cpp \
     ../src/wallet/db.cpp \
+#    ../src/wallet/init.cpp \
     ../src/wallet/wallet.cpp \
     ../src/wallet/walletdb.cpp \
+    ../src/wallet/bip39mnemonic.cpp \
     ../src/qt/addressbookpage.cpp \
     ../src/qt/addresstablemodel.cpp \
     ../src/qt/askpassphrasedialog.cpp \
@@ -185,7 +187,14 @@ SOURCES += \
     ../src/qt/walletview.cpp \
     ../src/qt/winshutdownmonitor.cpp \
     ../src/qt/paymentrequest.pb.cc \
-    ../src/qt/fundsinholdingdialog.cpp
+    ../src/qt/fundsinholdingdialog.cpp \
+    ../src/qt/walletselectionpage.cpp \
+    ../src/qt/welcomepage.cpp \
+    ../src/qt/setpinpage.cpp \
+    ../src/qt/paperkeyintropage.cpp \
+    ../src/qt/paperkeywritedownpage.cpp \
+    ../src/qt/paperkeycompletionpage.cpp \
+    ../src/qt/restorewalletpage.cpp
 
 HEADERS += \
     ../src/qt/addressbookpage.h \
@@ -241,7 +250,14 @@ HEADERS += \
     ../src/qt/walletmodeltransaction.h \
     ../src/qt/walletview.h \
     ../src/qt/winshutdownmonitor.h \
-    ../src/qt/fundsinholdingdialog.h
+    ../src/qt/fundsinholdingdialog.h \
+    ../src/qt/walletselectionpage.h \
+    ../src/qt/welcomepage.h \
+    ../src/qt/setpinpage.h \
+    ../src/qt/paperkeyintropage.h \
+    ../src/qt/paperkeywritedownpage.h \
+    ../src/qt/paperkeycompletionpage.h \
+    ../src/qt/restorewalletpage.h
 
 UI_DIR = ../src/qt/forms
 
@@ -262,7 +278,14 @@ FORMS += \
     ../src/qt/forms/sendcoinsentry.ui \
     ../src/qt/forms/signverifymessagedialog.ui \
     ../src/qt/forms/transactiondescdialog.ui \
-    ../src/qt/forms/fundsinholdingdialog.ui
+    ../src/qt/forms/fundsinholdingdialog.ui \
+    ../src/qt/forms/walletselectionpage.ui \
+    ../src/qt/forms/welcomepage.ui \
+    ../src/qt/forms/setpinpage.ui \
+    ../src/qt/forms/paperkeyintropage.ui \
+    ../src/qt/forms/paperkeywritedownpage.ui \
+    ../src/qt/forms/paperkeycompletionpage.ui \
+    ../src/qt/forms/restorewalletpage.ui
 
 RESOURCES += \
     ../src/qt/paicoin.qrc

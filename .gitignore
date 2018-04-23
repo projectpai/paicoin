@@ -44,6 +44,8 @@ src/qt/*.moc
 src/qt/moc_*.cpp
 src/qt/forms/ui_*.h
 paicoin-qt*
+contrib/ui_*
+contrib/moc_*
 
 src/qt/test/moc*.cpp
 
