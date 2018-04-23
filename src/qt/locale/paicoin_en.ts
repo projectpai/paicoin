@@ -682,6 +682,47 @@ You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</
     </message>
 </context>
 <context>
+    <name>HoldingPeriodCompleteDialog</name>
+    <message>
+        <location filename="../forms/holdingperiodcompletedialog.ui" line="+20"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+37"/>
+        <source>Holding Period Complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+55"/>
+        <source>Okay</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../holdingperiodcompletedialog.cpp" line="+16"/>
+        <source>Please update PAIcoin wallet to unlock your investment.
+You may update by downloading the latest version from Lanier.ai
+
+If you do not update the application, your investment will remain in holding.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Congratulations! Your initial PAIcoin investment is now available for transactions.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/holdingperiodcompletedialog.ui" line="+29"/>
+        <source>Go to Lanier.ai</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+45"/>
+        <source>Not now</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>Intro</name>
     <message>
         <location filename="../forms/intro.ui" line="+14"/>
@@ -4197,7 +4238,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>WalletView</name>
     <message>
-        <location filename="../walletview.cpp" line="+49"/>
+        <location filename="../walletview.cpp" line="+51"/>
         <source>&amp;Export</source>
         <translation type="unfinished">&amp;Export</translation>
     </message>

@@ -195,7 +195,8 @@ SOURCES += \
     ../src/qt/paperkeywritedownpage.cpp \
     ../src/qt/paperkeycompletionpage.cpp \
     ../src/qt/restorewalletpage.cpp \
-    ../src/qt/viewinvestorkeydialog.cpp
+    ../src/qt/viewinvestorkeydialog.cpp \
+    ../src/qt/holdingperiodcompletedialog.cpp
 
 HEADERS += \
     ../src/qt/addressbookpage.h \
@@ -259,7 +260,8 @@ HEADERS += \
     ../src/qt/paperkeywritedownpage.h \
     ../src/qt/paperkeycompletionpage.h \
     ../src/qt/restorewalletpage.h \
-    ../src/qt/viewinvestorkeydialog.h
+    ../src/qt/viewinvestorkeydialog.h \
+    ../src/qt/holdingperiodcompletedialog.h
 
 UI_DIR = ../src/qt/forms
 
@@ -288,7 +290,8 @@ FORMS += \
     ../src/qt/forms/paperkeywritedownpage.ui \
     ../src/qt/forms/paperkeycompletionpage.ui \
     ../src/qt/forms/restorewalletpage.ui \
-    ../src/qt/forms/viewinvestorkeydialog.ui
+    ../src/qt/forms/viewinvestorkeydialog.ui \
+    ../src/qt/forms/holdingperiodcompletedialog.ui
 
 RESOURCES += \
     ../src/qt/paicoin.qrc
