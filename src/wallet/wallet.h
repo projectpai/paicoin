@@ -18,6 +18,7 @@
 #include "wallet/crypter.h"
 #include "wallet/walletdb.h"
 #include "wallet/rpcwallet.h"
+#include "wallet/investor.h"
 
 #include <algorithm>
 #include <atomic>
@@ -897,9 +898,6 @@ public:
     //! Adds a watch-only address to the store, without saving it to disk (used by LoadWallet)
     bool LoadWatchOnly(const CScript &dest);
 
-    //! Get the public key to be used for investor funding
-    CPubKey InvestorPublicKey();
-
     //! Holds a timestamp at which point the wallet is scheduled (externally) to be relocked. Caller must arrange for actual relocking to occur via Lock().
     int64_t nRelockTime;
 
@@ -1117,6 +1115,46 @@ public:
        caller must ensure the current wallet version is correct before calling
        this function). */
     bool SetHDMasterKey(const CPubKey& key);
+
+    // INVESTOR INTERFACE
+
+    /* Get the public key to be used for investor funding */
+    CPubKey GetInvestorPublicKey();
+
+    /* Get all the multisig addresses for the investor */
+    std::vector<std::string> GetAllMultisigAddresses();
+
+    /* Get the current wallet balance for investors receiving funds to the custom multisig addresses
+     * returns the investor balance until the funds are moved from the multisig address, even after the holding period expires, or 0 for users that are not investors
+     */
+    uint64_t GetInvestorBalance();
+
+    /* Return true if tx is an investor multisig transaction funding the wallet */
+    bool TransactionIsMyInvestment(const CWalletTx* tx);
+
+    /* Returns true if the total balance for the transaction's investor outputs is zero, or if the transaction does not have any investor output */
+    bool TransactionIsUnlocked(const CWalletTx *tx);
+
+    /*
+     * Gets the number of seconds until the holding period expires and the investors can spend their funds
+     * returns 0 if the user is not an investor or if the holding period expired
+     */
+    uint64_t SecondsUntilHoldingPeriodExpires();
+
+    /* Returns true if the user should be prompted with the popup to update the application */
+    bool ShouldUpdateApplication();
+
+    /* Returns true if the user should be prompted with the popup to unlock the investment */
+    bool ShouldUnlockInvestment();
+
+    /* Returns the tx with the necessary data to move all the unlocked investor funds to an available personal address */
+    bool CreateInvestorUnlockTransaction(CWalletTx& tx, const CPubKey& pubKey);
+
+    /* Returns true if this an the unlock transaction (all inputs are from the holding period multisig addresses) */
+    bool IsUnlockTransaction(const CWalletTx* tx);
+
+    /* reset the investor's data (public key, multisig address, redeem script, balance) */
+    void WipeInvestorData();
 };
 
 /** A key allocated from the key pool. */

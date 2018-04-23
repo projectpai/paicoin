@@ -3,15 +3,17 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "investor.h"
+#include <map>
 #include <assert.h>
 #include <time.h>
 #include <algorithm>
 #include "chainparams.h"
 #include "base58.h"
+#include "wallet.h"
 #include "script/standard.h"
 #include "fees.h"
 
-Investor& Investor::getInstance()
+Investor& Investor::GetInstance()
 {
     static Investor instance;
     return instance;
@@ -388,15 +390,17 @@ void Investor::SetPublicKey(const CPubKey& pubKey)
 
 // all addreses
 
-void Investor::AllMultisigAddresses(std::vector<std::string>& addresses)
+std::vector<std::string> Investor::AllMultisigAddresses()
 {
-    addresses.clear();
+    std::vector<std::string> addresses;
     
     LOCK(csInvestor);
     
     for (auto&& period : HoldingPeriods) {
         addresses.push_back(period.multisigAddress);
     }
+
+    return addresses;
 }
 
 // balance
@@ -414,25 +418,22 @@ uint64_t Investor::GlobalBalance(void)
     return balance;
 }
 
-void Investor::UpdateBalanceInTransaction(const CWallet& wallet, const CWalletTx* tx)
+void Investor::UpdateBalanceInTransaction(const CWallet& wallet, const CWalletTx& tx)
 {
-    assert(tx);
-    if (!tx) { return; }
-    
     LOCK(csInvestor);
 
-    if (IsTxHashAdded(tx)) {
+    if (IsTxHashAdded(&tx)) {
         return;
     }
 
     for (auto&& period : HoldingPeriods) {
-        for (auto&& output : tx->tx->vout) {
+        for (auto&& output : tx.tx->vout) {
             if (period.multisigAddress == AddressFromP2SH(output.scriptPubKey)) {
                 period.balance += output.nValue;
             }
         }
 
-        for (auto&& input : tx->tx->vin) {
+        for (auto&& input : tx.tx->vin) {
             CTxOut fundingTxOut;
             if (MultisigFundingOutputForInput(wallet, input, period.multisigAddress, fundingTxOut)) {
                 period.balance -= fundingTxOut.nValue;
@@ -440,7 +441,7 @@ void Investor::UpdateBalanceInTransaction(const CWallet& wallet, const CWalletTx
         }
     }
 
-    AddTxHash(tx);
+    AddTxHash(&tx);
 }
 
 // investments tracking
@@ -496,6 +497,31 @@ bool Investor::AddressIsMyMultisig(std::string& address)
     return false;
 }
 
+bool Investor::Hash160IsMyMultisig(const uint160& hash160)
+{
+    if (hash160.size() == 0) { return false; }
+
+    LOCK(csInvestor);
+
+    std::vector<unsigned char> vaddr;
+    vaddr.resize(21 - 1);
+
+    std::vector<unsigned char> prefix = Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS);
+    vaddr.insert(vaddr.begin(), prefix.begin(), prefix.begin() + 1);
+
+    vaddr.insert(vaddr.end(), hash160.begin(), hash160.end());
+
+    std::string address = EncodeBase58Check(vaddr);
+
+    for (auto&& period : HoldingPeriods) {
+        if (period.multisigAddress == address) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // expiration time
 
 uint64_t Investor::SecondsUntilHoldingPeriodExpires(void)
@@ -522,11 +548,11 @@ uint64_t Investor::SecondsUntilHoldingPeriodExpires(void)
 
 // unlock and update
 
-bool Investor::ShouldUpdateApplication(const CWallet& wallet, const std::vector<CWalletTx*> transactions)
+bool Investor::ShouldUpdateApplication(const CWallet& wallet)
 {
     // unlocking the investment has a higher priority,
     // so if this is available, then not need to update yet
-    if (ShouldUnlockInvestment(wallet, transactions)) {
+    if (ShouldUnlockInvestment(wallet)) {
         return false;
     }
     
@@ -545,7 +571,9 @@ bool Investor::ShouldUpdateApplication(const CWallet& wallet, const std::vector<
             // detect the already spent based on actual address balance
             uint64_t sent = 0, received = 0;
 
-            for (auto&& tx : transactions) {
+            for (std::map<uint256, CWalletTx>::const_iterator txit = wallet.mapWallet.begin(); txit != wallet.mapWallet.end(); txit++) {
+                const CWalletTx* tx = &(txit->second);
+
                 for (auto&& input : tx->tx->vin) {
                     CTxOut fundingTxOut;
                     if (MultisigFundingOutputForInput(wallet, input, period.multisigAddress, fundingTxOut)) {
@@ -569,7 +597,7 @@ bool Investor::ShouldUpdateApplication(const CWallet& wallet, const std::vector<
     return false;
 }
 
-bool Investor::ShouldUnlockInvestment(const CWallet& wallet, const std::vector<CWalletTx*> transactions)
+bool Investor::ShouldUnlockInvestment(const CWallet& wallet)
 {
     time_t t = time(NULL);
     if (t == ((time_t)-1)) { return 0; }
@@ -586,7 +614,9 @@ bool Investor::ShouldUnlockInvestment(const CWallet& wallet, const std::vector<C
             // detect the already spent based on actual address balance
             uint64_t sent = 0, received = 0;
 
-            for (auto&& tx : transactions) {
+            for (std::map<uint256, CWalletTx>::const_iterator txit = wallet.mapWallet.begin(); txit != wallet.mapWallet.end(); txit++) {
+                const CWalletTx* tx = &(txit->second);
+
                 for (auto&& input : tx->tx->vin) {
                     CTxOut fundingTxOut;
                     if (MultisigFundingOutputForInput(wallet, input, period.multisigAddress, fundingTxOut)) {
@@ -612,10 +642,10 @@ bool Investor::ShouldUnlockInvestment(const CWallet& wallet, const std::vector<C
 
 // spend funds
 
-bool Investor::CreateUnlockTransaction(CWallet& wallet, const CKey& privateKey, const std::vector<CWalletTx*>& lockedTransactions, const CPubKey& pubKey, CMutableTransaction& unlockTransaction)
+bool Investor::CreateUnlockTransaction(CWallet& wallet, const CKey& privateKey, const CPubKey& pubKey, CMutableTransaction& unlockTransaction)
 {
     // validation
-    if ((!privateKey.IsValid()) || (lockedTransactions.size() == 0) || (!pubKey.IsValid())) {
+    if ((!privateKey.IsValid()) || (wallet.mapWallet.size() == 0) || (!pubKey.IsValid())) {
         return false;
     }
     
@@ -628,13 +658,13 @@ bool Investor::CreateUnlockTransaction(CWallet& wallet, const CKey& privateKey, 
     // process all the transaction and add the appropriate inputs for all the holding periods that have been unlocked, while also calculating the total input
     unlockTransaction.vin.clear();
     uint64_t totalAmount = 0;
-    for (auto&& tx : lockedTransactions) {
-        for (size_t i = 0; i < tx->tx->vout.size(); ++i) {
+    for (auto&& tx : wallet.mapWallet) {
+        for (size_t i = 0; i < tx.second.tx->vout.size(); ++i) {
             // make sure the transaction's output is not already spent
             bool alreadySpent = false;
-            for (auto&& astx : lockedTransactions) {
-                for (auto&& asin : astx->tx->vin) {
-                    if ((asin.prevout.hash == tx->tx->GetHash()) && (asin.prevout.n == i)) {
+            for (auto&& astx : wallet.mapWallet) {
+                for (auto&& asin : astx.second.tx->vin) {
+                    if ((asin.prevout.hash == tx.second.tx->GetHash()) && (asin.prevout.n == i)) {
                         alreadySpent = true;
                         break;
                     }
@@ -650,7 +680,7 @@ bool Investor::CreateUnlockTransaction(CWallet& wallet, const CKey& privateKey, 
             }
 
             // find the corresponding holding period (if any), and create the input
-            CTxOut output = tx->tx->vout[i];
+            CTxOut output = tx.second.tx->vout[i];
 
             for (auto&& period : HoldingPeriods) {
                 if (!period.paiPrivateKey.IsValid()) {
@@ -659,7 +689,7 @@ bool Investor::CreateUnlockTransaction(CWallet& wallet, const CKey& privateKey, 
 
                 if (period.multisigAddress == AddressFromP2SH(output.scriptPubKey)) {
                     COutPoint prevOut;
-                    prevOut.hash = tx->tx->GetHash();
+                    prevOut.hash = tx.second.tx->GetHash();
                     prevOut.n = i;
 
                     CTxIn input;

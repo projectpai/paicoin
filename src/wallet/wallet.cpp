@@ -389,17 +389,6 @@ bool CWallet::LoadWatchOnly(const CScript &dest)
     return CCryptoKeyStore::AddWatchOnly(dest);
 }
 
-CPubKey CWallet::InvestorPublicKey()
-{
-    CWalletDB walletdb(*dbw);
-    CKey key;
-    CKeyMetadata metadata;
-
-    DeriveInvestorKey(walletdb, metadata, key);
-
-    return key.GetPubKey();
-}
-
 bool CWallet::Unlock(const SecureString& strWalletPassphrase)
 {
     CCrypter crypter;
@@ -912,6 +901,8 @@ bool CWallet::MarkReplaced(const uint256& originalHash, const uint256& newHash)
         success = false;
     }
 
+    Investor::GetInstance().UpdateBalanceInTransaction(*this, wtx);
+
     NotifyTransactionChanged(this, originalHash, CT_UPDATED);
 
     return success;
@@ -976,6 +967,8 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFlushOnClose)
 
     // Break debit/credit balance caches:
     wtx.MarkDirty();
+
+    Investor::GetInstance().UpdateBalanceInTransaction(*this, wtx);
 
     // Notify UI of new or updated transaction
     NotifyTransactionChanged(this, hash, fInsertedNew ? CT_NEW : CT_UPDATED);
@@ -1130,6 +1123,7 @@ bool CWallet::AbandonTransaction(const uint256& hashTx)
             wtx.setAbandoned();
             wtx.MarkDirty();
             walletdb.WriteTx(wtx);
+            Investor::GetInstance().UpdateBalanceInTransaction(*this, wtx);
             NotifyTransactionChanged(this, wtx.GetHash(), CT_UPDATED);
             // Iterate over all its outputs, and mark transactions in the wallet that spend them abandoned too
             TxSpends::const_iterator iter = mapTxSpends.lower_bound(COutPoint(hashTx, 0));
@@ -1483,6 +1477,8 @@ bool CWallet::SetHDMasterKey(const CPubKey& pubkey)
     newHdChain.masterKeyID = pubkey.GetID();
     SetHDChain(newHdChain, false);
 
+    Investor::GetInstance().SetPublicKey(GetInvestorPublicKey());
+
     return true;
 }
 
@@ -1499,6 +1495,85 @@ bool CWallet::SetHDChain(const CHDChain& chain, bool memonly)
 bool CWallet::IsHDEnabled() const
 {
     return !hdChain.masterKeyID.IsNull();
+}
+
+CPubKey CWallet::GetInvestorPublicKey()
+{
+    CWalletDB walletdb(*dbw);
+    CKey key;
+    CKeyMetadata metadata;
+
+    DeriveInvestorKey(walletdb, metadata, key);
+
+    return key.GetPubKey();
+}
+
+std::vector<std::string> CWallet::GetAllMultisigAddresses()
+{
+    return Investor::GetInstance().AllMultisigAddresses();
+}
+
+uint64_t CWallet::GetInvestorBalance()
+{
+    return Investor::GetInstance().GlobalBalance();
+}
+
+bool CWallet::TransactionIsMyInvestment(const CWalletTx* tx)
+{
+    return Investor::GetInstance().TransactionIsMyInvestment(tx);
+}
+
+bool CWallet::TransactionIsUnlocked(const CWalletTx *tx)
+{
+    return Investor::GetInstance().TransactionIsUnlocked(tx);
+}
+
+uint64_t CWallet::SecondsUntilHoldingPeriodExpires()
+{
+    return Investor::GetInstance().SecondsUntilHoldingPeriodExpires();
+}
+
+bool CWallet::ShouldUpdateApplication()
+{
+    return Investor::GetInstance().ShouldUpdateApplication(*this);
+}
+
+bool CWallet::ShouldUnlockInvestment()
+{
+    return Investor::GetInstance().ShouldUnlockInvestment(*this);
+}
+
+bool CWallet::CreateInvestorUnlockTransaction(CWalletTx& tx, const CPubKey& pubKey)
+{
+    CWalletDB walletdb(*dbw);
+    CKey key;
+    CKeyMetadata metadata;
+
+    DeriveInvestorKey(walletdb, metadata, key);
+
+    if (!key.IsValid()) {
+        return false;
+    }
+
+    CMutableTransaction mtx;
+
+    if (!Investor::GetInstance().CreateUnlockTransaction(*this, key, pubKey, mtx)) {
+        return false;
+    }
+
+    tx.SetTx(MakeTransactionRef(mtx));
+
+    return true;
+}
+
+bool CWallet::IsUnlockTransaction(const CWalletTx* tx)
+{
+    return Investor::GetInstance().IsUnlockTransaction(*this, tx);
+}
+
+void CWallet::WipeInvestorData()
+{
+    Investor::GetInstance().Wipe();
 }
 
 int64_t CWalletTx::GetTxTime() const
@@ -3013,6 +3088,7 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, CCon
             {
                 CWalletTx &coin = mapWallet[txin.prevout.hash];
                 coin.BindWallet(this);
+                Investor::GetInstance().UpdateBalanceInTransaction(*this, wtxNew);
                 NotifyTransactionChanged(this, coin.GetHash(), CT_UPDATED);
             }
         }
