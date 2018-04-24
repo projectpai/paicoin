@@ -1,6 +1,8 @@
 #include "paperkeywritedownpage.h"
 #include "ui_paperkeywritedownpage.h"
 
+#include <sstream>
+
 PaperKeyWritedownPage::PaperKeyWritedownPage(QStringList words, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PaperKeyWritedownPage),
@@ -10,11 +12,26 @@ PaperKeyWritedownPage::PaperKeyWritedownPage(QStringList words, QWidget *parent)
     ui->setupUi(this);
 
     updateCurrentWordAndCount();
-
-    connect(ui->pushButtonBack, SIGNAL(clicked()), this, SLOT(onBackClicked()));
-    connect(ui->pushButtonPreviousWord, SIGNAL(clicked()), this, SLOT(onPreviousClicked()));
-    connect(ui->pushButtonNextWord, SIGNAL(clicked()), this, SLOT(onNextClicked()));
+    connectCustomSignalsAndSlots();
 }
+
+PaperKeyWritedownPage::PaperKeyWritedownPage(std::string phrase, QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::PaperKeyWritedownPage),
+    currentWordCount(1)
+{
+    ui->setupUi(this);
+
+    std::stringstream phraseStream(phrase);
+    std::string item;
+    while (std::getline(phraseStream, item, ' ')) {
+        paperKeyList << item.c_str();
+    }
+
+    updateCurrentWordAndCount();
+    connectCustomSignalsAndSlots();
+}
+
 
 PaperKeyWritedownPage::~PaperKeyWritedownPage()
 {
@@ -54,4 +71,11 @@ void PaperKeyWritedownPage::updateCurrentWordAndCount()
     ui->labelWord->setText(paperKeyList.at(currentWordCount - 1));
     QString progress = tr("%1 of %2");
     ui->labelProgress->setText(progress.arg(QString::number(currentWordCount), QString::number(PAPER_KEY_WORD_COUNT)));
+}
+
+void PaperKeyWritedownPage::connectCustomSignalsAndSlots()
+{
+    connect(ui->pushButtonBack, SIGNAL(clicked()), this, SLOT(onBackClicked()));
+    connect(ui->pushButtonPreviousWord, SIGNAL(clicked()), this, SLOT(onPreviousClicked()));
+    connect(ui->pushButtonNextWord, SIGNAL(clicked()), this, SLOT(onNextClicked()));
 }

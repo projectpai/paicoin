@@ -15,6 +15,7 @@ class PaperKeyWritedownPage : public QWidget
 
 public:
     explicit PaperKeyWritedownPage(QStringList words, QWidget *parent = 0);
+    explicit PaperKeyWritedownPage(std::string phrase, QWidget *parent = 0);
     ~PaperKeyWritedownPage();
 
 Q_SIGNALS:
@@ -28,6 +29,7 @@ private Q_SLOTS:
 
 private:
     void updateCurrentWordAndCount();
+    void connectCustomSignalsAndSlots();
 
 private:
     Ui::PaperKeyWritedownPage *ui;
