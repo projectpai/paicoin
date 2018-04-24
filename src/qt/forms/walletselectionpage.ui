@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>644</width>
-    <height>388</height>
+    <width>639</width>
+    <height>412</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -227,41 +227,6 @@ color:#fff;</string>
        </property>
        <property name="text">
         <string>Restore Wallet</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="labelLegal">
-       <property name="minimumSize">
-        <size>
-         <width>270</width>
-         <height>70</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>270</width>
-         <height>70</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">padding-left:5;
-padding-right:5;</string>
-       </property>
-       <property name="text">
-        <string>  By using this application I agree to the &lt;a href=&quot;https://lanier.ai/terms-of-service/&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://lanier.ai/privacy-policy/&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</string>
-       </property>
-       <property name="textFormat">
-        <enum>Qt::RichText</enum>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-       <property name="openExternalLinks">
-        <bool>true</bool>
        </property>
       </widget>
      </item>

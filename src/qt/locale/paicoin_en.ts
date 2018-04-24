@@ -4229,11 +4229,6 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <source>Restore Wallet</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <location line="+23"/>
-        <source>  By using this application I agree to the &lt;a href=&quot;https://lanier.ai/terms-of-service/&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://lanier.ai/privacy-policy/&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>WalletView</name>
@@ -4286,7 +4281,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished">Form</translation>
     </message>
     <message>
-        <location line="+62"/>
+        <location line="+81"/>
         <source>Welcome to PAI Up</source>
         <translation type="unfinished"></translation>
     </message>

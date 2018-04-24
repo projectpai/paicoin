@@ -277,6 +277,7 @@ RES_ICONS = \
   qt/res/icons/paicoin_testnet.ico \
   qt/res/icons/paicoin.png \
   qt/res/icons/paiup_logo.png \
+  qt/res/icons/paiup.png \
   qt/res/icons/chevron.png \
   qt/res/icons/clock1.png \
   qt/res/icons/clock2.png \
