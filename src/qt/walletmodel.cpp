@@ -757,6 +757,33 @@ bool WalletModel::getDefaultWalletRbf() const
     return fWalletRbf;
 }
 
+// MNEMONIC FEATURES
+
+std::string WalletModel::generateNewMnemonic()
+{
+    return wallet->GenerateBIP39Phrase();
+}
+
+bool WalletModel::useMnemonic(const std::string& phrase)
+{
+    std::vector<unsigned char> seed = wallet->GetBIP39Seed(phrase);
+    if (seed.size() == 0) {
+        return false;
+    }
+
+    CPubKey masterPubKey = wallet->GenerateNewHDMasterKey(seed);
+    if (!masterPubKey.IsFullyValid()) {
+        return false;
+    }
+
+    bool result = wallet->SetHDMasterKey(masterPubKey);
+
+    memory_cleanse(&seed[0], seed.size());
+    memory_cleanse((unsigned char*)&masterPubKey[0], masterPubKey.size());
+
+    return result;
+}
+
 // INVESTOR FEATURES
 
 CPubKey WalletModel::getInvestorKey() const

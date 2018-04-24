@@ -1107,16 +1107,31 @@ public:
     /* Generates a new HD master key (will not be activated) */
     CPubKey GenerateNewHDMasterKey();
 
-    /* Generates a new HD master key using the BIP39 key of 64 bytes (will not be activated) */
-    CPubKey GenerateNewHDMasterKey(const unsigned char *key64);
-    
     /* Set the current HD master key (will reset the chain child index counters)
        Sets the master key's version based on the current wallet version (so the
        caller must ensure the current wallet version is correct before calling
        this function). */
     bool SetHDMasterKey(const CPubKey& key);
 
-    // INVESTOR INTERFACE
+    // BIP39 MNEMONIC
+
+    /*
+     * Generates a new BIP39 phrase
+     * Returns a string with the phrase. To be used exactly as generated here.
+     */
+    std::string GenerateBIP39Phrase();
+
+    /*
+     * Get the BIP39 key of 64 bytes to be used in the master key generation
+     * Phrase is the mnemonic phrase from which to compute the seed.
+     * Returns a vector filled with the 64 bytes of seed; might be empty.
+     */
+    std::vector<unsigned char> GetBIP39Seed(const std::string& phrase);
+
+    /* Generates a new HD master key using the BIP39 key of 64 bytes (will not be activated) */
+    CPubKey GenerateNewHDMasterKey(const std::vector<unsigned char>& key64);
+
+    // INVESTOR
 
     /* Get the public key to be used for investor funding */
     CPubKey GetInvestorPublicKey();

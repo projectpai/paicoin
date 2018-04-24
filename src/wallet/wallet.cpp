@@ -31,6 +31,7 @@
 #include "ui_interface.h"
 #include "utilmoneystr.h"
 #include "wallet/fees.h"
+#include "wallet/bip39mnemonic.h"
 
 #include <assert.h>
 
@@ -1433,39 +1434,6 @@ CPubKey CWallet::GenerateNewHDMasterKey()
     return pubkey;
 }
 
-CPubKey CWallet::GenerateNewHDMasterKey(const unsigned char *key64)
-{
-    CExtKey extKey;
-    extKey.SetMaster(key64, 64);
-
-    int64_t nCreationTime = GetTime();
-    CKeyMetadata metadata(nCreationTime);
-
-    // calculate the pubkey
-    CKey key;
-    ChainCode chainCode;
-    extKey.key.Derive(key, chainCode, 0 | BIP32_HARDENED_KEY_LIMIT, extKey.chaincode);
-    CPubKey pubkey = key.GetPubKey();
-    assert(key.VerifyPubKey(pubkey));
-
-    // set the hd keypath to "m" -> Master, refers the masterkeyid to itself
-    metadata.hdKeypath     = "m";
-    metadata.hdMasterKeyID = pubkey.GetID();
-
-    {
-        LOCK(cs_wallet);
-
-        // mem store the metadata
-        mapKeyMetadata[pubkey.GetID()] = metadata;
-
-        // write the key&metadata to the database
-        if (!AddKeyPubKey(key, pubkey))
-            throw std::runtime_error(std::string(__func__) + ": AddKeyPubKey failed");
-    }
-
-    return pubkey;
-}
-
 bool CWallet::SetHDMasterKey(const CPubKey& pubkey)
 {
     LOCK(cs_wallet);
@@ -1496,6 +1464,92 @@ bool CWallet::IsHDEnabled() const
 {
     return !hdChain.masterKeyID.IsNull();
 }
+
+std::string CWallet::GenerateBIP39Phrase()
+{
+    const static size_t bufferSize = 128 / 8;
+    unsigned char buffer[bufferSize] = {0};
+
+    GetStrongRandBytes(buffer, bufferSize);
+
+    BIP39Mnemonic b39;
+
+    size_t phraseLen = b39.Encode(NULL, 0, buffer, bufferSize);
+
+    char phrase[phraseLen];
+    memset(phrase, 0, phraseLen);
+    phraseLen = b39.Encode(phrase, phraseLen, buffer, bufferSize);
+
+    std::string phraseString(phrase);
+
+    memory_cleanse(buffer, bufferSize);
+    memory_cleanse(phrase, phraseLen);
+
+    return phraseString;
+}
+
+std::vector<unsigned char> CWallet::GetBIP39Seed(const std::string& phrase)
+{
+    BIP39Mnemonic b39;
+
+    if (!b39.PhraseIsValid(phrase.c_str())) {
+        return std::vector<unsigned char>();
+    }
+
+    unsigned char key64[64];
+    memset(key64, 0, 64);
+
+    b39.DeriveKey(key64, phrase.c_str(), NULL);
+
+    std::vector<unsigned char> vkey64(64, 0);
+    vkey64.assign(key64, key64 + 64);
+
+    return vkey64;
+}
+
+CPubKey CWallet::GenerateNewHDMasterKey(const std::vector<unsigned char>& key64)
+{
+    CExtKey extKey;
+    extKey.SetMaster(&key64[0], key64.size());
+
+    CKeyID id = extKey.key.GetPubKey().GetID();
+    memcpy(&extKey.vchFingerprint[0], &id, 4);
+
+    int64_t nCreationTime = GetTime();
+    CKeyMetadata metadata(nCreationTime);
+
+    // calculate the pubkey
+    CKey key;
+    ChainCode chainCode;
+    extKey.key.Derive(key, chainCode, 0 | BIP32_HARDENED_KEY_LIMIT, extKey.chaincode);
+    extKey.chaincode = chainCode;
+    extKey.key = key;
+    CPubKey pubkey = extKey.key.GetPubKey();
+    assert(extKey.key.VerifyPubKey(pubkey));
+
+//    CExtKey ek;
+//    extKey.Derive(ek, 0 | BIP32_HARDENED_KEY_LIMIT);
+//    CPubKey pubkey = ek.key.GetPubKey();
+//    assert(ek.key.VerifyPubKey(pubkey));
+
+    // set the hd keypath to "m" -> Master, refers the masterkeyid to itself
+    metadata.hdKeypath     = "m";
+    metadata.hdMasterKeyID = pubkey.GetID();
+
+    {
+        LOCK(cs_wallet);
+
+        // mem store the metadata
+        mapKeyMetadata[pubkey.GetID()] = metadata;
+
+        // write the key&metadata to the database
+        if (!AddKeyPubKey(extKey.key, pubkey))
+            throw std::runtime_error(std::string(__func__) + ": AddKeyPubKey failed");
+    }
+
+    return pubkey;
+}
+
 
 CPubKey CWallet::GetInvestorPublicKey()
 {

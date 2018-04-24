@@ -218,6 +218,23 @@ public:
 
     bool getDefaultWalletRbf() const;
 
+    // MNEMONIC FEATURES
+
+    /*
+     * Generates a new BIP39 mnemonic phrase
+     * IMPORTANT! This method does NOT store the phrase! Make sure the generated phrase is stored.
+     * This method does NOT set this as current mnemonic phrase; use useMnemonic() to accomplish that.
+     * Returns a string with the mnemonic phrase. To be stored and used exactly as generated here.
+     */
+    std::string generateNewMnemonic();
+
+    /*
+     * Set the BIP39 mnemonic phrase as BIP32 HD seed
+     * IMPORTANT! This method sets the phrase as seed for the HD wallet and resets the child indexes.
+     * Returns true if successfully set, false otherwise.
+     */
+    bool useMnemonic(const std::string& phrase);
+
     // INVESTOR FEATURES
 
     /* Get the public key to be used for investor funding */
