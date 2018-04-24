@@ -570,11 +570,6 @@ bool WalletModel::getPrivKey(const CKeyID &address, CKey& vchPrivKeyOut) const
     return wallet->GetKey(address, vchPrivKeyOut);
 }
 
-CPubKey WalletModel::getInvestorKey() const
-{
-    return wallet->GetInvestorPublicKey();
-}
-
 // returns a list of COutputs from COutPoints
 void WalletModel::getOutputs(const std::vector<COutPoint>& vOutpoints, std::vector<COutput>& vOutputs)
 {
@@ -760,4 +755,76 @@ int WalletModel::getDefaultConfirmTarget() const
 bool WalletModel::getDefaultWalletRbf() const
 {
     return fWalletRbf;
+}
+
+// INVESTOR FEATURES
+
+CPubKey WalletModel::getInvestorKey() const
+{
+    return wallet->GetInvestorPublicKey();
+}
+
+uint64_t WalletModel::getInvestorBalance() const
+{
+    return wallet->GetInvestorBalance();
+}
+
+bool WalletModel::transactionIsMyInvestment(const WalletModelTransaction& transaction) const
+{
+    return wallet->TransactionIsMyInvestment(transaction.getTransaction());
+}
+
+bool WalletModel::transactionIsUnlocked(const WalletModelTransaction& transaction) const
+{
+    return wallet->TransactionIsUnlocked(transaction.getTransaction());
+}
+
+uint64_t WalletModel::secondsUntilHoldingPeriodExpires() const
+{
+    return wallet->SecondsUntilHoldingPeriodExpires();
+}
+
+bool WalletModel::shouldUpdateApplication() const
+{
+    return wallet->ShouldUpdateApplication();
+}
+
+bool WalletModel::shouldUnlockInvestment() const
+{
+    return wallet->ShouldUnlockInvestment();
+}
+
+bool WalletModel::unlockInvestment() const
+{
+    CPubKey personalPubKey;
+    //if (!wallet->GetKeyFromPool(personalPubKey)) {
+    //    return false;
+    //}
+
+    CReserveKey reserveKey(wallet);
+    if (!reserveKey.GetReservedKey(personalPubKey)) {
+        return false;
+    }
+
+    CWalletTx tx;
+    if (!wallet->CreateInvestorUnlockTransaction(tx, personalPubKey)) {
+        return false;
+    }
+
+    CValidationState state;
+    if (!wallet->CommitTransaction(tx, reserveKey, g_connman.get(), state)) {
+        return false;
+    }
+
+    return true;
+}
+
+bool WalletModel::isUnlockTransaction(const WalletModelTransaction& transaction) const
+{
+    return wallet->IsUnlockTransaction(transaction.getTransaction());
+}
+
+void WalletModel::wipeInvestorData() const
+{
+    wallet->WipeInvestorData();
 }

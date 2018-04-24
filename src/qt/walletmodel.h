@@ -192,7 +192,6 @@ public:
     bool getPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const;
     bool IsSpendable(const CTxDestination& dest) const;
     bool getPrivKey(const CKeyID &address, CKey& vchPrivKeyOut) const;
-    CPubKey getInvestorKey() const;
     void getOutputs(const std::vector<COutPoint>& vOutpoints, std::vector<COutput>& vOutputs);
     bool isSpent(const COutPoint& outpoint) const;
     void listCoins(std::map<QString, std::vector<COutput> >& mapCoins) const;
@@ -218,6 +217,44 @@ public:
     int getDefaultConfirmTarget() const;
 
     bool getDefaultWalletRbf() const;
+
+    // INVESTOR FEATURES
+
+    /* Get the public key to be used for investor funding */
+    CPubKey getInvestorKey() const;
+
+    /*
+     * Get the current wallet balance for investors receiving funds to the custom multisig addresses
+     * Returns the investor balance until the funds are moved from the multisig address, even after the holding period expires, or 0 for users that are not investors
+     */
+    uint64_t getInvestorBalance() const;
+
+    /* Return true if tx is an investor multisig transaction funding the wallet */
+    bool transactionIsMyInvestment(const WalletModelTransaction& transaction) const;
+
+    /* Returns true if the total balance for the transaction's investor outputs is zero, or if the transaction does not have any investor output */
+    bool transactionIsUnlocked(const WalletModelTransaction& transaction) const;
+
+    /*
+     * Gets the number of seconds until the holding period expires and the investors can spend their funds
+     * returns 0 if the user is not an investor or if the holding period expired
+     */
+    uint64_t secondsUntilHoldingPeriodExpires() const;
+
+    /* Returns true if the user should be prompted with the popup to update the application */
+    bool shouldUpdateApplication() const;
+
+    /* Returns true if the user should be prompted with the popup to unlock the investment */
+    bool shouldUnlockInvestment() const;
+
+    /* Creates the unlocking transactions and commits that to the network */
+    bool unlockInvestment() const;
+
+    /* Returns true if this an the unlock transaction (all inputs are from the holding period multisig addresses) */
+    bool isUnlockTransaction(const WalletModelTransaction& transaction) const;
+
+    /* reset the investor's data (public key, multisig address, redeem script, balance) */
+    void wipeInvestorData() const;
 
 private:
     CWallet *wallet;

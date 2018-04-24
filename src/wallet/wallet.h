@@ -1124,7 +1124,8 @@ public:
     /* Get all the multisig addresses for the investor */
     std::vector<std::string> GetAllMultisigAddresses();
 
-    /* Get the current wallet balance for investors receiving funds to the custom multisig addresses
+    /*
+     * Get the current wallet balance for investors receiving funds to the custom multisig addresses
      * returns the investor balance until the funds are moved from the multisig address, even after the holding period expires, or 0 for users that are not investors
      */
     uint64_t GetInvestorBalance();
