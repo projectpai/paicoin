@@ -4,32 +4,38 @@
 #include <set>
 #include <random>
 
+PaperKeyCompletionPage::PaperKeyCompletionPage(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::PaperKeyCompletionPage),
+    firstEquality(false),
+    secondEquality(false)
+{
+    ui->setupUi(this);
+}
+
 PaperKeyCompletionPage::PaperKeyCompletionPage(QStringList words, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PaperKeyCompletionPage),
-    paperKeyList(words),
     firstEquality(false),
     secondEquality(false)
 {
     ui->setupUi(this);
 
-    SelectRandomKeys();
-    EnableSubmitIfEqual();
-
-    ui->lineEditWordFirst->setPlaceholderText(QString(tr("Word #%1")).arg(QString::number(firstIndex)));
-    ui->lineEditWordSecond->setPlaceholderText(QString(tr("Word #%1")).arg(QString::number(secondIndex)));
-    ui->lineEditWordFirst->setStyleSheet(Ui::LineEditStyleSheetFormat.arg(Ui::IconNameFail));
-    ui->lineEditWordSecond->setStyleSheet(Ui::LineEditStyleSheetFormat.arg(Ui::IconNameFail));
-
-    connect(ui->pushButtonBack, SIGNAL(clicked()), this, SLOT(onBackClicked()));
-    connect(ui->pushButtonSubmit, SIGNAL(clicked()), this, SLOT(onSubmitClicked()));
-    connect(ui->lineEditWordFirst, SIGNAL(textChanged(QString)), this, SLOT(textChangedFirst(QString)));
-    connect(ui->lineEditWordSecond, SIGNAL(textChanged(QString)), this, SLOT(textChangedSecond(QString)));
+    setPaperKeyList(words);
 }
 
 PaperKeyCompletionPage::~PaperKeyCompletionPage()
 {
     delete ui;
+}
+
+void PaperKeyCompletionPage::setPaperKeyList(const QStringList &_paperKeyList)
+{
+    paperKeyList = _paperKeyList;
+
+    SelectRandomKeys();
+    EnableSubmitIfEqual();
+    ConnectSignalsAndSlots();
 }
 
 void PaperKeyCompletionPage::SelectRandomKeys()
@@ -65,6 +71,19 @@ void PaperKeyCompletionPage::EnableSubmitIfEqual()
         ui->pushButtonSubmit->setEnabled(false);
         ui->pushButtonSubmit->setStyleSheet(Ui::ButtonDisabledStyleSheet);
     }
+}
+
+void PaperKeyCompletionPage::ConnectSignalsAndSlots()
+{
+    ui->lineEditWordFirst->setPlaceholderText(QString(tr("Word #%1")).arg(QString::number(firstIndex)));
+    ui->lineEditWordSecond->setPlaceholderText(QString(tr("Word #%1")).arg(QString::number(secondIndex)));
+    ui->lineEditWordFirst->setStyleSheet(Ui::LineEditStyleSheetFormat.arg(Ui::IconNameFail));
+    ui->lineEditWordSecond->setStyleSheet(Ui::LineEditStyleSheetFormat.arg(Ui::IconNameFail));
+
+    connect(ui->pushButtonBack, SIGNAL(clicked()), this, SLOT(onBackClicked()));
+    connect(ui->pushButtonSubmit, SIGNAL(clicked()), this, SLOT(onSubmitClicked()));
+    connect(ui->lineEditWordFirst, SIGNAL(textChanged(QString)), this, SLOT(textChangedFirst(QString)));
+    connect(ui->lineEditWordSecond, SIGNAL(textChanged(QString)), this, SLOT(textChangedSecond(QString)));
 }
 
 void PaperKeyCompletionPage::SetLineEditState(QLineEdit *lineEdit, bool match)

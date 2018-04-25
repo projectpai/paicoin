@@ -3,6 +3,16 @@
 
 #include <sstream>
 
+PaperKeyWritedownPage::PaperKeyWritedownPage(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::PaperKeyWritedownPage),
+    currentWordCount(1)
+{
+    ui->setupUi(this);
+
+    connectCustomSignalsAndSlots();
+}
+
 PaperKeyWritedownPage::PaperKeyWritedownPage(QStringList words, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PaperKeyWritedownPage),
@@ -22,20 +32,30 @@ PaperKeyWritedownPage::PaperKeyWritedownPage(std::string phrase, QWidget *parent
 {
     ui->setupUi(this);
 
+    setPhrase(phrase);
+
+    connectCustomSignalsAndSlots();
+}
+
+PaperKeyWritedownPage::~PaperKeyWritedownPage()
+{
+    delete ui;
+}
+
+void PaperKeyWritedownPage::setPhrase(const QStringList &phrase)
+{
+    paperKeyList = phrase;
+    updateCurrentWordAndCount();
+}
+
+void PaperKeyWritedownPage::setPhrase(const std::string &phrase)
+{
     std::stringstream phraseStream(phrase);
     std::string item;
     while (std::getline(phraseStream, item, ' ')) {
         paperKeyList << item.c_str();
     }
-
     updateCurrentWordAndCount();
-    connectCustomSignalsAndSlots();
-}
-
-
-PaperKeyWritedownPage::~PaperKeyWritedownPage()
-{
-    delete ui;
 }
 
 void PaperKeyWritedownPage::onPreviousClicked()
@@ -53,7 +73,7 @@ void PaperKeyWritedownPage::onNextClicked()
     }
     else
     {
-        Q_EMIT paperKeyWritten();
+        Q_EMIT paperKeyWritten(paperKeyList);
     }
 }
 

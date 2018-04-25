@@ -20,8 +20,12 @@ class PaperKeyCompletionPage : public QWidget
     Q_OBJECT
 
 public:
+    explicit PaperKeyCompletionPage(QWidget *parent = 0);
     explicit PaperKeyCompletionPage(QStringList words, QWidget *parent = 0);
     ~PaperKeyCompletionPage();
+
+public:
+    void setPaperKeyList(const QStringList &paperKeyList);
 
 Q_SIGNALS:
     void backToPreviousPage();
@@ -36,6 +40,7 @@ private Q_SLOTS:
 private:
     void SelectRandomKeys();
     void EnableSubmitIfEqual();
+    void ConnectSignalsAndSlots();
     void SetLineEditState(QLineEdit* lineEdit, bool match);
 
 private:
