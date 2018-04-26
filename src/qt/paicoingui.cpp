@@ -475,8 +475,8 @@ void PAIcoinGUI::createActions()
     new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_C), this, SLOT(showDebugWindowActivateConsole()));
     new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_D), this, SLOT(showDebugWindow()));
 
-    // vladast
-    tabGroup->setVisible(false);
+    if (firstRun)
+        tabGroup->setVisible(false);
 }
 
 void PAIcoinGUI::createMenuBar()
@@ -715,10 +715,6 @@ void PAIcoinGUI::optionsClicked()
     OptionsDialog dlg(this, enableWallet);
     dlg.setModel(clientModel->getOptionsModel());
     dlg.exec();
-
-
-    FundsInHoldingDialog fundsInHoldingDlg(this);
-    fundsInHoldingDlg.exec();
 }
 
 void PAIcoinGUI::aboutClicked()
@@ -835,6 +831,7 @@ void PAIcoinGUI::gotoPaperKeyCompletionPage(const QStringList &phrase)
 
 void PAIcoinGUI::showPaperKeyCompleteDialog()
 {
+    // New wallet has been created and we need to display paper key complete dialog, and link wallet to the app itself
     Q_EMIT linkWalletToMainApp();
 }
 
