@@ -794,36 +794,11 @@ void PAIcoinGUI::gotoWalletSelectionPage()
 
 void PAIcoinGUI::createNewWallet()
 {
-    // TODO:
-    // 1. Generate new BIP39 phrase
-    // 2. Create new HD Wallet
-    // 3. Start with paper key writedown
-
-    /*
-    CWallet wallet;
-    std::string phrase = wallet.GenerateBIP39Phrase();
-    std::cout << "Phrase: '" << phrase.c_str() << "'" << std::endl;
-
-    walletModel->useMnemonic(phrase);
-    */
-
     Q_EMIT createNewWalletRequest();
-
-    /*
-    QStringList words;
-    words << "First" << "Second" << "Third" << "Fourth" << "Fifth" << "Sixth" << "Seventh" << "Eight" << "Ninth" << "Tenth" << "Eleventh" << "Twelveth";
-
-    paperKeyWritedownPage->setPhrase(words);
-
-    gotoPaperKeyWritedownPage();
-    */
 }
 
 void PAIcoinGUI::restoreWallet(QStringList paperKeys)
 {
-    // TODO:
-    // Restore wallet based on provided paper keys
-
     QString phrase;
     int wordCount = 0;
     for (int i = 0; i < paperKeys.size(); ++i)
@@ -860,13 +835,8 @@ void PAIcoinGUI::gotoPaperKeyCompletionPage(const QStringList &phrase)
 
 void PAIcoinGUI::showPaperKeyCompleteDialog()
 {
-    // TODO:
-    // 1. Display paper key completion dialog
-    // 2. Link newly created wallet to main window
-
     Q_EMIT linkWalletToMainApp();
 }
-
 
 void PAIcoinGUI::gotoOverviewPage()
 {
@@ -1195,9 +1165,7 @@ void PAIcoinGUI::walletCreated(std::string phrase)
 
 void PAIcoinGUI::walletRestored(bool success)
 {
-    // TODO:
-    // Navigate to main window
-    int a = 5;
+    Q_EMIT linkWalletToMainApp();
 }
 
 void PAIcoinGUI::completeUiWalletInitialization()

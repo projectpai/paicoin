@@ -622,18 +622,6 @@ void PAIcoinApplication::restoreWallet(std::string phrase)
 
 void PAIcoinApplication::completeNewWalletInitialization()
 {
-    // TODO:
-    // 1. Complete linkage
-/*
-#ifdef ENABLE_WALLET
-    PaymentServer::LoadRootCAs();
-    paymentServer->setOptionsModel(optionsModel);
-#endif
-
-    clientModel = new ClientModel(optionsModel);
-    window->setClientModel(clientModel);
-*/
-#ifdef ENABLE_WALLET
     // Now that initialization/startup is done, process any command-line
     // paicoin: URIs or payment requests:
     connect(paymentServer, SIGNAL(receivedPaymentRequest(SendCoinsRecipient)),
@@ -645,7 +633,6 @@ void PAIcoinApplication::completeNewWalletInitialization()
     QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
 
     Q_EMIT completeUiWalletInitialization();
-#endif
 }
 
 void PAIcoinApplication::shutdownResult()
