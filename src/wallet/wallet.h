@@ -263,7 +263,7 @@ public:
     bool IsCoinBase() const { return tx->IsCoinBase(); }
 };
 
-/** 
+/**
  * A transaction with a bunch of additional info that only the owner cares about.
  * It includes any unrecorded transactions needed to link it back to the block chain.
  */
@@ -648,7 +648,7 @@ private:
 };
 
 
-/** 
+/**
  * A CWallet is an extension of a keystore, which also maintains a set of transactions and balances,
  * and provides the ability to create new transactions.
  */
@@ -903,12 +903,12 @@ public:
 
     bool Unlock(const SecureString& strWalletPassphrase);
     bool ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase, const SecureString& strNewWalletPassphrase);
-    bool EncryptWallet(const SecureString& strWalletPassphrase);
+    bool EncryptWallet(const SecureString& strWalletPassphrase, const bool generateNewMasterKey = true);
 
     void GetKeyBirthTimes(std::map<CTxDestination, int64_t> &mapKeyBirth) const;
     unsigned int ComputeTimeSmart(const CWalletTx& wtx) const;
 
-    /** 
+    /**
      * Increment the next transaction order id
      * @return next transaction order id
      */
@@ -1025,7 +1025,7 @@ public:
     }
 
     void GetScriptForMining(std::shared_ptr<CReserveScript> &script);
-    
+
     unsigned int GetKeyPoolSize()
     {
         AssertLockHeld(cs_wallet); // set{Ex,In}ternalKeyPool
@@ -1050,7 +1050,7 @@ public:
     //! Flush wallet (bitdb flush)
     void Flush(bool shutdown=false);
 
-    /** 
+    /**
      * Address book entry changed.
      * @note called with lock cs_wallet held.
      */
@@ -1059,7 +1059,7 @@ public:
             const std::string &purpose,
             ChangeType status)> NotifyAddressBookChanged;
 
-    /** 
+    /**
      * Wallet transaction added, removed or updated.
      * @note called with lock cs_wallet held.
      */
@@ -1087,7 +1087,7 @@ public:
     bool MarkReplaced(const uint256& originalHash, const uint256& newHash);
 
     /* Initializes the wallet, returns a new CWallet instance or a null pointer in case of an error */
-    static CWallet* CreateWalletFromFile(const std::string walletFile, bool& fFirstRun);
+    static CWallet* CreateWalletFromFile(const std::string walletFile, bool& fFirstRun, const bool generateNewMasterKey = true);
 
     /**
      * Wallet post-init setup
@@ -1205,7 +1205,7 @@ public:
 };
 
 
-/** 
+/**
  * Account information.
  * Stored in wallet with key "acc"+string account name.
  */

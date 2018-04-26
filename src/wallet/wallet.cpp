@@ -617,7 +617,7 @@ void CWallet::AddToSpends(const uint256& wtxid)
         AddToSpends(txin.prevout, wtxid);
 }
 
-bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
+bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase, const bool generateNewMasterKey)
 {
     if (IsCrypted())
         return false;
@@ -689,7 +689,7 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
         Unlock(strWalletPassphrase);
 
         // if we are using HD, replace the HD master key (seed) with a new one
-        if (IsHDEnabled()) {
+        if (IsHDEnabled() && generateNewMasterKey) {
             if (!SetHDMasterKey(GenerateNewHDMasterKey())) {
                 return false;
             }
@@ -1519,18 +1519,9 @@ CPubKey CWallet::GenerateNewHDMasterKey(const std::vector<unsigned char>& key64)
     CKeyMetadata metadata(nCreationTime);
 
     // calculate the pubkey
-    CKey key;
-    ChainCode chainCode;
-    extKey.key.Derive(key, chainCode, 0 | BIP32_HARDENED_KEY_LIMIT, extKey.chaincode);
-    extKey.chaincode = chainCode;
-    extKey.key = key;
+    extKey.key.Derive(extKey.key, extKey.chaincode, 0 | BIP32_HARDENED_KEY_LIMIT, extKey.chaincode);
     CPubKey pubkey = extKey.key.GetPubKey();
     assert(extKey.key.VerifyPubKey(pubkey));
-
-//    CExtKey ek;
-//    extKey.Derive(ek, 0 | BIP32_HARDENED_KEY_LIMIT);
-//    CPubKey pubkey = ek.key.GetPubKey();
-//    assert(ek.key.VerifyPubKey(pubkey));
 
     // set the hd keypath to "m" -> Master, refers the masterkeyid to itself
     metadata.hdKeypath     = "m";
@@ -3967,7 +3958,7 @@ std::vector<std::string> CWallet::GetDestValues(const std::string& prefix) const
     return values;
 }
 
-CWallet* CWallet::CreateWalletFromFile(const std::string walletFile, bool& fFirstRun)
+CWallet* CWallet::CreateWalletFromFile(const std::string walletFile, bool& fFirstRun, const bool generateNewMasterKey)
 {
     // needed to restore wallet transaction meta data after -zapwallettxes
     std::vector<CWalletTx> vWtx;
@@ -4036,11 +4027,8 @@ CWallet* CWallet::CreateWalletFromFile(const std::string walletFile, bool& fFirs
         walletInstance->SetMaxVersion(nMaxVersion);
     }
 
-    if (fFirstRun)
+    if (fFirstRun && generateNewMasterKey)
     {
-        InitWarning("vladast: first run!");
- //       return nullptr;
-
         // Create new keyUser and set as default key
         if (gArgs.GetBoolArg("-usehd", DEFAULT_USE_HD_WALLET) && !walletInstance->IsHDEnabled()) {
 

@@ -781,7 +781,17 @@ bool WalletModel::useMnemonic(const std::string& phrase)
     memory_cleanse(&seed[0], seed.size());
     memory_cleanse((unsigned char*)&masterPubKey[0], masterPubKey.size());
 
-    return result;
+    if (!result) {
+        return false;
+    }
+
+    if (!wallet->TopUpKeyPool()) {
+        return false;
+    }
+
+    wallet->SetBestChain(chainActive.GetLocator());
+
+    return true;
 }
 
 // INVESTOR FEATURES
