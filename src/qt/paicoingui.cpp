@@ -22,10 +22,20 @@
 #include "rpcconsole.h"
 #include "utilitydialog.h"
 
+#include "fundsinholdingdialog.h"
+
 #ifdef ENABLE_WALLET
 #include "walletframe.h"
 #include "walletmodel.h"
+#include "walletselectionpage.h"
+#include "restorewalletpage.h"
+#include "paperkeyintropage.h"
+#include "paperkeywritedownpage.h"
+#include "paperkeycompletionpage.h"
 #endif // ENABLE_WALLET
+
+#include "welcomepage.h"
+#include "intro.h"
 
 #ifdef Q_OS_MAC
 #include "macdockiconhandler.h"
@@ -56,6 +66,7 @@
 #include <QTimer>
 #include <QToolBar>
 #include <QVBoxLayout>
+#include <QString>
 
 #if QT_VERSION < 0x050000
 #include <QTextDocument>
@@ -78,9 +89,10 @@ const std::string PAIcoinGUI::DEFAULT_UIPLATFORM =
  * collisions in the future with additional wallets */
 const QString PAIcoinGUI::DEFAULT_WALLET = "~Default";
 
-PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *networkStyle, QWidget *parent) :
+PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *_networkStyle, bool _firstRun, QWidget *parent) :
     QMainWindow(parent),
     enableWallet(false),
+    firstRun(_firstRun),
     clientModel(0),
     walletFrame(0),
     unitDisplayControl(0),
@@ -122,21 +134,27 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     modalOverlay(0),
     prevBlocks(0),
     spinnerFrame(0),
-    platformStyle(_platformStyle)
+    platformStyle(_platformStyle),
+    networkStyle(_networkStyle),
+    firstRunStackedWidget(nullptr),
+    welcomePage(nullptr),
+    walletSelectionPage(nullptr),
+    restoreWalletPage(nullptr),
+    paperKeyIntroPage(nullptr),
+    paperKeyWritedownPage(nullptr),
+    paperKeyCompletionPage(nullptr)
 {
     GUIUtil::restoreWindowGeometry("nWindow", QSize(850, 550), this);
 
-    QString windowTitle = tr(PACKAGE_NAME) + " - ";
+    QString windowTitle = tr(PACKAGE_NAME);
 #ifdef ENABLE_WALLET
     enableWallet = WalletModel::isWalletEnabled();
 #endif // ENABLE_WALLET
-    if(enableWallet)
+    if(!enableWallet)
     {
-        windowTitle += tr("Wallet");
-    } else {
-        windowTitle += tr("Node");
+        windowTitle += " - " + tr("Node");
+        windowTitle += " " + networkStyle->getTitleAddText();
     }
-    windowTitle += " " + networkStyle->getTitleAddText();
 #ifndef Q_OS_MAC
     QApplication::setWindowIcon(networkStyle->getTrayAndWindowIcon());
     setWindowIcon(networkStyle->getTrayAndWindowIcon());
@@ -154,41 +172,66 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     rpcConsole = new RPCConsole(_platformStyle, 0);
     helpMessageDialog = new HelpMessageDialog(this, false);
 #ifdef ENABLE_WALLET
-    if(enableWallet)
+    if (enableWallet)
     {
-        /** Create wallet frame and make it the central widget */
-        walletFrame = new WalletFrame(_platformStyle, this);
-        setCentralWidget(walletFrame);
+        if (firstRun)
+        {
+            firstRunStackedWidget = new QStackedWidget;
+            welcomePage = new WelcomePage;
+            walletSelectionPage = new WalletSelectionPage;
+            restoreWalletPage = new RestoreWalletPage;
+            paperKeyIntroPage = new PaperKeyIntroPage;
+            paperKeyWritedownPage = new PaperKeyWritedownPage;
+            paperKeyCompletionPage = new PaperKeyCompletionPage;
+
+            firstRunStackedWidget->addWidget(welcomePage);
+            firstRunStackedWidget->addWidget(walletSelectionPage);
+            firstRunStackedWidget->addWidget(restoreWalletPage);
+            firstRunStackedWidget->addWidget(paperKeyIntroPage);
+            firstRunStackedWidget->addWidget(paperKeyWritedownPage);
+            firstRunStackedWidget->addWidget(paperKeyCompletionPage);
+
+            setCentralWidget(firstRunStackedWidget);
+        }
+        else
+        {
+            /** Create wallet frame and make it the central widget */
+            walletFrame = new WalletFrame(_platformStyle, this);
+            setCentralWidget(walletFrame);
+        }
     } else
 #endif // ENABLE_WALLET
     {
-        /* When compiled without wallet or -disablewallet is provided,
+        /* When compiled without wallet v -disablewallet is provided,
          * the central widget is the rpc console.
          */
         setCentralWidget(rpcConsole);
     }
 
-    // Accept D&D of URIs
-    setAcceptDrops(true);
-
     // Create actions for the toolbar, menu bar and tray/dock icon
     // Needs walletFrame to be initialized
     createActions();
 
-    // Create application menu bar
-    createMenuBar();
+    if (!firstRun)
+    {
+        // Accept D&D of URIs
+        setAcceptDrops(true);
 
-    // Create the toolbars
-    createToolBars();
+        // Create application menu bar
+        createMenuBar();
 
-    // Create system tray icon and notification
-    createTrayIcon(networkStyle);
+        // Create the toolbars
+        createToolBars();
 
-    // Create status bar
-    statusBar();
+        // Create system tray icon and notification
+        createTrayIcon(networkStyle);
 
-    // Disable size grip because it looks ugly and nobody needs it
-    statusBar()->setSizeGripEnabled(false);
+        // Create status bar
+        statusBar();
+
+        // Disable size grip because it looks ugly and nobody needs it
+        statusBar()->setSizeGripEnabled(false);
+    }
 
     // Status bar notification icons
     QFrame *frameBlocks = new QFrame();
@@ -236,6 +279,9 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     statusBar()->addWidget(progressBar);
     statusBar()->addPermanentWidget(frameBlocks);
 
+    if (firstRun)
+        statusBar()->hide();
+
     // Install event filter to be able to catch status tip events (QEvent::StatusTip)
     this->installEventFilter(this);
 
@@ -249,12 +295,33 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
 
     modalOverlay = new ModalOverlay(this->centralWidget());
 #ifdef ENABLE_WALLET
-    if(enableWallet) {
+    if(enableWallet && !firstRun) {
         connect(walletFrame, SIGNAL(requestedSyncWarningInfo()), this, SLOT(showModalOverlay()));
         connect(labelBlocksIcon, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
         connect(progressBar, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
     }
 #endif
+
+    if (firstRun)
+    {
+        connect(welcomePage, SIGNAL(goToWalletSelection()), this, SLOT(gotoWalletSelectionPage()));
+        connect(welcomePage, SIGNAL(goToIntro()), this, SLOT(pickDataDirectory()));
+
+        connect(walletSelectionPage, SIGNAL(goToCreateNewWallet()), this, SLOT(gotoPaperKeyIntroPage()));
+        connect(walletSelectionPage, SIGNAL(goToRestoreWallet()), this, SLOT(gotoRestoreWalletPage()));
+
+        connect(restoreWalletPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoWalletSelectionPage()));
+        connect(restoreWalletPage, SIGNAL(restoreWallet(QStringList)), this, SLOT(restoreWallet(QStringList)));
+
+        connect(paperKeyIntroPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoWalletSelectionPage()));
+        connect(paperKeyIntroPage, SIGNAL(writeDownsClicked()), this, SLOT(createNewWallet()));
+
+        connect(paperKeyWritedownPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoPaperKeyIntroPage()));
+        connect(paperKeyWritedownPage, SIGNAL(paperKeyWritten(QStringList)), this, SLOT(gotoPaperKeyCompletionPage(QStringList)));
+
+        connect(paperKeyCompletionPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoPaperKeyWritedownPage()));
+        connect(paperKeyCompletionPage, SIGNAL(paperKeyProven()), this, SLOT(showPaperKeyCompleteDialog()));
+    }
 }
 
 PAIcoinGUI::~PAIcoinGUI()
@@ -407,6 +474,9 @@ void PAIcoinGUI::createActions()
 
     new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_C), this, SLOT(showDebugWindowActivateConsole()));
     new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_D), this, SLOT(showDebugWindow()));
+
+    // vladast
+    tabGroup->setVisible(false);
 }
 
 void PAIcoinGUI::createMenuBar()
@@ -641,9 +711,14 @@ void PAIcoinGUI::optionsClicked()
     if(!clientModel || !clientModel->getOptionsModel())
         return;
 
+
     OptionsDialog dlg(this, enableWallet);
     dlg.setModel(clientModel->getOptionsModel());
     dlg.exec();
+
+
+    FundsInHoldingDialog fundsInHoldingDlg(this);
+    fundsInHoldingDlg.exec();
 }
 
 void PAIcoinGUI::aboutClicked()
@@ -674,6 +749,31 @@ void PAIcoinGUI::showHelpMessageClicked()
     helpMessageDialog->show();
 }
 
+void PAIcoinGUI::pickDataDirectory()
+{
+    /// 5. Now that settings and translations are available, ask user for data directory
+    // User language is set up: pick a data directory
+    if (!Intro::pickDataDirectory())
+//        return EXIT_SUCCESS;
+    /// 6. Determine availability of data directory and parse paicoin.conf
+    /// - Do not call GetDataDir(true) before this step finishes
+    if (!fs::is_directory(GetDataDir(false)))
+    {
+        QMessageBox::critical(0, QObject::tr(PACKAGE_NAME),
+                              QObject::tr("Error: Specified data directory \"%1\" does not exist.").arg(QString::fromStdString(gArgs.GetArg("-datadir", ""))));
+//        return EXIT_FAILURE;
+    }
+    try {
+        gArgs.ReadConfigFile(gArgs.GetArg("-conf", PAICOIN_CONF_FILENAME));
+    } catch (const std::exception& e) {
+        QMessageBox::critical(0, QObject::tr(PACKAGE_NAME),
+                              QObject::tr("Error: Cannot parse configuration file: %1. Only use key=value syntax.").arg(e.what()));
+//        return EXIT_FAILURE;
+    }
+
+    gotoWalletSelectionPage();
+}
+
 #ifdef ENABLE_WALLET
 void PAIcoinGUI::openClicked()
 {
@@ -683,6 +783,90 @@ void PAIcoinGUI::openClicked()
         Q_EMIT receivedURI(dlg.getURI());
     }
 }
+
+void PAIcoinGUI::gotoWalletSelectionPage()
+{
+    // TODO:
+    // 1. Set default data directory
+    // 2. Navigate to wallet-selection page
+    firstRunStackedWidget->setCurrentWidget(walletSelectionPage);
+}
+
+void PAIcoinGUI::createNewWallet()
+{
+    // TODO:
+    // 1. Generate new BIP39 phrase
+    // 2. Create new HD Wallet
+    // 3. Start with paper key writedown
+
+    /*
+    CWallet wallet;
+    std::string phrase = wallet.GenerateBIP39Phrase();
+    std::cout << "Phrase: '" << phrase.c_str() << "'" << std::endl;
+
+    walletModel->useMnemonic(phrase);
+    */
+
+    Q_EMIT createNewWalletRequest();
+
+    /*
+    QStringList words;
+    words << "First" << "Second" << "Third" << "Fourth" << "Fifth" << "Sixth" << "Seventh" << "Eight" << "Ninth" << "Tenth" << "Eleventh" << "Twelveth";
+
+    paperKeyWritedownPage->setPhrase(words);
+
+    gotoPaperKeyWritedownPage();
+    */
+}
+
+void PAIcoinGUI::restoreWallet(QStringList paperKeys)
+{
+    // TODO:
+    // Restore wallet based on provided paper keys
+
+    QString phrase;
+    int wordCount = 0;
+    for (int i = 0; i < paperKeys.size(); ++i)
+    {
+        phrase += paperKeys.at(i);
+        if (++wordCount < paperKeys.size())
+            phrase += ' ';
+    }
+    std::cout << "Phrase: '" << phrase.toStdString().c_str() << std::endl;
+
+    Q_EMIT restoreWalletRequest(phrase.toStdString().c_str());
+}
+
+void PAIcoinGUI::gotoRestoreWalletPage()
+{
+    firstRunStackedWidget->setCurrentWidget(restoreWalletPage);
+}
+
+void PAIcoinGUI::gotoPaperKeyIntroPage()
+{
+    firstRunStackedWidget->setCurrentWidget(paperKeyIntroPage);
+}
+
+void PAIcoinGUI::gotoPaperKeyWritedownPage()
+{
+    firstRunStackedWidget->setCurrentWidget(paperKeyWritedownPage);
+}
+
+void PAIcoinGUI::gotoPaperKeyCompletionPage(const QStringList &phrase)
+{
+    paperKeyCompletionPage->setPaperKeyList(phrase);
+    firstRunStackedWidget->setCurrentWidget(paperKeyCompletionPage);
+}
+
+void PAIcoinGUI::showPaperKeyCompleteDialog()
+{
+    // TODO:
+    // 1. Display paper key completion dialog
+    // 2. Link newly created wallet to main window
+
+    Q_EMIT linkWalletToMainApp();
+}
+
 
 void PAIcoinGUI::gotoOverviewPage()
 {
@@ -1000,6 +1184,55 @@ void PAIcoinGUI::incomingTransaction(const QString& date, int unit, const CAmoun
     message((amount)<0 ? tr("Sent transaction") : tr("Incoming transaction"),
              msg, CClientUIInterface::MSG_INFORMATION);
 }
+
+void PAIcoinGUI::walletCreated(std::string phrase)
+{
+    // TODO:
+    // Navigate to paper key intro and continue with writedown
+    paperKeyWritedownPage->setPhrase(phrase);
+    gotoPaperKeyWritedownPage();
+}
+
+void PAIcoinGUI::walletRestored(bool success)
+{
+    // TODO:
+    // Navigate to main window
+    int a = 5;
+}
+
+void PAIcoinGUI::completeUiWalletInitialization()
+{
+    // Re-enable all UI features disabled during first run
+
+    // Create wallet frame and make it the central widget
+    walletFrame = new WalletFrame(platformStyle, this);
+    setCentralWidget(walletFrame);
+
+    // Accept D&D of URIs
+    setAcceptDrops(true);
+
+    // Create application menu bar
+    createMenuBar();
+
+    // Create the toolbars
+    createToolBars();
+
+    // Create system tray icon and notification
+    createTrayIcon(networkStyle);
+
+    // Create status bar
+    statusBar();
+
+    // Disable size grip because it looks ugly and nobody needs it
+    statusBar()->setSizeGripEnabled(false);
+
+    statusBar()->show();
+
+    connect(walletFrame, SIGNAL(requestedSyncWarningInfo()), this, SLOT(showModalOverlay()));
+    connect(labelBlocksIcon, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
+    connect(progressBar, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
+}
+
 #endif // ENABLE_WALLET
 
 void PAIcoinGUI::dragEnterEvent(QDragEnterEvent *event)

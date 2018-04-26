@@ -20,6 +20,6 @@ bool WalletParameterInteraction();
 bool WalletVerify();
 
 //! Load wallet databases.
-bool InitLoadWallet();
+bool InitLoadWallet(bool& firstRun);
 
 #endif // PAICOIN_WALLET_INIT_H

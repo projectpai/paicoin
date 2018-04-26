@@ -1199,7 +1199,7 @@ bool AppInitLockDataDirectory()
     return true;
 }
 
-bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
+bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler, bool& firstRun)
 {
     const CChainParams& chainparams = Params();
     // ********************************************************* Step 4a: application initialization
@@ -1574,8 +1574,12 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     // ********************************************************* Step 8: load wallet
 #ifdef ENABLE_WALLET
-    if (!InitLoadWallet())
+    if (!InitLoadWallet(firstRun))
         return false;
+    if (firstRun) {
+        LogPrintf("This is first run. Let's start with wallet initialization.\n");
+        return true; // change!
+    }
 #else
     LogPrintf("No wallet support compiled in!\n");
 #endif

@@ -165,7 +165,8 @@ bool AppInit(int argc, char* argv[])
             // If locking the data directory failed, exit immediately
             exit(EXIT_FAILURE);
         }
-        fRet = AppInitMain(threadGroup, scheduler);
+        bool firstRun = false;
+        fRet = AppInitMain(threadGroup, scheduler, firstRun);
     }
     catch (const std::exception& e) {
         PrintExceptionContinue(&e, "AppInit()");

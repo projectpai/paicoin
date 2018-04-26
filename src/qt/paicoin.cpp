@@ -24,6 +24,13 @@
 #ifdef ENABLE_WALLET
 #include "paymentserver.h"
 #include "walletmodel.h"
+#include "walletselectionpage.h"
+#include "welcomepage.h"
+#include "setpinpage.h"
+#include "paperkeyintropage.h"
+#include "paperkeywritedownpage.h"
+#include "paperkeycompletionpage.h"
+#include "restorewalletpage.h"
 #endif
 
 #include "init.h"
@@ -189,6 +196,7 @@ public Q_SLOTS:
 
 Q_SIGNALS:
     void initializeResult(bool success);
+    void initializeFirstRun();
     void shutdownResult();
     void runawayException(const QString &message);
 
@@ -217,7 +225,7 @@ public:
     /// Create options model
     void createOptionsModel(bool resetSettings);
     /// Create main window
-    void createWindow(const NetworkStyle *networkStyle);
+    void createWindow(const NetworkStyle *networkStyle, bool firstRun);
     /// Create splash screen
     void createSplashScreen(const NetworkStyle *networkStyle);
 
@@ -234,6 +242,10 @@ public:
 
 public Q_SLOTS:
     void initializeResult(bool success);
+    void initializeFirstRun();
+    void createNewWallet();
+    void restoreWallet(std::string phrase);
+    void completeNewWalletInitialization();
     void shutdownResult();
     /// Handle runaway exceptions. Shows a message box with the problem and quits the program.
     void handleRunawayException(const QString &message);
@@ -243,6 +255,9 @@ Q_SIGNALS:
     void requestedShutdown();
     void stopThread();
     void splashFinished(QWidget *window);
+    void walletCreated(std::string phrase);
+    void walletRestored(bool success);
+    void completeUiWalletInitialization();
 
 private:
     QThread *coreThread;
@@ -288,6 +303,7 @@ bool PAIcoinCore::baseInitialize()
     {
         return false;
     }
+    // vladast: this cannot be called with new UI flow!!!!
     if (!AppInitLockDataDirectory())
     {
         return false;
@@ -300,8 +316,13 @@ void PAIcoinCore::initialize()
     try
     {
         qDebug() << __func__ << ": Running initialization in thread";
-        bool rv = AppInitMain(threadGroup, scheduler);
-        Q_EMIT initializeResult(rv);
+        bool firstRun = false;
+        bool rv = AppInitMain(threadGroup, scheduler, firstRun);
+        if (firstRun) {
+            Q_EMIT initializeFirstRun();
+        } else {
+            Q_EMIT initializeResult(rv);
+        }
     } catch (const std::exception& e) {
         handleRunawayException(&e);
     } catch (...) {
@@ -386,12 +407,20 @@ void PAIcoinApplication::createOptionsModel(bool resetSettings)
     optionsModel = new OptionsModel(nullptr, resetSettings);
 }
 
-void PAIcoinApplication::createWindow(const NetworkStyle *networkStyle)
+void PAIcoinApplication::createWindow(const NetworkStyle *networkStyle, bool firstRun)
 {
-    window = new PAIcoinGUI(platformStyle, networkStyle, 0);
+    window = new PAIcoinGUI(platformStyle, networkStyle, firstRun, 0);
 
     pollShutdownTimer = new QTimer(window);
     connect(pollShutdownTimer, SIGNAL(timeout()), window, SLOT(detectShutdown()));
+#ifdef ENABLE_WALLET
+    connect(this, SIGNAL(walletCreated(std::string)), window, SLOT(walletCreated(std::string)));
+    connect(this, SIGNAL(walletRestored(bool)), window, SLOT(walletRestored(bool)));
+    connect(this, SIGNAL(completeUiWalletInitialization()), window, SLOT(completeUiWalletInitialization()));
+    connect(window, SIGNAL(createNewWalletRequest()), this, SLOT(createNewWallet()));
+    connect(window, SIGNAL(restoreWalletRequest(std::string)), this, SLOT(restoreWallet(std::string)));
+    connect(window, SIGNAL(linkWalletToMainApp()), this, SLOT(completeNewWalletInitialization()));
+#endif // ENABLE_WALLET
     pollShutdownTimer->start(200);
 }
 
@@ -415,6 +444,7 @@ void PAIcoinApplication::startThread()
 
     /*  communication to and from thread */
     connect(executor, SIGNAL(initializeResult(bool)), this, SLOT(initializeResult(bool)));
+    connect(executor, SIGNAL(initializeFirstRun()), this, SLOT(initializeFirstRun()));
     connect(executor, SIGNAL(shutdownResult()), this, SLOT(shutdownResult()));
     connect(executor, SIGNAL(runawayException(QString)), this, SLOT(handleRunawayException(QString)));
     connect(this, SIGNAL(requestedInitialize()), executor, SLOT(initialize()));
@@ -524,6 +554,100 @@ void PAIcoinApplication::initializeResult(bool success)
     }
 }
 
+#include <iostream>
+#include <string>
+
+void PAIcoinApplication::initializeFirstRun()
+{
+    qDebug() << __func__ << ": First run.";
+
+    // Log this only after AppInitMain finishes, as then logging setup is guaranteed complete
+    qWarning() << "Platform customization:" << platformStyle->getName();
+
+    window->show();
+
+    Q_EMIT splashFinished(window);
+}
+
+void PAIcoinApplication::createNewWallet()
+{
+    PaymentServer::LoadRootCAs();
+    paymentServer->setOptionsModel(optionsModel);
+
+    clientModel = new ClientModel(optionsModel);
+    window->setClientModel(clientModel);
+
+    if (!vpwallets.empty())
+    {
+        std::string phrase = vpwallets[0]->GenerateBIP39Phrase();
+        std::cout << "Phrase: '" << phrase.c_str() << "'" << std::endl;
+
+        walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
+        walletModel->useMnemonic(phrase);
+
+        window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
+        window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
+
+        connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
+                paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
+
+        Q_EMIT walletCreated(phrase);
+    }
+}
+
+void PAIcoinApplication::restoreWallet(std::string phrase)
+{
+    // TODO:
+    // 1. Restore wallet based on provided BIP39 phrase
+
+    PaymentServer::LoadRootCAs();
+    paymentServer->setOptionsModel(optionsModel);
+
+    clientModel = new ClientModel(optionsModel);
+    window->setClientModel(clientModel);
+
+    if (!vpwallets.empty())
+    {
+        walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
+        walletModel->useMnemonic(phrase);
+
+        window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
+        window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
+
+        connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
+                paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
+        Q_EMIT walletRestored(true);
+    }
+}
+
+void PAIcoinApplication::completeNewWalletInitialization()
+{
+    // TODO:
+    // 1. Complete linkage
+/*
+#ifdef ENABLE_WALLET
+    PaymentServer::LoadRootCAs();
+    paymentServer->setOptionsModel(optionsModel);
+#endif
+
+    clientModel = new ClientModel(optionsModel);
+    window->setClientModel(clientModel);
+*/
+#ifdef ENABLE_WALLET
+    // Now that initialization/startup is done, process any command-line
+    // paicoin: URIs or payment requests:
+    connect(paymentServer, SIGNAL(receivedPaymentRequest(SendCoinsRecipient)),
+            window, SLOT(handlePaymentRequest(SendCoinsRecipient)));
+    connect(window, SIGNAL(receivedURI(QString)),
+            paymentServer, SLOT(handleURIOrFile(QString)));
+    connect(paymentServer, SIGNAL(message(QString,QString,unsigned int)),
+            window, SLOT(message(QString,QString,unsigned int)));
+    QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
+
+    Q_EMIT completeUiWalletInitialization();
+#endif
+}
+
 void PAIcoinApplication::shutdownResult()
 {
     quit(); // Exit main loop after shutdown finished
@@ -613,28 +737,7 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
-    /// 5. Now that settings and translations are available, ask user for data directory
-    // User language is set up: pick a data directory
-    if (!Intro::pickDataDirectory())
-        return EXIT_SUCCESS;
-
-    /// 6. Determine availability of data directory and parse paicoin.conf
-    /// - Do not call GetDataDir(true) before this step finishes
-    if (!fs::is_directory(GetDataDir(false)))
-    {
-        QMessageBox::critical(0, QObject::tr(PACKAGE_NAME),
-                              QObject::tr("Error: Specified data directory \"%1\" does not exist.").arg(QString::fromStdString(gArgs.GetArg("-datadir", ""))));
-        return EXIT_FAILURE;
-    }
-    try {
-        gArgs.ReadConfigFile(gArgs.GetArg("-conf", PAICOIN_CONF_FILENAME));
-    } catch (const std::exception& e) {
-        QMessageBox::critical(0, QObject::tr(PACKAGE_NAME),
-                              QObject::tr("Error: Cannot parse configuration file: %1. Only use key=value syntax.").arg(e.what()));
-        return EXIT_FAILURE;
-    }
-
-    /// 7. Determine network (and switch to network specific options)
+    /// 5. Determine network (and switch to network specific options)
     // - Do not call Params() before this step
     // - Do this after parsing the configuration file, as the network can be switched there
     // - QSettings() will use the new application name after this, resulting in network-specific settings
@@ -660,7 +763,7 @@ int main(int argc, char *argv[])
     initTranslations(qtTranslatorBase, qtTranslator, translatorBase, translator);
 
 #ifdef ENABLE_WALLET
-    /// 8. URI IPC sending
+    /// 6. URI IPC sending
     // - Do this early as we don't want to bother initializing if we are just calling IPC
     // - Do this *after* setting up the data directory, as the data directory hash is used in the name
     // of the server.
@@ -674,7 +777,7 @@ int main(int argc, char *argv[])
     app.createPaymentServer();
 #endif
 
-    /// 9. Main GUI initialization
+    /// 7. Main GUI initialization
     // Install global event filter that makes sure that long tooltips can be word-wrapped
     app.installEventFilter(new GUIUtil::ToolTipToRichTextFilter(TOOLTIP_WRAP_THRESHOLD, &app));
 #if QT_VERSION < 0x050000
@@ -702,7 +805,14 @@ int main(int argc, char *argv[])
     int rv = EXIT_SUCCESS;
     try
     {
-        app.createWindow(networkStyle.data());
+        QSettings settings;
+        /* 1) Default data directory for operating system */
+        QString dataDir = Intro::getDefaultDataDirectory();
+        /* 2) Allow QSettings to override default dir */
+        dataDir = settings.value("strDataDir", dataDir).toString();
+        bool firstRun = !fs::exists(GUIUtil::qstringToBoostPath(dataDir)) || settings.value("fReset", false).toBool() || gArgs.GetBoolArg("-resetguisettings", false);
+//        firstRun = false;
+        app.createWindow(networkStyle.data(), firstRun);
         // Perform base initialization before spinning up initialization/shutdown thread
         // This is acceptable because this function only contains steps that are quick to execute,
         // so the GUI thread won't be held up.

@@ -30,6 +30,14 @@ class WalletFrame;
 class WalletModel;
 class HelpMessageDialog;
 class ModalOverlay;
+class QStackedWidget;
+class WelcomePage;
+class WalletSelectionPage;
+class RestoreWalletPage;
+class PaperKeyIntroPage;
+class PaperKeyWritedownPage;
+class PaperKeyCompletionPage;
+class Intro;
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -49,7 +57,7 @@ public:
     static const QString DEFAULT_WALLET;
     static const std::string DEFAULT_UIPLATFORM;
 
-    explicit PAIcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *networkStyle, QWidget *parent = 0);
+    explicit PAIcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *networkStyle, bool firstRun, QWidget *parent = 0);
     ~PAIcoinGUI();
 
     /** Set the client model.
@@ -79,6 +87,15 @@ protected:
 private:
     ClientModel *clientModel;
     WalletFrame *walletFrame;
+
+    QStackedWidget *firstRunStackedWidget;
+    WelcomePage *welcomePage;
+    WalletSelectionPage *walletSelectionPage;
+    RestoreWalletPage *restoreWalletPage;
+    PaperKeyIntroPage *paperKeyIntroPage;
+    PaperKeyWritedownPage *paperKeyWritedownPage;
+    PaperKeyCompletionPage *paperKeyCompletionPage;
+    Intro *dataDirSelectionDialog;
 
     UnitDisplayStatusBarControl *unitDisplayControl;
     QLabel *labelWalletEncryptionIcon;
@@ -124,7 +141,11 @@ private:
     int prevBlocks;
     int spinnerFrame;
 
+    /** Flag indicating whether this is initial run of the app */
+    bool firstRun;
+
     const PlatformStyle *platformStyle;
+    const NetworkStyle *networkStyle;
 
     /** Create the main UI actions. */
     void createActions();
@@ -153,6 +174,11 @@ private:
 Q_SIGNALS:
     /** Signal raised when a URI was entered or dragged to the GUI */
     void receivedURI(const QString &uri);
+#ifdef ENABLE_WALLET
+    void createNewWalletRequest();
+    void restoreWalletRequest(std::string paperKeys);
+    void linkWalletToMainApp();
+#endif // ENABLE_WALLET
 
 public Q_SLOTS:
     /** Set number of connections shown in the UI */
@@ -188,10 +214,34 @@ public Q_SLOTS:
 
     /** Show incoming transaction notification for new transactions. */
     void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address, const QString& label);
+
+    void walletCreated(std::string phrase);
+
+    void walletRestored(bool success);
+
+    void completeUiWalletInitialization();
 #endif // ENABLE_WALLET
 
 private Q_SLOTS:
+    /** Switch to dialog for data directory selection */
+    void pickDataDirectory();
 #ifdef ENABLE_WALLET
+    /** Switch to wallet-selection page */
+    void gotoWalletSelectionPage();
+    /** Switch to new wallet action flow */
+    void createNewWallet();
+    /** Restore wallet based on provided paper keys */
+    void restoreWallet(QStringList paperKeys);
+    /** Switch to restore wallet page */
+    void gotoRestoreWalletPage();
+    /** Switch to paper key intro page */
+    void gotoPaperKeyIntroPage();
+    /** Switch to paper key write-down page */
+    void gotoPaperKeyWritedownPage();
+    /** Switch to paper key completion page */
+    void gotoPaperKeyCompletionPage(const QStringList &phrase);
+    /** Display dialog for successful paper key procedure completion */
+    void showPaperKeyCompleteDialog();
     /** Switch to overview (home) page */
     void gotoOverviewPage();
     /** Switch to history (transactions) page */
