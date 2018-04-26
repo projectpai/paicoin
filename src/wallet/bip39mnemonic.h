@@ -11,16 +11,13 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include "bip39words.h"
 
 #define BIP39_CREATION_TIME  1388534400 // oldest possible BIP39 phrase creation time, seconds after unix epoch
-#define BIP39_WORDLIST_COUNT 2048       // number of words in a BIP39 wordlist
 
 class BIP39Mnemonic final
 {
 public:
-    //// Singleton
-    //static BIP39Mnemonic& getInstance();
-
     BIP39Mnemonic();
     ~BIP39Mnemonic();
 
@@ -39,12 +36,7 @@ public:
     void DeriveKey(void *key64, const char *phrase, const char *passphrase);
 
 private:
-    char *wordList[BIP39_WORDLIST_COUNT];
-
-    //BIP39Mnemonic();
-    //~BIP39Mnemonic();
-    //BIP39Mnemonic(BIP39Mnemonic const&)     = delete;
-    //void operator= (BIP39Mnemonic const&)   = delete;
+    enum BIP39_LANGUAGES language;
 
     void PBKDF2(void *dk, const void *pw, size_t pwLen, const void *salt, size_t saltLen);
 };
