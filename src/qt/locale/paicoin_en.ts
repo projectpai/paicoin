@@ -749,7 +749,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <location line="+157"/>
-        <source>When you click OK, %1 will begin to download and process the full %4 block chain (%2GB) starting with the earliest transactions in %3 when %4 initially launched.</source>
+        <source>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %2 initially launched.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -773,23 +773,23 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Use a custom data directory:</translation>
     </message>
     <message>
-        <location filename="../intro.cpp" line="+20"/>
+        <location filename="../intro.cpp" line="+18"/>
         <source>PAIcoin</source>
         <translation type="unfinished">PAIcoin</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>At least %1 GB of data will be stored in this directory, and it will grow over time.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+5"/>
+        <location line="+11"/>
         <source>Approximately %1 GB of data will be stored in this directory.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+8"/>
-        <source>%1 will download and store a copy of the PAIcoin block chain.</source>
+        <location line="-5"/>
+        <source>The blockchain data will be stored in this directory, and it will grow over time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>%1 will download and store a copy of the PAIcoin blockchain.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
