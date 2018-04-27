@@ -132,6 +132,7 @@ SOURCES += \
 #    ../src/wallet/init.cpp \
     ../src/wallet/wallet.cpp \
     ../src/wallet/walletdb.cpp \
+    ../src/wallet/investor.cpp \
     ../src/wallet/bip39mnemonic.cpp \
     ../src/qt/addressbookpage.cpp \
     ../src/qt/addresstablemodel.cpp \
@@ -140,6 +141,7 @@ SOURCES += \
     ../src/qt/clientmodel.cpp \
     ../src/qt/coincontroldialog.cpp \
     ../src/qt/coincontroltreewidget.cpp \
+    ../src/qt/confirmationdialog.cpp \
     ../src/qt/csvmodelwriter.cpp \
     ../src/qt/editaddressdialog.cpp \
     ../src/qt/guiutil.cpp \
@@ -207,6 +209,7 @@ HEADERS += \
     ../src/qt/clientmodel.h \
     ../src/qt/coincontroldialog.h \
     ../src/qt/coincontroltreewidget.h \
+    ../src/qt/confirmationdialog.h \
     ../src/qt/csvmodelwriter.h \
     ../src/qt/editaddressdialog.h \
     ../src/qt/guiconstants.h \
@@ -291,7 +294,8 @@ FORMS += \
     ../src/qt/forms/paperkeycompletionpage.ui \
     ../src/qt/forms/restorewalletpage.ui \
     ../src/qt/forms/viewinvestorkeydialog.ui \
-    ../src/qt/forms/holdingperiodcompletedialog.ui
+    ../src/qt/forms/holdingperiodcompletedialog.ui \
+    ../src/qt/forms/confirmationdialog.ui
 
 RESOURCES += \
     ../src/qt/paicoin.qrc

@@ -57,6 +57,7 @@
         <file alias="network_disabled">res/icons/network_disabled.png</file>
         <file alias="pass">res/icons/pass.png</file>
         <file alias="fail">res/icons/fail.png</file>
+        <file alias="accept">res/icons/accept.png</file>
     </qresource>
     <qresource prefix="/movies">
         <file alias="spinner-000">res/movies/spinner-000.png</file>
