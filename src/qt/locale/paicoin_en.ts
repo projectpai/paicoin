@@ -487,6 +487,14 @@
     </message>
 </context>
 <context>
+    <name>ConfirmationDialog</name>
+    <message>
+        <location filename="../forms/confirmationdialog.ui" line="+26"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>EditAddressDialog</name>
     <message>
         <location filename="../forms/editaddressdialog.ui" line="+14"/>
@@ -1338,27 +1346,27 @@ If you do not update the application, your investment will remain in holding.</s
 <context>
     <name>PAIcoinGUI</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+358"/>
+        <location filename="../paicoingui.cpp" line="+426"/>
         <source>Sign &amp;message...</source>
         <translation>Sign &amp;message...</translation>
     </message>
     <message>
-        <location line="+435"/>
+        <location line="+521"/>
         <source>Synchronizing with network...</source>
         <translation>Synchronizing with network...</translation>
     </message>
     <message>
-        <location line="-513"/>
+        <location line="-599"/>
         <source>&amp;Overview</source>
         <translation>&amp;Overview</translation>
     </message>
     <message>
-        <location line="-143"/>
+        <location line="-192"/>
         <source>Node</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+144"/>
+        <location line="+193"/>
         <source>Show general overview of wallet</source>
         <translation>Show general overview of wallet</translation>
     </message>
@@ -1453,7 +1461,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+362"/>
+        <location line="+392"/>
+        <source>Paper Key Complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+56"/>
         <source>Click to disable network activity.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1478,7 +1491,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Reindexing blocks on disk...</translation>
     </message>
     <message>
-        <location line="-516"/>
+        <location line="-602"/>
         <source>Send coins to a PAIcoin address</source>
         <translation>Send coins to a PAIcoin address</translation>
     </message>
@@ -1508,17 +1521,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>&amp;Verify message...</translation>
     </message>
     <message>
-        <location line="+522"/>
+        <location line="+608"/>
         <source>PAIcoin</source>
         <translation>PAIcoin</translation>
     </message>
     <message>
-        <location line="-747"/>
-        <source>Wallet</source>
-        <translation>Wallet</translation>
-    </message>
-    <message>
-        <location line="+152"/>
+        <location line="-681"/>
         <source>&amp;Send</source>
         <translation>&amp;Send</translation>
     </message>
@@ -1553,7 +1561,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Verify messages to ensure they were signed with specified PAIcoin addresses</translation>
     </message>
     <message>
-        <location line="+62"/>
+        <location line="+65"/>
         <source>&amp;File</source>
         <translation>&amp;File</translation>
     </message>
@@ -1573,7 +1581,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Tabs toolbar</translation>
     </message>
     <message>
-        <location line="-163"/>
+        <location line="-166"/>
         <source>Request payments (generates QR codes and paicoin: URIs)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1598,7 +1606,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location line="+359"/>
+        <location line="+445"/>
         <source>%n active connection(s) to PAIcoin network</source>
         <translation>
             <numerusform>%n active connection to PAIcoin network</numerusform>
@@ -1659,17 +1667,17 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Up to date</translation>
     </message>
     <message>
-        <location line="-443"/>
+        <location line="-529"/>
         <source>Show the %1 help message to get a list with possible PAIcoin command-line options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+202"/>
+        <location line="+205"/>
         <source>%1 client</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+227"/>
+        <location line="+310"/>
         <source>Connecting to peers...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1719,7 +1727,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Incoming transaction</translation>
     </message>
     <message>
-        <location line="+52"/>
+        <location line="+16"/>
+        <source>Wallet Restored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+88"/>
         <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1739,7 +1752,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+534"/>
+        <location filename="../paicoin.cpp" line="+648"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1767,7 +1780,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../paperkeycompletionpage.cpp" line="+19"/>
+        <location filename="../paperkeycompletionpage.cpp" line="+78"/>
         <location line="+1"/>
         <source>Word #%1</source>
         <translation type="unfinished"></translation>
@@ -1836,7 +1849,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../paperkeywritedownpage.cpp" line="+55"/>
+        <location filename="../paperkeywritedownpage.cpp" line="+92"/>
         <source>%1 of %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2093,7 +2106,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         </translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+178"/>
+        <location filename="../paicoin.cpp" line="+164"/>
         <source>%1 didn&apos;t yet exit safely...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2106,7 +2119,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>QObject::QObject</name>
     <message>
-        <location filename="../paicoin.cpp" line="-86"/>
+        <location filename="../paicoingui.cpp" line="-525"/>
         <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2116,7 +2129,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location filename="../paicoin.cpp" line="-72"/>
         <source>Error: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4121,7 +4134,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+129"/>
+        <location filename="../paicoingui.cpp" line="+647"/>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4160,7 +4173,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished">Send Coins</translation>
     </message>
     <message>
-        <location line="+393"/>
+        <location line="+388"/>
         <location line="+46"/>
         <location line="+9"/>
         <source>Fee bump error</source>
@@ -4233,7 +4246,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>WalletView</name>
     <message>
-        <location filename="../walletview.cpp" line="+51"/>
+        <location filename="../walletview.cpp" line="+49"/>
         <source>&amp;Export</source>
         <translation type="unfinished">&amp;Export</translation>
     </message>

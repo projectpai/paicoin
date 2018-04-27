@@ -22,7 +22,6 @@
 #include "rpcconsole.h"
 #include "utilitydialog.h"
 
-#include "fundsinholdingdialog.h"
 
 #ifdef ENABLE_WALLET
 #include "walletframe.h"
@@ -32,6 +31,8 @@
 #include "paperkeyintropage.h"
 #include "paperkeywritedownpage.h"
 #include "paperkeycompletionpage.h"
+#include "fundsinholdingdialog.h"
+#include "confirmationdialog.h"
 #endif // ENABLE_WALLET
 
 #include "welcomepage.h"
@@ -832,6 +833,8 @@ void PAIcoinGUI::gotoPaperKeyCompletionPage(const QStringList &phrase)
 void PAIcoinGUI::showPaperKeyCompleteDialog()
 {
     // New wallet has been created and we need to display paper key complete dialog, and link wallet to the app itself
+    ConfirmationDialog *confirmationDialog = new ConfirmationDialog(tr("Paper Key Complete"), this);
+    confirmationDialog->exec();
     Q_EMIT linkWalletToMainApp();
 }
 
@@ -1162,7 +1165,12 @@ void PAIcoinGUI::walletCreated(std::string phrase)
 
 void PAIcoinGUI::walletRestored(bool success)
 {
-    Q_EMIT linkWalletToMainApp();
+    if (success)
+    {
+        ConfirmationDialog *confirmationDialog = new ConfirmationDialog(tr("Wallet Restored"), this);
+        confirmationDialog->exec();
+        Q_EMIT linkWalletToMainApp();
+    }
 }
 
 void PAIcoinGUI::completeUiWalletInitialization()
