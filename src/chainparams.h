@@ -78,6 +78,7 @@ public:
     const ChainTxData& TxData() const { return chainTxData; }
     void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout);
     bool HasGenesisBlockTxOutPoint(const COutPoint& out) const;
+    void LoadGenesisParams() const;
 protected:
     CChainParams() {}
 

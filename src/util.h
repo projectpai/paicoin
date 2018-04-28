@@ -55,6 +55,8 @@ extern CTranslationInterface translationInterface;
 
 extern const char * const PAICOIN_CONF_FILENAME;
 extern const char * const PAICOIN_PID_FILENAME;
+extern const char * const PAICOIN_CHAINPARAMS_CONF_FILENAME;
+extern const char * const PAICOIN_GENESIS_CONF_FILENAME;
 
 extern std::atomic<uint32_t> logCategories;
 
@@ -198,7 +200,10 @@ protected:
     mutable CCriticalSection cs_args;
     std::map<std::string, std::string> mapArgs;
     std::map<std::string, std::vector<std::string>> mapMultiArgs;
+    bool main;
 public:
+	ArgsManager(bool isMainConfig = true) : main(isMainConfig) { }
+
     void ParseParameters(int argc, const char*const argv[]);
     void ReadConfigFile(const std::string& confPath);
 
@@ -269,6 +274,8 @@ public:
 };
 
 extern ArgsManager gArgs;
+extern ArgsManager gChainparams;
+extern ArgsManager gGenesisparams;
 
 /**
  * Format a string to be used as group of options in help messages

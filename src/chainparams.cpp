@@ -51,13 +51,16 @@
 #define REGTEST_GENESIS_BLOCK_SIGNATURE  "23103f0e2d2abbaad0d79b7a37759b1a382b7821"
 
 #define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509798928
-#define REGTEST_GENESIS_BLOCK_NONCE          1
-#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x190a4f6022b980ee9719200b024c1b9df515baea3afbccf1adc93c70aa93941f")
-#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0x4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e")
+//#define REGTEST_GENESIS_BLOCK_NONCE          1
+//#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x190a4f6022b980ee9719200b024c1b9df515baea3afbccf1adc93c70aa93941f")
+//#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0x4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e")
 
-#ifdef MINE_FOR_THE_GENESIS_BLOCK
+//#ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
-#endif // MINE_FOR_THE_GENESIS_BLOCK
+//#endif // MINE_FOR_THE_GENESIS_BLOCK
+
+#define GENESIS_UINT256S(x) uint256S(gGenesisparams.GetArg(x, ""))
+#define GENESIS_UINT(x) gGenesisparams.GetArg(x, 0UL)
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
@@ -128,6 +131,19 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
     return false;
 }
 
+void CChainParams::LoadGenesisParams() const
+{
+	std::string genesisConfFilename = GetDataDir().string() + '/' + PAICOIN_GENESIS_CONF_FILENAME;
+	try
+	{
+		gGenesisparams.ReadConfigFile(genesisConfFilename);
+	}
+	catch (std::exception & ex)
+	{
+		throw std::runtime_error(std::string("Error reading genesis configuration (") + genesisConfFilename + ") : " + ex.what());
+	}
+}
+
 /**
  * Main network
  */
@@ -188,50 +204,54 @@ public:
         nDefaultPort = 8567;
         nPruneAfterHeight = 100000;
 
-#ifdef MINE_FOR_THE_GENESIS_BLOCK
+//#ifdef MINE_FOR_THE_GENESIS_BLOCK
+		if (gArgs.IsArgSet("-mine-genesis-block"))
+		{
+			genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
 
-        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+			arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> MAINNET_GENESIS_BLOCK_POW_BITS);
 
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> MAINNET_GENESIS_BLOCK_POW_BITS);
+			LogPrintf("Recalculating params for mainnet.\n");
+			LogPrintf("- old mainnet genesis nonce: %u\n", genesis.nNonce);
+			LogPrintf("- old mainnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
+			LogPrintf("- old mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        LogPrintf("Recalculating params for mainnet.\n");
-        LogPrintf("- old mainnet genesis nonce: %u\n", genesis.nNonce);
-        LogPrintf("- old mainnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
-        LogPrintf("- old mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+			// deliberately empty for loop finds nonce value.
+			for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
 
-        // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+			LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
+			LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
+			LogPrintf("- new mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
-        LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
-        LogPrintf("- new mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+			consensus.hashGenesisBlock = genesis.GetHash();
+			consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-        consensus.hashGenesisBlock = genesis.GetHash();
-        consensus.BIP34Hash = consensus.hashGenesisBlock;
+			LogPrintf("- new mainnet genesis block: %s\n", genesis.ToString().c_str());
+		}
+//#else
+		else
+		{
 
-        LogPrintf("- new mainnet genesis block: %s\n", genesis.ToString().c_str());
+			genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, MAINNET_GENESIS_BLOCK_NONCE, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
 
-#else
+			consensus.hashGenesisBlock = genesis.GetHash();
+			consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, MAINNET_GENESIS_BLOCK_NONCE, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+			assert(consensus.hashGenesisBlock == MAINNET_CONSENSUS_HASH_GENESIS_BLOCK);
+			assert(genesis.hashMerkleRoot == MAINNET_GENESIS_HASH_MERKLE_ROOT);
+		}
 
-        consensus.hashGenesisBlock = genesis.GetHash();
-        consensus.BIP34Hash = consensus.hashGenesisBlock;
-
-        assert(consensus.hashGenesisBlock == MAINNET_CONSENSUS_HASH_GENESIS_BLOCK);
-        assert(genesis.hashMerkleRoot == MAINNET_GENESIS_HASH_MERKLE_ROOT);
-
-#endif  // MINE_FOR_THE_GENESIS_BLOCK
+//#endif  // MINE_FOR_THE_GENESIS_BLOCK
 
         vFixedSeeds.clear();
         vSeeds.clear();
         // Note that of those with the service bits flag, most only support a subset of possible options
-        vSeeds.emplace_back("34.215.125.66", false);
-        vSeeds.emplace_back("13.58.110.183", false);
-        vSeeds.emplace_back("13.124.177.237", false);
-        vSeeds.emplace_back("193.112.7.193", false);
+        //vSeeds.emplace_back("34.215.125.66", false);
+        //vSeeds.emplace_back("13.58.110.183", false);
+        //vSeeds.emplace_back("13.124.177.237", false);
+        //vSeeds.emplace_back("193.112.7.193", false);
 
-        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
+        //vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
         
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,56);  // P
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,130); // u
@@ -309,51 +329,52 @@ public:
         nDefaultPort = 18567;
         nPruneAfterHeight = 1000;
 
-#ifdef MINE_FOR_THE_GENESIS_BLOCK
+//#ifdef MINE_FOR_THE_GENESIS_BLOCK
+		if (gArgs.IsArgSet("-mine-genesis-block"))
+		{
+			genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
 
-        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+			arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> TESTNET_GENESIS_BLOCK_POW_BITS);
 
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> TESTNET_GENESIS_BLOCK_POW_BITS);
+			LogPrintf("Recalculating params for testnet.\n");
+			LogPrintf("- old testnet genesis nonce: %u\n", genesis.nNonce);
+			LogPrintf("- old testnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
+			LogPrintf("- old testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        LogPrintf("Recalculating params for testnet.\n");
-        LogPrintf("- old testnet genesis nonce: %u\n", genesis.nNonce);
-        LogPrintf("- old testnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
-        LogPrintf("- old testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+			// deliberately empty for loop finds nonce value.
+			for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
 
-        // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+			LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
+			LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
+			LogPrintf("- new testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
-        LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
-        LogPrintf("- new testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+			consensus.hashGenesisBlock = genesis.GetHash();
+			consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-        consensus.hashGenesisBlock = genesis.GetHash();
-        consensus.BIP34Hash = consensus.hashGenesisBlock;
+			LogPrintf("- new testnet genesis block: %s\n", genesis.ToString().c_str());
+		}
+//#else
+		else {
+			genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, TESTNET_GENESIS_BLOCK_NONCE, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
 
-        LogPrintf("- new testnet genesis block: %s\n", genesis.ToString().c_str());
+			consensus.hashGenesisBlock = genesis.GetHash();
+			consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-#else
-
-        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, TESTNET_GENESIS_BLOCK_NONCE, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
-
-        consensus.hashGenesisBlock = genesis.GetHash();
-        consensus.BIP34Hash = consensus.hashGenesisBlock;
-
-        assert(consensus.hashGenesisBlock == TESTNET_CONSENSUS_HASH_GENESIS_BLOCK);
-        assert(genesis.hashMerkleRoot == TESTNET_GENESIS_HASH_MERKLE_ROOT);
-
-#endif  // MINE_FOR_THE_GENESIS_BLOCK
+			assert(consensus.hashGenesisBlock == TESTNET_CONSENSUS_HASH_GENESIS_BLOCK);
+			assert(genesis.hashMerkleRoot == TESTNET_GENESIS_HASH_MERKLE_ROOT);
+		}
+//#endif  // MINE_FOR_THE_GENESIS_BLOCK
 
         vFixedSeeds.clear();
         vSeeds.clear();
        
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.emplace_back("52.37.189.65", false);
-        vSeeds.emplace_back("13.59.205.159", false);
-        vSeeds.emplace_back("52.78.224.215", false);
-        vSeeds.emplace_back("193.112.4.118", false);
+        //vSeeds.emplace_back("52.37.189.65", false);
+        //vSeeds.emplace_back("13.59.205.159", false);
+        //vSeeds.emplace_back("52.78.224.215", false);
+        //vSeeds.emplace_back("193.112.4.118", false);
 
-        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
+        //vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
         
         // same as for the CRegTestParams
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
@@ -432,44 +453,59 @@ public:
         nDefaultPort = 19567;
         nPruneAfterHeight = 1000;
 
-#ifdef MINE_FOR_THE_GENESIS_BLOCK
+//#ifdef MINE_FOR_THE_GENESIS_BLOCK
+		if (gArgs.IsArgSet("-mine-genesis-block"))
+		{
+			genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, REGTEST_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
 
-        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, REGTEST_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
+			arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> REGTEST_GENESIS_BLOCK_POW_BITS);
 
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> REGTEST_GENESIS_BLOCK_POW_BITS);
+			LogPrintf("Recalculating params for regtest.\n");
+			LogPrintf("- old regtest genesis nonce: %u\n", genesis.nNonce);
+			LogPrintf("- old regtest genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
+			LogPrintf("- old regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        LogPrintf("Recalculating params for regtest.\n");
-        LogPrintf("- old regtest genesis nonce: %u\n", genesis.nNonce);
-        LogPrintf("- old regtest genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
-        LogPrintf("- old regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+			// deliberately empty for loop finds nonce value.
+			for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
 
-        // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+			LogPrintf("- new regtest genesis nonce: %u\n", genesis.nNonce);
+			LogPrintf("- new regtest genesis hash: %s\n", genesis.GetHash().ToString().c_str());
+			LogPrintf("- new regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        LogPrintf("- new regtest genesis nonce: %u\n", genesis.nNonce);
-        LogPrintf("- new regtest genesis hash: %s\n", genesis.GetHash().ToString().c_str());
-        LogPrintf("- new regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+			consensus.hashGenesisBlock = genesis.GetHash();
+			consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-        consensus.hashGenesisBlock = genesis.GetHash();
-        consensus.BIP34Hash = consensus.hashGenesisBlock;
+			LogPrintf("- new regtest genesis block: %s\n", genesis.ToString().c_str());
+			
+			char buffer[32];
+			snprintf(buffer, sizeof(buffer), "%u", genesis.nNonce);
+			gGenesisparams.SoftSetArg("REGTEST_GENESIS_BLOCK_NONCE", buffer);
+			gGenesisparams.SoftSetArg("REGTEST_CONSENSUS_HASH_GENESIS_BLOCK", std::string("0x") + genesis.GetHash().ToString());
+			gGenesisparams.SoftSetArg("REGTEST_GENESIS_HASH_MERKLE_ROOT", std::string("0x") + genesis.hashMerkleRoot.ToString());
+		}
+//#else
+		else {
+			LoadGenesisParams();
+			// TODO: Update the values below with the nonce from the above mining for the genesis block
+			//       This should only be done once, after the mining and prior to production release
+			genesis = CreateGenesisBlock(
+				REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP,
+				GENESIS_UINT("REGTEST_GENESIS_BLOCK_NONCE"),
+				REGTEST_GENESIS_BLOCK_NBITS,
+				4,
+				GENESIS_BLOCK_REWARD * COIN,
+				REGTEST_GENESIS_BLOCK_SIGNATURE
+			);
 
-        LogPrintf("- new regtest genesis block: %s\n", genesis.ToString().c_str());
+			consensus.hashGenesisBlock = genesis.GetHash();
+			consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-#else
-
-        // TODO: Update the values below with the nonce from the above mining for the genesis block
-        //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, REGTEST_GENESIS_BLOCK_NONCE, REGTEST_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
-
-        consensus.hashGenesisBlock = genesis.GetHash();
-        consensus.BIP34Hash = consensus.hashGenesisBlock;
-
-        // TODO: Update the values below with the data from the above mining for the genesis block
-        //       This should only be done once, after the mining and prior to production release
-        assert(consensus.hashGenesisBlock == REGTEST_CONSENSUS_HASH_GENESIS_BLOCK);
-        assert(genesis.hashMerkleRoot == REGTEST_GENESIS_HASH_MERKLE_ROOT);
-
-#endif  // MINE_FOR_THE_GENESIS_BLOCK
+			// TODO: Update the values below with the data from the above mining for the genesis block
+			//       This should only be done once, after the mining and prior to production release
+			assert(consensus.hashGenesisBlock == GENESIS_UINT256S("REGTEST_CONSENSUS_HASH_GENESIS_BLOCK"));
+			assert(genesis.hashMerkleRoot == GENESIS_UINT256S("REGTEST_GENESIS_HASH_MERKLE_ROOT"));
+		}
+//#endif  // MINE_FOR_THE_GENESIS_BLOCK
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
@@ -487,7 +523,7 @@ public:
 
         checkpointData = (CCheckpointData) {
             {
-                {0, REGTEST_CONSENSUS_HASH_GENESIS_BLOCK },
+                {0, GENESIS_UINT256S("REGTEST_CONSENSUS_HASH_GENESIS_BLOCK") },
             }
         };
 

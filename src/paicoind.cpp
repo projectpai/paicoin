@@ -56,6 +56,18 @@ void WaitForShutdown(boost::thread_group* threadGroup)
     }
 }
 
+void SaveGenesisConf(const std::string& confPath)
+{
+	std::ofstream conf;
+	conf.exceptions(std::ios_base::eofbit | std::ios_base::failbit | std::ios_base::badbit);
+	conf.open(confPath);
+
+	conf << "REGTEST_GENESIS_BLOCK_NONCE = " << gGenesisparams.GetArg("REGTEST_GENESIS_BLOCK_NONCE", "") << "\n";
+	conf << "REGTEST_CONSENSUS_HASH_GENESIS_BLOCK = " << gGenesisparams.GetArg("REGTEST_CONSENSUS_HASH_GENESIS_BLOCK", "") << "\n";
+	conf << "REGTEST_GENESIS_HASH_MERKLE_ROOT = " << gGenesisparams.GetArg("REGTEST_GENESIS_HASH_MERKLE_ROOT", "") << "\n";
+	conf.close();
+}
+
 //////////////////////////////////////////////////////////////////////////////
 //
 // Start
@@ -108,6 +120,14 @@ bool AppInit(int argc, char* argv[])
             fprintf(stderr,"Error reading configuration file: %s\n", e.what());
             return false;
         }
+        try
+        {
+            gChainparams.ReadConfigFile(gArgs.GetArg("-chainparams-conf", PAICOIN_CHAINPARAMS_CONF_FILENAME));
+        } catch (const std::exception& e) {
+            fprintf(stderr,"Error reading chainparams configuration file: %s\n", e.what());
+            return false;
+        }
+        
         // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
         try {
             SelectParams(ChainNameFromCommandLine());
@@ -144,6 +164,17 @@ bool AppInit(int argc, char* argv[])
             // InitError will have been called with detailed error, which ends up on console
             exit(EXIT_FAILURE);
         }
+        if (gArgs.IsArgSet("-mine-genesis-block"))
+        {
+			try
+			{
+				SaveGenesisConf(GetDataDir().string() + '/' + PAICOIN_GENESIS_CONF_FILENAME);
+			} catch (const std::exception& e) {
+				fprintf(stderr,"Error writting genesis configuration file: %s\n", e.what());
+				return false;
+			}
+			exit(0);
+		}
         if (gArgs.GetBoolArg("-daemon", false))
         {
 #if HAVE_DECL_DAEMON
@@ -159,12 +190,14 @@ bool AppInit(int argc, char* argv[])
             return false;
 #endif // HAVE_DECL_DAEMON
         }
+
         // Lock data directory after daemonization
         if (!AppInitLockDataDirectory())
         {
             // If locking the data directory failed, exit immediately
             exit(EXIT_FAILURE);
         }
+
         fRet = AppInitMain(threadGroup, scheduler);
     }
     catch (const std::exception& e) {
