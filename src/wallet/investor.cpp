@@ -380,6 +380,8 @@ void Investor::SetPublicKey(const CPubKey& pubKey)
     LOCK(csInvestor);
     
     for (auto&& period : HoldingPeriods) {
+        period.investorPublicKey = pubKey;
+
         std::vector<CPubKey> pubKeys;
         pubKeys.push_back(pubKey);
         pubKeys.push_back(period.paiPublicKey);

@@ -704,7 +704,7 @@ private:
     void DeriveNewChildKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKey& secret, bool internal = false);
 
     /* HD derive investor key */
-    void DeriveInvestorKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKey& secret);
+    void DeriveInvestorKey(CWalletDB &walletdb, CKeyMetadata& metadata, CPubKey& pubKey);
 
     std::set<int64_t> setInternalKeyPool;
     std::set<int64_t> setExternalKeyPool;
