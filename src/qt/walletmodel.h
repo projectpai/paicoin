@@ -290,6 +290,7 @@ private:
     CAmount cachedBalance;
     CAmount cachedUnconfirmedBalance;
     CAmount cachedImmatureBalance;
+    CAmount cachedInvestorBalance;
     CAmount cachedWatchOnlyBalance;
     CAmount cachedWatchUnconfBalance;
     CAmount cachedWatchImmatureBalance;
@@ -304,7 +305,7 @@ private:
 
 Q_SIGNALS:
     // Signal that balance in wallet changed
-    void balanceChanged(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance,
+    void balanceChanged(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& investorBalance,
                         const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
 
     // Encryption status of wallet changed
@@ -326,6 +327,8 @@ Q_SIGNALS:
 
     // Watch-only address added
     void notifyWatchonlyChanged(bool fHaveWatchonly);
+
+    void fundsInHoldingTimeChanged(uint64_t secondsUntilHoldingPeriodExpiry);
 
 public Q_SLOTS:
     /* Wallet status might have changed */

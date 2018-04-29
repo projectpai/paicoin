@@ -773,7 +773,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Use a custom data directory:</translation>
     </message>
     <message>
-        <location filename="../intro.cpp" line="+18"/>
+        <location filename="../intro.cpp" line="+17"/>
         <source>PAIcoin</source>
         <translation type="unfinished">PAIcoin</translation>
     </message>
@@ -1257,23 +1257,18 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Form</translation>
     </message>
     <message>
-        <location line="+62"/>
-        <location line="+386"/>
+        <location line="+68"/>
+        <location line="+497"/>
         <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAIcoin network after a connection is established, but this process has not completed yet.</source>
         <translation>The displayed information may be out of date. Your wallet automatically synchronizes with the PAIcoin network after a connection is established, but this process has not completed yet.</translation>
     </message>
     <message>
-        <location line="-139"/>
+        <location line="-250"/>
         <source>Watch-only:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+10"/>
-        <source>Available:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+16"/>
+        <location line="+26"/>
         <source>Your current spendable balance</source>
         <translation>Your current spendable balance</translation>
     </message>
@@ -1313,7 +1308,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Your current total balance</translation>
     </message>
     <message>
-        <location line="+92"/>
+        <location line="+51"/>
+        <source>Available Funds:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+41"/>
         <source>Your current balance in watch-only addresses</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1323,12 +1323,27 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+49"/>
+        <location line="+32"/>
+        <source>Days left in holding:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Funds in Holding:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+72"/>
         <source>Recent transactions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-317"/>
+        <location line="-428"/>
         <source>Unconfirmed transactions to watch-only addresses</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2106,7 +2121,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         </translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+164"/>
+        <location filename="../paicoin.cpp" line="+165"/>
         <source>%1 didn&apos;t yet exit safely...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3887,12 +3902,17 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+30"/>
         <source>watch-only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+13"/>
+        <source>Locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>(n/a)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4168,7 +4188,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>WalletModel</name>
     <message>
-        <location filename="../walletmodel.cpp" line="+290"/>
+        <location filename="../walletmodel.cpp" line="+294"/>
         <source>Send Coins</source>
         <translation type="unfinished">Send Coins</translation>
     </message>

@@ -9,7 +9,8 @@ DEFINES += \
     QT_IDE_BUILD \
     HAVE_CONFIG_H \
     __x86_64__ \
-    USE_ASM
+    USE_ASM \
+    VARIANT_LITE
 
 INCLUDEPATH += \
     ../src \

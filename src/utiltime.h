@@ -29,4 +29,11 @@ void MilliSleep(int64_t n);
 
 std::string DateTimeStrFormat(const char* pszFormat, int64_t nTime);
 
+/**
+ * @brief GetDayCountFromSeconds Converts number of seconds into number of days
+ * @param durationInSeconds Duration in seconds
+ * @return Day count
+ */
+int GetDayCountFromSeconds(uint64_t durationInSeconds);
+
 #endif // PAICOIN_UTILTIME_H
