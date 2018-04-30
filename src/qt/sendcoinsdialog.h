@@ -53,6 +53,10 @@ public Q_SLOTS:
     void updateTabsAndLabels();
     void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance,
                     const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
+    void checkHolding();
+
+protected:
+    void showEvent(QShowEvent *event);
 
 private:
     Ui::SendCoinsDialog *ui;
@@ -70,6 +74,16 @@ private:
     void updateFeeMinimizedLabel();
     // Update the passed in CCoinControl with state from the GUI
     void updateCoinControlState(CCoinControl& ctrl);
+
+    // Investor holding period checks
+    bool shouldShowHoldingDialog();
+    bool shouldShowHoldingCompleteDialog();
+    bool shouldShowHoldingUpdateDialog();
+
+    // Investor holding period messages
+    void showHoldingDialog();
+    void showHoldingCompleteDialog();
+    void showHoldingUpdateDialog();
 
 private Q_SLOTS:
     void on_sendButton_clicked();

@@ -168,7 +168,7 @@ void WalletModel::checkBalanceChanged()
                             newWatchOnlyBalance, newWatchUnconfBalance, newWatchImmatureBalance);
     }
 
-    Q_EMIT fundsInHoldingTimeChanged(secondsUntilHoldingPeriodExpires());
+    Q_EMIT balanceChangeCheckComplete();
 }
 
 void WalletModel::updateTransaction()

@@ -14,6 +14,8 @@
 #include "platformstyle.h"
 #include "sendcoinsentry.h"
 #include "walletmodel.h"
+#include "fundsinholdingdialog.h"
+#include "holdingperiodcompletedialog.h"
 
 #include "base58.h"
 #include "chainparams.h"
@@ -161,6 +163,7 @@ void SendCoinsDialog::setModel(WalletModel *_model)
         setBalance(_model->getBalance(), _model->getUnconfirmedBalance(), _model->getImmatureBalance(),
                    _model->getWatchBalance(), _model->getWatchUnconfirmedBalance(), _model->getWatchImmatureBalance());
         connect(_model, SIGNAL(balanceChanged(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)), this, SLOT(setBalance(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)));
+        connect(_model, SIGNAL(balanceChangeCheckComplete()), this, SLOT(checkHolding()));
         connect(_model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
         updateDisplayUnit();
 
@@ -528,6 +531,26 @@ void SendCoinsDialog::setBalance(const CAmount& balance, const CAmount& unconfir
     }
 }
 
+void SendCoinsDialog::checkHolding()
+{
+    if (shouldShowHoldingUpdateDialog())
+    {
+        showHoldingUpdateDialog();
+    }
+    else if (shouldShowHoldingCompleteDialog())
+    {
+        showHoldingCompleteDialog();
+    }
+}
+
+void SendCoinsDialog::showEvent(QShowEvent *event)
+{
+    if (shouldShowHoldingDialog())
+    {
+        showHoldingDialog();
+    }
+}
+
 void SendCoinsDialog::updateDisplayUnit()
 {
     setBalance(model->getBalance(), 0, 0, 0, 0, 0);
@@ -658,6 +681,40 @@ void SendCoinsDialog::updateCoinControlState(CCoinControl& ctrl)
     // Either custom fee will be used or if not selected, the confirmation target from dropdown box
     ctrl.m_confirm_target = getConfTargetForIndex(ui->confTargetSelector->currentIndex());
     ctrl.signalRbf = ui->optInRBF->isChecked();
+}
+
+bool SendCoinsDialog::shouldShowHoldingDialog()
+{
+    QSettings settings;
+    return model->getInvestorBalance() != 0 && !(settings.contains("nDontShowFundsInHolding") && settings.value("nDontShowFundsInHolding").toBool());
+}
+
+bool SendCoinsDialog::shouldShowHoldingCompleteDialog()
+{
+    return model->getInvestorBalance() !=0 && model->shouldUnlockInvestment();
+}
+
+bool SendCoinsDialog::shouldShowHoldingUpdateDialog()
+{
+    return model->shouldUpdateApplication();
+}
+
+void SendCoinsDialog::showHoldingDialog()
+{
+    FundsInHoldingDialog *fundsInHoldingDialog = new FundsInHoldingDialog();
+    fundsInHoldingDialog->exec();
+}
+
+void SendCoinsDialog::showHoldingCompleteDialog()
+{
+    HoldingPeriodCompleteDialog *holdingPeriodCompleteDialog = new HoldingPeriodCompleteDialog();
+    holdingPeriodCompleteDialog->exec();
+}
+
+void SendCoinsDialog::showHoldingUpdateDialog()
+{
+    HoldingPeriodCompleteDialog *holdingPeriodCompleteDialog = new HoldingPeriodCompleteDialog(true);
+    holdingPeriodCompleteDialog->exec();
 }
 
 void SendCoinsDialog::updateSmartFeeLabel()

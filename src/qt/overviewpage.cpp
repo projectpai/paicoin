@@ -216,8 +216,9 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
 #endif
 }
 
-void OverviewPage::updateTimeLeftInHolding(uint64_t timeLeftInHolding)
+void OverviewPage::updateTimeLeftInHolding()
 {
+    uint64_t timeLeftInHolding = walletModel->secondsUntilHoldingPeriodExpires();
     ui->labelDaysCount->setText(QString::number(GetDayCountFromSeconds(timeLeftInHolding)));
 }
 
@@ -267,7 +268,7 @@ void OverviewPage::setWalletModel(WalletModel *model)
         setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(), model->getInvestorBalance(),
                    model->getWatchBalance(), model->getWatchUnconfirmedBalance(), model->getWatchImmatureBalance());
         connect(model, SIGNAL(balanceChanged(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)), this, SLOT(setBalance(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)));
-        connect(model, SIGNAL(fundsInHoldingTimeChanged(uint64_t)), this, SLOT(updateTimeLeftInHolding(uint64_t)));
+        connect(model, SIGNAL(balanceChangeCheckComplete()), this, SLOT(updateTimeLeftInHolding()));
 
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
 

@@ -328,7 +328,8 @@ Q_SIGNALS:
     // Watch-only address added
     void notifyWatchonlyChanged(bool fHaveWatchonly);
 
-    void fundsInHoldingTimeChanged(uint64_t secondsUntilHoldingPeriodExpiry);
+    // Perform additional checks when balance check has been completed
+    void balanceChangeCheckComplete();
 
 public Q_SLOTS:
     /* Wallet status might have changed */
