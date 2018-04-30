@@ -417,6 +417,7 @@ void PAIcoinApplication::createWindow(const NetworkStyle *networkStyle, bool fir
     connect(this, SIGNAL(walletCreated(std::string)), window, SLOT(walletCreated(std::string)));
     connect(this, SIGNAL(walletRestored(bool)), window, SLOT(walletRestored(bool)));
     connect(this, SIGNAL(completeUiWalletInitialization()), window, SLOT(completeUiWalletInitialization()));
+    connect(window, SIGNAL(shutdown()), this, SLOT(shutdownResult()));
     connect(window, SIGNAL(createNewWalletRequest()), this, SLOT(createNewWallet()));
     connect(window, SIGNAL(restoreWalletRequest(std::string)), this, SLOT(restoreWallet(std::string)));
     connect(window, SIGNAL(linkWalletToMainApp()), this, SLOT(completeNewWalletInitialization()));
@@ -597,9 +598,7 @@ void PAIcoinApplication::createNewWallet()
 
 void PAIcoinApplication::restoreWallet(std::string phrase)
 {
-    // TODO:
-    // 1. Restore wallet based on provided BIP39 phrase
-
+    // Restore wallet based on provided BIP39 phrase
     PaymentServer::LoadRootCAs();
     paymentServer->setOptionsModel(optionsModel);
 
@@ -616,6 +615,7 @@ void PAIcoinApplication::restoreWallet(std::string phrase)
 
         connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
                 paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
+
         Q_EMIT walletRestored(true);
     }
 }
@@ -657,6 +657,7 @@ WId PAIcoinApplication::getMainWinId() const
 #ifndef PAICOIN_QT_TEST
 int main(int argc, char *argv[])
 {
+
     SetupEnvironment();
 
     /// 1. Parse command-line options. These take precedence over anything else.
