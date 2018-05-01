@@ -37,7 +37,9 @@ public:
         /// Generated (mined) transactions
         Immature,           /**< Mined but waiting for maturity */
         MaturesWarning,     /**< Transaction will likely not mature because no nodes have confirmed */
-        NotAccepted         /**< Mined but not accepted */
+        NotAccepted,        /**< Mined but not accepted */
+        /// Investor transactions
+        Locked,             /**< Investor fund in holding time lock */
     };
 
     /// Transaction counts towards available balance
@@ -136,7 +138,7 @@ public:
 
     /** Update status from core wallet tx.
      */
-    void updateStatus(const CWalletTx &wtx);
+    void updateStatus(CWallet *wallet, const CWalletTx &wtx);
 
     /** Return whether a status update is needed.
      */

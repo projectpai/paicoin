@@ -161,7 +161,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
     return parts;
 }
 
-void TransactionRecord::updateStatus(const CWalletTx &wtx)
+void TransactionRecord::updateStatus(CWallet *wallet, const CWalletTx &wtx)
 {
     AssertLockHeld(cs_main);
     // Determine transaction status
@@ -246,6 +246,11 @@ void TransactionRecord::updateStatus(const CWalletTx &wtx)
         }
     }
     status.needsUpdate = false;
+
+    if (wallet->TransactionIsMyInvestment(&wtx) && !wallet->TransactionIsUnlocked(&wtx))
+    {
+        status.status = TransactionStatus::Locked;
+    }
 }
 
 bool TransactionRecord::statusUpdateNeeded() const
