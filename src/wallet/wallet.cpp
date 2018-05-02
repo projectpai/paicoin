@@ -145,8 +145,6 @@ bool CWallet::AddPaperKey(const std::string& paperKey)
 
 bool CWallet::AddPaperKeyWithDB(CWalletDB &walletdb, const std::string& paperKey)
 {
-    AssertLockHeld(cs_wallet);
-
     // CCryptoKeyStore has no concept of wallet databases, but calls AddCryptedPaperKey
     // which is overridden above. To avoid flushes, the database handle is
     // tunneled through to it.
@@ -254,15 +252,13 @@ void CWallet::DeriveNewChildKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKe
 
 void CWallet::DeriveInvestorKey(CWalletDB &walletdb, CKeyMetadata& metadata, CPubKey& pubKey)
 {
-    // BIP39 seed
-    std::vector<unsigned char> seed = GetBIP39Seed("pitch away put alien unveil topic dash unhappy legal often wonder truth");
-    if (seed.size() == 0) {
-        return;
-    }
-
     // seed the master private key (m)
     CExtKey masterPrivKey;
-    masterPrivKey.SetMaster(&seed[0], seed.size());
+    CKey key;
+    if (!GetKey(hdChain.masterKeyID, key)) {
+        throw std::runtime_error(std::string(__func__) + ": Master key not found");
+    }
+    masterPrivKey.SetMaster(key.begin(), key.size());
 
     // keep the parent finger print
     CKeyID id = masterPrivKey.key.GetPubKey().GetID();
@@ -732,9 +728,14 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase, const bool 
 
         // if we are using HD, replace the HD master key (seed) with a new one
         if (IsHDEnabled() && generateNewMasterKey) {
-            if (!SetHDMasterKey(GenerateNewHDMasterKey())) {
-                return false;
-            }
+            // generate a new paper key
+            std::string paperKey = GeneratePaperKey();
+            if  (paperKey.size() == 0)
+                throw std::runtime_error(std::string(__func__) + ": Generating new paper key failed");
+
+            // use the new paper key to generated the HD wallet
+            if (!SetCurrentPaperKey(paperKey))
+                throw std::runtime_error(std::string(__func__) + ": Using paper key failed");
         }
 
         NewKeyPool();
@@ -4125,10 +4126,14 @@ CWallet* CWallet::CreateWalletFromFile(const std::string walletFile, bool& fFirs
             // ensure this wallet.dat can only be opened by clients supporting HD with chain split
             walletInstance->SetMinVersion(FEATURE_HD_SPLIT);
 
-            // generate a new master key
-            CPubKey masterPubKey = walletInstance->GenerateNewHDMasterKey();
-            if (!walletInstance->SetHDMasterKey(masterPubKey))
-                throw std::runtime_error(std::string(__func__) + ": Storing master key failed");
+            // generate a new paper key
+            std::string paperKey = walletInstance->GeneratePaperKey();
+            if  (paperKey.size() == 0)
+                throw std::runtime_error(std::string(__func__) + ": Generating new paper key failed");
+
+            // use the new paper key to generated the HD wallet
+            if (!walletInstance->SetCurrentPaperKey(paperKey))
+                throw std::runtime_error(std::string(__func__) + ": Using paper key failed");
         }
 
         // Top up the keypool

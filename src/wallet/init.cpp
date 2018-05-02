@@ -241,7 +241,6 @@ bool InitLoadWallet(bool& firstRun)
             return false;
         }
 
-        Investor::GetInstance().SetPublicKey(pwallet->GetInvestorPublicKey());
         vpwallets.push_back(pwallet);
     }
 
