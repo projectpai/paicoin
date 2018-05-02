@@ -1,6 +1,8 @@
 #include "welcomepage.h"
 #include "ui_welcomepage.h"
 
+#include "intro.h"
+
 WelcomePage::WelcomePage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::WelcomePage)
@@ -18,6 +20,7 @@ WelcomePage::~WelcomePage()
 
 void WelcomePage::on_pushButtonEasy_clicked()
 {
+    Intro::pickDataDirectory(true);
     Q_EMIT goToWalletSelection();
 }
 

@@ -183,7 +183,7 @@ QString Intro::getDefaultDataDirectory()
     return GUIUtil::boostPathToQString(GetDefaultDataDir());
 }
 
-bool Intro::pickDataDirectory()
+bool Intro::pickDataDirectory(bool useDefault)
 {
     QSettings settings;
     /* If data directory provided on command line, no need to look at settings
@@ -197,19 +197,25 @@ bool Intro::pickDataDirectory()
 
     if(!fs::exists(GUIUtil::qstringToBoostPath(dataDir)) || gArgs.GetBoolArg("-choosedatadir", DEFAULT_CHOOSE_DATADIR) || settings.value("fReset", false).toBool() || gArgs.GetBoolArg("-resetguisettings", false))
     {
-        /* If current default data directory does not exist, let the user choose one */
         Intro intro;
-        intro.setDataDirectory(dataDir);
-        intro.setWindowIcon(QIcon(":icons/paicoin"));
+        if (!useDefault)
+        {
+            /* If current default data directory does not exist, let the user choose one */
+            intro.setDataDirectory(dataDir);
+            intro.setWindowIcon(QIcon(":icons/paicoin"));
+        }
 
         while(true)
         {
-            if(!intro.exec())
+            if (!useDefault)
             {
-                /* Cancel clicked */
-                return false;
+                if(!intro.exec())
+                {
+                    /* Cancel clicked */
+                    return false;
+                }
+                dataDir = intro.getDataDirectory();
             }
-            dataDir = intro.getDataDirectory();
             try {
                 TryCreateDirectories(GUIUtil::qstringToBoostPath(dataDir));
                 break;

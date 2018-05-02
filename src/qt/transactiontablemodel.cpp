@@ -202,7 +202,7 @@ public:
 
                     if(mi != wallet->mapWallet.end())
                     {
-                        rec->updateStatus(mi->second);
+                        rec->updateStatus(wallet, mi->second);
                     }
                 }
             }
@@ -335,6 +335,9 @@ QString TransactionTableModel::formatTxStatus(const TransactionRecord *wtx) cons
     case TransactionStatus::NotAccepted:
         status = tr("Generated but not accepted");
         break;
+    case TransactionStatus::Locked:
+        status = tr("Locked");
+        break;
     }
 
     return status;
@@ -389,6 +392,11 @@ QString TransactionTableModel::formatTxType(const TransactionRecord *wtx) const
 
 QVariant TransactionTableModel::txAddressDecoration(const TransactionRecord *wtx) const
 {
+    if (wtx->status.status == TransactionStatus::Locked)
+    {
+        return QIcon(":/icons/lock_closed");
+    }
+
     switch(wtx->type)
     {
     case TransactionRecord::Generated:
@@ -406,25 +414,29 @@ QVariant TransactionTableModel::txAddressDecoration(const TransactionRecord *wtx
 
 QString TransactionTableModel::formatTxToAddress(const TransactionRecord *wtx, bool tooltip) const
 {
-    QString watchAddress;
+    QString transactionNotice;
     if (tooltip) {
         // Mark transactions involving watch-only addresses by adding " (watch-only)"
-        watchAddress = wtx->involvesWatchAddress ? QString(" (") + tr("watch-only") + QString(")") : "";
+        transactionNotice = wtx->involvesWatchAddress ? QString(" (") + tr("watch-only") + QString(")") : "";
+    }
+    if (wtx->status.status == TransactionStatus::Locked)
+    {
+        // Mark transactions being locked by holding time by adding " (Locked)"
+        transactionNotice += QString(" (") + tr("Locked") + QString(")");
     }
 
     switch(wtx->type)
     {
-    case TransactionRecord::RecvFromOther:
-        return QString::fromStdString(wtx->address) + watchAddress;
     case TransactionRecord::RecvWithAddress:
     case TransactionRecord::SendToAddress:
     case TransactionRecord::Generated:
-        return lookupAddress(wtx->address, tooltip) + watchAddress;
+        return lookupAddress(wtx->address, tooltip) + transactionNotice;
+    case TransactionRecord::RecvFromOther:
     case TransactionRecord::SendToOther:
-        return QString::fromStdString(wtx->address) + watchAddress;
+        return QString::fromStdString(wtx->address) + transactionNotice;
     case TransactionRecord::SendToSelf:
     default:
-        return tr("(n/a)") + watchAddress;
+        return tr("(n/a)") + transactionNotice;
     }
 }
 
@@ -496,6 +508,8 @@ QVariant TransactionTableModel::txStatusDecoration(const TransactionRecord *wtx)
     case TransactionStatus::MaturesWarning:
     case TransactionStatus::NotAccepted:
         return QIcon(":/icons/transaction_0");
+    case TransactionStatus::Locked:
+        return QIcon(":/icons/lock_closed");
     default:
         return COLOR_BLACK;
     }

@@ -41,7 +41,7 @@ WalletModel::WalletModel(const PlatformStyle *platformStyle, CWallet *_wallet, O
     QObject(parent), wallet(_wallet), optionsModel(_optionsModel), addressTableModel(0),
     transactionTableModel(0),
     recentRequestsTableModel(0),
-    cachedBalance(0), cachedUnconfirmedBalance(0), cachedImmatureBalance(0),
+    cachedBalance(0), cachedUnconfirmedBalance(0), cachedImmatureBalance(0), cachedInvestorBalance(0),
     cachedEncryptionStatus(Unencrypted),
     cachedNumBlocks(0)
 {
@@ -143,6 +143,7 @@ void WalletModel::checkBalanceChanged()
     CAmount newBalance = getBalance();
     CAmount newUnconfirmedBalance = getUnconfirmedBalance();
     CAmount newImmatureBalance = getImmatureBalance();
+    CAmount newInvestorBalance = getInvestorBalance();
     CAmount newWatchOnlyBalance = 0;
     CAmount newWatchUnconfBalance = 0;
     CAmount newWatchImmatureBalance = 0;
@@ -153,18 +154,21 @@ void WalletModel::checkBalanceChanged()
         newWatchImmatureBalance = getWatchImmatureBalance();
     }
 
-    if(cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance || cachedImmatureBalance != newImmatureBalance ||
+    if(cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance || cachedImmatureBalance != newImmatureBalance || cachedInvestorBalance != newInvestorBalance ||
         cachedWatchOnlyBalance != newWatchOnlyBalance || cachedWatchUnconfBalance != newWatchUnconfBalance || cachedWatchImmatureBalance != newWatchImmatureBalance)
     {
         cachedBalance = newBalance;
         cachedUnconfirmedBalance = newUnconfirmedBalance;
         cachedImmatureBalance = newImmatureBalance;
+        cachedInvestorBalance = newInvestorBalance;
         cachedWatchOnlyBalance = newWatchOnlyBalance;
         cachedWatchUnconfBalance = newWatchUnconfBalance;
         cachedWatchImmatureBalance = newWatchImmatureBalance;
-        Q_EMIT balanceChanged(newBalance, newUnconfirmedBalance, newImmatureBalance,
+        Q_EMIT balanceChanged(newBalance, newUnconfirmedBalance, newImmatureBalance, newInvestorBalance,
                             newWatchOnlyBalance, newWatchUnconfBalance, newWatchImmatureBalance);
     }
+
+    Q_EMIT balanceChangeCheckComplete();
 }
 
 void WalletModel::updateTransaction()

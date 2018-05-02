@@ -748,27 +748,32 @@ void PAIcoinGUI::showHelpMessageClicked()
 
 void PAIcoinGUI::pickDataDirectory()
 {
-    /// 5. Now that settings and translations are available, ask user for data directory
+    bool shouldShutdown = false;
+    /// Ask user for data directory
     // User language is set up: pick a data directory
     if (!Intro::pickDataDirectory())
-//        return EXIT_SUCCESS;
-    /// 6. Determine availability of data directory and parse paicoin.conf
+        shouldShutdown = true;
+
+    /// Determine availability of data directory and parse paicoin.conf
     /// - Do not call GetDataDir(true) before this step finishes
     if (!fs::is_directory(GetDataDir(false)))
     {
         QMessageBox::critical(0, QObject::tr(PACKAGE_NAME),
                               QObject::tr("Error: Specified data directory \"%1\" does not exist.").arg(QString::fromStdString(gArgs.GetArg("-datadir", ""))));
-//        return EXIT_FAILURE;
+        shouldShutdown = true;
     }
     try {
         gArgs.ReadConfigFile(gArgs.GetArg("-conf", PAICOIN_CONF_FILENAME));
     } catch (const std::exception& e) {
         QMessageBox::critical(0, QObject::tr(PACKAGE_NAME),
                               QObject::tr("Error: Cannot parse configuration file: %1. Only use key=value syntax.").arg(e.what()));
-//        return EXIT_FAILURE;
+        shouldShutdown = true;
     }
 
-    gotoWalletSelectionPage();
+    if (shouldShutdown)
+        Q_EMIT shutdown();
+    else
+        gotoWalletSelectionPage();
 }
 
 #ifdef ENABLE_WALLET
@@ -783,9 +788,6 @@ void PAIcoinGUI::openClicked()
 
 void PAIcoinGUI::gotoWalletSelectionPage()
 {
-    // TODO:
-    // 1. Set default data directory
-    // 2. Navigate to wallet-selection page
     firstRunStackedWidget->setCurrentWidget(walletSelectionPage);
 }
 

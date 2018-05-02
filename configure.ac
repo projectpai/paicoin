@@ -104,6 +104,13 @@ AC_ARG_ENABLE([wallet],
   [enable_wallet=$enableval],
   [enable_wallet=yes])
 
+# Enable lite variant
+AC_ARG_ENABLE([variant_lite],
+  [AS_HELP_STRING([--disable-variant-lite],
+  [disable lite variant (enabled by default)])],
+  [variant_lite=$enableval],
+  [variant_lite=yes])
+
 AC_ARG_WITH([miniupnpc],
   [AS_HELP_STRING([--with-miniupnpc],
   [enable UPNP (default is yes if libminiupnpc is found)])],
@@ -165,7 +172,7 @@ AC_ARG_ENABLE([lcov],
   [enable lcov testing (default is no)])],
   [use_lcov=yes],
   [use_lcov=no])
-  
+
 AC_ARG_ENABLE([lcov-branch-coverage],
   [AS_HELP_STRING([--enable-lcov-branch-coverage],
   [enable lcov testing branch coverage (default is no)])],
@@ -1073,7 +1080,6 @@ AC_MSG_CHECKING([if wallet should be enabled])
 if test x$enable_wallet != xno; then
   AC_MSG_RESULT(yes)
   AC_DEFINE_UNQUOTED([ENABLE_WALLET],[1],[Define to 1 to enable wallet functions])
-
 else
   AC_MSG_RESULT(no)
 fi
@@ -1163,6 +1169,15 @@ else
   AC_MSG_RESULT([no])
 fi
 
+dnl enable lite variant
+AC_MSG_CHECKING([if lite variant should be run])
+if test x$variant_lite != xno; then
+  AC_MSG_RESULT(yes)
+  AC_DEFINE_UNQUOTED([VARIANT_LITE],[1],[Define to 1 to enable lite variant])
+else
+  AC_MSG_RESULT(no)
+fi
+
 if test x$build_paicoin_utils$build_paicoin_libs$build_paicoind$paicoin_enable_qt$use_bench$use_tests = xnononononono; then
   AC_MSG_ERROR([No targets! Please specify at least one of: --with-utils --with-libs --with-daemon --with-gui --enable-bench or --enable-tests])
 fi
@@ -1181,6 +1196,7 @@ AM_CONDITIONAL([GLIBC_BACK_COMPAT],[test x$use_glibc_compat = xyes])
 AM_CONDITIONAL([HARDEN],[test x$use_hardening = xyes])
 AM_CONDITIONAL([ENABLE_HWCRC32],[test x$enable_hwcrc32 = xyes])
 AM_CONDITIONAL([USE_ASM],[test x$use_asm = xyes])
+AM_CONDITIONAL([VARIANT_LITE],[test x$variant_lite = xyes])
 
 AC_DEFINE(CLIENT_VERSION_MAJOR, _CLIENT_VERSION_MAJOR, [Major version])
 AC_DEFINE(CLIENT_VERSION_MINOR, _CLIENT_VERSION_MINOR, [Minor version])
@@ -1287,9 +1303,10 @@ case ${OS} in
    ;;
 esac
 
-echo 
+echo
 echo "Options used to compile and link:"
 echo "  with wallet   = $enable_wallet"
+echo "  lite variant  = $variant_lite"
 echo "  with gui / qt = $paicoin_enable_qt"
 if test x$paicoin_enable_qt != xno; then
     echo "    qt version  = $paicoin_qt_got_major_vers"
@@ -1302,7 +1319,7 @@ echo "  with upnp     = $use_upnp"
 echo "  use asm       = $use_asm"
 echo "  debug enabled = $enable_debug"
 echo "  werror        = $enable_werror"
-echo 
+echo
 echo "  target os     = $TARGET_OS"
 echo "  build os      = $BUILD_OS"
 echo
@@ -1313,4 +1330,4 @@ echo "  CXX           = $CXX"
 echo "  CXXFLAGS      = $CXXFLAGS"
 echo "  LDFLAGS       = $LDFLAGS"
 echo "  ARFLAGS       = $ARFLAGS"
-echo 
+echo

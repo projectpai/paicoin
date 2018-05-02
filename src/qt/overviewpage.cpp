@@ -5,6 +5,7 @@
 #include "overviewpage.h"
 #include "ui_overviewpage.h"
 
+#include "utiltime.h"
 #include "paicoinunits.h"
 #include "clientmodel.h"
 #include "guiconstants.h"
@@ -159,12 +160,14 @@ OverviewPage::~OverviewPage()
     delete ui;
 }
 
-void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance)
+void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& fundsInHoldingBalance,
+                              const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance)
 {
     int unit = walletModel->getOptionsModel()->getDisplayUnit();
     currentBalance = balance;
     currentUnconfirmedBalance = unconfirmedBalance;
     currentImmatureBalance = immatureBalance;
+    currentFundsInHoldingBalance = fundsInHoldingBalance / COIN;
     currentWatchOnlyBalance = watchOnlyBalance;
     currentWatchUnconfBalance = watchUnconfBalance;
     currentWatchImmatureBalance = watchImmatureBalance;
@@ -177,6 +180,30 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     ui->labelWatchImmature->setText(PAIcoinUnits::formatWithUnit(unit, watchImmatureBalance, false, PAIcoinUnits::separatorAlways));
     ui->labelWatchTotal->setText(PAIcoinUnits::formatWithUnit(unit, watchOnlyBalance + watchUnconfBalance + watchImmatureBalance, false, PAIcoinUnits::separatorAlways));
 
+    if (currentFundsInHoldingBalance == 0)
+    {
+        ui->frameFundsInHolding->hide();
+    }
+    else
+    {
+        ui->frameFundsInHolding->show();
+        ui->labelFundsInHolding->setText(PAIcoinUnits::formatWithUnit(unit, fundsInHoldingBalance, false, PAIcoinUnits::separatorAlways));
+    }
+
+#ifdef VARIANT_LITE
+    ui->labelUnconfirmed->hide();
+    ui->labelPendingText->hide();
+    ui->labelImmature->hide();
+    ui->labelImmatureText->hide();
+    ui->labelTotal->hide();
+    ui->labelTotalText->hide();
+    ui->labelWatchAvailable->hide();
+    ui->labelWatchPending->hide();
+    ui->labelWatchImmature->hide();
+    ui->labelWatchTotal->hide();
+    ui->line->hide();
+    ui->lineWatchBalance->hide();
+#else
     // only show immature (newly mined) balance if it's non-zero, so as not to complicate things
     // for the non-mining users
     bool showImmature = immatureBalance != 0;
@@ -186,6 +213,13 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     ui->labelImmature->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelImmatureText->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelWatchImmature->setVisible(showWatchOnlyImmature); // show watch-only immature balance
+#endif
+}
+
+void OverviewPage::updateTimeLeftInHolding()
+{
+    uint64_t timeLeftInHolding = walletModel->secondsUntilHoldingPeriodExpires();
+    ui->labelDaysCount->setText(QString::number(GetDayCountFromSeconds(timeLeftInHolding)));
 }
 
 // show/hide watch-only labels
@@ -231,14 +265,19 @@ void OverviewPage::setWalletModel(WalletModel *model)
         ui->listTransactions->setModelColumn(TransactionTableModel::ToAddress);
 
         // Keep up to date with wallet
-        setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(),
+        setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(), model->getInvestorBalance(),
                    model->getWatchBalance(), model->getWatchUnconfirmedBalance(), model->getWatchImmatureBalance());
-        connect(model, SIGNAL(balanceChanged(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)), this, SLOT(setBalance(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)));
+        connect(model, SIGNAL(balanceChanged(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)), this, SLOT(setBalance(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)));
+        connect(model, SIGNAL(balanceChangeCheckComplete()), this, SLOT(updateTimeLeftInHolding()));
 
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
 
+#ifdef VARIANT_LITE
+        updateWatchOnlyLabels(false);
+#else
         updateWatchOnlyLabels(model->haveWatchOnly());
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
+#endif
     }
 
     // update the display unit, to not use the default ("PAI")
@@ -250,7 +289,7 @@ void OverviewPage::updateDisplayUnit()
     if(walletModel && walletModel->getOptionsModel())
     {
         if(currentBalance != -1)
-            setBalance(currentBalance, currentUnconfirmedBalance, currentImmatureBalance,
+            setBalance(currentBalance, currentUnconfirmedBalance, currentImmatureBalance, currentFundsInHoldingBalance,
                        currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance);
 
         // Update txdelegate->unit with the current unit
