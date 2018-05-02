@@ -75,9 +75,9 @@ uint256 CHAINPARAMS_UINT256(const char * name)
 	return uint256S(gChainparams.GetArg(name, ""));
 }
 
-uint32_t CHAINPARAMS_UINT32(const char * name)
+uint32_t CHAINPARAMS_UINT32(const char * name, uint32_t def = 0)
 {
-	return gChainparams.GetArg(name, 0);
+	return gChainparams.GetArg(name, def);
 }
 
 std::string CHAINPARAMS_STR(const char * name)
@@ -224,12 +224,12 @@ public:
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
          * a large 32-bit integer with any alignment.
          */
-        pchMessageStart[0] = 0xfe;
-        pchMessageStart[1] = 0xd0;
-        pchMessageStart[2] = 0xd5;
-        pchMessageStart[3] = 0xf2;
+        pchMessageStart[0] = CHAINPARAMS_UINT32("MAINNET_MAGIC_BYTE_0");
+        pchMessageStart[1] = CHAINPARAMS_UINT32("MAINNET_MAGIC_BYTE_1");
+        pchMessageStart[2] = CHAINPARAMS_UINT32("MAINNET_MAGIC_BYTE_2");
+        pchMessageStart[3] = CHAINPARAMS_UINT32("MAINNET_MAGIC_BYTE_3");
 
-        nDefaultPort = 8567;
+        nDefaultPort = CHAINPARAMS_UINT32("MAINNET_PORT", 8567);
         nPruneAfterHeight = 100000;
 
 //#ifdef MINE_FOR_THE_GENESIS_BLOCK
@@ -298,12 +298,30 @@ public:
         //vSeeds.emplace_back("13.58.110.183", false);
         //vSeeds.emplace_back("13.124.177.237", false);
         //vSeeds.emplace_back("193.112.7.193", false);
+        
+        std::string seed0 = CHAINPARAMS_STR("MAINNET_SEED_0");
+        if (!seed0.empty())
+        {
+			vSeeds.emplace_back(seed0, false);
+		}
+        
+        std::string seed1 = CHAINPARAMS_STR("MAINNET_SEED_1");
+        if (!seed1.empty())
+        {
+			vSeeds.emplace_back(seed1, false);
+		}
+		
+        std::string seed2 = CHAINPARAMS_STR("MAINNET_SEED_2");
+        if (!seed2.empty())
+        {
+			vSeeds.emplace_back(seed2, false);
+		}
 
         //vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
         
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,56);  // P
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,130); // u
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247); // 9
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,CHAINPARAMS_UINT32("MAINNET_PUBKEY_ADDRESS"));  // P
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,CHAINPARAMS_UINT32("MAINNET_SCRIPT_ADDRESS")); // u
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,CHAINPARAMS_UINT32("MAINNET_SECRET_KEY")); // 9
         base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xDD, 0x47, 0xAF};  // paip
         base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xDD, 0x47, 0xD9};  // paiv
 
@@ -369,12 +387,12 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000000b13e58c76917eb3b416fc284e36641d952a96c3422b0808d828646");
 
-        pchMessageStart[0] = 0x0b;
-        pchMessageStart[1] = 0x09;
-        pchMessageStart[2] = 0x11;
-        pchMessageStart[3] = 0x07;
+        pchMessageStart[0] = CHAINPARAMS_UINT32("TESTNET_MAGIC_BYTE_0");
+        pchMessageStart[1] = CHAINPARAMS_UINT32("TESTNET_MAGIC_BYTE_1");
+        pchMessageStart[2] = CHAINPARAMS_UINT32("TESTNET_MAGIC_BYTE_2");
+        pchMessageStart[3] = CHAINPARAMS_UINT32("TESTNET_MAGIC_BYTE_3");
 
-        nDefaultPort = 18567;
+        nDefaultPort = CHAINPARAMS_UINT32("TESTNET_PORT", 18567);;
         nPruneAfterHeight = 1000;
 
 //#ifdef MINE_FOR_THE_GENESIS_BLOCK
@@ -442,13 +460,32 @@ public:
         //vSeeds.emplace_back("13.59.205.159", false);
         //vSeeds.emplace_back("52.78.224.215", false);
         //vSeeds.emplace_back("193.112.4.118", false);
+        
+        std::string seed0 = CHAINPARAMS_STR("TESTNET_SEED_0");
+        if (!seed0.empty())
+        {
+			vSeeds.emplace_back(seed0, false);
+		}
+        
+        std::string seed1 = CHAINPARAMS_STR("TESTNET_SEED_1");
+        if (!seed1.empty())
+        {
+			vSeeds.emplace_back(seed1, false);
+		}
+		
+        std::string seed2 = CHAINPARAMS_STR("TESTNET_SEED_2");
+        if (!seed2.empty())
+        {
+			vSeeds.emplace_back(seed2, false);
+		}
+        
 
         //vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
         
         // same as for the CRegTestParams
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,CHAINPARAMS_UINT32("TESTNET_PUBKEY_ADDRESS"));
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,CHAINPARAMS_UINT32("TESTNET_SCRIPT_ADDRESS"));
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,CHAINPARAMS_UINT32("TESTNET_SECRET_KEY"));
         base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xE3, 0xC5, 0x26};  // ptpu
         base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xE3, 0xC5, 0x2D};  // ptpv
 
@@ -514,12 +551,12 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x00");
 
-        pchMessageStart[0] = 0xff;
-        pchMessageStart[1] = 0xd1;
-        pchMessageStart[2] = 0xd6;
-        pchMessageStart[3] = 0xf3;
+        pchMessageStart[0] = CHAINPARAMS_UINT32("REGTEST_MAGIC_BYTE_0");
+        pchMessageStart[1] = CHAINPARAMS_UINT32("REGTEST_MAGIC_BYTE_1");
+        pchMessageStart[2] = CHAINPARAMS_UINT32("REGTEST_MAGIC_BYTE_2");
+        pchMessageStart[3] = CHAINPARAMS_UINT32("REGTEST_MAGIC_BYTE_3");
 
-        nDefaultPort = 19567;
+        nDefaultPort = CHAINPARAMS_UINT32("REGTEST_PORT", 19567);
         nPruneAfterHeight = 1000;
 
 //#ifdef MINE_FOR_THE_GENESIS_BLOCK
@@ -591,9 +628,9 @@ public:
         fMineBlocksOnDemand = true;
 
         // same as for the CTestNetParams
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,CHAINPARAMS_UINT32("REGTEST_PUBKEY_ADDRESS"));
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,CHAINPARAMS_UINT32("REGTEST_SCRIPT_ADDRESS"));
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,CHAINPARAMS_UINT32("REGTEST_SECRET_KEY"));
         base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xE3, 0xC5, 0x26};  // ptpu
         base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xE3, 0xC5, 0x2D};  // ptpv
 

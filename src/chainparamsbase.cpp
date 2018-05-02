@@ -32,7 +32,7 @@ class CBaseMainParams : public CBaseChainParams
 public:
     CBaseMainParams()
     {
-        nRPCPort = 8566;
+        nRPCPort = gChainparams.GetArg("MAINNET_RPC_PORT", 8566);
     }
 };
 
@@ -44,7 +44,7 @@ class CBaseTestNetParams : public CBaseChainParams
 public:
     CBaseTestNetParams()
     {
-        nRPCPort = 18566;
+        nRPCPort = gChainparams.GetArg("TESTNET_RPC_PORT", 18566);
         strDataDir = "testnet3";
     }
 };
@@ -57,7 +57,7 @@ class CBaseRegTestParams : public CBaseChainParams
 public:
     CBaseRegTestParams()
     {
-        nRPCPort = 19566;
+        nRPCPort = gChainparams.GetArg("REGTEST_RPC_PORT", 19566);
         strDataDir = "regtest";
     }
 };
