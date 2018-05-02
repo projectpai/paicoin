@@ -244,7 +244,7 @@ public Q_SLOTS:
     void initializeResult(bool success);
     void initializeFirstRun();
     void createNewWallet();
-    void restoreWallet(std::string phrase);
+    void restoreWallet(std::string paperKey);
     void completeNewWalletInitialization();
     void shutdownResult();
     /// Handle runaway exceptions. Shows a message box with the problem and quits the program.
@@ -579,11 +579,12 @@ void PAIcoinApplication::createNewWallet()
 
     if (!vpwallets.empty())
     {
-        std::string phrase = vpwallets[0]->GenerateBIP39Phrase();
-        std::cout << "Phrase: '" << phrase.c_str() << "'" << std::endl;
-
         walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
-        walletModel->useMnemonic(phrase);
+
+        std::string paperKey = walletModel->generateNewPaperKey();
+        //std::cout << "Paper Key: '" << paperKey.c_str() << "'" << std::endl;
+
+        walletModel->usePaperKey(paperKey);
 
         window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
         window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
@@ -591,11 +592,11 @@ void PAIcoinApplication::createNewWallet()
         connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
                 paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
 
-        Q_EMIT walletCreated(phrase);
+        Q_EMIT walletCreated(paperKey);
     }
 }
 
-void PAIcoinApplication::restoreWallet(std::string phrase)
+void PAIcoinApplication::restoreWallet(std::string paperKey)
 {
     // TODO:
     // 1. Restore wallet based on provided BIP39 phrase
@@ -609,7 +610,7 @@ void PAIcoinApplication::restoreWallet(std::string phrase)
     if (!vpwallets.empty())
     {
         walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
-        walletModel->useMnemonic(phrase);
+        walletModel->usePaperKey(paperKey);
 
         window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
         window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);

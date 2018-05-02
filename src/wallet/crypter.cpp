@@ -205,6 +205,57 @@ bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
     return true;
 }
 
+bool CCryptoKeyStore::AddCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey)
+{
+    {
+        LOCK(cs_KeyStore);
+        if (!SetCrypted())
+            return false;
+
+        this->vchCryptedPaperKey = vchCryptedPaperKey;
+    }
+    return true;
+}
+
+bool CCryptoKeyStore::AddPaperKey(const std::string& paperKey)
+{
+    {
+        LOCK(cs_KeyStore);
+        if (!IsCrypted())
+            return CBasicKeyStore::AddPaperKey(paperKey);
+
+        if (IsLocked())
+            return false;
+
+        std::vector<unsigned char> vchCryptedPaperKey;
+        CKeyingMaterial vchPaperKey(paperKey.begin(), paperKey.end());
+        if (!EncryptSecret(vMasterKey, vchPaperKey, uint256S("paperkey"), vchCryptedPaperKey))
+            return false;
+
+        if (!AddCryptedPaperKey(vchCryptedPaperKey))
+            return false;
+    }
+    return true;
+}
+
+bool CCryptoKeyStore::GetPaperKey(std::string& paperKey) const
+{
+    {
+        LOCK(cs_KeyStore);
+        if (!IsCrypted())
+            return CBasicKeyStore::GetPaperKey(paperKey);
+
+        CKeyingMaterial vchPaperKey;
+        if (!DecryptSecret(vMasterKey, vchCryptedPaperKey, uint256S("paperkey"), vchPaperKey))
+            return false;
+
+        paperKey = std::string(vchPaperKey.begin(), vchPaperKey.end());
+
+        return true;
+    }
+    return false;
+}
+
 bool CCryptoKeyStore::AddKeyPubKey(const CKey& key, const CPubKey &pubkey)
 {
     {

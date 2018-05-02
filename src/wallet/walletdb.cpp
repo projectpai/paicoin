@@ -56,6 +56,22 @@ bool CWalletDB::EraseTx(uint256 hash)
     return EraseIC(std::make_pair(std::string("tx"), hash));
 }
 
+bool CWalletDB::WritePaperKey(const std::string& paperKey)
+{
+    return WriteIC(std::string("paperkey"), paperKey, true);
+}
+
+bool CWalletDB::WriteCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey)
+{
+    if (!WriteIC(std::string("cpaperkey"), vchCryptedPaperKey, true)) {
+        return false;
+    }
+
+    EraseIC(std::string("paperkey"));
+
+    return true;
+}
+
 bool CWalletDB::WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey, const CKeyMetadata& keyMeta)
 {
     if (!WriteIC(std::make_pair(std::string("keymeta"), vchPubKey), keyMeta, false)) {
@@ -323,6 +339,39 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             ssValue >> fYes;
             if (fYes == '1')
                 pwallet->LoadWatchOnly(script);
+        }
+        else if (strType == "paperkey")
+        {
+            std::string paperkey;
+            ssValue >> paperkey;
+            if (paperkey.empty())
+            {
+                strErr = "Error reading wallet database: paper key corrupt";
+                return false;
+            }
+
+            if (!pwallet->LoadPaperKey(paperkey))
+            {
+                strErr = "Error reading wallet database: LoadPaperKey failed";
+                return false;
+            }
+        }
+        else if (strType == "cpaperkey")
+        {
+            const std::vector<unsigned char> cpaperkey(ssValue.begin(), ssValue.end());
+            if (cpaperkey.size() == 0)
+            {
+                strErr = "Error reading wallet database: encrypted paper key corrupt";
+                return false;
+            }
+
+            if (!pwallet->LoadCryptedPaperKey(cpaperkey))
+            {
+                strErr = "Error reading wallet database: LoadCryptedPaperKey failed";
+                return false;
+            }
+
+            wss.fIsEncrypted = true;
         }
         else if (strType == "key" || strType == "wkey")
         {

@@ -23,6 +23,10 @@ protected:
 public:
     virtual ~CKeyStore() {}
 
+    //! Paper key management
+    virtual bool AddPaperKey(const std::string& paperKey) = 0;
+    virtual bool GetPaperKey(std::string& paperKey) const = 0;
+
     //! Add a key to the store.
     virtual bool AddKeyPubKey(const CKey &key, const CPubKey &pubkey) =0;
     virtual bool AddKey(const CKey &key);
@@ -54,12 +58,16 @@ typedef std::set<CScript> WatchOnlySet;
 class CBasicKeyStore : public CKeyStore
 {
 protected:
+    std::string paperKey;
     KeyMap mapKeys;
     WatchKeyMap mapWatchKeys;
     ScriptMap mapScripts;
     WatchOnlySet setWatchOnly;
 
 public:
+    bool AddPaperKey(const std::string& paperKey) override;
+    bool GetPaperKey(std::string& paperKey) const override;
+
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey) override;
     bool GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const override;
     bool HaveKey(const CKeyID &address) const override

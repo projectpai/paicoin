@@ -123,6 +123,8 @@ private:
     //! keeps track of whether Unlock has run a thorough check before
     bool fDecryptionThoroughlyChecked;
 
+    std::vector<unsigned char> vchCryptedPaperKey;
+
 protected:
     bool SetCrypted();
 
@@ -155,6 +157,10 @@ public:
     }
 
     bool Lock();
+
+    virtual bool AddCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey);
+    bool AddPaperKey(const std::string& paperKey) override;
+    bool GetPaperKey(std::string& paperKey) const override;
 
     virtual bool AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey) override;

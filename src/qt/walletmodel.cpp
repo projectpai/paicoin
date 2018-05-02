@@ -759,39 +759,21 @@ bool WalletModel::getDefaultWalletRbf() const
 
 // MNEMONIC FEATURES
 
-std::string WalletModel::generateNewMnemonic()
+std::string WalletModel::generateNewPaperKey()
 {
-    return wallet->GenerateBIP39Phrase();
+    return wallet->GeneratePaperKey();
 }
 
-bool WalletModel::useMnemonic(const std::string& phrase)
+std::string WalletModel::getCurrentPaperKey()
 {
-    std::vector<unsigned char> seed = wallet->GetBIP39Seed(phrase);
-    if (seed.size() == 0) {
-        return false;
-    }
+    std::string paperKey;
+    wallet->GetPaperKey(paperKey);
+    return paperKey;
+}
 
-    CPubKey masterPubKey = wallet->GenerateNewHDMasterKey(seed);
-    if (!masterPubKey.IsFullyValid()) {
-        return false;
-    }
-
-    bool result = wallet->SetHDMasterKey(masterPubKey);
-
-    memory_cleanse(&seed[0], seed.size());
-    memory_cleanse((unsigned char*)&masterPubKey[0], masterPubKey.size());
-
-    if (!result) {
-        return false;
-    }
-
-    if (!wallet->TopUpKeyPool()) {
-        return false;
-    }
-
-    wallet->SetBestChain(chainActive.GetLocator());
-
-    return true;
+bool WalletModel::usePaperKey(const std::string& paperKey)
+{
+    return wallet->SetCurrentPaperKey(paperKey);
 }
 
 // INVESTOR FEATURES

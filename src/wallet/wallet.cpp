@@ -124,6 +124,53 @@ const CWalletTx* CWallet::GetWalletTx(const uint256& hash) const
     return &(it->second);
 }
 
+bool CWallet::AddCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey)
+{
+    if (!CCryptoKeyStore::AddCryptedPaperKey(vchCryptedPaperKey))
+        return false;
+    {
+        LOCK(cs_wallet);
+        if (pwalletdbEncryption)
+            return pwalletdbEncryption->WriteCryptedPaperKey(vchCryptedPaperKey);
+        else
+            return CWalletDB(*dbw).WriteCryptedPaperKey(vchCryptedPaperKey);
+    }
+}
+
+bool CWallet::AddPaperKey(const std::string& paperKey)
+{
+    CWalletDB walletdb(*dbw);
+    return CWallet::AddPaperKeyWithDB(walletdb, paperKey);
+}
+
+bool CWallet::AddPaperKeyWithDB(CWalletDB &walletdb, const std::string& paperKey)
+{
+    AssertLockHeld(cs_wallet);
+
+    // CCryptoKeyStore has no concept of wallet databases, but calls AddCryptedPaperKey
+    // which is overridden above. To avoid flushes, the database handle is
+    // tunneled through to it.
+    bool needsDB = !pwalletdbEncryption;
+    if (needsDB) {
+        pwalletdbEncryption = &walletdb;
+    }
+    if (!CCryptoKeyStore::AddPaperKey(paperKey)) {
+        if (needsDB) pwalletdbEncryption = nullptr;
+        return false;
+    }
+    if (needsDB) pwalletdbEncryption = nullptr;
+
+    if (!IsCrypted()) {
+        return walletdb.WritePaperKey(paperKey);
+    }
+    return true;
+}
+
+bool CWallet::LoadCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey)
+{
+    return CCryptoKeyStore::AddCryptedPaperKey(vchCryptedPaperKey);
+}
+
 CPubKey CWallet::GenerateNewKey(CWalletDB &walletdb, bool internal)
 {
     AssertLockHeld(cs_wallet); // mapKeyMetadata
@@ -1460,7 +1507,7 @@ bool CWallet::IsHDEnabled() const
     return !hdChain.masterKeyID.IsNull();
 }
 
-std::string CWallet::GenerateBIP39Phrase()
+std::string CWallet::GeneratePaperKey()
 {
     const static size_t bufferSize = 128 / 8;
     unsigned char buffer[bufferSize] = {0};
@@ -1481,6 +1528,52 @@ std::string CWallet::GenerateBIP39Phrase()
     memory_cleanse(phrase, phraseLen);
 
     return phraseString;
+}
+
+bool CWallet::GetCurrentPaperKey(std::string& paperKey)
+{
+    std::string paperKeyStr;
+    if (!CCryptoKeyStore::GetPaperKey(paperKeyStr)) {
+        return false;
+    }
+
+    paperKey = paperKeyStr;
+
+    return true;
+}
+
+bool CWallet::SetCurrentPaperKey(const std::string& paperKey)
+{
+    std::vector<unsigned char> seed = GetBIP39Seed(paperKey);
+    if (seed.size() == 0) {
+        return false;
+    }
+
+    CPubKey masterPubKey = GenerateNewHDMasterKey(seed);
+    if (!masterPubKey.IsFullyValid()) {
+        return false;
+    }
+
+    bool result = SetHDMasterKey(masterPubKey);
+
+    memory_cleanse(&seed[0], seed.size());
+    memory_cleanse((unsigned char*)&masterPubKey[0], masterPubKey.size());
+
+    if (!result) {
+        return false;
+    }
+
+    //if (!TopUpKeyPool()) {
+    //    return false;
+    //}
+
+    SetBestChain(chainActive.GetLocator());
+
+    if (!AddPaperKey(paperKey)) {
+        return false;
+    }
+
+    return true;
 }
 
 std::vector<unsigned char> CWallet::GetBIP39Seed(const std::string& phrase)

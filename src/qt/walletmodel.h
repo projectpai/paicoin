@@ -221,19 +221,25 @@ public:
     // MNEMONIC FEATURES
 
     /*
-     * Generates a new BIP39 mnemonic phrase
-     * IMPORTANT! This method does NOT store the phrase! Make sure the generated phrase is stored.
-     * This method does NOT set this as current mnemonic phrase; use useMnemonic() to accomplish that.
+     * Generates a new BIP39 mnemonic phrase (paper key)
+     * IMPORTANT! This method does NOT store the paper key! Make sure the generated paper key is stored.
+     * This method does NOT set this as current mnemonic paper key; use usePaperKey() to accomplish that.
      * Returns a string with the mnemonic phrase. To be stored and used exactly as generated here.
      */
-    std::string generateNewMnemonic();
+    std::string generateNewPaperKey();
 
     /*
-     * Set the BIP39 mnemonic phrase as BIP32 HD seed
-     * IMPORTANT! This method sets the phrase as seed for the HD wallet and resets the child indexes.
+     * Get the current BIP39 mnemonic phrase (paper key)
+     * Returns a string with the mnemonic phrase. To be stored and used exactly as generated here.
+     */
+    std::string getCurrentPaperKey();
+
+    /*
+     * Set the BIP39 mnemonic phrase (paper key) as BIP32 HD seed
+     * IMPORTANT! This method sets the paper key as seed for the HD wallet and resets the child indexes.
      * Returns true if successfully set, false otherwise.
      */
-    bool useMnemonic(const std::string& phrase);
+    bool usePaperKey(const std::string& paperKey);
 
     // INVESTOR FEATURES
 

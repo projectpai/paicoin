@@ -858,6 +858,15 @@ public:
     bool IsAbortingRescan() { return fAbortRescan; }
     bool IsScanning() { return fScanningWallet; }
 
+    //! Adds paper keys to the store
+    bool AddCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey) override;
+    bool AddPaperKey(const std::string& paperKey) override;
+    bool AddPaperKeyWithDB(CWalletDB &walletdb, const std::string& paperKey);
+    //! Adds the paper key to the store, without saving it to disk (used by LoadWallet)
+    bool LoadPaperKey(const std::string& paperkey) { return CCryptoKeyStore::AddPaperKey(paperkey); }
+    //! Adds the encrypted paper key to the store, without saving it to disk (used by LoadWallet)
+    bool LoadCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey);
+
     /**
      * keystore implementation
      * Generate a new key
@@ -1119,7 +1128,19 @@ public:
      * Generates a new BIP39 phrase
      * Returns a string with the phrase. To be used exactly as generated here.
      */
-    std::string GenerateBIP39Phrase();
+    std::string GeneratePaperKey();
+
+    /*
+     * Get the current BIP39 phrase
+     * Returns true if the string with the paper key is valid. To be used exactly as generated here.
+     */
+    bool GetCurrentPaperKey(std::string& paperKey);
+
+    /*
+     * Set the current BIP39 phrase
+     * Returns true if the paper key has been set.
+     */
+    bool SetCurrentPaperKey(const std::string& paperKey);
 
     /*
      * Get the BIP39 key of 64 bytes to be used in the master key generation
