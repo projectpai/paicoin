@@ -162,7 +162,6 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
 void CChainParams::LoadGenesisParams() const
 {
 	std::string genesisConfFilename = GetDataDir().string() + '/' + PAICOIN_GENESIS_CONF_FILENAME;
-	fprintf(stderr, "DEBUG %s \n", genesisConfFilename.c_str());
 	try
 	{
 		gGenesisparams.ReadConfigFile(genesisConfFilename);
@@ -285,7 +284,7 @@ public:
 
 			consensus.hashGenesisBlock = genesis.GetHash();
 			consensus.BIP34Hash = consensus.hashGenesisBlock;
-
+			
 			assert(consensus.hashGenesisBlock == GENESIS_UINT256("MAINNET_CONSENSUS_HASH_GENESIS_BLOCK"));
 			assert(genesis.hashMerkleRoot == GENESIS_UINT256("MAINNET_GENESIS_HASH_MERKLE_ROOT"));
 		}
