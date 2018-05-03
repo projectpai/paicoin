@@ -701,10 +701,10 @@ private:
     CHDChain hdChain;
 
     /* HD derive new child key (on internal or external chain) */
-    void DeriveNewChildKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKey& secret, bool internal = false);
+    bool DeriveNewChildKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKey& secret, bool internal = false);
 
     /* HD derive investor key */
-    void DeriveInvestorKey(CWalletDB &walletdb, CKeyMetadata& metadata, CPubKey& pubKey);
+    bool DeriveInvestorKey(CKey& key, CKeyMetadata& metadata);
 
     std::set<int64_t> setInternalKeyPool;
     std::set<int64_t> setExternalKeyPool;
@@ -1112,9 +1112,6 @@ public:
 
     /* Returns true if HD is enabled */
     bool IsHDEnabled() const;
-
-    /* Generates a new HD master key (will not be activated) */
-    CPubKey GenerateNewHDMasterKey();
 
     /* Set the current HD master key (will reset the chain child index counters)
        Sets the master key's version based on the current wallet version (so the

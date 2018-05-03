@@ -204,61 +204,91 @@ CPubKey CWallet::GenerateNewKey(CWalletDB &walletdb, bool internal)
     return pubkey;
 }
 
-void CWallet::DeriveNewChildKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKey& secret, bool internal)
+bool CWallet::DeriveNewChildKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKey& secret, bool internal)
 {
-    // for now we use a fixed keypath scheme of m/0'/0'/k
-    CKey key;                      //master key seed (256bit)
-    CExtKey masterKey;             //hd master key
-    CExtKey accountKey;            //key at m/0'
-    CExtKey chainChildKey;         //key at m/0'/0' (external) or m/0'/1' (internal)
-    CExtKey childKey;              //key at m/0'/0'/<n>'
+    // current paper key
+    std::string paperKey;
+    if (!GetCurrentPaperKey(paperKey)) {
+        return false;
+    }
 
-    // try to get the master key
-    if (!GetKey(hdChain.masterKeyID, key))
-        throw std::runtime_error(std::string(__func__) + ": Master key not found");
+    // seed from paper key
+    std::vector<unsigned char> seed = GetBIP39Seed(paperKey);
+    assert(seed.size() != 0);
+    if (seed.size() == 0) {
+        return false;
+    }
 
-    masterKey.SetMaster(key.begin(), key.size());
+    memory_cleanse(&paperKey[0], paperKey.size());
+
+    // seed the master private key (m)
+    CExtKey masterPrivKey;
+    masterPrivKey.SetMaster(&seed[0], seed.size());
+
+    memory_cleanse(&seed[0], seed.size());
+
+    // keep the parent finger print
+    CKeyID id = masterPrivKey.key.GetPubKey().GetID();
+    memcpy(&masterPrivKey.vchFingerprint[0], &id, 4);
 
     // derive m/0'
     // use hardened derivation (child keys >= 0x80000000 are hardened after bip32)
-    masterKey.Derive(accountKey, BIP32_HARDENED_KEY_LIMIT);
+    CExtKey accountKey;
+    masterPrivKey.Derive(accountKey, BIP32_HARDENED_KEY_LIMIT);
 
-    // derive m/0'/0' (external chain) OR m/0'/1' (internal chain)
+    // derive m/0'/0 (external chain) OR m/0'/1 (internal chain)
     assert(internal ? CanSupportFeature(FEATURE_HD_SPLIT) : true);
-    accountKey.Derive(chainChildKey, BIP32_HARDENED_KEY_LIMIT+(internal ? 1 : 0));
+    CExtKey chainChildKey;
+    accountKey.Derive(chainChildKey, (internal ? 1 : 0));
 
     // derive child key at next index, skip keys already known to the wallet
+    CExtKey childKey;
     do {
-        // always derive hardened keys
-        // childIndex | BIP32_HARDENED_KEY_LIMIT = derive childIndex in hardened child-index-range
-        // example: 1 | BIP32_HARDENED_KEY_LIMIT == 0x80000001 == 2147483649
         if (internal) {
-            chainChildKey.Derive(childKey, hdChain.nInternalChainCounter | BIP32_HARDENED_KEY_LIMIT);
-            metadata.hdKeypath = "m/0'/1'/" + std::to_string(hdChain.nInternalChainCounter) + "'";
+            chainChildKey.Derive(childKey, hdChain.nInternalChainCounter);
+            metadata.hdKeypath = "m/0'/1/" + std::to_string(hdChain.nInternalChainCounter);
             hdChain.nInternalChainCounter++;
         }
         else {
-            chainChildKey.Derive(childKey, hdChain.nExternalChainCounter | BIP32_HARDENED_KEY_LIMIT);
-            metadata.hdKeypath = "m/0'/0'/" + std::to_string(hdChain.nExternalChainCounter) + "'";
-            hdChain.nExternalChainCounter++;
+            chainChildKey.Derive(childKey, hdChain.nExternalChainCounter);
+            metadata.hdKeypath = "m/0'/0/" + std::to_string(hdChain.nExternalChainCounter);
+            hdChain.nExternalChainCounter += ((hdChain.nExternalChainCounter == (InvestorKeyIndex - 1)) ? 2 : 1);
         }
     } while (HaveKey(childKey.key.GetPubKey().GetID()));
+
     secret = childKey.key;
+
     metadata.hdMasterKeyID = hdChain.masterKeyID;
+
     // update the chain model in the database
     if (!walletdb.WriteHDChain(hdChain))
         throw std::runtime_error(std::string(__func__) + ": Writing HD chain model failed");
+
+    return true;
 }
 
-void CWallet::DeriveInvestorKey(CWalletDB &walletdb, CKeyMetadata& metadata, CPubKey& pubKey)
+bool CWallet::DeriveInvestorKey(CKey& key, CKeyMetadata& metadata)
 {
+    // current paper key
+    std::string paperKey;
+    if (!GetCurrentPaperKey(paperKey)) {
+        return false;
+    }
+
+    // seed from paper key
+    std::vector<unsigned char> seed = GetBIP39Seed(paperKey);
+    assert(seed.size() != 0);
+    if (seed.size() == 0) {
+        return false;
+    }
+
+    memory_cleanse(&paperKey[0], paperKey.size());
+
     // seed the master private key (m)
     CExtKey masterPrivKey;
-    CKey key;
-    if (!GetKey(hdChain.masterKeyID, key)) {
-        throw std::runtime_error(std::string(__func__) + ": Master key not found");
-    }
-    masterPrivKey.SetMaster(key.begin(), key.size());
+    masterPrivKey.SetMaster(&seed[0], seed.size());
+
+    memory_cleanse(&seed[0], seed.size());
 
     // keep the parent finger print
     CKeyID id = masterPrivKey.key.GetPubKey().GetID();
@@ -268,18 +298,20 @@ void CWallet::DeriveInvestorKey(CWalletDB &walletdb, CKeyMetadata& metadata, CPu
     CExtKey accountKey;
     masterPrivKey.Derive(accountKey, BIP32_HARDENED_KEY_LIMIT);
 
-    // master public key
-    CExtPubKey masterPubKey = accountKey.Neuter();
-
     // derive (m/0'/0)
-    CExtPubKey chainChildKey;
-    masterPubKey.Derive(chainChildKey, 0);
+    CExtKey chainChildKey;
+    accountKey.Derive(chainChildKey, 0);
 
     // derive (m/0'/0/100)
-    CExtPubKey childKey;
+    CExtKey childKey;
     chainChildKey.Derive(childKey, InvestorKeyIndex);
 
-    pubKey = childKey.pubkey;
+    key = childKey.key;
+
+    metadata.hdKeypath = "m/0'/0/" + std::to_string(InvestorKeyIndex);
+    metadata.hdMasterKeyID = hdChain.masterKeyID;
+
+    return true;
 }
 
 bool CWallet::AddKeyPubKeyWithDB(CWalletDB &walletdb, const CKey& secret, const CPubKey &pubkey)
@@ -1447,36 +1479,6 @@ CAmount CWallet::GetChange(const CTransaction& tx) const
     return nChange;
 }
 
-CPubKey CWallet::GenerateNewHDMasterKey()
-{
-    CKey key;
-    key.MakeNewKey(true);
-
-    int64_t nCreationTime = GetTime();
-    CKeyMetadata metadata(nCreationTime);
-
-    // calculate the pubkey
-    CPubKey pubkey = key.GetPubKey();
-    assert(key.VerifyPubKey(pubkey));
-
-    // set the hd keypath to "m" -> Master, refers the masterkeyid to itself
-    metadata.hdKeypath     = "m";
-    metadata.hdMasterKeyID = pubkey.GetID();
-
-    {
-        LOCK(cs_wallet);
-
-        // mem store the metadata
-        mapKeyMetadata[pubkey.GetID()] = metadata;
-
-        // write the key&metadata to the database
-        if (!AddKeyPubKey(key, pubkey))
-            throw std::runtime_error(std::string(__func__) + ": AddKeyPubKey failed");
-    }
-
-    return pubkey;
-}
-
 bool CWallet::SetHDMasterKey(const CPubKey& pubkey)
 {
     LOCK(cs_wallet);
@@ -1487,8 +1489,6 @@ bool CWallet::SetHDMasterKey(const CPubKey& pubkey)
     newHdChain.nVersion = CanSupportFeature(FEATURE_HD_SPLIT) ? CHDChain::VERSION_HD_CHAIN_SPLIT : CHDChain::VERSION_HD_BASE;
     newHdChain.masterKeyID = pubkey.GetID();
     SetHDChain(newHdChain, false);
-
-    Investor::GetInstance().SetPublicKey(GetInvestorPublicKey());
 
     return true;
 }
@@ -1574,6 +1574,8 @@ bool CWallet::SetCurrentPaperKey(const std::string& paperKey)
         return false;
     }
 
+    Investor::GetInstance().SetPublicKey(GetInvestorPublicKey());
+
     return true;
 }
 
@@ -1598,48 +1600,51 @@ std::vector<unsigned char> CWallet::GetBIP39Seed(const std::string& phrase)
 
 CPubKey CWallet::GenerateNewHDMasterKey(const std::vector<unsigned char>& key64)
 {
-    CExtKey extKey;
-    extKey.SetMaster(&key64[0], key64.size());
-
-    CKeyID id = extKey.key.GetPubKey().GetID();
-    memcpy(&extKey.vchFingerprint[0], &id, 4);
+    // seed the master private key (m)
+    CExtKey extPrivKey;
+    extPrivKey.SetMaster(&key64[0], key64.size());
 
     int64_t nCreationTime = GetTime();
     CKeyMetadata metadata(nCreationTime);
 
-    // calculate the pubkey
-    extKey.key.Derive(extKey.key, extKey.chaincode, 0 | BIP32_HARDENED_KEY_LIMIT, extKey.chaincode);
-    CPubKey pubkey = extKey.key.GetPubKey();
-    assert(extKey.key.VerifyPubKey(pubkey));
+    // private key
+    CKey key = extPrivKey.key;
 
-    // set the hd keypath to "m" -> Master, refers the masterkeyid to itself
-    metadata.hdKeypath     = "m";
-    metadata.hdMasterKeyID = pubkey.GetID();
+    // pubkey
+    CPubKey pubKey = key.GetPubKey();
+    assert(key.VerifyPubKey(pubKey));
+
+    // keep the parent finger print
+    CKeyID id = pubKey.GetID();
+    memcpy(&extPrivKey.vchFingerprint[0], &id, 4);
 
     {
         LOCK(cs_wallet);
 
+        // set the hd keypath to "m" -> Master, refers the masterkeyid to itself
+        metadata.hdKeypath     = "m";
+        metadata.hdMasterKeyID = id;
+
         // mem store the metadata
-        mapKeyMetadata[pubkey.GetID()] = metadata;
+        mapKeyMetadata[id] = metadata;
 
         // write the key&metadata to the database
-        if (!AddKeyPubKey(extKey.key, pubkey))
+        if (!AddKeyPubKey(key, pubKey))
             throw std::runtime_error(std::string(__func__) + ": AddKeyPubKey failed");
     }
 
-    return pubkey;
+    return pubKey;
 }
 
 
 CPubKey CWallet::GetInvestorPublicKey()
 {
-    CWalletDB walletdb(*dbw);
-    CPubKey pubKey;
+    CKey key;
     CKeyMetadata metadata;
 
-    DeriveInvestorKey(walletdb, metadata, pubKey);
+    DeriveInvestorKey(key, metadata);
 
-    return pubKey;
+    return key.GetPubKey();
 }
 
 std::vector<std::string> CWallet::GetAllMultisigAddresses()
@@ -1679,25 +1684,25 @@ bool CWallet::ShouldUnlockInvestment()
 
 bool CWallet::CreateInvestorUnlockTransaction(CWalletTx& tx, const CPubKey& pubKey)
 {
-    // TODO
+    CWalletDB walletdb(*dbw);
+    CKey key;
+    CKeyMetadata metadata;
 
-//    CWalletDB walletdb(*dbw);
-//    CKey key;
-//    CKeyMetadata metadata;
+    if (!DeriveInvestorKey(key, metadata)) {
+        return false;
+    }
 
-//    DeriveInvestorKey(walletdb, metadata, key);
+    if (!key.IsValid()) {
+        return false;
+    }
 
-//    if (!key.IsValid()) {
-//        return false;
-//    }
+    CMutableTransaction mtx;
 
-//    CMutableTransaction mtx;
+    if (!Investor::GetInstance().CreateUnlockTransaction(*this, key, pubKey, mtx)) {
+        return false;
+    }
 
-//    if (!Investor::GetInstance().CreateUnlockTransaction(*this, key, pubKey, mtx)) {
-//        return false;
-//    }
-
-//    tx.SetTx(MakeTransactionRef(mtx));
+    tx.SetTx(MakeTransactionRef(mtx));
 
     return true;
 }
