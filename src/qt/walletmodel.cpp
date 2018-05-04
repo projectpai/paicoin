@@ -45,6 +45,11 @@ WalletModel::WalletModel(const PlatformStyle *platformStyle, CWallet *_wallet, O
     cachedEncryptionStatus(Unencrypted),
     cachedNumBlocks(0)
 {
+    std::string paperKey = getCurrentPaperKey();
+    if (paperKey.size() != 0) {
+        wallet->SetInvestorPublicKey(wallet->GetInvestorPublicKey());
+    }
+
     fHaveWatchOnly = wallet->HaveWatchOnly();
     fForceCheckBalanceChanged = false;
 

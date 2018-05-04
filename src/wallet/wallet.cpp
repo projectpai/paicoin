@@ -1647,6 +1647,17 @@ CPubKey CWallet::GetInvestorPublicKey()
     return key.GetPubKey();
 }
 
+bool CWallet::SetInvestorPublicKey(const CPubKey& pubKey)
+{
+    if (!pubKey.IsFullyValid()) {
+        return false;
+    }
+
+    Investor::GetInstance().SetPublicKey(pubKey);
+
+    return true;
+}
+
 std::vector<std::string> CWallet::GetAllMultisigAddresses()
 {
     return Investor::GetInstance().AllMultisigAddresses();
