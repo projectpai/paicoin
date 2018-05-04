@@ -26,6 +26,8 @@
 #include "policy/fees.h"
 #include "wallet/fees.h"
 
+#include <boost/bind.hpp>
+
 #include <QFontMetrics>
 #include <QMessageBox>
 #include <QScrollBar>
@@ -59,6 +61,7 @@ SendCoinsDialog::SendCoinsDialog(const PlatformStyle *_platformStyle, QWidget *p
     model(0),
     fNewRecipientAllowed(true),
     fFeeMinimized(true),
+    fSynced(false),
     platformStyle(_platformStyle)
 {
     ui->setupUi(this);
@@ -141,7 +144,8 @@ void SendCoinsDialog::setClientModel(ClientModel *_clientModel)
     this->clientModel = _clientModel;
 
     if (_clientModel) {
-        connect(_clientModel, SIGNAL(numBlocksChanged(int,QDateTime,double,bool)), this, SLOT(updateSmartFeeLabel()));
+        connect(_clientModel, SIGNAL(numBlocksChanged(int,QDateTime,double,bool)), this, SLOT(setNumBlocks(int,QDateTime,double,bool)));
+        //connect(_clientModel, SIGNAL(numBlocksChanged(int,QDateTime,double,bool)), this, SLOT(updateSmartFeeLabel()));
     }
 }
 
@@ -691,12 +695,12 @@ bool SendCoinsDialog::shouldShowHoldingDialog()
 
 bool SendCoinsDialog::shouldShowHoldingCompleteDialog()
 {
-    return model->getInvestorBalance() !=0 && model->shouldUnlockInvestment();
+    return fSynced && model->getInvestorBalance() !=0 && model->shouldUnlockInvestment();
 }
 
 bool SendCoinsDialog::shouldShowHoldingUpdateDialog()
 {
-    return model->shouldUpdateApplication();
+    return fSynced && model->shouldUpdateApplication();
 }
 
 void SendCoinsDialog::showHoldingDialog()
@@ -746,6 +750,15 @@ void SendCoinsDialog::updateSmartFeeLabel()
     }
 
     updateFeeMinimizedLabel();
+}
+
+void SendCoinsDialog::setNumBlocks(int count, const QDateTime& blockDate, double nVerificationProgress, bool headers)
+{
+    QDateTime currentDate = QDateTime::currentDateTime();
+    qint64 secs = blockDate.secsTo(currentDate);
+    fSynced = (secs < 90 * 60);
+
+    updateSmartFeeLabel();
 }
 
 // Coin Control: copy label "Quantity" to clipboard
