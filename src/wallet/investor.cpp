@@ -506,7 +506,6 @@ bool Investor::Hash160IsMyMultisig(const uint160& hash160)
     LOCK(csInvestor);
 
     std::vector<unsigned char> vaddr;
-    vaddr.resize(21 - 1);
 
     std::vector<unsigned char> prefix = Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS);
     vaddr.insert(vaddr.begin(), prefix.begin(), prefix.begin() + 1);
