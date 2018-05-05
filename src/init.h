@@ -56,6 +56,11 @@ bool AppInitLockDataDirectory();
  */
 bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler, bool& firstRun);
 
+/**
+ * Performs last steps in PAIcoin core initialization
+ */
+bool AppInitMainFinalize(boost::thread_group& threadGroup, CScheduler& scheduler, bool& hasResult);
+
 /** The help message mode determines what help message to show */
 enum HelpMessageMode {
     HMM_PAICOIND,

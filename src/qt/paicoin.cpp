@@ -193,6 +193,7 @@ public:
 public Q_SLOTS:
     void initialize();
     void shutdown();
+    void initFinalize();
 
 Q_SIGNALS:
     void initializeResult(bool success);
@@ -246,6 +247,7 @@ public Q_SLOTS:
     void createNewWallet();
     void restoreWallet(std::string paperKey);
     void completeNewWalletInitialization();
+    void enableWalletDisplay();
     void shutdownResult();
     /// Handle runaway exceptions. Shows a message box with the problem and quits the program.
     void handleRunawayException(const QString &message);
@@ -253,10 +255,11 @@ public Q_SLOTS:
 Q_SIGNALS:
     void requestedInitialize();
     void requestedShutdown();
+    void requestedInitFinalize();
     void stopThread();
     void splashFinished(QWidget *window);
     void walletCreated(std::string phrase);
-    void walletRestored(bool success);
+    void walletRestored(std::string phrase);
     void completeUiWalletInitialization();
 
 private:
@@ -268,6 +271,7 @@ private:
 #ifdef ENABLE_WALLET
     PaymentServer* paymentServer;
     WalletModel *walletModel;
+    std::string walletPhrase;
 #endif
     int returnValue;
     const PlatformStyle *platformStyle;
@@ -303,7 +307,6 @@ bool PAIcoinCore::baseInitialize()
     {
         return false;
     }
-    // vladast: this cannot be called with new UI flow!!!!
     if (!AppInitLockDataDirectory())
     {
         return false;
@@ -344,6 +347,16 @@ void PAIcoinCore::shutdown()
         handleRunawayException(&e);
     } catch (...) {
         handleRunawayException(nullptr);
+    }
+}
+
+void PAIcoinCore::initFinalize()
+{
+    bool hasResult = false;
+    bool result = AppInitMainFinalize(threadGroup, scheduler, hasResult);
+    if (hasResult && !result)
+    {
+        shutdown();
     }
 }
 
@@ -415,12 +428,13 @@ void PAIcoinApplication::createWindow(const NetworkStyle *networkStyle, bool fir
     connect(pollShutdownTimer, SIGNAL(timeout()), window, SLOT(detectShutdown()));
 #ifdef ENABLE_WALLET
     connect(this, SIGNAL(walletCreated(std::string)), window, SLOT(walletCreated(std::string)));
-    connect(this, SIGNAL(walletRestored(bool)), window, SLOT(walletRestored(bool)));
+    connect(this, SIGNAL(walletRestored(std::string)), window, SLOT(walletRestored(std::string)));
     connect(this, SIGNAL(completeUiWalletInitialization()), window, SLOT(completeUiWalletInitialization()));
     connect(window, SIGNAL(shutdown()), this, SLOT(shutdownResult()));
     connect(window, SIGNAL(createNewWalletRequest()), this, SLOT(createNewWallet()));
     connect(window, SIGNAL(restoreWalletRequest(std::string)), this, SLOT(restoreWallet(std::string)));
     connect(window, SIGNAL(linkWalletToMainApp()), this, SLOT(completeNewWalletInitialization()));
+    connect(window, SIGNAL(enableWalletDisplay()), this, SLOT(enableWalletDisplay()));
 #endif // ENABLE_WALLET
     pollShutdownTimer->start(200);
 }
@@ -450,6 +464,7 @@ void PAIcoinApplication::startThread()
     connect(executor, SIGNAL(runawayException(QString)), this, SLOT(handleRunawayException(QString)));
     connect(this, SIGNAL(requestedInitialize()), executor, SLOT(initialize()));
     connect(this, SIGNAL(requestedShutdown()), executor, SLOT(shutdown()));
+    connect(this, SIGNAL(requestedInitFinalize()), executor, SLOT(initFinalize()));
     /*  make sure executor object is deleted in its own thread */
     connect(this, SIGNAL(stopThread()), executor, SLOT(deleteLater()));
     connect(this, SIGNAL(stopThread()), coreThread, SLOT(quit()));
@@ -580,18 +595,11 @@ void PAIcoinApplication::createNewWallet()
 
     if (!vpwallets.empty())
     {
-        walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
+        std::string paperKey = vpwallets[0]->GeneratePaperKey();
+        std::cout << "Phrase: '" << paperKey.c_str() << "'" << std::endl;
+        walletPhrase = paperKey;
 
-        std::string paperKey = walletModel->generateNewPaperKey();
-        //std::cout << "Paper Key: '" << paperKey.c_str() << "'" << std::endl;
-
-        walletModel->usePaperKey(paperKey);
-
-        window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
-        window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
-
-        connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
-                paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
+        enableWalletDisplay();
 
         Q_EMIT walletCreated(paperKey);
     }
@@ -608,16 +616,9 @@ void PAIcoinApplication::restoreWallet(std::string paperKey)
 
     if (!vpwallets.empty())
     {
-        walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
-        walletModel->usePaperKey(paperKey);
+        walletPhrase = paperKey;
 
-        window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
-        window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
-
-        connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
-                paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
-
-        Q_EMIT walletRestored(true);
+        Q_EMIT walletRestored(paperKey);
     }
 }
 
@@ -633,7 +634,27 @@ void PAIcoinApplication::completeNewWalletInitialization()
             window, SLOT(message(QString,QString,unsigned int)));
     QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
 
+    window->createWalletFrame();
+
+    enableWalletDisplay();
+
+    Q_EMIT requestedInitFinalize();
     Q_EMIT completeUiWalletInitialization();
+}
+
+void PAIcoinApplication::enableWalletDisplay()
+{
+    walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
+    walletModel->usePaperKey(walletPhrase);
+
+    bool firstRun = false;
+    CWallet::CreateWalletFromFile("wallet.dat", firstRun, false);
+
+    window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
+    window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
+
+    connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
+            paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
 }
 
 void PAIcoinApplication::shutdownResult()

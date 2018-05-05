@@ -104,6 +104,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     progressBarLabel(0),
     progressBar(0),
     progressDialog(0),
+    tabGroup(0),
     appMenuBar(0),
     overviewAction(0),
     historyAction(0),
@@ -209,12 +210,12 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
         setCentralWidget(rpcConsole);
     }
 
-    // Create actions for the toolbar, menu bar and tray/dock icon
-    // Needs walletFrame to be initialized
-    createActions();
-
     if (!firstRun)
     {
+        // Create actions for the toolbar, menu bar and tray/dock icon
+        // Needs walletFrame to be initialized
+        createActions();
+
         // Accept D&D of URIs
         setAcceptDrops(true);
 
@@ -281,13 +282,17 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     statusBar()->addPermanentWidget(frameBlocks);
 
     if (firstRun)
+    {
         statusBar()->hide();
+    }
+    else
+    {
+        // Initially wallet actions should be disabled
+        setWalletActionsEnabled(false);
+    }
 
     // Install event filter to be able to catch status tip events (QEvent::StatusTip)
     this->installEventFilter(this);
-
-    // Initially wallet actions should be disabled
-    setWalletActionsEnabled(false);
 
     // Subscribe to notifications from core
     subscribeToCoreSignals();
@@ -343,7 +348,7 @@ PAIcoinGUI::~PAIcoinGUI()
 
 void PAIcoinGUI::createActions()
 {
-    QActionGroup *tabGroup = new QActionGroup(this);
+    tabGroup = new QActionGroup(this);
 
     overviewAction = new QAction(platformStyle->SingleColorIcon(":/icons/overview"), tr("&Overview"), this);
     overviewAction->setStatusTip(tr("Show general overview of wallet"));
@@ -476,8 +481,7 @@ void PAIcoinGUI::createActions()
     new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_C), this, SLOT(showDebugWindowActivateConsole()));
     new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_D), this, SLOT(showDebugWindow()));
 
-    if (firstRun)
-        tabGroup->setVisible(false);
+    tabGroup->setVisible(!firstRun);
 }
 
 void PAIcoinGUI::createMenuBar()
@@ -806,7 +810,6 @@ void PAIcoinGUI::restoreWallet(QStringList paperKeys)
         if (++wordCount < paperKeys.size())
             phrase += ' ';
     }
-    std::cout << "Phrase: '" << phrase.toStdString().c_str() << std::endl;
 
     Q_EMIT restoreWalletRequest(phrase.toStdString().c_str());
 }
@@ -921,6 +924,14 @@ void PAIcoinGUI::updateHeadersSyncProgressLabel()
     int estHeadersLeft = (GetTime() - headersTipTime) / Params().GetConsensus().nPowTargetSpacing;
     if (estHeadersLeft > HEADER_HEIGHT_DELTA_SYNC)
         progressBarLabel->setText(tr("Syncing Headers (%1%)...").arg(QString::number(100.0 / (headersTipHeight+estHeadersLeft)*headersTipHeight, 'f', 1)));
+}
+
+void PAIcoinGUI::enableDebugWindow()
+{
+    // enable the debug window when the main window shows up
+    openRPCConsoleAction->setEnabled(true);
+    aboutAction->setEnabled(true);
+    optionsAction->setEnabled(true);
 }
 
 void PAIcoinGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVerificationProgress, bool header)
@@ -1136,10 +1147,8 @@ void PAIcoinGUI::closeEvent(QCloseEvent *event)
 
 void PAIcoinGUI::showEvent(QShowEvent *event)
 {
-    // enable the debug window when the main window shows up
-    openRPCConsoleAction->setEnabled(true);
-    aboutAction->setEnabled(true);
-    optionsAction->setEnabled(true);
+    if (!firstRun)
+        enableDebugWindow();
 }
 
 #ifdef ENABLE_WALLET
@@ -1159,29 +1168,37 @@ void PAIcoinGUI::incomingTransaction(const QString& date, int unit, const CAmoun
 
 void PAIcoinGUI::walletCreated(std::string phrase)
 {
-    // TODO:
     // Navigate to paper key intro and continue with writedown
     paperKeyWritedownPage->setPhrase(phrase);
     gotoPaperKeyWritedownPage();
 }
 
-void PAIcoinGUI::walletRestored(bool success)
+void PAIcoinGUI::walletRestored(std::string phrase)
 {
-    if (success)
-    {
-        ConfirmationDialog *confirmationDialog = new ConfirmationDialog(tr("Wallet Restored"), this);
-        confirmationDialog->exec();
-        Q_EMIT linkWalletToMainApp();
-    }
+    ConfirmationDialog *confirmationDialog = new ConfirmationDialog(tr("Wallet Restored"), this);
+    confirmationDialog->exec();
+    Q_EMIT linkWalletToMainApp();
+}
+
+void PAIcoinGUI::createWalletFrame()
+{
+    firstRun = false;
+
+    // Create actions for the toolbar, menu bar and tray/dock icon
+    // Needs walletFrame to be initialized
+    createActions();
+
+    // Create wallet frame and make it the central widget
+    walletFrame = new WalletFrame(platformStyle, this);
+    walletFrame->setClientModel(clientModel);
+    setCentralWidget(walletFrame);
+
+    modalOverlay->setParent(this->centralWidget());
 }
 
 void PAIcoinGUI::completeUiWalletInitialization()
 {
     // Re-enable all UI features disabled during first run
-
-    // Create wallet frame and make it the central widget
-    walletFrame = new WalletFrame(platformStyle, this);
-    setCentralWidget(walletFrame);
 
     // Accept D&D of URIs
     setAcceptDrops(true);
@@ -1202,6 +1219,8 @@ void PAIcoinGUI::completeUiWalletInitialization()
     statusBar()->setSizeGripEnabled(false);
 
     statusBar()->show();
+
+    enableDebugWindow();
 
     connect(walletFrame, SIGNAL(requestedSyncWarningInfo()), this, SLOT(showModalOverlay()));
     connect(labelBlocksIcon, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));

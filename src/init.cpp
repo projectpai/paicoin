@@ -1363,12 +1363,6 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler, bool& 
         RegisterValidationInterface(pzmqNotificationInterface);
     }
 #endif
-    uint64_t nMaxOutboundLimit = 0; //unlimited unless -maxuploadtarget is set
-    uint64_t nMaxOutboundTimeframe = MAX_UPLOAD_TIMEFRAME;
-
-    if (gArgs.IsArgSet("-maxuploadtarget")) {
-        nMaxOutboundLimit = gArgs.GetArg("-maxuploadtarget", DEFAULT_MAX_UPLOAD_TARGET)*1024*1024;
-    }
 
     // ********************************************************* Step 7: load block chain
 
@@ -1578,11 +1572,34 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler, bool& 
         return false;
     if (firstRun) {
         LogPrintf("This is first run. Let's start with wallet initialization.\n");
-        return true; // change!
+        return true;
     }
 #else
     LogPrintf("No wallet support compiled in!\n");
 #endif
+
+    bool hasResult = false;
+    bool result = AppInitMainFinalize(threadGroup, scheduler, hasResult);
+    if (hasResult)
+        return result;
+
+    return !fRequestShutdown;
+}
+
+bool AppInitMainFinalize(boost::thread_group& threadGroup, CScheduler& scheduler, bool &hasResult)
+{
+    uint64_t nMaxOutboundLimit = 0; //unlimited unless -maxuploadtarget is set
+    uint64_t nMaxOutboundTimeframe = MAX_UPLOAD_TIMEFRAME;
+
+    if (gArgs.IsArgSet("-maxuploadtarget")) {
+        nMaxOutboundLimit = gArgs.GetArg("-maxuploadtarget", DEFAULT_MAX_UPLOAD_TARGET)*1024*1024;
+    }
+
+    const CChainParams& chainparams = Params();
+
+    if (!g_connman)
+        g_connman = std::unique_ptr<CConnman>(new CConnman(GetRand(std::numeric_limits<uint64_t>::max()), GetRand(std::numeric_limits<uint64_t>::max())));
+    CConnman& connman = *g_connman;
 
     // ********************************************************* Step 9: data directory maintenance
 
@@ -1611,8 +1628,10 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler, bool& 
 
     // ********************************************************* Step 10: import blocks
 
-    if (!CheckDiskSpace())
+    if (!CheckDiskSpace()) {
+        hasResult = true;
         return false;
+    }
 
     // Either install a handler to notify us when genesis activates, or set fHaveGenesis directly.
     // No locking, as this happens before any background thread is started.
@@ -1672,6 +1691,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler, bool& 
     for (const std::string& strBind : gArgs.GetArgs("-bind")) {
         CService addrBind;
         if (!Lookup(strBind.c_str(), addrBind, GetListenPort(), false)) {
+            hasResult = true;
             return InitError(ResolveErrMsg("bind", strBind));
         }
         connOptions.vBinds.push_back(addrBind);
@@ -1679,9 +1699,11 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler, bool& 
     for (const std::string& strBind : gArgs.GetArgs("-whitebind")) {
         CService addrBind;
         if (!Lookup(strBind.c_str(), addrBind, 0, false)) {
+            hasResult = true;
             return InitError(ResolveErrMsg("whitebind", strBind));
         }
         if (addrBind.GetPort() == 0) {
+            hasResult = true;
             return InitError(strprintf(_("Need to specify a port with -whitebind: '%s'"), strBind));
         }
         connOptions.vWhiteBinds.push_back(addrBind);
@@ -1690,8 +1712,10 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler, bool& 
     for (const auto& net : gArgs.GetArgs("-whitelist")) {
         CSubNet subnet;
         LookupSubNet(net.c_str(), subnet);
-        if (!subnet.IsValid())
+        if (!subnet.IsValid()) {
+            hasResult = true;
             return InitError(strprintf(_("Invalid netmask specified in -whitelist: '%s'"), net));
+        }
         connOptions.vWhitelistedRange.push_back(subnet);
     }
 
@@ -1707,6 +1731,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler, bool& 
         }
     }
     if (!connman.Start(scheduler, connOptions)) {
+        hasResult = true;
         return false;
     }
 
@@ -1720,6 +1745,6 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler, bool& 
         pwallet->postInitProcess(scheduler);
     }
 #endif
-
-    return !fRequestShutdown;
+    hasResult = false;
+    return true;
 }

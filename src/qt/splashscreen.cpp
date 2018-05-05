@@ -158,6 +158,7 @@ void SplashScreen::slotFinish(QWidget *mainWin)
     if (isMinimized())
         showNormal();
     hide();
+    unsubscribeFromCoreSignals();
     deleteLater(); // No more need for this
 }
 
@@ -191,9 +192,6 @@ void SplashScreen::subscribeToCoreSignals()
     // Connect signals to client
     uiInterface.InitMessage.connect(boost::bind(InitMessage, this, _1));
     uiInterface.ShowProgress.connect(boost::bind(ShowProgress, this, _1, _2, _3));
-#ifdef ENABLE_WALLET
-    uiInterface.LoadWallet.connect(boost::bind(&SplashScreen::ConnectWallet, this, _1));
-#endif
 }
 
 void SplashScreen::unsubscribeFromCoreSignals()
@@ -229,4 +227,18 @@ void SplashScreen::closeEvent(QCloseEvent *event)
 {
     StartShutdown(); // allows an "emergency" shutdown during startup
     event->ignore();
+}
+
+void SplashScreen::showEvent(QShowEvent *event)
+{
+#ifdef ENABLE_WALLET
+    uiInterface.LoadWallet.connect(boost::bind(&SplashScreen::ConnectWallet, this, _1));
+#endif
+}
+
+void SplashScreen::hideEvent(QHideEvent *event)
+{
+#ifdef ENABLE_WALLET
+    uiInterface.LoadWallet.disconnect(boost::bind(&SplashScreen::ConnectWallet, this, _1));
+#endif
 }
