@@ -977,7 +977,7 @@ bool CWallet::MarkReplaced(const uint256& originalHash, const uint256& newHash)
         success = false;
     }
 
-    Investor::GetInstance().UpdateBalanceInTransaction(*this, wtx);
+    Investor::GetInstance().UpdateGlobalBalance(*this);
 
     NotifyTransactionChanged(this, originalHash, CT_UPDATED);
 
@@ -1044,7 +1044,7 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFlushOnClose)
     // Break debit/credit balance caches:
     wtx.MarkDirty();
 
-    Investor::GetInstance().UpdateBalanceInTransaction(*this, wtx);
+    Investor::GetInstance().UpdateGlobalBalance(*this);
 
     // Notify UI of new or updated transaction
     NotifyTransactionChanged(this, hash, fInsertedNew ? CT_NEW : CT_UPDATED);
@@ -1079,6 +1079,8 @@ bool CWallet::LoadToWallet(const CWalletTx& wtxIn)
             }
         }
     }
+
+    Investor::GetInstance().UpdateGlobalBalance(*this);
 
     return true;
 }
@@ -1199,7 +1201,7 @@ bool CWallet::AbandonTransaction(const uint256& hashTx)
             wtx.setAbandoned();
             wtx.MarkDirty();
             walletdb.WriteTx(wtx);
-            Investor::GetInstance().UpdateBalanceInTransaction(*this, wtx);
+            Investor::GetInstance().UpdateGlobalBalance(*this);
             NotifyTransactionChanged(this, wtx.GetHash(), CT_UPDATED);
             // Iterate over all its outputs, and mark transactions in the wallet that spend them abandoned too
             TxSpends::const_iterator iter = mapTxSpends.lower_bound(COutPoint(hashTx, 0));
@@ -3240,7 +3242,7 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, CCon
             {
                 CWalletTx &coin = mapWallet[txin.prevout.hash];
                 coin.BindWallet(this);
-                Investor::GetInstance().UpdateBalanceInTransaction(*this, wtxNew);
+                Investor::GetInstance().UpdateGlobalBalance(*this);
                 NotifyTransactionChanged(this, coin.GetHash(), CT_UPDATED);
             }
         }

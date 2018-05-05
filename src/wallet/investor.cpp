@@ -257,16 +257,6 @@ Investor::~Investor()
 
 // utilities
 
-//int BRCompareAllElementsInArray(const char *array, const size_t len, const char value)
-//{
-//    for (int i = 0; i < len; ++i) {
-//        if (array[i] != value) {
-//            return 0;
-//        }
-//    }
-//    return 1;
-//}
-
 void Investor::AddTxHash(const CWalletTx *tx)
 {
     if (IsTxHashAdded(tx))
@@ -290,10 +280,14 @@ void Investor::CleanTxHashList(void)
     addedTxHashes.clear();
 }
 
-std::string Investor::AddressFromP2SH(const CScript& script)
+bool Investor::DoesScriptPayToMultisigAddress(const CScript& script, const std::string& multisigAddress)
 {
+    if (multisigAddress.size() == 0) {
+        return false;
+    }
+
     if (!script.IsPayToScriptHash()) {
-        return "";
+        return false;
     }
 
     std::vector<unsigned char> vaddr;
@@ -306,7 +300,13 @@ std::string Investor::AddressFromP2SH(const CScript& script)
     hash160.Write(&script[2], 20);
     hash160.Finalize(&vaddr[1]);
 
-    return EncodeBase58Check(vaddr);
+    std::string scriptAddress = EncodeBase58Check(vaddr);
+
+    if ((scriptAddress.size() == 0) || (multisigAddress != scriptAddress)) {
+        return false;
+    }
+
+    return true;
 }
 
 bool Investor::FundingOutputForInput(const CWallet& wallet, const CTxIn& input, CTxOut& output)
@@ -330,7 +330,7 @@ bool Investor::MultisigFundingOutputForInput(const CWallet& wallet, const CTxIn&
         return false;
     }
 
-    if (txOut.scriptPubKey.IsPayToScriptHash() && (multisigAddress == AddressFromP2SH(txOut.scriptPubKey))) {
+    if (DoesScriptPayToMultisigAddress(txOut.scriptPubKey, multisigAddress)) {
         output = txOut;
         return true;
     }
@@ -387,6 +387,8 @@ void Investor::SetPublicKey(const CPubKey& pubKey)
         pubKeys.push_back(period.paiPublicKey);
 
         CreateMultisig(period.multisigAddress, period.redeemScript, 2, pubKeys);
+
+        period.balance = 0;
     }
 }
 
@@ -420,30 +422,30 @@ uint64_t Investor::GlobalBalance(void)
     return balance;
 }
 
-void Investor::UpdateBalanceInTransaction(const CWallet& wallet, const CWalletTx& tx)
+void Investor::UpdateGlobalBalance(const CWallet& wallet)
 {
     LOCK(csInvestor);
 
-    if (IsTxHashAdded(&tx)) {
-        return;
-    }
+    ResetBalance();
 
-    for (auto&& period : HoldingPeriods) {
-        for (auto&& output : tx.tx->vout) {
-            if (period.multisigAddress == AddressFromP2SH(output.scriptPubKey)) {
-                period.balance += output.nValue;
+    for (auto&& txp : wallet.mapWallet) {
+        for (auto&& period : HoldingPeriods) {
+            for (auto&& output : txp.second.tx->vout) {
+                if (DoesScriptPayToMultisigAddress(output.scriptPubKey, period.multisigAddress)) {
+                    period.balance += output.nValue;
+                }
+            }
+
+            for (auto&& input : txp.second.tx->vin) {
+                CTxOut fundingTxOut;
+                if (MultisigFundingOutputForInput(wallet, input, period.multisigAddress, fundingTxOut)) {
+                    period.balance -= fundingTxOut.nValue;
+                }
             }
         }
 
-        for (auto&& input : tx.tx->vin) {
-            CTxOut fundingTxOut;
-            if (MultisigFundingOutputForInput(wallet, input, period.multisigAddress, fundingTxOut)) {
-                period.balance -= fundingTxOut.nValue;
-            }
-        }
+        AddTxHash(&txp.second);
     }
-
-    AddTxHash(&tx);
 }
 
 // investments tracking
@@ -457,7 +459,7 @@ bool Investor::TransactionIsMyInvestment(const CWalletTx* tx)
     
     for (auto&& output : tx->tx->vout) {
         for (auto&& period : HoldingPeriods) {
-            if (period.multisigAddress == AddressFromP2SH(output.scriptPubKey)) {
+            if (DoesScriptPayToMultisigAddress(output.scriptPubKey, period.multisigAddress)) {
                 return true;
             }
         }
@@ -475,7 +477,7 @@ bool Investor::TransactionIsUnlocked(const CWalletTx* tx)
     
     for (auto&& output : tx->tx->vout) {
         for (auto&& period : HoldingPeriods) {
-            if ((period.multisigAddress == AddressFromP2SH(output.scriptPubKey)) && (period.balance > 0)) {
+            if (DoesScriptPayToMultisigAddress(output.scriptPubKey, period.multisigAddress) && (period.balance > 0)) {
                 return false;
             }
         }
@@ -583,7 +585,7 @@ bool Investor::ShouldUpdateApplication(const CWallet& wallet)
                 }
 
                 for (auto&& output : tx->tx->vout) {
-                    if (period.multisigAddress == AddressFromP2SH(output.scriptPubKey)) {
+                    if (DoesScriptPayToMultisigAddress(output.scriptPubKey, period.multisigAddress)) {
                         received += output.nValue;
                     }
                 }
@@ -626,7 +628,7 @@ bool Investor::ShouldUnlockInvestment(const CWallet& wallet)
                 }
 
                 for (auto&& output : tx->tx->vout) {
-                    if (period.multisigAddress == AddressFromP2SH(output.scriptPubKey)) {
+                    if (DoesScriptPayToMultisigAddress(output.scriptPubKey, period.multisigAddress)) {
                         received += output.nValue;
                     }
                 }
@@ -688,7 +690,7 @@ bool Investor::CreateUnlockTransaction(CWallet& wallet, const CKey& privateKey, 
                     continue;
                 }
 
-                if (period.multisigAddress == AddressFromP2SH(output.scriptPubKey)) {
+                if (DoesScriptPayToMultisigAddress(output.scriptPubKey, period.multisigAddress)) {
                     COutPoint prevOut;
                     prevOut.hash = tx.second.tx->GetHash();
                     prevOut.n = i;

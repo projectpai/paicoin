@@ -49,8 +49,8 @@ public:
     /* Gets the balance for all the investor's multisig addresses */
     uint64_t GlobalBalance(void);
 
-    /* Adds or delete the amount in the investor output or input of the transaction to or from the balance for the corresponding multisig address */
-    void UpdateBalanceInTransaction(const CWallet& wallet, const CWalletTx& tx);
+    /* Process each wallet transaction to account for the amount in the investor output or input for the corresponding multisig address */
+    void UpdateGlobalBalance(const CWallet& wallet);
 
     /* Returns true if the transaction has an output that refers to one of the investor's multisig addresses */
     bool TransactionIsMyInvestment(const CWalletTx* tx);
@@ -133,7 +133,7 @@ private:
     bool IsTxHashAdded(const CWalletTx *tx);
     void CleanTxHashList(void);
 
-    std::string AddressFromP2SH(const CScript& script);
+    bool DoesScriptPayToMultisigAddress(const CScript& script, const std::string& multisigAddress);
 
     bool FundingOutputForInput(const CWallet& wallet, const CTxIn& input, CTxOut& output);
     bool MultisigFundingOutputForInput(const CWallet& wallet, const CTxIn& input, const std::string& multisigAddress, CTxOut& output);
