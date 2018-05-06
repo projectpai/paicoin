@@ -424,7 +424,7 @@ SendCoinsEntry *SendCoinsDialog::addEntry()
     entry->clear();
     entry->setFocus();
     ui->scrollAreaWidgetContents->resize(ui->scrollAreaWidgetContents->sizeHint());
-    qApp->processEvents();
+    // qApp->processEvents(); // NOTE: Leads to crash during initial wallet creation
     QScrollBar* bar = ui->scrollArea->verticalScrollBar();
     if(bar)
         bar->setSliderPosition(bar->maximum());

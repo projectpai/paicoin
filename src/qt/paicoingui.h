@@ -106,6 +106,7 @@ private:
     QProgressBar *progressBar;
     QProgressDialog *progressDialog;
 
+    QActionGroup *tabGroup;
     QMenuBar *appMenuBar;
     QAction *overviewAction;
     QAction *historyAction;
@@ -171,6 +172,8 @@ private:
 
     void updateHeadersSyncProgressLabel();
 
+    void enableDebugWindow();
+
 Q_SIGNALS:
     /** Signal raised when a URI was entered or dragged to the GUI */
     void receivedURI(const QString &uri);
@@ -179,6 +182,7 @@ Q_SIGNALS:
     void createNewWalletRequest();
     void restoreWalletRequest(std::string paperKeys);
     void linkWalletToMainApp();
+    void enableWalletDisplay();
 #endif // ENABLE_WALLET
 
 public Q_SLOTS:
@@ -218,7 +222,9 @@ public Q_SLOTS:
 
     void walletCreated(std::string phrase);
 
-    void walletRestored(bool success);
+    void walletRestored(std::string phrase);
+
+    void createWalletFrame();
 
     void completeUiWalletInitialization();
 #endif // ENABLE_WALLET

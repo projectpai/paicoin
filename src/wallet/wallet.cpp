@@ -3314,6 +3314,8 @@ DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
     if (nLoadWalletRet != DB_LOAD_OK)
         return nLoadWalletRet;
 
+    // With new wallet creation flow, splash screen is being hidden before LoadWallet is called
+    // thus, calling LoadWallet on non-existent splash screen will lead to error
     uiInterface.LoadWallet(this);
 
     return DB_LOAD_OK;

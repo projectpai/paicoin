@@ -28,6 +28,8 @@ public:
 protected:
     void paintEvent(QPaintEvent *event);
     void closeEvent(QCloseEvent *event);
+    void showEvent(QShowEvent *event);
+    void hideEvent(QHideEvent *event);
 
 public Q_SLOTS:
     /** Slot to call finish() method as it's not defined as slot */

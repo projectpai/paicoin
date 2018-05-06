@@ -130,7 +130,7 @@ SOURCES += \
     ../src/support/lockedpool.cpp \
     ../src/wallet/crypter.cpp \
     ../src/wallet/db.cpp \
-#    ../src/wallet/init.cpp \
+#   ../src/wallet/init.cpp \
     ../src/wallet/wallet.cpp \
     ../src/wallet/walletdb.cpp \
     ../src/wallet/investor.cpp \
@@ -279,6 +279,7 @@ FORMS += \
     ../src/qt/forms/openuridialog.ui \
     ../src/qt/forms/optionsdialog.ui \
     ../src/qt/forms/overviewpage.ui \
+    ../src/qt/forms/modaloverlay.ui \
     ../src/qt/forms/receivecoinsdialog.ui \
     ../src/qt/forms/receiverequestdialog.ui \
     ../src/qt/forms/debugwindow.ui \
