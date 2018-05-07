@@ -244,7 +244,7 @@ public:
     // INVESTOR FEATURES
 
     /* Get the public key to be used for investor funding */
-    CPubKey getInvestorKey() const;
+    bool getInvestorKey(CPubKey& pubKey) const;
 
     /*
      * Get the current wallet balance for investors receiving funds to the custom multisig addresses

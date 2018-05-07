@@ -1152,7 +1152,7 @@ public:
     // INVESTOR
 
     /* Get the public key to be used for investor funding */
-    CPubKey GetInvestorPublicKey();
+    bool GetInvestorPublicKey(CPubKey& pubKey);
 
     /* Set the public key to be used for investor funding */
     bool SetInvestorPublicKey(const CPubKey& pubKey);

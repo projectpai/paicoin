@@ -1576,7 +1576,10 @@ bool CWallet::SetCurrentPaperKey(const std::string& paperKey)
         return false;
     }
 
-    Investor::GetInstance().SetPublicKey(GetInvestorPublicKey());
+    CPubKey pubKey;
+    if (GetInvestorPublicKey(pubKey)) {
+        Investor::GetInstance().SetPublicKey(pubKey);
+    }
 
     return true;
 }
@@ -1639,14 +1642,22 @@ CPubKey CWallet::GenerateNewHDMasterKey(const std::vector<unsigned char>& key64)
 }
 
 
-CPubKey CWallet::GetInvestorPublicKey()
+bool CWallet::GetInvestorPublicKey(CPubKey& pubKey)
 {
     CKey key;
     CKeyMetadata metadata;
 
-    DeriveInvestorKey(key, metadata);
+    if (!DeriveInvestorKey(key, metadata)) {
+        return false;
+    }
 
-    return key.GetPubKey();
+    if ((!key.IsValid()) || (!key.GetPubKey().IsFullyValid())) {
+        return false;
+    }
+
+    pubKey = key.GetPubKey();
+
+    return true;
 }
 
 bool CWallet::SetInvestorPublicKey(const CPubKey& pubKey)

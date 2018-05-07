@@ -47,7 +47,10 @@ WalletModel::WalletModel(const PlatformStyle *platformStyle, CWallet *_wallet, O
 {
     std::string paperKey = getCurrentPaperKey();
     if (paperKey.size() != 0) {
-        wallet->SetInvestorPublicKey(wallet->GetInvestorPublicKey());
+        CPubKey pubKey;
+        if (wallet->GetInvestorPublicKey(pubKey)) {
+            wallet->SetInvestorPublicKey(pubKey);
+        }
     }
 
     fHaveWatchOnly = wallet->HaveWatchOnly();
@@ -787,9 +790,9 @@ bool WalletModel::usePaperKey(const std::string& paperKey)
 
 // INVESTOR FEATURES
 
-CPubKey WalletModel::getInvestorKey() const
+bool WalletModel::getInvestorKey(CPubKey& pubKey) const
 {
-    return wallet->GetInvestorPublicKey();
+    return wallet->GetInvestorPublicKey(pubKey);
 }
 
 uint64_t WalletModel::getInvestorBalance() const
