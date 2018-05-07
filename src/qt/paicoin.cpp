@@ -599,8 +599,6 @@ void PAIcoinApplication::createNewWallet()
         std::cout << "Phrase: '" << paperKey.c_str() << "'" << std::endl;
         walletPhrase = paperKey;
 
-        enableWalletDisplay();
-
         Q_EMIT walletCreated(paperKey);
     }
 }
