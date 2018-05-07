@@ -1184,13 +1184,14 @@ void PAIcoinGUI::createWalletFrame()
 {
     firstRun = false;
 
+    // Create wallet frame and make it the central widget
+    walletFrame = new WalletFrame(platformStyle, this);
+    walletFrame->setClientModel(clientModel);
+
     // Create actions for the toolbar, menu bar and tray/dock icon
     // Needs walletFrame to be initialized
     createActions();
 
-    // Create wallet frame and make it the central widget
-    walletFrame = new WalletFrame(platformStyle, this);
-    walletFrame->setClientModel(clientModel);
     setCentralWidget(walletFrame);
 
     modalOverlay->setParent(this->centralWidget());
