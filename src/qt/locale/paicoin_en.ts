@@ -798,7 +798,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+76"/>
         <source>Error: Specified data directory &quot;%1&quot; cannot be created.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1361,27 +1361,27 @@ If you do not update the application, your investment will remain in holding.</s
 <context>
     <name>PAIcoinGUI</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+426"/>
+        <location filename="../paicoingui.cpp" line="+431"/>
         <source>Sign &amp;message...</source>
         <translation>Sign &amp;message...</translation>
     </message>
     <message>
-        <location line="+521"/>
+        <location line="+529"/>
         <source>Synchronizing with network...</source>
         <translation>Synchronizing with network...</translation>
     </message>
     <message>
-        <location line="-599"/>
+        <location line="-607"/>
         <source>&amp;Overview</source>
         <translation>&amp;Overview</translation>
     </message>
     <message>
-        <location line="-192"/>
+        <location line="-196"/>
         <source>Node</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+193"/>
+        <location line="+197"/>
         <source>Show general overview of wallet</source>
         <translation>Show general overview of wallet</translation>
     </message>
@@ -1501,12 +1501,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+45"/>
         <source>Reindexing blocks on disk...</source>
         <translation>Reindexing blocks on disk...</translation>
     </message>
     <message>
-        <location line="-602"/>
+        <location line="-610"/>
         <source>Send coins to a PAIcoin address</source>
         <translation>Send coins to a PAIcoin address</translation>
     </message>
@@ -1536,12 +1536,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>&amp;Verify message...</translation>
     </message>
     <message>
-        <location line="+608"/>
+        <location line="+616"/>
         <source>PAIcoin</source>
         <translation>PAIcoin</translation>
     </message>
     <message>
-        <location line="-681"/>
+        <location line="-689"/>
         <source>&amp;Send</source>
         <translation>&amp;Send</translation>
     </message>
@@ -1576,7 +1576,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Verify messages to ensure they were signed with specified PAIcoin addresses</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+64"/>
         <source>&amp;File</source>
         <translation>&amp;File</translation>
     </message>
@@ -1596,7 +1596,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Tabs toolbar</translation>
     </message>
     <message>
-        <location line="-166"/>
+        <location line="-165"/>
         <source>Request payments (generates QR codes and paicoin: URIs)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1629,7 +1629,7 @@ If you do not update the application, your investment will remain in holding.</s
         </translation>
     </message>
     <message>
-        <location line="+60"/>
+        <location line="+68"/>
         <source>Indexing blocks on disk...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1682,17 +1682,17 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Up to date</translation>
     </message>
     <message>
-        <location line="-529"/>
+        <location line="-537"/>
         <source>Show the %1 help message to get a list with possible PAIcoin command-line options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+205"/>
+        <location line="+204"/>
         <source>%1 client</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+310"/>
+        <location line="+319"/>
         <source>Connecting to peers...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1702,7 +1702,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Catching up...</translation>
     </message>
     <message>
-        <location line="+145"/>
+        <location line="+143"/>
         <source>Date: %1
 </source>
         <translation type="unfinished"></translation>
@@ -1742,12 +1742,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Incoming transaction</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+13"/>
         <source>Wallet Restored</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+88"/>
+        <location line="+102"/>
         <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1767,7 +1767,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+648"/>
+        <location filename="../paicoin.cpp" line="+661"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1780,7 +1780,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished">Form</translation>
     </message>
     <message>
-        <location line="+76"/>
+        <location line="+94"/>
         <source>Paper Key</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1809,12 +1809,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished">Form</translation>
     </message>
     <message>
-        <location line="+108"/>
+        <location line="+126"/>
         <source>Paper Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+25"/>
         <source>Your paper key is the only way to restore your PAIcoin Wallet if your phone is lost, stolen, broken, or updated.
 
 We will show you a list of words to write down on a piece of paper and keep safe.</source>
@@ -1834,12 +1834,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished">Form</translation>
     </message>
     <message>
-        <location line="+39"/>
-        <source>&lt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+34"/>
+        <location line="+100"/>
         <source>Paper Key</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2134,7 +2129,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>QObject::QObject</name>
     <message>
-        <location filename="../paicoingui.cpp" line="-525"/>
+        <location filename="../paicoingui.cpp" line="-541"/>
         <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2813,12 +2808,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished">Form</translation>
     </message>
     <message>
-        <location line="+83"/>
+        <location line="+101"/>
         <source>Paper Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+13"/>
         <source>Enter the Paper Key of the wallet you want to restore</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2837,7 +2832,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>SendCoinsDialog</name>
     <message>
         <location filename="../forms/sendcoinsdialog.ui" line="+14"/>
-        <location filename="../sendcoinsdialog.cpp" line="+586"/>
+        <location filename="../sendcoinsdialog.cpp" line="+613"/>
         <source>Send Coins</source>
         <translation>Send Coins</translation>
     </message>
@@ -3023,7 +3018,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>S&amp;end</translation>
     </message>
     <message>
-        <location filename="../sendcoinsdialog.cpp" line="-499"/>
+        <location filename="../sendcoinsdialog.cpp" line="-521"/>
         <source>Copy quantity</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3058,7 +3053,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+84"/>
         <source>%1 (%2 blocks)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3101,7 +3096,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+191"/>
+        <location line="+211"/>
         <source>The recipient address is not valid. Please recheck.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3151,7 +3146,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location line="+42"/>
+        <location line="+76"/>
         <source>Estimated to begin confirmation within %n block(s).</source>
         <translation>
             <numerusform>Estimated to begin confirmation within %n block.</numerusform>
@@ -3159,7 +3154,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         </translation>
     </message>
     <message>
-        <location line="+101"/>
+        <location line="+110"/>
         <source>Warning: Invalid PAIcoin address</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3877,7 +3872,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+42"/>
         <source>Received with</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3902,22 +3897,23 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+33"/>
         <source>watch-only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="-81"/>
+        <location line="+86"/>
         <source>Locked</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+14"/>
         <source>(n/a)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+213"/>
+        <location line="+215"/>
         <source>(no label)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4154,7 +4150,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+647"/>
+        <location filename="../paicoingui.cpp" line="+663"/>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4188,7 +4184,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>WalletModel</name>
     <message>
-        <location filename="../walletmodel.cpp" line="+294"/>
+        <location filename="../walletmodel.cpp" line="+299"/>
         <source>Send Coins</source>
         <translation type="unfinished">Send Coins</translation>
     </message>

@@ -28,14 +28,14 @@
         <widget class="QPushButton" name="pushButtonBack">
          <property name="minimumSize">
           <size>
-           <width>35</width>
-           <height>35</height>
+           <width>43</width>
+           <height>38</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>35</width>
-           <height>35</height>
+           <width>43</width>
+           <height>38</height>
           </size>
          </property>
          <property name="font">
@@ -47,10 +47,22 @@
          </property>
          <property name="styleSheet">
           <string notr="true">background:#f8f8f8;
-color:#000;</string>
+color:#000;
+border-radius:6.4px;
+border:1px solid #dedede;</string>
          </property>
          <property name="text">
-          <string notr="true">&lt;</string>
+          <string notr="true"/>
+         </property>
+         <property name="icon">
+          <iconset resource="../paicoin.qrc">
+           <normaloff>:/icons/back</normaloff>:/icons/back</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>26</width>
+           <height>26</height>
+          </size>
          </property>
         </widget>
        </item>
@@ -76,6 +88,12 @@ color:#000;</string>
        </property>
        <item alignment="Qt::AlignHCenter">
         <widget class="QLabel" name="labelTitle">
+         <property name="minimumSize">
+          <size>
+           <width>424</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>20</pointsize>
@@ -263,6 +281,8 @@ color:#fff;</string>
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../paicoin.qrc"/>
+ </resources>
  <connections/>
 </ui>
