@@ -570,9 +570,6 @@ void PAIcoinApplication::initializeResult(bool success)
     }
 }
 
-#include <iostream>
-#include <string>
-
 void PAIcoinApplication::initializeFirstRun()
 {
     qDebug() << __func__ << ": First run.";
@@ -596,7 +593,6 @@ void PAIcoinApplication::createNewWallet()
     if (!vpwallets.empty())
     {
         std::string paperKey = vpwallets[0]->GeneratePaperKey();
-        std::cout << "Phrase: '" << paperKey.c_str() << "'" << std::endl;
         walletPhrase = paperKey;
 
         Q_EMIT walletCreated(paperKey);
