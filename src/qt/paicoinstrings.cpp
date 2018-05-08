@@ -9,7 +9,7 @@
 #define UNUSED
 #endif
 static const char UNUSED *paicoin_strings[] = {
-QT_TRANSLATE_NOOP("paicoin-core", "PAIcoin Core"),
+QT_TRANSLATE_NOOP("paicoin-core", "PAI Up"),
 QT_TRANSLATE_NOOP("paicoin-core", "The %s developers"),
 QT_TRANSLATE_NOOP("paicoin-core", ""
 "(1 = keep tx meta data e.g. account owner and payment request information, 2 "
@@ -269,6 +269,7 @@ QT_TRANSLATE_NOOP("paicoin-core", "Always query for peer addresses via DNS looku
 QT_TRANSLATE_NOOP("paicoin-core", "Append comment to the user agent string"),
 QT_TRANSLATE_NOOP("paicoin-core", "Attempt to recover private keys from a corrupt wallet on startup"),
 QT_TRANSLATE_NOOP("paicoin-core", "Automatically create Tor hidden service (default: %d)"),
+QT_TRANSLATE_NOOP("paicoin-core", "Bitcoin Core"),
 QT_TRANSLATE_NOOP("paicoin-core", "Block creation options:"),
 QT_TRANSLATE_NOOP("paicoin-core", "Cannot downgrade wallet"),
 QT_TRANSLATE_NOOP("paicoin-core", "Cannot resolve -%s address: '%s'"),
@@ -277,7 +278,7 @@ QT_TRANSLATE_NOOP("paicoin-core", "Change index out of range"),
 QT_TRANSLATE_NOOP("paicoin-core", "Connect through SOCKS5 proxy"),
 QT_TRANSLATE_NOOP("paicoin-core", "Connect to a node to retrieve peer addresses, and disconnect"),
 QT_TRANSLATE_NOOP("paicoin-core", "Connection options:"),
-QT_TRANSLATE_NOOP("paicoin-core", "Copyright (C) %i-%i"),
+QT_TRANSLATE_NOOP("paicoin-core", "Copyright (C)"),
 QT_TRANSLATE_NOOP("paicoin-core", "Corrupted block database detected"),
 QT_TRANSLATE_NOOP("paicoin-core", "Debugging/Testing options:"),
 QT_TRANSLATE_NOOP("paicoin-core", "Do not load the wallet and disable wallet RPC calls"),
@@ -324,6 +325,7 @@ QT_TRANSLATE_NOOP("paicoin-core", "Invalid netmask specified in -whitelist: '%s'
 QT_TRANSLATE_NOOP("paicoin-core", "Keep at most <n> unconnectable transactions in memory (default: %u)"),
 QT_TRANSLATE_NOOP("paicoin-core", "Keep the transaction memory pool below <n> megabytes (default: %u)"),
 QT_TRANSLATE_NOOP("paicoin-core", "Keypool ran out, please call keypoolrefill first"),
+QT_TRANSLATE_NOOP("paicoin-core", "Lainer AI Labs LLC"),
 QT_TRANSLATE_NOOP("paicoin-core", "Listen for JSON-RPC connections on <port> (default: %u or testnet: %u)"),
 QT_TRANSLATE_NOOP("paicoin-core", "Listen for connections on <port> (default: %u or testnet: %u)"),
 QT_TRANSLATE_NOOP("paicoin-core", "Loading P2P addresses..."),

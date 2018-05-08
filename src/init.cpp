@@ -516,24 +516,25 @@ std::string HelpMessage(HelpMessageMode mode)
 
 std::string LicenseInfo()
 {
-    const std::string URL_SOURCE_CODE = "<https://github.com/paicoin/paicoin>";
-    const std::string URL_WEBSITE = "<https://paicoincore.org>";
+    const std::string URL_SOURCE_CODE = "<https://github.com/projectpai>";
+    const std::string URL_WEBSITE = "<https://projectpai.com/>";
 
-    return CopyrightHolders(strprintf(_("Copyright (C) %i-%i"), 2009, COPYRIGHT_YEAR) + " ") + "\n" +
-           "\n" +
-           strprintf(_("Please contribute if you find %s useful. "
-                       "Visit %s for further information about the software."),
-               PACKAGE_NAME, URL_WEBSITE) +
-           "\n" +
-           strprintf(_("The source code is available from %s."),
-               URL_SOURCE_CODE) +
-           "\n" +
-           "\n" +
-           _("This is experimental software.") + "\n" +
-           strprintf(_("Distributed under the MIT software license, see the accompanying file %s or %s"), "COPYING", "<https://opensource.org/licenses/MIT>") + "\n" +
-           "\n" +
-           strprintf(_("This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit %s and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard."), "<https://www.openssl.org>") +
-           "\n";
+    std::stringstream stringStreamLicenseInfo;
+
+    stringStreamLicenseInfo << CopyrightHolders(2009, COPYRIGHT_YEAR)
+                            << std::endl << std::endl
+                            << strprintf(_("Please contribute if you find %s useful. Visit %s for further information about the software."), PACKAGE_NAME, URL_WEBSITE)
+                            << std::endl
+                            << strprintf(_("The source code is available from %s."), URL_SOURCE_CODE)
+                            << std::endl << std::endl
+                            << _("This is experimental software.")
+                            << std::endl
+                            << strprintf(_("Distributed under the MIT software license, see the accompanying file %s or %s"), "COPYING", "<https://opensource.org/licenses/MIT>")
+                            << std::endl << std::endl
+                            << strprintf(_("This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit %s and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard."), "<https://www.openssl.org>")
+                            << std::endl;
+
+    return stringStreamLicenseInfo.str();
 }
 
 static void BlockNotifyCallback(bool initialSync, const CBlockIndex *pBlockIndex)

@@ -324,6 +324,8 @@ template <typename Callable> void TraceThread(const char* name,  Callable func)
     }
 }
 
+std::string CopyrightHolders(int beginning, int current);
+
 std::string CopyrightHolders(const std::string& strPrefix);
 
 #endif // PAICOIN_UTIL_H

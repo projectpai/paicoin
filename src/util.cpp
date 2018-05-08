@@ -881,6 +881,19 @@ int GetNumCores()
 #endif
 }
 
+std::string CopyrightHolders(int beginning, int current)
+{
+    const std::string strCopyrightPrefix = _("Copyright (C)") + " ";
+    const std::string strCopyrightHolderFirst = _("Lainer AI Labs LLC");
+    const std::string strCopyrightHolderSecond = strprintf(_(COPYRIGHT_HOLDERS), _("Bitcoin Core"));// "Bitcoin Core";
+
+    std::stringstream stringStreamCopyrightHolders;
+    stringStreamCopyrightHolders << strCopyrightPrefix << current << " " << strCopyrightHolderFirst << std::endl
+                                 << strCopyrightPrefix << beginning << "-" << current << " " << strCopyrightHolderSecond;
+
+    return stringStreamCopyrightHolders.str();
+}
+
 std::string CopyrightHolders(const std::string& strPrefix)
 {
     std::string strCopyrightHolders = strPrefix + strprintf(_(COPYRIGHT_HOLDERS), _(COPYRIGHT_HOLDERS_SUBSTITUTION));
