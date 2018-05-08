@@ -134,6 +134,7 @@ SOURCES += \
     ../src/wallet/wallet.cpp \
     ../src/wallet/walletdb.cpp \
     ../src/wallet/investor.cpp \
+    ../src/wallet/bip39words.cpp \
     ../src/wallet/bip39mnemonic.cpp \
     ../src/qt/addressbookpage.cpp \
     ../src/qt/addresstablemodel.cpp \

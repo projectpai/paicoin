@@ -133,6 +133,22 @@ void BIP39Mnemonic::DeriveKey(void *key64, const char *phrase, const char *passp
     }
 }
 
+bool BIP39Mnemonic::WordIsValid(const char* word)
+{
+    bool result = false;
+    size_t len = 0;
+    for (int i = 0; i < BIP39_WORDLIST_COUNT; ++i)
+    {
+        len = strlen(BIP39WordList[language][i]);
+        if (strlen(word) == len && strncmp(word, BIP39WordList[language][i], len) == 0)
+        {
+            result = true;
+            break;
+        }
+    }
+    return result;
+}
+
 void BIP39Mnemonic::PBKDF2(void *dk, const void *pw, size_t pwLen, const void *salt, size_t saltLen)
 {
     size_t dkLen = 64;

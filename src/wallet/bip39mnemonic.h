@@ -30,11 +30,13 @@ public:
     // verifies that all phrase words are contained in wordlist and checksum is valid
     int PhraseIsValid(const char *phrase);
 
+    // verifies that given word is in the BIP39 word list, for current language
+    bool WordIsValid(const char* word);
+
     // key64 must hold 64 bytes (512 bits), phrase and passphrase must be unicode NFKD normalized
     // http://www.unicode.org/reports/tr15/#Norm_Forms
     // BUG: does not currently support passphrases containing NULL characters
     void DeriveKey(void *key64, const char *phrase, const char *passphrase);
-
 private:
     enum BIP39_LANGUAGES language;
 
