@@ -2,7 +2,7 @@ QT += core gui dbus network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = paicoin-qt
+TARGET = paiup
 TEMPLATE = app
 
 DEFINES += \

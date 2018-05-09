@@ -7,7 +7,7 @@ MANDIR=${MANDIR:-$TOPDIR/doc/man}
 PAICOIND=${PAICOIND:-$SRCDIR/paicoind}
 PAICOINCLI=${PAICOINCLI:-$SRCDIR/paicoin-cli}
 PAICOINTX=${PAICOINTX:-$SRCDIR/paicoin-tx}
-PAICOINQT=${PAICOINQT:-$SRCDIR/qt/paicoin-qt}
+PAICOINQT=${PAICOINQT:-$SRCDIR/qt/paiup}
 
 [ ! -x $PAICOIND ] && echo "$PAICOIND not found or not executable." && exit 1
 
@@ -16,7 +16,7 @@ PAIVER=($($PAICOINCLI --version | head -n1 | awk -F'[ -]' '{ print $6, $7 }'))
 
 # Create a footer file with copyright content.
 # This gets autodetected fine for paicoind if --version-string is not set,
-# but has different outcomes for paicoin-qt and paicoin-cli.
+# but has different outcomes for paiup and paicoin-cli.
 echo "[COPYRIGHT]" > footer.h2m
 $PAICOIND --version | sed -n '1!p' >> footer.h2m
 

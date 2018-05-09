@@ -11,7 +11,7 @@ with each other, with the help of a P2P network to check for double-spending.
 
 Setup
 -----
-Unpack the files into a directory and run paicoin-qt.exe.
+Unpack the files into a directory and run paiup.exe.
 
 PAIcoin Core is the original PAIcoin client and it builds the backbone of the network.
 However, it downloads and stores the entire history of PAIcoin transactions;

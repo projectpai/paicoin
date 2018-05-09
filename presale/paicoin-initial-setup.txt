@@ -51,4 +51,4 @@ Blockchain initialization
 13. Add TxData
 	Select the appropriate chekpoint and extract its Unix timestamp, total number of transactions from the genesis block up to that block and and the estimated number of transations afterwards and fill in the this data into the chainTxData variable in the corresponding section of the chain parameters class.
 
-14. Run ./paicoin-qt to visually use the blockchain
+14. Run ./paiup to visually use the blockchain

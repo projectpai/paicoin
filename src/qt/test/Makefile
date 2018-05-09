@@ -1,6 +1,6 @@
 all:
-	$(MAKE) -C ../../ test_paicoin_qt
+	$(MAKE) -C ../../ test_paiup
 clean:
-	$(MAKE) -C ../../ test_paicoin_qt_clean
+	$(MAKE) -C ../../ test_paiup_clean
 check:
-	$(MAKE) -C ../../ test_paicoin_qt_check
+	$(MAKE) -C ../../ test_paiup_check

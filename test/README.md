@@ -6,7 +6,7 @@ etc.
 There are currently two sets of tests in this directory:
 
 - [functional](/test/functional) which test the functionality of 
-paicoind and paicoin-qt by interacting with them through the RPC and P2P
+paicoind and paiup by interacting with them through the RPC and P2P
 interfaces.
 - [util](test/util) which tests the paicoin utilities, currently only
 paicoin-tx.

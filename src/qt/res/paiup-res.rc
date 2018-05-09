@@ -22,10 +22,10 @@ BEGIN
             VALUE "CompanyName",        "PAIcoin"
             VALUE "FileDescription",    PACKAGE_NAME " (GUI node for PAIcoin)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
-            VALUE "InternalName",       "paicoin-qt"
+            VALUE "InternalName",       "paiup"
             VALUE "LegalCopyright",     COPYRIGHT_STR
             VALUE "LegalTrademarks1",   "Distributed under the MIT software license, see the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.php."
-            VALUE "OriginalFilename",   "paicoin-qt.exe"
+            VALUE "OriginalFilename",   "paiup.exe"
             VALUE "ProductName",        PACKAGE_NAME
             VALUE "ProductVersion",     VER_PRODUCTVERSION_STR
         END

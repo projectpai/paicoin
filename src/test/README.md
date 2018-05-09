@@ -14,9 +14,9 @@ To add more paicoind tests, add `BOOST_AUTO_TEST_CASE` functions to the existing
 .cpp files in the `test/` directory or add new .cpp files that
 implement new BOOST_AUTO_TEST_SUITE sections.
 
-To run the paicoin-qt tests manually, launch `src/qt/test/test_paicoin-qt`
+To run the paiup tests manually, launch `src/qt/test/test_paiup`
 
-To add more paicoin-qt tests, add them to the `src/qt/test/` directory and
+To add more paiup tests, add them to the `src/qt/test/` directory and
 the `src/qt/test/test_main.cpp` file.
 
 ### Running individual tests

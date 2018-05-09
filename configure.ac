@@ -15,7 +15,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
 
 PAICOIN_DAEMON_NAME=paicoind
-PAICOIN_GUI_NAME=paicoin-qt
+PAICOIN_GUI_NAME=paiup
 PAICOIN_CLI_NAME=paicoin-cli
 PAICOIN_BLOCK_GENERATOR_NAME=paicoin-block-generator
 PAICOIN_TX_NAME=paicoin-tx
@@ -1142,7 +1142,7 @@ if test x$paicoin_enable_qt != xno; then
     AC_MSG_WARN("xgettext is required to update qt translations")
   fi
 
-  AC_MSG_CHECKING([whether to build test_paicoin-qt])
+  AC_MSG_CHECKING([whether to build test_paiup])
   if test x$use_gui_tests$paicoin_enable_qt_test = xyesyes; then
     AC_MSG_RESULT([yes])
     BUILD_TEST_QT="yes"
@@ -1309,7 +1309,7 @@ echo "  with wallet   = $enable_wallet"
 echo "  lite variant  = $variant_lite"
 echo "  with gui / qt = $paicoin_enable_qt"
 if test x$paicoin_enable_qt != xno; then
-    echo "    qt version  = $paicoin_qt_got_major_vers"
+    echo "    qt version  = $paiup_got_major_vers"
     echo "    with qr     = $use_qr"
 fi
 echo "  with zmq      = $use_zmq"

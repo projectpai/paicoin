@@ -24,7 +24,7 @@ make
 make install # optional
 ```
 
-This will build paicoin-qt as well if the dependencies are met.
+This will build paiup as well if the dependencies are met.
 
 Dependencies
 ---------------------
@@ -124,7 +124,7 @@ libqrencode (optional) can be installed with:
 
     sudo apt-get install libqrencode-dev
 
-Once these are installed, they will be found by configure and a paicoin-qt executable will be
+Once these are installed, they will be found by configure and a paiup executable will be
 built by default.
 
 Dependency Build Instructions: Fedora

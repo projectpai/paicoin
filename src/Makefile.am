@@ -184,7 +184,7 @@ obj/build.h: FORCE
 	  "$(abs_top_srcdir)"
 libpaicoin_util_a-clientversion.$(OBJEXT): obj/build.h
 
-# server: shared between paicoind and paicoin-qt
+# server: shared between paicoind and paiup
 libpaicoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libpaicoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpaicoin_server_a_SOURCES = \
@@ -238,7 +238,7 @@ libpaicoin_zmq_a_SOURCES = \
 endif
 
 
-# wallet: shared between paicoind and paicoin-qt, but only linked
+# wallet: shared between paicoind and paiup, but only linked
 # when wallet enabled
 libpaicoin_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES)
 libpaicoin_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
@@ -318,7 +318,7 @@ libpaicoin_consensus_a_SOURCES = \
   utilstrencodings.h \
   version.h
 
-# common: shared between paicoind, and paicoin-qt and non-server tools
+# common: shared between paicoind, and paiup and non-server tools
 libpaicoin_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES)
 libpaicoin_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpaicoin_common_a_SOURCES = \
@@ -368,7 +368,7 @@ if GLIBC_BACK_COMPAT
 libpaicoin_util_a_SOURCES += compat/glibc_compat.cpp
 endif
 
-# cli: shared between paicoin-cli, paicoin-block-generator and paicoin-qt
+# cli: shared between paicoin-cli, paicoin-block-generator and paiup
 libpaicoin_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES)
 libpaicoin_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpaicoin_cli_a_SOURCES = \

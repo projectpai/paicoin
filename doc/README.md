@@ -15,12 +15,12 @@ The following are some helpful notes on how to run PAIcoin on your native platfo
 
 Unpack the files into a directory and run:
 
-- `bin/paicoin-qt` (GUI) or
+- `bin/paiup` (GUI) or
 - `bin/paicoind` (headless)
 
 ### Windows
 
-Unpack the files into a directory, and then run paicoin-qt.exe.
+Unpack the files into a directory, and then run paiup.exe.
 
 ### OS X
 

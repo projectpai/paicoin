@@ -1,5 +1,5 @@
 [Protocol]
-exec=paicoin-qt '%u'
+exec=paiup '%u'
 protocol=paicoin
 input=none
 output=none

@@ -43,7 +43,7 @@ Description: peer-to-peer network based digital currency - daemon
  This package provides the daemon, paicoind, and the CLI tool
  paicoin-cli to interact with the daemon.
 
-Package: paicoin-qt
+Package: paiup
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: peer-to-peer network based digital currency - Qt GUI

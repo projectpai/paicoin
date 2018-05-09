@@ -5,7 +5,7 @@ if BUILD_PAICOIND
 endif
 
 if ENABLE_QT
-  dist_man1_MANS+=paicoin-qt.1
+  dist_man1_MANS+=paiup.1
 endif
 
 if BUILD_PAICOIN_UTILS

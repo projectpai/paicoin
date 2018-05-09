@@ -29,7 +29,7 @@ Source10:	https://raw.githubusercontent.com/paicoin/paicoin/v%{version}/contrib/
 #man pages
 Source20:	https://raw.githubusercontent.com/paicoin/paicoin/v%{version}/doc/man/paicoind.1
 Source21:	https://raw.githubusercontent.com/paicoin/paicoin/v%{version}/doc/man/paicoin-cli.1
-Source22:	https://raw.githubusercontent.com/paicoin/paicoin/v%{version}/doc/man/paicoin-qt.1
+Source22:	https://raw.githubusercontent.com/paicoin/paicoin/v%{version}/doc/man/paiup.1
 
 #selinux
 Source30:	https://raw.githubusercontent.com/paicoin/paicoin/v%{version}/contrib/rpm/paicoin.te
@@ -269,7 +269,7 @@ Name=PAIcoin
 Comment=PAIcoin P2P Cryptocurrency
 Comment[fr]=PAIcoin, monnaie virtuelle cryptographique pair à pair
 Comment[tr]=PAIcoin, eşten eşe kriptografik sanal para birimi
-Exec=paicoin-qt %u
+Exec=paiup %u
 Terminal=false
 Type=Application
 Icon=paicoin128
@@ -284,7 +284,7 @@ touch -a -m -t 201511100546 %{buildroot}%{_datadir}/applications/paicoin-core.de
 mkdir -p %{buildroot}%{_datadir}/kde4/services
 cat <<EOF > %{buildroot}%{_datadir}/kde4/services/paicoin-core.protocol
 [Protocol]
-exec=paicoin-qt '%u'
+exec=paiup '%u'
 protocol=paicoin
 input=none
 output=none
@@ -303,7 +303,7 @@ touch -a -m -t 201511100546 %{buildroot}%{_datadir}/kde4/services/paicoin-core.p
 install -D -p %{SOURCE20} %{buildroot}%{_mandir}/man1/paicoind.1
 install -p %{SOURCE21} %{buildroot}%{_mandir}/man1/paicoin-cli.1
 %if %{_buildqt}
-install -p %{SOURCE22} %{buildroot}%{_mandir}/man1/paicoin-qt.1
+install -p %{SOURCE22} %{buildroot}%{_mandir}/man1/paiup.1
 %endif
 
 # nuke these, we do extensive testing of binaries in %%check before packaging
@@ -376,7 +376,7 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %license COPYING db-%{bdbv}.NC-LICENSE
 %doc COPYING paicoin.conf.example doc/README.md doc/bips.md doc/files.md doc/multiwallet-qt.md doc/reduce-traffic.md doc/release-notes.md doc/tor.md
-%attr(0755,root,root) %{_bindir}/paicoin-qt
+%attr(0755,root,root) %{_bindir}/paiup
 %attr(0644,root,root) %{_datadir}/applications/paicoin-core.desktop
 %attr(0644,root,root) %{_datadir}/kde4/services/paicoin-core.protocol
 %attr(0644,root,root) %{_datadir}/pixmaps/*.ico
@@ -384,7 +384,7 @@ rm -rf %{buildroot}
 %attr(0644,root,root) %{_datadir}/pixmaps/*.svg
 %attr(0644,root,root) %{_datadir}/pixmaps/*.png
 %attr(0644,root,root) %{_datadir}/pixmaps/*.xpm
-%attr(0644,root,root) %{_mandir}/man1/paicoin-qt.1*
+%attr(0644,root,root) %{_mandir}/man1/paiup.1*
 %endif
 
 %files libs

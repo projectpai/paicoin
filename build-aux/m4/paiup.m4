@@ -5,9 +5,9 @@ dnl file COPYING or http://www.opensource.org/licenses/mit-license.php.
 dnl Helper for cases where a qt dependency is not met.
 dnl Output: If qt version is auto, set paicoin_enable_qt to false. Else, exit.
 AC_DEFUN([PAICOIN_QT_FAIL],[
-  if test "x$paicoin_qt_want_version" = "xauto" && test x$paicoin_qt_force != xyes; then
+  if test "x$paiup_want_version" = "xauto" && test x$paiup_force != xyes; then
     if test x$paicoin_enable_qt != xno; then
-      AC_MSG_WARN([$1; paicoin-qt frontend will not be built])
+      AC_MSG_WARN([$1; paiup frontend will not be built])
     fi
     paicoin_enable_qt=no
     paicoin_enable_qt_test=no
@@ -17,7 +17,7 @@ AC_DEFUN([PAICOIN_QT_FAIL],[
 ])
 
 AC_DEFUN([PAICOIN_QT_CHECK],[
-  if test "x$paicoin_enable_qt" != "xno" && test x$paicoin_qt_want_version != xno; then
+  if test "x$paicoin_enable_qt" != "xno" && test x$paiup_want_version != xno; then
     true
     $1
   else
@@ -54,15 +54,15 @@ AC_DEFUN([PAICOIN_QT_INIT],[
   dnl enable qt support
   AC_ARG_WITH([gui],
     [AS_HELP_STRING([--with-gui@<:@=no|qt4|qt5|auto@:>@],
-    [build paicoin-qt GUI (default=auto, qt5 tried first)])],
+    [build paiup GUI (default=auto, qt5 tried first)])],
     [
-     paicoin_qt_want_version=$withval
-     if test x$paicoin_qt_want_version = xyes; then
-       paicoin_qt_force=yes
-       paicoin_qt_want_version=auto
+     paiup_want_version=$withval
+     if test x$paiup_want_version = xyes; then
+       paiup_force=yes
+       paiup_want_version=auto
      fi
     ],
-    [paicoin_qt_want_version=auto])
+    [paiup_want_version=auto])
 
   AC_ARG_WITH([qt-incdir],[AS_HELP_STRING([--with-qt-incdir=INC_DIR],[specify qt include path (overridden by pkgconfig)])], [qt_include_path=$withval], [])
   AC_ARG_WITH([qt-libdir],[AS_HELP_STRING([--with-qt-libdir=LIB_DIR],[specify qt lib path (overridden by pkgconfig)])], [qt_lib_path=$withval], [])
@@ -113,7 +113,7 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
   TEMP_CXXFLAGS=$CXXFLAGS
   CPPFLAGS="$QT_INCLUDES $CPPFLAGS"
   CXXFLAGS="$PIC_FLAGS $CXXFLAGS"
-  if test x$paicoin_qt_got_major_vers = x5; then
+  if test x$paiup_got_major_vers = x5; then
     _PAICOIN_QT_IS_STATIC
     if test x$paicoin_cv_static_qt = xyes; then
       _PAICOIN_QT_FIND_STATIC_PLUGINS
@@ -161,7 +161,7 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
   ])
 
   if test x$use_pkgconfig$qt_bin_path = xyes; then
-    if test x$paicoin_qt_got_major_vers = x5; then
+    if test x$paiup_got_major_vers = x5; then
       qt_bin_path="`$PKG_CONFIG --variable=host_bins Qt5Core 2>/dev/null`"
     fi
   fi
@@ -203,11 +203,11 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
     ])
   fi
 
-  PAICOIN_QT_PATH_PROGS([MOC], [moc-qt${paicoin_qt_got_major_vers} moc${paicoin_qt_got_major_vers} moc], $qt_bin_path)
-  PAICOIN_QT_PATH_PROGS([UIC], [uic-qt${paicoin_qt_got_major_vers} uic${paicoin_qt_got_major_vers} uic], $qt_bin_path)
-  PAICOIN_QT_PATH_PROGS([RCC], [rcc-qt${paicoin_qt_got_major_vers} rcc${paicoin_qt_got_major_vers} rcc], $qt_bin_path)
-  PAICOIN_QT_PATH_PROGS([LRELEASE], [lrelease-qt${paicoin_qt_got_major_vers} lrelease${paicoin_qt_got_major_vers} lrelease], $qt_bin_path)
-  PAICOIN_QT_PATH_PROGS([LUPDATE], [lupdate-qt${paicoin_qt_got_major_vers} lupdate${paicoin_qt_got_major_vers} lupdate],$qt_bin_path, yes)
+  PAICOIN_QT_PATH_PROGS([MOC], [moc-qt${paiup_got_major_vers} moc${paiup_got_major_vers} moc], $qt_bin_path)
+  PAICOIN_QT_PATH_PROGS([UIC], [uic-qt${paiup_got_major_vers} uic${paiup_got_major_vers} uic], $qt_bin_path)
+  PAICOIN_QT_PATH_PROGS([RCC], [rcc-qt${paiup_got_major_vers} rcc${paiup_got_major_vers} rcc], $qt_bin_path)
+  PAICOIN_QT_PATH_PROGS([LRELEASE], [lrelease-qt${paiup_got_major_vers} lrelease${paiup_got_major_vers} lrelease], $qt_bin_path)
+  PAICOIN_QT_PATH_PROGS([LUPDATE], [lupdate-qt${paiup_got_major_vers} lupdate${paiup_got_major_vers} lupdate],$qt_bin_path, yes)
 
   MOC_DEFS='-DHAVE_CONFIG_H -I$(srcdir)'
   case $host in
@@ -246,7 +246,7 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
   ],[
     paicoin_enable_qt=no
   ])
-  AC_MSG_RESULT([$paicoin_enable_qt (Qt${paicoin_qt_got_major_vers})])
+  AC_MSG_RESULT([$paicoin_enable_qt (Qt${paiup_got_major_vers})])
 
   AC_SUBST(QT_PIE_FLAGS)
   AC_SUBST(QT_INCLUDES)
@@ -256,7 +256,7 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
   AC_SUBST(QT_DBUS_LIBS)
   AC_SUBST(QT_TEST_INCLUDES)
   AC_SUBST(QT_TEST_LIBS)
-  AC_SUBST(QT_SELECT, qt${paicoin_qt_got_major_vers})
+  AC_SUBST(QT_SELECT, qt${paiup_got_major_vers})
   AC_SUBST(MOC_DEFS)
 ])
 
@@ -326,11 +326,11 @@ AC_DEFUN([_PAICOIN_QT_CHECK_STATIC_PLUGINS],[
 ])
 
 dnl Internal. Find paths necessary for linking qt static plugins
-dnl Inputs: paicoin_qt_got_major_vers. 4 or 5.
+dnl Inputs: paiup_got_major_vers. 4 or 5.
 dnl Inputs: qt_plugin_path. optional.
 dnl Outputs: QT_LIBS is appended
 AC_DEFUN([_PAICOIN_QT_FIND_STATIC_PLUGINS],[
-  if test x$paicoin_qt_got_major_vers = x5; then
+  if test x$paiup_got_major_vers = x5; then
       if test x$qt_plugin_path != x; then
         QT_LIBS="$QT_LIBS -L$qt_plugin_path/platforms"
         if test -d "$qt_plugin_path/accessible"; then
@@ -375,12 +375,12 @@ AC_DEFUN([_PAICOIN_QT_FIND_STATIC_PLUGINS],[
 ])
 
 dnl Internal. Find Qt libraries using pkg-config.
-dnl Inputs: paicoin_qt_want_version (from --with-gui=). The version to check
+dnl Inputs: paiup_want_version (from --with-gui=). The version to check
 dnl         first.
-dnl Inputs: $1: If paicoin_qt_want_version is "auto", check for this version
+dnl Inputs: $1: If paiup_want_version is "auto", check for this version
 dnl         first.
 dnl Outputs: All necessary QT_* variables are set.
-dnl Outputs: paicoin_qt_got_major_vers is set to "4" or "5".
+dnl Outputs: paiup_got_major_vers is set to "4" or "5".
 dnl Outputs: have_qt_test and have_qt_dbus are set (if applicable) to yes|no.
 AC_DEFUN([_PAICOIN_QT_FIND_LIBS_WITH_PKGCONFIG],[
   m4_ifdef([PKG_CHECK_MODULES],[
@@ -388,28 +388,28 @@ AC_DEFUN([_PAICOIN_QT_FIND_LIBS_WITH_PKGCONFIG],[
   if test x$auto_priority_version = x; then
     auto_priority_version=qt5
   fi
-    if test x$paicoin_qt_want_version = xqt5 ||  ( test x$paicoin_qt_want_version = xauto && test x$auto_priority_version = xqt5 ); then
+    if test x$paiup_want_version = xqt5 ||  ( test x$paiup_want_version = xauto && test x$auto_priority_version = xqt5 ); then
       QT_LIB_PREFIX=Qt5
-      paicoin_qt_got_major_vers=5
+      paiup_got_major_vers=5
     else
       QT_LIB_PREFIX=Qt
-      paicoin_qt_got_major_vers=4
+      paiup_got_major_vers=4
     fi
     qt5_modules="Qt5Core Qt5Gui Qt5Network Qt5Widgets"
     qt4_modules="QtCore QtGui QtNetwork"
     PAICOIN_QT_CHECK([
-      if test x$paicoin_qt_want_version = xqt5 || ( test x$paicoin_qt_want_version = xauto && test x$auto_priority_version = xqt5 ); then
+      if test x$paiup_want_version = xqt5 || ( test x$paiup_want_version = xauto && test x$auto_priority_version = xqt5 ); then
         PKG_CHECK_MODULES([QT5], [$qt5_modules], [QT_INCLUDES="$QT5_CFLAGS"; QT_LIBS="$QT5_LIBS" have_qt=yes],[have_qt=no])
-      elif test x$paicoin_qt_want_version = xqt4 || ( test x$paicoin_qt_want_version = xauto && test x$auto_priority_version = xqt4 ); then
+      elif test x$paiup_want_version = xqt4 || ( test x$paiup_want_version = xauto && test x$auto_priority_version = xqt4 ); then
         PKG_CHECK_MODULES([QT4], [$qt4_modules], [QT_INCLUDES="$QT4_CFLAGS"; QT_LIBS="$QT4_LIBS" ; have_qt=yes], [have_qt=no])
       fi
 
       dnl qt version is set to 'auto' and the preferred version wasn't found. Now try the other.
-      if test x$have_qt = xno && test x$paicoin_qt_want_version = xauto; then
+      if test x$have_qt = xno && test x$paiup_want_version = xauto; then
         if test x$auto_priority_version = xqt5; then
-          PKG_CHECK_MODULES([QT4], [$qt4_modules], [QT_INCLUDES="$QT4_CFLAGS"; QT_LIBS="$QT4_LIBS" ; have_qt=yes; QT_LIB_PREFIX=Qt; paicoin_qt_got_major_vers=4], [have_qt=no])
+          PKG_CHECK_MODULES([QT4], [$qt4_modules], [QT_INCLUDES="$QT4_CFLAGS"; QT_LIBS="$QT4_LIBS" ; have_qt=yes; QT_LIB_PREFIX=Qt; paiup_got_major_vers=4], [have_qt=no])
         else
-          PKG_CHECK_MODULES([QT5], [$qt5_modules], [QT_INCLUDES="$QT5_CFLAGS"; QT_LIBS="$QT5_LIBS" ; have_qt=yes; QT_LIB_PREFIX=Qt5; paicoin_qt_got_major_vers=5], [have_qt=no])
+          PKG_CHECK_MODULES([QT5], [$qt5_modules], [QT_INCLUDES="$QT5_CFLAGS"; QT_LIBS="$QT5_LIBS" ; have_qt=yes; QT_LIB_PREFIX=Qt5; paiup_got_major_vers=5], [have_qt=no])
         fi
       fi
       if test x$have_qt != xyes; then
@@ -429,10 +429,10 @@ AC_DEFUN([_PAICOIN_QT_FIND_LIBS_WITH_PKGCONFIG],[
 
 dnl Internal. Find Qt libraries without using pkg-config. Version is deduced
 dnl from the discovered headers.
-dnl Inputs: paicoin_qt_want_version (from --with-gui=). The version to use.
+dnl Inputs: paiup_want_version (from --with-gui=). The version to use.
 dnl         If "auto", the version will be discovered by _PAICOIN_QT_CHECK_QT5.
 dnl Outputs: All necessary QT_* variables are set.
-dnl Outputs: paicoin_qt_got_major_vers is set to "4" or "5".
+dnl Outputs: paiup_got_major_vers is set to "4" or "5".
 dnl Outputs: have_qt_test and have_qt_dbus are set (if applicable) to yes|no.
 AC_DEFUN([_PAICOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
   TEMP_CPPFLAGS="$CPPFLAGS"
@@ -451,15 +451,15 @@ AC_DEFUN([_PAICOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
   PAICOIN_QT_CHECK([AC_CHECK_HEADER([QLocalSocket],, PAICOIN_QT_FAIL(QtNetwork headers missing))])
 
   PAICOIN_QT_CHECK([
-    if test x$paicoin_qt_want_version = xauto; then
+    if test x$paiup_want_version = xauto; then
       _PAICOIN_QT_CHECK_QT5
     fi
-    if test x$paicoin_cv_qt5 = xyes || test x$paicoin_qt_want_version = xqt5; then
+    if test x$paicoin_cv_qt5 = xyes || test x$paiup_want_version = xqt5; then
       QT_LIB_PREFIX=Qt5
-      paicoin_qt_got_major_vers=5
+      paiup_got_major_vers=5
     else
       QT_LIB_PREFIX=Qt
-      paicoin_qt_got_major_vers=4
+      paiup_got_major_vers=4
     fi
   ])
 
@@ -482,7 +482,7 @@ AC_DEFUN([_PAICOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
   PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Core]   ,[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXCore not found)))
   PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Gui]    ,[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXGui not found)))
   PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Network],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXNetwork not found)))
-  if test x$paicoin_qt_got_major_vers = x5; then
+  if test x$paiup_got_major_vers = x5; then
     PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Widgets],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXWidgets not found)))
   fi
   QT_LIBS="$LIBS"

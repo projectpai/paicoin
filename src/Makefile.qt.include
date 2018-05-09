@@ -2,7 +2,7 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-bin_PROGRAMS += qt/paicoin-qt
+bin_PROGRAMS += qt/paiup
 EXTRA_LIBRARIES += qt/libpaicoinqt.a
 
 # paicoin qt core #
@@ -408,7 +408,7 @@ RES_IMAGES =
 
 RES_MOVIES = $(wildcard $(srcdir)/qt/res/movies/spinner-*.png)
 
-PAICOIN_RC = qt/res/paicoin-qt-res.rc
+PAICOIN_RC = qt/res/paiup-res.rc
 
 PAICOIN_QT_INCLUDES = -I$(builddir)/qt -I$(srcdir)/qt -I$(srcdir)/qt/forms \
   -I$(builddir)/qt/forms -DQT_NO_KEYWORDS
@@ -429,37 +429,37 @@ QT_FORMS_H=$(join $(dir $(QT_FORMS_UI)),$(addprefix ui_, $(notdir $(QT_FORMS_UI:
 # Most files will depend on the forms and moc files as includes. Generate them
 # before anything else.
 $(QT_MOC): $(QT_FORMS_H)
-$(qt_libpaicoinqt_a_OBJECTS) $(qt_paicoin_qt_OBJECTS) : | $(QT_MOC)
+$(qt_libpaicoinqt_a_OBJECTS) $(qt_paiup_OBJECTS) : | $(QT_MOC)
 
 #Generating these with a half-written protobuf header leads to wacky results.
 #This makes sure it's done.
 $(QT_MOC): $(PROTOBUF_H)
 $(QT_MOC_CPP): $(PROTOBUF_H)
 
-# paicoin-qt binary #
-qt_paicoin_qt_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES) $(PAICOIN_QT_INCLUDES) \
+# paiup binary #
+qt_paiup_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES) $(PAICOIN_QT_INCLUDES) \
   $(QT_INCLUDES) $(PROTOBUF_CFLAGS) $(QR_CFLAGS)
-qt_paicoin_qt_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
+qt_paiup_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
 
-qt_paicoin_qt_SOURCES = qt/paicoin.cpp
+qt_paiup_SOURCES = qt/paicoin.cpp
 if TARGET_DARWIN
-  qt_paicoin_qt_SOURCES += $(PAICOIN_MM)
+  qt_paiup_SOURCES += $(PAICOIN_MM)
 endif
 if TARGET_WINDOWS
-  qt_paicoin_qt_SOURCES += $(PAICOIN_RC)
+  qt_paiup_SOURCES += $(PAICOIN_RC)
 endif
-qt_paicoin_qt_LDADD = qt/libpaicoinqt.a $(LIBPAICOIN_SERVER)
+qt_paiup_LDADD = qt/libpaicoinqt.a $(LIBPAICOIN_SERVER)
 if ENABLE_WALLET
-qt_paicoin_qt_LDADD += $(LIBPAICOIN_WALLET)
+qt_paiup_LDADD += $(LIBPAICOIN_WALLET)
 endif
 if ENABLE_ZMQ
-qt_paicoin_qt_LDADD += $(LIBPAICOIN_ZMQ) $(ZMQ_LIBS)
+qt_paiup_LDADD += $(LIBPAICOIN_ZMQ) $(ZMQ_LIBS)
 endif
-qt_paicoin_qt_LDADD += $(LIBPAICOIN_CLI) $(LIBPAICOIN_COMMON) $(LIBPAICOIN_UTIL) $(LIBPAICOIN_CONSENSUS) $(LIBPAICOIN_CRYPTO) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBLEVELDB_SSE42) $(LIBMEMENV) \
+qt_paiup_LDADD += $(LIBPAICOIN_CLI) $(LIBPAICOIN_COMMON) $(LIBPAICOIN_UTIL) $(LIBPAICOIN_CONSENSUS) $(LIBPAICOIN_CRYPTO) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBLEVELDB_SSE42) $(LIBMEMENV) \
   $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(PROTOBUF_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(LIBSECP256K1) \
   $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
-qt_paicoin_qt_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
-qt_paicoin_qt_LIBTOOLFLAGS = --tag CXX
+qt_paiup_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+qt_paiup_LIBTOOLFLAGS = --tag CXX
 
 #locale/foo.ts -> locale/foo.qm
 QT_QM=$(QT_TS:.ts=.qm)
@@ -490,10 +490,10 @@ CLEAN_QT = $(nodist_qt_libpaicoinqt_a_SOURCES) $(QT_QM) $(QT_FORMS_H) qt/*.gcda 
 
 CLEANFILES += $(CLEAN_QT)
 
-paicoin_qt_clean: FORCE
-	rm -f $(CLEAN_QT) $(qt_libpaicoinqt_a_OBJECTS) $(qt_paicoin_qt_OBJECTS) qt/paicoin-qt$(EXEEXT) $(LIBPAICOINQT)
+paiup_clean: FORCE
+	rm -f $(CLEAN_QT) $(qt_libpaicoinqt_a_OBJECTS) $(qt_paiup_OBJECTS) qt/paiup$(EXEEXT) $(LIBPAICOINQT)
 
-paicoin_qt : qt/paicoin-qt$(EXEEXT)
+paiup : qt/paiup$(EXEEXT)
 
 ui_%.h: %.ui
 	@test -f $(UIC)
