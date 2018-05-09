@@ -29,16 +29,16 @@
   <string>????</string>
 
   <key>CFBundleExecutable</key>
-  <string>PAIcoin-Qt</string>
+  <string>PAIcoin-Core</string>
   
   <key>CFBundleName</key>
-  <string>PAIcoin-Qt</string>
+  <string>PAIcoin-Core</string>
 
   <key>LSHasLocalizedDisplayName</key>
   <true/>
 
   <key>CFBundleIdentifier</key>
-  <string>org.paicoinfoundation.PAIcoin-Qt</string>
+  <string>org.paicoinfoundation.PAIcoin-Core</string>
 
   <key>CFBundleURLTypes</key>
   <array>

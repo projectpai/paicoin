@@ -21,7 +21,7 @@ How to Upgrade
 
 If you are running an older version, shut it down. Wait until it has completely
 shut down (which might take a few minutes for older versions), then run the 
-installer (on Windows) or just copy over /Applications/PAIcoin-Qt (on Mac)
+installer (on Windows) or just copy over /Applications/PAIcoin-Core (on Mac)
 or `paicoind`/`paiup` (on Linux).
 
 The first time you run version 0.15.0, your chainstate database will be converted to a

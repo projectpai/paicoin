@@ -50,7 +50,7 @@ static const int MAX_URI_LENGTH = 255;
 
 #define QAPP_ORG_NAME "PAIcoin"
 #define QAPP_ORG_DOMAIN "paicoin.org"
-#define QAPP_APP_NAME_DEFAULT "PAIcoin-Qt"
-#define QAPP_APP_NAME_TESTNET "PAIcoin-Qt-testnet"
+#define QAPP_APP_NAME_DEFAULT "PAIcoin-Core"
+#define QAPP_APP_NAME_TESTNET "PAIcoin-Core-testnet"
 
 #endif // PAICOIN_QT_GUICONSTANTS_H
