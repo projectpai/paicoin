@@ -28,7 +28,7 @@ Q_SIGNALS:
     void backToPreviousPage();
     void pinEntered();
     void pinReEntered();
-    void pinReadyForVerification(QString pin);
+    void pinReadyForVerification(const std::string &pin);
     void pinValidationFailed();
 
 protected:

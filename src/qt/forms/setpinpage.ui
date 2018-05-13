@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>582</width>
+    <width>808</width>
     <height>413</height>
    </rect>
   </property>
@@ -18,6 +18,19 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
+    <spacer name="horizontalSpacer_4">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="0" column="1">
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -46,10 +59,22 @@
          </property>
          <property name="styleSheet">
           <string notr="true">background:#f8f8f8;
-color:#000;</string>
+color:#000;
+border-radius:6.4px;
+border:1px solid #dedede;</string>
          </property>
          <property name="text">
-          <string>&lt;</string>
+          <string notr="true"/>
+         </property>
+         <property name="icon">
+          <iconset resource="../paicoin.qrc">
+           <normaloff>:/icons/back</normaloff>:/icons/back</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>26</width>
+           <height>26</height>
+          </size>
          </property>
         </widget>
        </item>
@@ -75,6 +100,12 @@ color:#000;</string>
        </property>
        <item alignment="Qt::AlignHCenter">
         <widget class="QLabel" name="labelTitle">
+         <property name="minimumSize">
+          <size>
+           <width>424</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>20</pointsize>
@@ -309,8 +340,23 @@ color:#000;</string>
      </item>
     </layout>
    </item>
+   <item row="0" column="2">
+    <spacer name="horizontalSpacer_5">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../paicoin.qrc"/>
+ </resources>
  <connections/>
 </ui>

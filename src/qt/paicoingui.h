@@ -35,6 +35,7 @@ class WelcomePage;
 class WalletSelectionPage;
 class RestoreWalletPage;
 class PaperKeyIntroPage;
+class SetPinPage;
 class PaperKeyWritedownPage;
 class PaperKeyCompletionPage;
 class Intro;
@@ -44,6 +45,14 @@ class QAction;
 class QProgressBar;
 class QProgressDialog;
 QT_END_NAMESPACE
+
+enum class PAIcoinGUIState : std::int8_t
+{
+    Init,
+    CreateWallet,
+    RestoreWallet,
+    PaperKeyWritedown
+};
 
 /**
   PAIcoin GUI main class. This class represents the main window of the PAIcoin UI. It communicates with both the client and
@@ -93,6 +102,7 @@ private:
     WalletSelectionPage *walletSelectionPage;
     RestoreWalletPage *restoreWalletPage;
     PaperKeyIntroPage *paperKeyIntroPage;
+    SetPinPage *setPinPage;
     PaperKeyWritedownPage *paperKeyWritedownPage;
     PaperKeyCompletionPage *paperKeyCompletionPage;
     Intro *dataDirSelectionDialog;
@@ -144,6 +154,8 @@ private:
 
     /** Flag indicating whether this is initial run of the app */
     bool firstRun;
+    /** Current GUI state */
+    PAIcoinGUIState state;
 
     const PlatformStyle *platformStyle;
     const NetworkStyle *networkStyle;
@@ -173,6 +185,8 @@ private:
     void updateHeadersSyncProgressLabel();
 
     void enableDebugWindow();
+
+    bool ShouldAuthenticate() const;
 
 Q_SIGNALS:
     /** Signal raised when a URI was entered or dragged to the GUI */
@@ -241,8 +255,12 @@ private Q_SLOTS:
     void restoreWallet(QStringList paperKeys);
     /** Switch to restore wallet page */
     void gotoRestoreWalletPage();
+    /** Set create wallet state and navigate to PIN setup */
+    void processCreateWalletRequest();
     /** Switch to paper key intro page */
     void gotoPaperKeyIntroPage();
+    /** Switch to set pin page */
+    void gotoSetPinPage();
     /** Switch to paper key write-down page */
     void gotoPaperKeyWritedownPage();
     /** Switch to paper key completion page */
@@ -265,6 +283,11 @@ private Q_SLOTS:
 
     /** Show open dialog */
     void openClicked();
+
+    /** Interrupt current operation and request PIN entry */
+    void interruptForPinRequest();
+    /** Continue from last state before PIN entry was requested */
+    void continueFromPinRequest();
 #endif // ENABLE_WALLET
     /** Show configuration dialog */
     void optionsClicked();
@@ -276,6 +299,8 @@ private Q_SLOTS:
     void showDebugWindowActivateConsole();
     /** Show help message dialog */
     void showHelpMessageClicked();
+    /** Store PIN code */
+    void setPinCode(const std::string &pin);
 #ifndef Q_OS_MAC
     /** Handle tray icon clicked */
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);

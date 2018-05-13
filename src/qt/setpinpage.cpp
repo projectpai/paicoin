@@ -84,7 +84,9 @@ bool SetPinPage::eventFilter(QObject* obj, QEvent* event)
 
 void SetPinPage::initSetPinLayout()
 {
+    pageState = PinPageState::Init;
     pin.clear();
+    pinToVerify.clear();
     ui->labelTitle->setText(tr("Set PIN"));
     ui->labelNotice->show();
 }
@@ -116,6 +118,7 @@ void SetPinPage::onDigitClicked(char digit)
             Q_EMIT pinReEntered();
         }
     }
+    repaint();
 }
 
 void SetPinPage::onBackspaceClicked()
@@ -148,14 +151,15 @@ void SetPinPage::onPinReEntered()
 
     if (pin.compare(pinToVerify) == 0)
     {
-        Q_EMIT pinReadyForVerification(pin);
+        Q_EMIT pinReadyForVerification(pin.toStdString());
+        initSetPinLayout(); // Re-init page in the case of getting back to previous screen
     }
     else
     {
         Q_EMIT pinValidationFailed();
     }
 
-    this->repaint();
+    repaint();
 }
 
 void SetPinPage::onBackClicked()
