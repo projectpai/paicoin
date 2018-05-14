@@ -766,6 +766,10 @@ void PAIcoinGUI::showHelpMessageClicked()
 void PAIcoinGUI::setPinCode(const std::string &pin)
 {
     AuthManager::getInstance().SetPinCode(pin);
+
+    ConfirmationDialog *confirmationDialog = new ConfirmationDialog(tr("PIN Set"), this);
+    confirmationDialog->exec();
+
     switch(state)
     {
     case PAIcoinGUIState::CreateWallet:
