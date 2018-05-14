@@ -90,6 +90,8 @@ void SetPinPage::initSetPinLayout()
     pinToVerify.clear();
     ui->labelTitle->setText(tr("Set PIN"));
     ui->labelNotice->show();
+    if (!ui->pushButton->isVisible())
+        ui->pushButton->show();
 }
 
 void SetPinPage::initReEnterPinLayout()
@@ -98,6 +100,8 @@ void SetPinPage::initReEnterPinLayout()
     pinToVerify.clear();
     ui->labelTitle->setText(tr("Re-Enter PIN"));
     ui->labelNotice->hide();
+    if (!ui->pushButton->isVisible())
+        ui->pushButton->show();
 }
 
 void SetPinPage::initPinRequiredLayout()
@@ -107,6 +111,7 @@ void SetPinPage::initPinRequiredLayout()
     ui->labelTitle->setText(tr("PIN Required"));
     ui->labelSubtitle->setText(tr("Please enter your PIN to continue"));
     ui->labelNotice->hide();
+    ui->pushButton->hide();
 }
 
 void SetPinPage::onDigitClicked(char digit)
