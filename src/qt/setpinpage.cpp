@@ -49,7 +49,8 @@ void SetPinPage::paintEvent(QPaintEvent *event)
     painterGray->setRenderHint(QPainter::Antialiasing, true);
     painterGray->drawEllipse(4, 4, 21, 21);
 
-    int numOfSelectedDots = pageState == PinPageState::Init ? pin.length() : pinToVerify.length();
+    int numOfSelectedDots = (pageState == PinPageState::Init || pageState == PinPageState::RequiredEntry)
+            ? pin.length() : pinToVerify.length();
     ui->labelDot1->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
     numOfSelectedDots--;
     ui->labelDot2->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
@@ -93,14 +94,24 @@ void SetPinPage::initSetPinLayout()
 
 void SetPinPage::initReEnterPinLayout()
 {
+    pageState = PinPageState::ReEnter;
     pinToVerify.clear();
     ui->labelTitle->setText(tr("Re-Enter PIN"));
     ui->labelNotice->hide();
 }
 
+void SetPinPage::initPinRequiredLayout()
+{
+    pageState = PinPageState::RequiredEntry;
+    pin.clear();
+    ui->labelTitle->setText(tr("PIN Required"));
+    ui->labelSubtitle->setText(tr("Please enter your PIN to continue"));
+    ui->labelNotice->hide();
+}
+
 void SetPinPage::onDigitClicked(char digit)
 {
-    if (pageState == PinPageState::Init)
+    if (pageState == PinPageState::Init || pageState == PinPageState::RequiredEntry)
     {
         if (pin.length() < 6)
             pin.append(digit);
@@ -136,11 +147,15 @@ void SetPinPage::onBackspaceClicked()
 
 void SetPinPage::onPinEntered()
 {
-    // Rebuild UI for re-enter PIN functionality
-    pageState = PinPageState::ReEnter;
-
-    initReEnterPinLayout();
-
+    if (pageState == PinPageState::Init)
+    {
+        // Rebuild UI for re-enter PIN functionality
+        initReEnterPinLayout();
+    }
+    else if (pageState == PinPageState::RequiredEntry)
+    {
+        Q_EMIT pinReadyForAuthentication(pin.toStdString());
+    }
     repaint();
 }
 
@@ -151,7 +166,7 @@ void SetPinPage::onPinReEntered()
 
     if (pin.compare(pinToVerify) == 0)
     {
-        Q_EMIT pinReadyForVerification(pin.toStdString());
+        Q_EMIT pinReadyForConfirmation(pin.toStdString());
         initSetPinLayout(); // Re-init page in the case of getting back to previous screen
     }
     else

@@ -49,9 +49,13 @@ QT_END_NAMESPACE
 enum class PAIcoinGUIState : std::int8_t
 {
     Init,
+    WalletSelection,
     CreateWallet,
     RestoreWallet,
-    PaperKeyWritedown
+    SetPin,
+    PaperKeyIntro,
+    PaperKeyWritedown,
+    PaperKeyCompletion
 };
 
 /**
@@ -156,6 +160,8 @@ private:
     bool firstRun;
     /** Current GUI state */
     PAIcoinGUIState state;
+    /** Previous GUI state */
+    PAIcoinGUIState previousState;
 
     const PlatformStyle *platformStyle;
     const NetworkStyle *networkStyle;

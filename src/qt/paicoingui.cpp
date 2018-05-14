@@ -323,14 +323,15 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
         connect(walletSelectionPage, SIGNAL(goToRestoreWallet()), this, SLOT(gotoRestoreWalletPage()));
         connect(walletSelectionPage, SIGNAL(goToCreateNewWallet()), this, SLOT(processCreateWalletRequest()));
 
-        connect(setPinPage, SIGNAL(pinReadyForVerification(const std::string&)), this, SLOT(setPinCode(const std::string&)));
+        connect(setPinPage, SIGNAL(pinReadyForConfirmation(const std::string&)), this, SLOT(setPinCode(const std::string&)));
+        connect(setPinPage, SIGNAL(pinReadyForAuthentication(const std::string&)), &AuthManager::getInstance(), SLOT(RequestCheck(const std::string&)));
         connect(setPinPage, SIGNAL(pinValidationFailed()), this, SLOT(gotoSetPinPage()));
 
         connect(restoreWalletPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoWalletSelectionPage()));
         connect(restoreWalletPage, SIGNAL(restoreWallet(QStringList)), this, SLOT(restoreWallet(QStringList)));
 
         connect(paperKeyIntroPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoWalletSelectionPage()));
-        connect(paperKeyIntroPage, SIGNAL(writeDownsClicked()), this, SLOT(createNewWallet()));
+        connect(paperKeyIntroPage, SIGNAL(writeDownsClicked()), this, SLOT(interruptForPinRequest()));
 
         connect(paperKeyWritedownPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoPaperKeyIntroPage()));
         connect(paperKeyWritedownPage, SIGNAL(paperKeyWritten(QStringList)), this, SLOT(gotoPaperKeyCompletionPage(QStringList)));
@@ -826,17 +827,43 @@ void PAIcoinGUI::openClicked()
 
 void PAIcoinGUI::interruptForPinRequest()
 {
-    // TODO: Navigate to PIN entry page and remember current state/page
+    previousState = state;
+    setPinPage->initPinRequiredLayout();
+    gotoSetPinPage();
 }
 
 void PAIcoinGUI::continueFromPinRequest()
 {
     // TODO: Restore previous state/page, before PIN was requested
+
+    switch(previousState)
+    {
+    case PAIcoinGUIState::Init:
+        break;
+    case PAIcoinGUIState::WalletSelection:
+        break;
+    case PAIcoinGUIState::CreateWallet:
+        break;
+    case PAIcoinGUIState::RestoreWallet:
+        break;
+    case PAIcoinGUIState::SetPin:
+        break;
+    case PAIcoinGUIState::PaperKeyIntro:
+        createNewWallet();
+        break;
+    case PAIcoinGUIState::PaperKeyWritedown:
+        break;
+    case PAIcoinGUIState::PaperKeyCompletion:
+        break;
+    default:
+        break;
+    }
 }
 
 void PAIcoinGUI::gotoWalletSelectionPage()
 {
     AuthManager::getInstance().Reset();
+    state = PAIcoinGUIState::WalletSelection;
     firstRunStackedWidget->setCurrentWidget(walletSelectionPage);
 }
 
@@ -873,22 +900,33 @@ void PAIcoinGUI::processCreateWalletRequest()
 
 void PAIcoinGUI::gotoPaperKeyIntroPage()
 {
+    state = PAIcoinGUIState::PaperKeyIntro;
     firstRunStackedWidget->setCurrentWidget(paperKeyIntroPage);
 }
 
 void PAIcoinGUI::gotoSetPinPage()
 {
-    firstRunStackedWidget->setCurrentWidget(setPinPage);
+    if (firstRun)
+    {
+        //state = PAIcoinGUIState::SetPin;
+        firstRunStackedWidget->setCurrentWidget(setPinPage);
+    }
+    else
+    {
+        setCentralWidget(setPinPage);
+    }
 }
 
 void PAIcoinGUI::gotoPaperKeyWritedownPage()
 {
+    state = PAIcoinGUIState::PaperKeyWritedown;
     firstRunStackedWidget->setCurrentWidget(paperKeyWritedownPage);
 }
 
 void PAIcoinGUI::gotoPaperKeyCompletionPage(const QStringList &phrase)
 {
     paperKeyCompletionPage->setPaperKeyList(phrase);
+    state = PAIcoinGUIState::PaperKeyCompletion;
     firstRunStackedWidget->setCurrentWidget(paperKeyCompletionPage);
 }
 
