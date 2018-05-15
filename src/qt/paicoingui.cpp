@@ -199,6 +199,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
             mainStackedWidget->addWidget(paperKeyIntroPage);
             mainStackedWidget->addWidget(paperKeyWritedownPage);
             mainStackedWidget->addWidget(paperKeyCompletionPage);
+            mainStackedWidget->setCurrentWidget(welcomePage);
         }
         else
         {
@@ -1287,6 +1288,9 @@ void PAIcoinGUI::createWalletFrame()
 {
     firstRun = false;
 
+    if (walletFrame != nullptr)
+        mainStackedWidget->removeWidget(walletFrame);
+
     // Create wallet frame and make it the central widget
     walletFrame = new WalletFrame(platformStyle, this);
     walletFrame->setClientModel(clientModel);
@@ -1295,9 +1299,11 @@ void PAIcoinGUI::createWalletFrame()
     // Needs walletFrame to be initialized
     createActions();
 
+    mainStackedWidget->addWidget(walletFrame);
     mainStackedWidget->setCurrentWidget(walletFrame);
 
     modalOverlay->setParent(this->centralWidget());
+    modalOverlay->showHide();
 }
 
 void PAIcoinGUI::completeUiWalletInitialization()
