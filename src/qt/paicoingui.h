@@ -101,7 +101,7 @@ private:
     ClientModel *clientModel;
     WalletFrame *walletFrame;
 
-    QStackedWidget *firstRunStackedWidget;
+    QStackedWidget *mainStackedWidget;
     WelcomePage *welcomePage;
     WalletSelectionPage *walletSelectionPage;
     RestoreWalletPage *restoreWalletPage;
@@ -247,6 +247,11 @@ public Q_SLOTS:
     void createWalletFrame();
 
     void completeUiWalletInitialization();
+
+    /** Interrupt current operation and request PIN entry */
+    void interruptForPinRequest();
+    /** Continue from last state before PIN entry was requested */
+    void continueFromPinRequest();
 #endif // ENABLE_WALLET
 
 private Q_SLOTS:
@@ -289,11 +294,6 @@ private Q_SLOTS:
 
     /** Show open dialog */
     void openClicked();
-
-    /** Interrupt current operation and request PIN entry */
-    void interruptForPinRequest();
-    /** Continue from last state before PIN entry was requested */
-    void continueFromPinRequest();
 #endif // ENABLE_WALLET
     /** Show configuration dialog */
     void optionsClicked();

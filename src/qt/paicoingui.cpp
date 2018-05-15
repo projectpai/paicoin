@@ -98,6 +98,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     enableWallet(false),
     clientModel(0),
     walletFrame(0),
+    mainStackedWidget(nullptr),
     unitDisplayControl(0),
     labelWalletEncryptionIcon(0),
     labelWalletHDStatusIcon(0),
@@ -142,7 +143,6 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     state(PAIcoinGUIState::Init),
     platformStyle(_platformStyle),
     networkStyle(_networkStyle),
-    firstRunStackedWidget(nullptr),
     welcomePage(nullptr),
     walletSelectionPage(nullptr),
     restoreWalletPage(nullptr),
@@ -181,33 +181,32 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
 #ifdef ENABLE_WALLET
     if (enableWallet)
     {
+        setPinPage = new SetPinPage; // Used no matter if first run or not
+        mainStackedWidget = new QStackedWidget;
+        mainStackedWidget->addWidget(setPinPage);
         if (firstRun)
         {
-            firstRunStackedWidget = new QStackedWidget;
             welcomePage = new WelcomePage;
             walletSelectionPage = new WalletSelectionPage;
             restoreWalletPage = new RestoreWalletPage;
             paperKeyIntroPage = new PaperKeyIntroPage;
-            setPinPage = new SetPinPage;
             paperKeyWritedownPage = new PaperKeyWritedownPage;
             paperKeyCompletionPage = new PaperKeyCompletionPage;
 
-            firstRunStackedWidget->addWidget(welcomePage);
-            firstRunStackedWidget->addWidget(walletSelectionPage);
-            firstRunStackedWidget->addWidget(restoreWalletPage);
-            firstRunStackedWidget->addWidget(paperKeyIntroPage);
-            firstRunStackedWidget->addWidget(setPinPage);
-            firstRunStackedWidget->addWidget(paperKeyWritedownPage);
-            firstRunStackedWidget->addWidget(paperKeyCompletionPage);
-
-            setCentralWidget(firstRunStackedWidget);
+            mainStackedWidget->addWidget(welcomePage);
+            mainStackedWidget->addWidget(walletSelectionPage);
+            mainStackedWidget->addWidget(restoreWalletPage);
+            mainStackedWidget->addWidget(paperKeyIntroPage);
+            mainStackedWidget->addWidget(paperKeyWritedownPage);
+            mainStackedWidget->addWidget(paperKeyCompletionPage);
         }
         else
         {
             /** Create wallet frame and make it the central widget */
             walletFrame = new WalletFrame(_platformStyle, this);
-            setCentralWidget(walletFrame);
+            mainStackedWidget->addWidget(walletFrame);
         }
+        setCentralWidget(mainStackedWidget);
     } else
 #endif // ENABLE_WALLET
     {
@@ -307,13 +306,6 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     connect(connectionsControl, SIGNAL(clicked(QPoint)), this, SLOT(toggleNetworkActive()));
 
     modalOverlay = new ModalOverlay(this->centralWidget());
-#ifdef ENABLE_WALLET
-    if(enableWallet && !firstRun) {
-        connect(walletFrame, SIGNAL(requestedSyncWarningInfo()), this, SLOT(showModalOverlay()));
-        connect(labelBlocksIcon, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
-        connect(progressBar, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
-    }
-#endif
 
     if (firstRun)
     {
@@ -322,10 +314,6 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
 
         connect(walletSelectionPage, SIGNAL(goToRestoreWallet()), this, SLOT(gotoRestoreWalletPage()));
         connect(walletSelectionPage, SIGNAL(goToCreateNewWallet()), this, SLOT(processCreateWalletRequest()));
-
-        connect(setPinPage, SIGNAL(pinReadyForConfirmation(const std::string&)), this, SLOT(setPinCode(const std::string&)));
-        connect(setPinPage, SIGNAL(pinReadyForAuthentication(const std::string&)), &AuthManager::getInstance(), SLOT(RequestCheck(const std::string&)));
-        connect(setPinPage, SIGNAL(pinValidationFailed()), this, SLOT(gotoSetPinPage()));
 
         connect(restoreWalletPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoWalletSelectionPage()));
         connect(restoreWalletPage, SIGNAL(restoreWallet(QStringList)), this, SLOT(restoreWallet(QStringList)));
@@ -338,10 +326,14 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
 
         connect(paperKeyCompletionPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoPaperKeyWritedownPage()));
         connect(paperKeyCompletionPage, SIGNAL(paperKeyProven()), this, SLOT(showPaperKeyCompleteDialog()));
-
-        connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), this, SLOT(interruptForPinRequest()));
-        connect(&AuthManager::getInstance(), SIGNAL(Authenticated()), this, SLOT(continueFromPinRequest()));
     }
+
+    connect(setPinPage, SIGNAL(pinReadyForConfirmation(const std::string&)), this, SLOT(setPinCode(const std::string&)));
+    connect(setPinPage, SIGNAL(pinReadyForAuthentication(const std::string&)), &AuthManager::getInstance(), SLOT(RequestCheck(const std::string&)));
+    connect(setPinPage, SIGNAL(pinValidationFailed()), this, SLOT(gotoSetPinPage()));
+
+    connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), this, SLOT(interruptForPinRequest()));
+    connect(&AuthManager::getInstance(), SIGNAL(Authenticated()), this, SLOT(continueFromPinRequest()));
 }
 
 PAIcoinGUI::~PAIcoinGUI()
@@ -828,17 +820,36 @@ void PAIcoinGUI::openClicked()
 void PAIcoinGUI::interruptForPinRequest()
 {
     previousState = state;
+
+    if (previousState == PAIcoinGUIState::Init)
+    {
+        appMenuBar->hide();
+        tabGroup->setVisible(false);
+        progressBar->hide();
+        statusBar()->hide();
+        modalOverlay->showHide(true, true);
+    }
+
     setPinPage->initPinRequiredLayout();
     gotoSetPinPage();
 }
 
 void PAIcoinGUI::continueFromPinRequest()
 {
-    // TODO: Restore previous state/page, before PIN was requested
-
     switch(previousState)
     {
     case PAIcoinGUIState::Init:
+        mainStackedWidget->setCurrentWidget(walletFrame);
+
+        appMenuBar->show();
+        tabGroup->setVisible(true);
+        progressBar->hide();
+        statusBar()->show();
+        modalOverlay->showHide();
+
+        connect(walletFrame, SIGNAL(requestedSyncWarningInfo()), this, SLOT(showModalOverlay()));
+        connect(labelBlocksIcon, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
+        connect(progressBar, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
         break;
     case PAIcoinGUIState::WalletSelection:
         break;
@@ -864,7 +875,7 @@ void PAIcoinGUI::gotoWalletSelectionPage()
 {
     AuthManager::getInstance().Reset();
     state = PAIcoinGUIState::WalletSelection;
-    firstRunStackedWidget->setCurrentWidget(walletSelectionPage);
+    mainStackedWidget->setCurrentWidget(walletSelectionPage);
 }
 
 void PAIcoinGUI::createNewWallet()
@@ -889,7 +900,7 @@ void PAIcoinGUI::restoreWallet(QStringList paperKeys)
 void PAIcoinGUI::gotoRestoreWalletPage()
 {
     state = PAIcoinGUIState::RestoreWallet;
-    firstRunStackedWidget->setCurrentWidget(restoreWalletPage);
+    mainStackedWidget->setCurrentWidget(restoreWalletPage);
 }
 
 void PAIcoinGUI::processCreateWalletRequest()
@@ -901,33 +912,25 @@ void PAIcoinGUI::processCreateWalletRequest()
 void PAIcoinGUI::gotoPaperKeyIntroPage()
 {
     state = PAIcoinGUIState::PaperKeyIntro;
-    firstRunStackedWidget->setCurrentWidget(paperKeyIntroPage);
+    mainStackedWidget->setCurrentWidget(paperKeyIntroPage);
 }
 
 void PAIcoinGUI::gotoSetPinPage()
 {
-    if (firstRun)
-    {
-        //state = PAIcoinGUIState::SetPin;
-        firstRunStackedWidget->setCurrentWidget(setPinPage);
-    }
-    else
-    {
-        setCentralWidget(setPinPage);
-    }
+    mainStackedWidget->setCurrentWidget(setPinPage);
 }
 
 void PAIcoinGUI::gotoPaperKeyWritedownPage()
 {
     state = PAIcoinGUIState::PaperKeyWritedown;
-    firstRunStackedWidget->setCurrentWidget(paperKeyWritedownPage);
+    mainStackedWidget->setCurrentWidget(paperKeyWritedownPage);
 }
 
 void PAIcoinGUI::gotoPaperKeyCompletionPage(const QStringList &phrase)
 {
     paperKeyCompletionPage->setPaperKeyList(phrase);
     state = PAIcoinGUIState::PaperKeyCompletion;
-    firstRunStackedWidget->setCurrentWidget(paperKeyCompletionPage);
+    mainStackedWidget->setCurrentWidget(paperKeyCompletionPage);
 }
 
 void PAIcoinGUI::showPaperKeyCompleteDialog()
@@ -1126,7 +1129,6 @@ void PAIcoinGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVer
         if(walletFrame)
         {
             walletFrame->showOutOfSyncWarning(true);
-            modalOverlay->showHide();
         }
 #endif // ENABLE_WALLET
 
@@ -1293,7 +1295,7 @@ void PAIcoinGUI::createWalletFrame()
     // Needs walletFrame to be initialized
     createActions();
 
-    setCentralWidget(walletFrame);
+    mainStackedWidget->setCurrentWidget(walletFrame);
 
     modalOverlay->setParent(this->centralWidget());
 }

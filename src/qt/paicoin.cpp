@@ -564,6 +564,8 @@ void PAIcoinApplication::initializeResult(bool success)
         connect(paymentServer, SIGNAL(message(QString,QString,unsigned int)),
                          window, SLOT(message(QString,QString,unsigned int)));
         QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
+
+        window->interruptForPinRequest();
 #endif
     } else {
         quit(); // Exit main loop
