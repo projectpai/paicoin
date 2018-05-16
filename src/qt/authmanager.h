@@ -1,6 +1,8 @@
 #ifndef AUTHMANAGER_H
 #define AUTHMANAGER_H
 
+#include "wallet.h"
+
 #include <string>
 #include <QObject>
 
@@ -12,8 +14,10 @@ public:
     AuthManager(AuthManager const&)     = delete;
     void operator=(AuthManager const&)  = delete;
 private:
-    AuthManager(QObject *parent) : QObject(parent) {}
+    AuthManager(QObject *parent) : QObject(parent), wallet(nullptr) {}
+    CWallet* wallet;
 public:
+    void ConnectWallet(CWallet* wallet);
     bool Check(const std::string& pin);
     bool AuthRequested();
     void SetPinCode(const std::string& pin);

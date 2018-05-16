@@ -72,6 +72,22 @@ bool CWalletDB::WriteCryptedPaperKey(const std::vector<unsigned char>& vchCrypte
     return true;
 }
 
+bool CWalletDB::WritePinCode(const std::string& pinCode)
+{
+    return WriteIC(std::string("pincode"), pinCode, true);
+}
+
+bool CWalletDB::WriteCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode)
+{
+    if (!WriteIC(std::string("cpincode"), vchCryptedPinCode, true)) {
+        return false;
+    }
+
+    EraseIC(std::string("pincode"));
+
+    return true;
+}
+
 bool CWalletDB::WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey, const CKeyMetadata& keyMeta)
 {
     if (!WriteIC(std::make_pair(std::string("keymeta"), vchPubKey), keyMeta, false)) {
@@ -366,6 +382,39 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             }
 
             if (!pwallet->LoadCryptedPaperKey(cpaperkey))
+            {
+                strErr = "Error reading wallet database: LoadCryptedPaperKey failed";
+                return false;
+            }
+
+            wss.fIsEncrypted = true;
+        }
+        else if (strType == "pincode")
+        {
+            std::string pincode;
+            ssValue >> pincode;
+            if (pincode.empty())
+            {
+                strErr = "Error reading wallet database: paper key corrupt";
+                return false;
+            }
+
+            if (!pwallet->LoadPinCode(pincode))
+            {
+                strErr = "Error reading wallet database: LoadPaperKey failed";
+                return false;
+            }
+        }
+        else if (strType == "cpincode")
+        {
+            const std::vector<unsigned char> cpincode(ssValue.begin(), ssValue.end());
+            if (cpincode.size() == 0)
+            {
+                strErr = "Error reading wallet database: encrypted paper key corrupt";
+                return false;
+            }
+
+            if (!pwallet->LoadCryptedPinCode(cpincode))
             {
                 strErr = "Error reading wallet database: LoadCryptedPaperKey failed";
                 return false;

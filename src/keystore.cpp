@@ -32,6 +32,25 @@ bool CBasicKeyStore::GetPaperKey(std::string& paperKey) const
     return false;
 }
 
+bool CBasicKeyStore::AddPinCode(const std::string& pinCode)
+{
+    LOCK(cs_KeyStore);
+    this->pinCode = pinCode;
+    return true;
+}
+
+bool CBasicKeyStore::GetPinCode(std::string& pinCode) const
+{
+    {
+        LOCK(cs_KeyStore);
+        if (!this->pinCode.empty()) {
+            pinCode = this->pinCode;
+            return true;
+        }
+    }
+    return false;
+}
+
 bool CBasicKeyStore::GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const
 {
     CKey key;

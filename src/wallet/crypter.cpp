@@ -108,7 +108,6 @@ bool CCrypter::Decrypt(const std::vector<unsigned char>& vchCiphertext, CKeyingM
     return true;
 }
 
-
 static bool EncryptSecret(const CKeyingMaterial& vMasterKey, const CKeyingMaterial &vchPlaintext, const uint256& nIV, std::vector<unsigned char> &vchCiphertext)
 {
     CCrypter cKeyCrypter;
@@ -250,6 +249,57 @@ bool CCryptoKeyStore::GetPaperKey(std::string& paperKey) const
             return false;
 
         paperKey = std::string(vchPaperKey.begin(), vchPaperKey.end());
+
+        return true;
+    }
+    return false;
+}
+
+bool CCryptoKeyStore::AddCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode)
+{
+    {
+        LOCK(cs_KeyStore);
+        if (!SetCrypted())
+            return false;
+
+        this->vchCryptedPaperKey = vchCryptedPinCode;
+    }
+    return true;
+}
+
+bool CCryptoKeyStore::AddPinCode(const std::string& pinCode)
+{
+    {
+        LOCK(cs_KeyStore);
+        if (!IsCrypted())
+            return CBasicKeyStore::AddPinCode(pinCode);
+
+        if (IsLocked())
+            return false;
+
+        std::vector<unsigned char> vchCryptedPinCode;
+        CKeyingMaterial vchPinCode(pinCode.begin(), pinCode.end());
+        if (!EncryptSecret(vMasterKey, vchPinCode, uint256S("pinCode"), vchCryptedPinCode))
+            return false;
+
+        if (!AddCryptedPinCode(vchCryptedPinCode))
+            return false;
+    }
+    return true;
+}
+
+bool CCryptoKeyStore::GetPinCode(std::string& pinCode) const
+{
+    {
+        LOCK(cs_KeyStore);
+        if (!IsCrypted())
+            return CBasicKeyStore::GetPinCode(pinCode);
+
+        CKeyingMaterial vchPinCode;
+        if (!DecryptSecret(vMasterKey, vchCryptedPinCode, uint256S("pinCode"), vchPinCode))
+            return false;
+
+        pinCode = std::string(vchPinCode.begin(), vchPinCode.end());
 
         return true;
     }
