@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(get_next_work)
 }
 
 /**
- * TODO PAICOIN if unit test updating is required
+ * Note: if unit test updating is required
  * Methodology:
  * - update the nLastRetargetTime to the genesis block time;
  * - update the pindexLast.nTime to a date at 2055491 seconds from nLastRetargetTime;
