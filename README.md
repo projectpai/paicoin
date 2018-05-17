@@ -22,7 +22,7 @@ PAIcoin uses peer-to-peer technology to operate with no central authority: manag
 transactions and issuing money are carried out collectively by the network.
 PAIcoin Core is the name of the open-source software which enables the use of this currency.
 
-Read the [whitepapers here](https://projectpai.com/pai-whitepaper/).
+Read the whitepapers [here](https://projectpai.com/pai-whitepaper/).
 
 License
 -------
