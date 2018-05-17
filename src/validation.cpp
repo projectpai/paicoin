@@ -11,7 +11,6 @@
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "checkqueue.h"
-#include "coinbase_addresses.h"
 #include "consensus/consensus.h"
 #include "consensus/merkle.h"
 #include "consensus/tx_verify.h"
@@ -1032,7 +1031,7 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
     if (halvings >= 64)
         return 0;
 
-    // TODO PAICOIN If the initial block subsidy has been changed,
+    // PAICOIN Note: If the initial block subsidy has been changed,
     // update the subsidy with the correct value
     CAmount nSubsidy = 1500 * COIN;
     // Subsidy is cut in half every 210,000 blocks which will occur approximately every 4 years.
@@ -2841,23 +2840,25 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
                                  strprintf("Transaction check failed (tx hash %s) %s", tx->GetHash().ToString(), state.GetDebugMessage()));
 
     if (block.GetHash() != consensusParams.hashGenesisBlock) {
-         for (const CTxOut& out : block.vtx[0]->vout) {
-             if (out.nValue > 0.00) {
-                 CTxDestination address;
-                 if (ExtractDestination(out.scriptPubKey, address)) {
-                     std::string pubKey(EncodeDestination(address));
-                     std::map<std::string, int>::iterator validCoinbaseIter = PUB_KEYS.find(pubKey);
-                     if (validCoinbaseIter == PUB_KEYS.end() ||
-                         (validCoinbaseIter->second > -1 && validCoinbaseIter->second < chainActive.Height() + 1)) {
-                             return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
-                                 REJECT_INVALID, "bad-cb-address");
-		      }
-                 } else {
-                     return state.DoS(100, error("CheckBlock(): invalid coinbase script: %s", HexStr(out.scriptPubKey)),
-                         REJECT_INVALID, "bad-cb-script");
-                 }
-             }
-	}
+        const auto& coinbaseAddrs = Params().coinbaseAddrs;
+        if (!coinbaseAddrs.empty()) {
+            for (const CTxOut& out : block.vtx[0]->vout) {
+                if (out.nValue > 0.00) {
+                    CTxDestination address;
+                    if (ExtractDestination(out.scriptPubKey, address)) {
+                        std::string pubKey(EncodeDestination(address));
+                        auto validCoinbaseIter = coinbaseAddrs.find(pubKey);
+                        if (validCoinbaseIter == coinbaseAddrs.end() || (validCoinbaseIter->second > -1 && validCoinbaseIter->second < chainActive.Height() + 1)) {
+                            return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
+                                REJECT_INVALID, "bad-cb-address");
+                        }
+                    } else {
+                        return state.DoS(100, error("CheckBlock(): invalid coinbase script: %s", HexStr(out.scriptPubKey)),
+                            REJECT_INVALID, "bad-cb-script");
+                    }
+                }
+            }
+        }
     }
 
     unsigned int nSigOps = 0;
