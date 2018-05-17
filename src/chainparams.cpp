@@ -243,8 +243,6 @@ public:
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
 
-        // TODO PAICOIN Update this when releasing, using the suitable blocks heights and corresponding hashes
-        // Check the above note for what make a good checkpoint
         checkpointData = (CCheckpointData) {
             {
                 {     0, MAINNET_CONSENSUS_HASH_GENESIS_BLOCK },
@@ -254,8 +252,6 @@ public:
             }
         };
 
-        // TODO PAICOIN Update this when releasing, using the block timestamp and the number of transactions upto that block
-        // use the blockchain info
         chainTxData = ChainTxData{
 			// tx hash = c54bee8227b2b009dcd4d53b1f01de328b86417b475a1f0540b8cca91797b256
 			// block hash = 0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec
@@ -375,8 +371,6 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
 
-        // TODO PAICOIN Update this when releasing, using the suitable blocks heights and corresponding hashes
-        // Check the above note for what make a good checkpoint
         checkpointData = (CCheckpointData) {
             {
                 {    0, TESTNET_CONSENSUS_HASH_GENESIS_BLOCK },
@@ -386,8 +380,6 @@ public:
             }
         };
 
-        // TODO PAICOIN Update this when releasing, using the block timestamp and the number of transactions upto that block
-        // use the blockchain info
         chainTxData = ChainTxData{
 			// tx hash = 0xd714e38737c9a4f2f0f59bdd6ffa6e527a6874a7f599849dfe042c8bd1f49ce5
 			// block hash = 0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b
