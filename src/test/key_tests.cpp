@@ -17,7 +17,7 @@
 #include <boost/test/unit_test.hpp>
 
 /**
- * TODO PAICOIN if unit test updating is required
+ * PAICOIN Note: if unit test updating is required
  * Updating methodology:
  * Helpers:
  * - http://incoherency.co.uk/base58/

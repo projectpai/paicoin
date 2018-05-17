@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
     // Note that by default, these tests run with size accounting enabled.
     const auto chainParams = CreateChainParams(CBaseChainParams::MAIN);
     const CChainParams& chainparams = *chainParams;
-    // TODO PAICOIN No need to update this address, it's just for testing purposes
+    // PAICOIN Note: No need to update this address, it's just for testing purposes
     CScript scriptPubKey = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
     std::unique_ptr<CBlockTemplate> pblocktemplate;
     CMutableTransaction tx,tx2;
@@ -256,7 +256,7 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
     // Just to make sure we can still make simple blocks
     BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey));
 
-    // TODO PAICOIN If the initial block subsidy has been changed,
+    // PAICOIN Note: If the initial block subsidy has been changed,
     // update the subsidy with the correct value
     const CAmount BLOCKSUBSIDY = 1500 * COIN;
     const CAmount LOWFEE = CENT;
