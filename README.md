@@ -39,7 +39,7 @@ regularly to indicate new official, stable release versions of PAIcoin Core.
 
 The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-The developer [forum](ihttps://www.paiforum.com/?forum=665374) should be used 
+The developer [forum](https://www.paiforum.com/?forum=665374) should be used 
 to discuss complicated or controversial changes before working on a patch set.
 
 Testing
