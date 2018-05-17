@@ -1,0 +1,23 @@
+
+
+-------------------------------------------
+Date: 2018-02-13 11:28:32.634797
+Timestamp: 1518550112.0
+
+Secret key: e680e3f89d576843644135897af94b7eb9a4750d257b63ee2dcc11a3609833ea
+Public key: 04cef8b8650b944e4356710c355fe54b0dc89b437135432e9f171becb87998702059ca69934eb18799b24b97f7bad6982734dc141159f6f16767d45c19da876d9e
+
+regtest:
+publicAddress: MqhcRbbzLDEpsMs5SFsJB4pccF3cHquuaY
+privateAddress: 8c4kmijb2wg8a4K8kH88JEMvMogHgUdKQyLy9xcvemPGQUfqGxb
+scriptAddress: 2FkJRSc49vV1rNGrFbNqQjEw6oKHJ6LqjaD
+
+testnet:
+publicAddress: MqhcRbbzLDEpsMs5SFsJB4pccF3cHquuaY
+privateAddress: 8c4kmijb2wg8a4K8kH88JEMvMogHgUdKQyLy9xcvemPGQUfqGxb
+scriptAddress: 2FkJRSc49vV1rNGrFbNqQjEw6oKHJ6LqjaD
+
+mainnet:
+publicAddress: PrPdM96Rt7ZCxXZWZMXtbhBYkmLKut218o
+privateAddress: 9JtPUbAFvsstQHWwnTA7KxxBbCcNLGKhwPqEH74kXXXQmZoAFq2
+scriptAddress: udQGDB9kRTr3UbsvNQBUUyKmL6Q8UCnVjp

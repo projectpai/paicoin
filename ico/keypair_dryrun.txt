@@ -1,0 +1,23 @@
+
+
+-------------------------------------------
+Date: 2018-02-09 06:28:22.083756
+Timestamp: 1518186502.0
+
+Secret key: f9cbfd00d4956b07be83c8833265e9f3817ce08d163cc8b9d15c998a58054215
+Public key: 0418f5a046f0a7c2d4990059ca9d39e51d019f950a4fa66e3473d7fea7bac4ccf5e23f1901807efa12c5428b238fd21078021bea2bfabbbc9b08344432a6ad7617
+
+regtest:
+publicAddress: Me5hY3WAwwJp14aEMAMqGtcWss4VEgwrVP
+privateAddress: 8cDFbSTsyNDRJN1r4W6XHiJsmidDJqWj5dPRfJWeA3FTer7JhoP
+scriptAddress: 2FYgWZ3xLYD5qVyZQWHKwq4j14wJAwC2Dqb
+
+testnet:
+publicAddress: Me5hY3WAwwJp14aEMAMqGtcWss4VEgwrVP
+privateAddress: 8cDFbSTsyNDRJN1r4W6XHiJsmidDJqWj5dPRfJWeA3FTer7JhoP
+scriptAddress: 2FYgWZ3xLYD5qVyZQWHKwq4j14wJAwC2Dqb
+
+mainnet:
+publicAddress: PemiTazcVqdC6EGfUG2RhWyT2PMCpCKQee
+privateAddress: 9K2tJJtYsJRB8bDf6g8WKSu917ZHxdD7c3sgnSxU2oPc1svzg1s
+scriptAddress: uRnMKd3w3Bv2cJb5HJg1ao7fbiR1N8ADNz
