@@ -15,6 +15,7 @@
 #include <stdlib.h>
 
 #include "chainparamsseeds.h"
+#include "coinbase_addresses.h"
 
 /**
  * To initialize the block chain by mining a new genesis block uncomment the following define.
@@ -141,7 +142,7 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
 
 class CMainParams : public CChainParams {
 public:
-    CMainParams() {
+    CMainParams(): CChainParams(fCoinbaseAddrs) {
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
@@ -272,7 +273,7 @@ public:
  */
 class CTestNetParams : public CChainParams {
 public:
-    CTestNetParams() {
+    CTestNetParams(): CChainParams(fCoinbaseAddrs) {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
