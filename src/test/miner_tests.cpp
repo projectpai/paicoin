@@ -42,7 +42,7 @@ struct {
     unsigned char extranonce;
     unsigned int nonce;
 } blockinfo[] = {
-    /* TODO PAICOIN
+    /* PAICOIN Note:
      * The extranonce-nonce pairs bellow must be changed, but only when the actual production genesis block is ready:
      * 1. Generate the 110 block that are to be added after the genesis block, similar to the Bitcoin's test blocks in miner-test-blocks.txt
      *    Note the usage of the median time for nTime (starting with the genesis block time), the chain height in the scriptSig, the extranonce, etc.
@@ -203,7 +203,7 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
 // NOTE: These tests rely on CreateNewBlock doing its own self-validation!
 BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 {
-    // TODO PAICOIN Activate this test by removing the following line once the test blocks are generated
+    // PAICOIN Note: Activate this test by removing the following line once the test blocks are generated
     return;
 
     // Note that by default, these tests run with size accounting enabled.
