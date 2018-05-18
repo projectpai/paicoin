@@ -1,7 +1,7 @@
 #ifndef AUTHMANAGER_H
 #define AUTHMANAGER_H
 
-#include "wallet.h"
+#include "wallet/wallet.h"
 
 #include <string>
 #include <QObject>
