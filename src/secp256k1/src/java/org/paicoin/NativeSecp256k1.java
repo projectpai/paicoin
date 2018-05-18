@@ -29,7 +29,7 @@ import static org.paicoin.NativeSecp256k1Util.*;
 /**
  * <p>This class holds native methods to handle ECDSA verification.</p>
  *
- * <p>You can find an example library that can be used for this at https://github.com/paicoin/secp256k1</p>
+ * <p>You can find an example library that can be used for this at https://github.com/bitcoin/secp256k1</p>
  *
  * <p>To build secp256k1 for use with paicoinj, run
  * `./configure --enable-jni --enable-experimental --enable-module-ecdh`

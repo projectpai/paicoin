@@ -51,4 +51,4 @@ situations but should be discussed in public in advance.
 
 See also
 ----------
-- [paicoin-seeder](https://github.com/sipa/paicoin-seeder) is a reference implementation of a DNS seed.
+- [paicoin-seeder](https://github.com/sipa/bitcoin-seeder) is a reference implementation of a DNS seed.

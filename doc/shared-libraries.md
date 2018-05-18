@@ -28,12 +28,12 @@ The interface is defined in the C header `paicoinconsensus.h` located in  `src/s
 
 ##### Script Flags
 - `paicoinconsensus_SCRIPT_FLAGS_VERIFY_NONE`
-- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_P2SH` - Evaluate P2SH ([BIP16](https://github.com/paicoin/bips/blob/master/bip-0016.mediawiki)) subscripts
-- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_DERSIG` - Enforce strict DER ([BIP66](https://github.com/paicoin/bips/blob/master/bip-0066.mediawiki)) compliance
-- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_NULLDUMMY` - Enforce NULLDUMMY ([BIP147](https://github.com/paicoin/bips/blob/master/bip-0147.mediawiki))
-- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_CHECKLOCKTIMEVERIFY` - Enable CHECKLOCKTIMEVERIFY ([BIP65](https://github.com/paicoin/bips/blob/master/bip-0065.mediawiki))
-- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_CHECKSEQUENCEVERIFY` - Enable CHECKSEQUENCEVERIFY ([BIP112](https://github.com/paicoin/bips/blob/master/bip-0112.mediawiki))
-- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_WITNESS` - Enable WITNESS ([BIP141](https://github.com/paicoin/bips/blob/master/bip-0141.mediawiki))
+- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_P2SH` - Evaluate P2SH ([BIP16](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki)) subscripts
+- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_DERSIG` - Enforce strict DER ([BIP66](https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki)) compliance
+- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_NULLDUMMY` - Enforce NULLDUMMY ([BIP147](https://github.com/bitcoin/bips/blob/master/bip-0147.mediawiki))
+- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_CHECKLOCKTIMEVERIFY` - Enable CHECKLOCKTIMEVERIFY ([BIP65](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki))
+- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_CHECKSEQUENCEVERIFY` - Enable CHECKSEQUENCEVERIFY ([BIP112](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki))
+- `paicoinconsensus_SCRIPT_FLAGS_VERIFY_WITNESS` - Enable WITNESS ([BIP141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki))
 
 ##### Errors
 - `paicoinconsensus_ERR_OK` - No errors with input parameters *(see the return value of `paicoinconsensus_verify_script` for the verification status)*
@@ -43,7 +43,7 @@ The interface is defined in the C header `paicoinconsensus.h` located in  `src/s
 - `paicoinconsensus_ERR_AMOUNT_REQUIRED` - Input amount is required if WITNESS is used
 
 ### Example Implementations
-- [NPAIcoin](https://github.com/NicolasDorier/NPAIcoin/blob/master/NPAIcoin/Script.cs#L814) (.NET Bindings)
-- [node-libpaicoinconsensus](https://github.com/bitpay/node-libpaicoinconsensus) (Node.js Bindings)
-- [java-libpaicoinconsensus](https://github.com/dexX7/java-libpaicoinconsensus) (Java Bindings)
-- [paicoinconsensus-php](https://github.com/Bit-Wasp/paicoinconsensus-php) (PHP Bindings)
+- [NBitcoin](https://github.com/NicolasDorier/Nbitcoin/blob/master/Nbitcoin/Script.cs#L814) (.NET Bindings)
+- [node-libbitcoinconsensus](https://github.com/bitpay/node-libbitcoinconsensus) (Node.js Bindings)
+- [java-libbitcoinconsensus](https://github.com/dexX7/java-libbitcoinconsensus) (Java Bindings)
+- [bitcoinconsensus-php](https://github.com/Bit-Wasp/bitcoinconsensus-php) (PHP Bindings)
