@@ -8,6 +8,8 @@
 SetPinPage::SetPinPage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::SetPinPage),
+    pixmapBlack(new QPixmap(Ui::DotWidth, Ui::DotHeight)),
+    pixmapGray(new QPixmap(Ui::DotWidth, Ui::DotHeight)),
     pageState(PinPageState::Init),
     pin(""),
     pinToVerify(""),
@@ -21,23 +23,13 @@ SetPinPage::SetPinPage(QWidget *parent) :
     connect(this, SIGNAL(pinEntered()), this, SLOT(onPinEntered()));
     connect(this, SIGNAL(pinReEntered()), this, SLOT(onPinReEntered()));
     connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(onBackClicked()));
-}
 
-SetPinPage::~SetPinPage()
-{
-    delete ui;
-}
-
-void SetPinPage::paintEvent(QPaintEvent *event)
-{
-    QWidget::paintEvent(event);
-
-    QPixmap *pixmapBlack = new QPixmap(30, 30);
-    QPixmap *pixmapGray = new QPixmap(30, 30);
     pixmapBlack->fill(Qt::transparent);
     pixmapGray->fill(Qt::transparent);
-    QPainter *painterBlack = new QPainter(pixmapBlack);
-    QPainter *painterGray = new QPainter(pixmapGray);
+
+    painterBlack = new QPainter(pixmapBlack);
+    painterGray = new QPainter(pixmapGray);
+
     painterBlack->setBrush(QBrush(Qt::black));
     painterGray->setBrush(QBrush(QColor(155, 155, 155)));
 
@@ -48,6 +40,16 @@ void SetPinPage::paintEvent(QPaintEvent *event)
     painterGray->setPen(Qt::NoPen);
     painterGray->setRenderHint(QPainter::Antialiasing, true);
     painterGray->drawEllipse(4, 4, 21, 21);
+}
+
+SetPinPage::~SetPinPage()
+{
+    delete ui;
+}
+
+void SetPinPage::paintEvent(QPaintEvent *event)
+{
+    QWidget::paintEvent(event);
 
     int numOfSelectedDots = (pageState == PinPageState::Init || pageState == PinPageState::RequiredEntry)
             ? pin.length() : pinToVerify.length();

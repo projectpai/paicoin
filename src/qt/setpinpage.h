@@ -5,6 +5,8 @@
 
 namespace Ui {
 class SetPinPage;
+const int DotWidth = 30;
+const int DotHeight = 30;
 }
 
 enum class PinPageState : std::int8_t
@@ -51,6 +53,10 @@ private Q_SLOTS:
 
 private:
     Ui::SetPinPage *ui;
+    QPixmap *pixmapBlack;
+    QPixmap *pixmapGray;
+    QPainter *painterBlack;
+    QPainter *painterGray;
     PinPageState pageState;
     QString pin;
     QString pinToVerify;
