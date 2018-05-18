@@ -41,6 +41,8 @@ bool AuthManager::Check(const std::string& pin)
     else
     {
         SettingsHelper::ResetAuthFailCount();
+        SettingsHelper::SetAuthRequested(false);
+        QTimer::singleShot(5 * 60 * 1000, this, SLOT(RequestAuthenticate()));
     }
     return fMatch;
 }
@@ -65,7 +67,6 @@ void AuthManager::SetPinCode(const std::string& pin)
         SettingsHelper::PutPinCode(pin);
     }
     // TODO: Should store last pin used time as well
-    QTimer::singleShot(5 * 60 * 1000, this, SLOT(RequestAuthenticate()));
 }
 
 void AuthManager::Reset()
