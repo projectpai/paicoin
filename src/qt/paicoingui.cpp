@@ -1495,7 +1495,7 @@ void PAIcoinGUI::setTrayIconVisible(bool fHideTrayIcon)
 
 void PAIcoinGUI::showModalOverlay()
 {
-    if (modalOverlay && (progressBar->isVisible() || modalOverlay->isLayerVisible()))
+    if (modalOverlay && (progressBar->isVisible() || modalOverlay->isLayerVisible()) && !SettingsHelper::IsAuthRequested())
         modalOverlay->toggleVisibility();
 }
 
