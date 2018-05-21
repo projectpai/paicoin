@@ -236,22 +236,22 @@ bool CWallet::DeriveNewChildKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKe
     CExtKey accountKey;
     masterPrivKey.Derive(accountKey, BIP32_HARDENED_KEY_LIMIT);
 
-    // derive m/0'/0 (external chain) OR m/0'/1 (internal chain)
+    // derive m/0'/0' (external chain) OR m/0'/1' (internal chain)
     assert(internal ? CanSupportFeature(FEATURE_HD_SPLIT) : true);
     CExtKey chainChildKey;
-    accountKey.Derive(chainChildKey, (internal ? 1 : 0));
+    accountKey.Derive(chainChildKey, (internal ? 1 : 0) | BIP32_HARDENED_KEY_LIMIT);
 
     // derive child key at next index, skip keys already known to the wallet
     CExtKey childKey;
     do {
         if (internal) {
-            chainChildKey.Derive(childKey, hdChain.nInternalChainCounter);
-            metadata.hdKeypath = "m/0'/1/" + std::to_string(hdChain.nInternalChainCounter);
+            chainChildKey.Derive(childKey, hdChain.nInternalChainCounter | BIP32_HARDENED_KEY_LIMIT);
+            metadata.hdKeypath = "m/0'/1'/" + std::to_string(hdChain.nInternalChainCounter) + "'";
             hdChain.nInternalChainCounter++;
         }
         else {
-            chainChildKey.Derive(childKey, hdChain.nExternalChainCounter);
-            metadata.hdKeypath = "m/0'/0/" + std::to_string(hdChain.nExternalChainCounter);
+            chainChildKey.Derive(childKey, hdChain.nExternalChainCounter | BIP32_HARDENED_KEY_LIMIT);
+            metadata.hdKeypath = "m/0'/0'/" + std::to_string(hdChain.nExternalChainCounter) + "'";
             hdChain.nExternalChainCounter += ((hdChain.nExternalChainCounter == (InvestorKeyIndex - 1)) ? 2 : 1);
         }
     } while (HaveKey(childKey.key.GetPubKey().GetID()));
@@ -298,17 +298,17 @@ bool CWallet::DeriveInvestorKey(CKey& key, CKeyMetadata& metadata)
     CExtKey accountKey;
     masterPrivKey.Derive(accountKey, BIP32_HARDENED_KEY_LIMIT);
 
-    // derive (m/0'/0)
+    // derive (m/0'/0')
     CExtKey chainChildKey;
-    accountKey.Derive(chainChildKey, 0);
+    accountKey.Derive(chainChildKey, BIP32_HARDENED_KEY_LIMIT);
 
-    // derive (m/0'/0/100)
+    // derive (m/0'/0'/100')
     CExtKey childKey;
-    chainChildKey.Derive(childKey, InvestorKeyIndex);
+    chainChildKey.Derive(childKey, InvestorKeyIndex | BIP32_HARDENED_KEY_LIMIT);
 
     key = childKey.key;
 
-    metadata.hdKeypath = "m/0'/0/" + std::to_string(InvestorKeyIndex);
+    metadata.hdKeypath = "m/0'/0'/" + std::to_string(InvestorKeyIndex) + "'";
     metadata.hdMasterKeyID = hdChain.masterKeyID;
 
     return true;
