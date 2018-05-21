@@ -14,6 +14,7 @@ public:
     static std::string GetPinCode();
     static void SetAuthRequested(bool authRequested);
     static bool IsAuthRequested();
+    static bool ShouldSetNewPin();
 private:
     SettingsHelper() {}
 };

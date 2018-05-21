@@ -51,3 +51,8 @@ bool SettingsHelper::IsAuthRequested()
     QSettings settings;
     return settings.value("fAuthRequested", false).toBool();
 }
+
+bool SettingsHelper::ShouldSetNewPin()
+{
+    return SettingsHelper::GetPinCode().compare("noPin") == 0;
+}

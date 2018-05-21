@@ -249,7 +249,7 @@ public Q_SLOTS:
     void completeUiWalletInitialization();
 
     /** Interrupt current operation and request PIN entry */
-    void interruptForPinRequest();
+    void interruptForPinRequest(bool newPin = false);
     /** Continue from last state before PIN entry was requested */
     void continueFromPinRequest();
 #endif // ENABLE_WALLET

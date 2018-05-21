@@ -773,6 +773,7 @@ void PAIcoinGUI::setPinCode(const std::string &pin)
         Q_EMIT linkWalletToMainApp();
         break;
     case PAIcoinGUIState::Init:
+        AuthManager::getInstance().RequestCheck(pin);
     default:
         break;
     }
@@ -818,7 +819,7 @@ void PAIcoinGUI::openClicked()
     }
 }
 
-void PAIcoinGUI::interruptForPinRequest()
+void PAIcoinGUI::interruptForPinRequest(bool newPin)
 {
     previousState = state;
 
@@ -831,7 +832,11 @@ void PAIcoinGUI::interruptForPinRequest()
         modalOverlay->showHide(true, true);
     }
 
-    setPinPage->initPinRequiredLayout();
+    if (newPin)
+        setPinPage->initSetPinLayout();
+    else
+        setPinPage->initPinRequiredLayout();
+
     gotoSetPinPage();
 }
 
