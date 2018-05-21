@@ -169,6 +169,51 @@ bool CWallet::LoadCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPa
     return CCryptoKeyStore::AddCryptedPaperKey(vchCryptedPaperKey);
 }
 
+bool CWallet::AddCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode)
+{
+    if (!CCryptoKeyStore::AddCryptedPinCode(vchCryptedPinCode))
+        return false;
+    {
+        LOCK(cs_wallet);
+        if (pwalletdbEncryption)
+            return pwalletdbEncryption->WriteCryptedPinCode(vchCryptedPinCode);
+        else
+            return CWalletDB(*dbw).WriteCryptedPinCode(vchCryptedPinCode);
+    }
+}
+
+bool CWallet::AddPinCode(const std::string& pinCode)
+{
+    CWalletDB walletdb(*dbw);
+    return CWallet::AddPinCodeWithDB(walletdb, pinCode);
+}
+
+bool CWallet::AddPinCodeWithDB(CWalletDB &walletdb, const std::string& pinCode)
+{
+    // CCryptoKeyStore has no concept of wallet databases, but calls AddCryptedPaperKey
+    // which is overridden above. To avoid flushes, the database handle is
+    // tunneled through to it.
+    bool needsDB = !pwalletdbEncryption;
+    if (needsDB) {
+        pwalletdbEncryption = &walletdb;
+    }
+    if (!CCryptoKeyStore::AddPinCode(pinCode)) {
+        if (needsDB) pwalletdbEncryption = nullptr;
+        return false;
+    }
+    if (needsDB) pwalletdbEncryption = nullptr;
+
+    if (!IsCrypted()) {
+        return walletdb.WritePinCode(pinCode);
+    }
+    return true;
+}
+
+bool CWallet::LoadCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode)
+{
+    return CCryptoKeyStore::AddCryptedPinCode(vchCryptedPinCode);
+}
+
 CPubKey CWallet::GenerateNewKey(CWalletDB &walletdb, bool internal)
 {
     AssertLockHeld(cs_wallet); // mapKeyMetadata
@@ -1579,6 +1624,27 @@ bool CWallet::SetCurrentPaperKey(const std::string& paperKey)
     CPubKey pubKey;
     if (GetInvestorPublicKey(pubKey)) {
         Investor::GetInstance().SetPublicKey(pubKey);
+    }
+
+    return true;
+}
+
+bool CWallet::GetCurrentPinCode(std::string& pinCode)
+{
+    std::string pinCodeStr;
+    if (!CCryptoKeyStore::GetPinCode(pinCodeStr)) {
+        return false;
+    }
+
+    pinCode = pinCodeStr;
+
+    return true;
+}
+
+bool CWallet::SetCurrentPinCode(const std::string& pinCode)
+{
+    if (!AddPinCode(pinCode)) {
+        return false;
     }
 
     return true;

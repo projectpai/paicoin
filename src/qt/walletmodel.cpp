@@ -28,6 +28,7 @@
 #include "wallet/feebumper.h"
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h" // for BackupWallet
+#include "authmanager.h"
 
 #include <stdint.h>
 
@@ -786,6 +787,11 @@ std::string WalletModel::getCurrentPaperKey()
 bool WalletModel::usePaperKey(const std::string& paperKey)
 {
     return wallet->SetCurrentPaperKey(paperKey);
+}
+
+void WalletModel::connectAuthenticator()
+{
+    AuthManager::getInstance().ConnectWallet(wallet);
 }
 
 // INVESTOR FEATURES

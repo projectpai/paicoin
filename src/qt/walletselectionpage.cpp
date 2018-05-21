@@ -7,8 +7,8 @@ WalletSelectionPage::WalletSelectionPage(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    connect(ui->pushButtonCreate, SIGNAL(clicked()), this, SLOT(on_pushButtonCreate_clicked()));
-    connect(ui->pushButtonRestore, SIGNAL(clicked()), this, SLOT(on_pushButtonRestore_clicked()));
+    connect(ui->pushButtonCreate, SIGNAL(clicked()), this, SLOT(PushButtonCreateClicked()));
+    connect(ui->pushButtonRestore, SIGNAL(clicked()), this, SLOT(PushButtonRestoreClicked()));
 }
 
 WalletSelectionPage::~WalletSelectionPage()
@@ -16,12 +16,12 @@ WalletSelectionPage::~WalletSelectionPage()
     delete ui;
 }
 
-void WalletSelectionPage::on_pushButtonCreate_clicked()
+void WalletSelectionPage::PushButtonCreateClicked()
 {
     Q_EMIT goToCreateNewWallet();
 }
 
-void WalletSelectionPage::on_pushButtonRestore_clicked()
+void WalletSelectionPage::PushButtonRestoreClicked()
 {
     Q_EMIT goToRestoreWallet();
 }

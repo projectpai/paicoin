@@ -534,9 +534,11 @@ void PAIcoinApplication::initializeResult(bool success)
         if (!vpwallets.empty())
         {
             walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
+            walletModel->connectAuthenticator();
 
             window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
             window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
+
 
             connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
                              paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
@@ -564,6 +566,8 @@ void PAIcoinApplication::initializeResult(bool success)
         connect(paymentServer, SIGNAL(message(QString,QString,unsigned int)),
                          window, SLOT(message(QString,QString,unsigned int)));
         QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
+
+        window->interruptForPinRequest();
 #endif
     } else {
         quit(); // Exit main loop
@@ -640,6 +644,7 @@ void PAIcoinApplication::enableWalletDisplay()
 {
     walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
     walletModel->usePaperKey(walletPhrase);
+    walletModel->connectAuthenticator();
 
     bool firstRun = false;
     CWallet::CreateWalletFromFile("wallet.dat", firstRun, false);

@@ -139,6 +139,8 @@ SOURCES += \
     ../src/qt/addressbookpage.cpp \
     ../src/qt/addresstablemodel.cpp \
     ../src/qt/askpassphrasedialog.cpp \
+    ../src/qt/authmanager.cpp \
+    ../src/qt/settingshelper.cpp \
     ../src/qt/bantablemodel.cpp \
     ../src/qt/clientmodel.cpp \
     ../src/qt/coincontroldialog.cpp \
@@ -203,6 +205,8 @@ SOURCES += \
     ../src/qt/holdingperiodcompletedialog.cpp
 
 HEADERS += \
+    ../src/qt/authmanager.h \
+    ../src/qt/settingshelper.h \
     ../src/qt/addressbookpage.h \
     ../src/qt/addresstablemodel.h \
     ../src/qt/askpassphrasedialog.h \

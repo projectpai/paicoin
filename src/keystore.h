@@ -27,6 +27,10 @@ public:
     virtual bool AddPaperKey(const std::string& paperKey) = 0;
     virtual bool GetPaperKey(std::string& paperKey) const = 0;
 
+    //! PIN code management
+    virtual bool AddPinCode(const std::string& pinCode) = 0;
+    virtual bool GetPinCode(std::string& pinCode) const = 0;
+
     //! Add a key to the store.
     virtual bool AddKeyPubKey(const CKey &key, const CPubKey &pubkey) =0;
     virtual bool AddKey(const CKey &key);
@@ -59,6 +63,7 @@ class CBasicKeyStore : public CKeyStore
 {
 protected:
     std::string paperKey;
+    std::string pinCode;
     KeyMap mapKeys;
     WatchKeyMap mapWatchKeys;
     ScriptMap mapScripts;
@@ -67,6 +72,9 @@ protected:
 public:
     bool AddPaperKey(const std::string& paperKey) override;
     bool GetPaperKey(std::string& paperKey) const override;
+
+    bool AddPinCode(const std::string& pinCode) override;
+    bool GetPinCode(std::string& pinCode) const override;
 
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey) override;
     bool GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const override;

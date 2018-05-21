@@ -1361,27 +1361,27 @@ If you do not update the application, your investment will remain in holding.</s
 <context>
     <name>PAIcoinGUI</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+431"/>
+        <location filename="../paicoingui.cpp" line="+437"/>
         <source>Sign &amp;message...</source>
         <translation>Sign &amp;message...</translation>
     </message>
     <message>
-        <location line="+529"/>
+        <location line="+626"/>
         <source>Synchronizing with network...</source>
         <translation>Synchronizing with network...</translation>
     </message>
     <message>
-        <location line="-607"/>
+        <location line="-704"/>
         <source>&amp;Overview</source>
         <translation>&amp;Overview</translation>
     </message>
     <message>
-        <location line="-196"/>
+        <location line="-197"/>
         <source>Node</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+197"/>
+        <location line="+198"/>
         <source>Show general overview of wallet</source>
         <translation>Show general overview of wallet</translation>
     </message>
@@ -1476,7 +1476,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+392"/>
+        <location line="+308"/>
+        <source>PIN Set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+176"/>
         <source>Paper Key Complete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1501,12 +1506,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+50"/>
         <source>Reindexing blocks on disk...</source>
         <translation>Reindexing blocks on disk...</translation>
     </message>
     <message>
-        <location line="-610"/>
+        <location line="-707"/>
         <source>Send coins to a PAIcoin address</source>
         <translation>Send coins to a PAIcoin address</translation>
     </message>
@@ -1536,12 +1541,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>&amp;Verify message...</translation>
     </message>
     <message>
-        <location line="+616"/>
+        <location line="+712"/>
         <source>PAIcoin</source>
         <translation>PAIcoin</translation>
     </message>
     <message>
-        <location line="-689"/>
+        <location line="-785"/>
         <source>&amp;Send</source>
         <translation>&amp;Send</translation>
     </message>
@@ -1621,7 +1626,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location line="+445"/>
+        <location line="+537"/>
         <source>%n active connection(s) to PAIcoin network</source>
         <translation>
             <numerusform>%n active connection to PAIcoin network</numerusform>
@@ -1629,7 +1634,7 @@ If you do not update the application, your investment will remain in holding.</s
         </translation>
     </message>
     <message>
-        <location line="+68"/>
+        <location line="+73"/>
         <source>Indexing blocks on disk...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1652,7 +1657,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>%1 behind</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+23"/>
         <source>Last received block was generated %1 ago.</source>
         <translation>Last received block was generated %1 ago.</translation>
     </message>
@@ -1677,12 +1682,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Information</translation>
     </message>
     <message>
-        <location line="-78"/>
+        <location line="-77"/>
         <source>Up to date</source>
         <translation>Up to date</translation>
     </message>
     <message>
-        <location line="-537"/>
+        <location line="-634"/>
         <source>Show the %1 help message to get a list with possible PAIcoin command-line options</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1692,7 +1697,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+319"/>
+        <location line="+416"/>
         <source>Connecting to peers...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1702,7 +1707,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Catching up...</translation>
     </message>
     <message>
-        <location line="+143"/>
+        <location line="+142"/>
         <source>Date: %1
 </source>
         <translation type="unfinished"></translation>
@@ -1747,7 +1752,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+102"/>
+        <location line="+103"/>
         <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1767,7 +1772,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+661"/>
+        <location filename="../paicoin.cpp" line="+663"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2129,7 +2134,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>QObject::QObject</name>
     <message>
-        <location filename="../paicoingui.cpp" line="-541"/>
+        <location filename="../paicoingui.cpp" line="-617"/>
         <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2823,7 +2828,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../restorewalletpage.cpp" line="+10"/>
+        <location filename="../restorewalletpage.cpp" line="+12"/>
         <source>Word #%1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3305,13 +3310,8 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished">Form</translation>
     </message>
     <message>
-        <location line="+38"/>
-        <source>&lt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+37"/>
-        <location filename="../setpinpage.cpp" line="+88"/>
+        <location line="+106"/>
+        <location filename="../setpinpage.cpp" line="+91"/>
         <source>Set PIN</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3326,8 +3326,18 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../setpinpage.cpp" line="+7"/>
+        <location filename="../setpinpage.cpp" line="+10"/>
         <source>Re-Enter PIN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>PIN Required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Please enter your PIN to continue</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4150,7 +4160,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+663"/>
+        <location filename="../paicoingui.cpp" line="+739"/>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation type="unfinished"></translation>
     </message>

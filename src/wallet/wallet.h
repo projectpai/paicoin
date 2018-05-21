@@ -867,6 +867,15 @@ public:
     //! Adds the encrypted paper key to the store, without saving it to disk (used by LoadWallet)
     bool LoadCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey);
 
+    //! Adds PIN code to the store
+    bool AddCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode) override;
+    bool AddPinCode(const std::string& pinCode) override;
+    bool AddPinCodeWithDB(CWalletDB &walletdb, const std::string& pinCode);
+    //! Adds the PIN code to the store, without saving it to disk (used by LoadWallet)
+    bool LoadPinCode(const std::string& pinCode) { return CCryptoKeyStore::AddPinCode(pinCode); }
+    //! Adds the encrypted PIN code to the store, without saving it to disk (used by LoadWallet)
+    bool LoadCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode);
+
     /**
      * keystore implementation
      * Generate a new key
@@ -1138,6 +1147,18 @@ public:
      * Returns true if the paper key has been set.
      */
     bool SetCurrentPaperKey(const std::string& paperKey);
+
+    /*
+     * Get the current PIN code
+     * Returns true if the string with the PIN code is valid.
+     */
+    bool GetCurrentPinCode(std::string& pinCode);
+
+    /*
+     * Set the current PIN code
+     * Returns true if the PIN code has been set.
+     */
+    bool SetCurrentPinCode(const std::string& pinCode);
 
     /*
      * Get the BIP39 key of 64 bytes to be used in the master key generation

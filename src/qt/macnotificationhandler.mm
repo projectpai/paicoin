@@ -13,7 +13,7 @@
 - (NSString *)__bundleIdentifier
 {
     if (self == [NSBundle mainBundle]) {
-        return @"org.paicoinfoundation.PAIcoin-Qt";
+        return @"org.paicoinfoundation.PAIcoin-Core";
     } else {
         return [self __bundleIdentifier];
     }

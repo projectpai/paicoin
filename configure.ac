@@ -1198,6 +1198,13 @@ AM_CONDITIONAL([ENABLE_HWCRC32],[test x$enable_hwcrc32 = xyes])
 AM_CONDITIONAL([USE_ASM],[test x$use_asm = xyes])
 AM_CONDITIONAL([VARIANT_LITE],[test x$variant_lite = xyes])
 
+if test "x$paicoin_enable_qt" = "xyes"; then
+  WITH_GUI=yes
+else
+  WITH_GUI=no
+fi
+AC_SUBST(WITH_GUI)
+
 AC_DEFINE(CLIENT_VERSION_MAJOR, _CLIENT_VERSION_MAJOR, [Major version])
 AC_DEFINE(CLIENT_VERSION_MINOR, _CLIENT_VERSION_MINOR, [Minor version])
 AC_DEFINE(CLIENT_VERSION_REVISION, _CLIENT_VERSION_REVISION, [Build revision])

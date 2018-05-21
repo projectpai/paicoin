@@ -125,6 +125,7 @@ QT_FORMS_UI = \
   qt/forms/confirmationdialog.ui
 
 QT_MOC_CPP = \
+  qt/moc_authmanager.cpp \
   qt/moc_addressbookpage.cpp \
   qt/moc_addresstablemodel.cpp \
   qt/moc_askpassphrasedialog.cpp \
@@ -208,6 +209,8 @@ PAICOIN_QT_H = \
   qt/addressbookpage.h \
   qt/addresstablemodel.h \
   qt/askpassphrasedialog.h \
+  qt/authmanager.h \
+  qt/settingshelper.h \
   qt/bantablemodel.h \
   qt/paicoinaddressvalidator.h \
   qt/paicoinamountfield.h \
@@ -371,6 +374,8 @@ PAICOIN_QT_WALLET_CPP = \
   qt/addressbookpage.cpp \
   qt/addresstablemodel.cpp \
   qt/askpassphrasedialog.cpp \
+  qt/authmanager.cpp \
+  qt/settingshelper.cpp \
   qt/coincontroldialog.cpp \
   qt/coincontroltreewidget.cpp \
   qt/editaddressdialog.cpp \

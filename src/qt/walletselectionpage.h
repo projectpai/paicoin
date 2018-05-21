@@ -20,8 +20,8 @@ Q_SIGNALS:
     void goToRestoreWallet();
 
 private Q_SLOTS:
-    void on_pushButtonCreate_clicked();
-    void on_pushButtonRestore_clicked();
+    void PushButtonCreateClicked();
+    void PushButtonRestoreClicked();
 
 private:
     Ui::WalletSelectionPage *ui;

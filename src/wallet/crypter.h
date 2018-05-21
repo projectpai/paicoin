@@ -125,6 +125,8 @@ private:
 
     std::vector<unsigned char> vchCryptedPaperKey;
 
+    std::vector<unsigned char> vchCryptedPinCode;
+
 protected:
     bool SetCrypted();
 
@@ -161,6 +163,10 @@ public:
     virtual bool AddCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey);
     bool AddPaperKey(const std::string& paperKey) override;
     bool GetPaperKey(std::string& paperKey) const override;
+
+    virtual bool AddCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode);
+    bool AddPinCode(const std::string& pinCode) override;
+    bool GetPinCode(std::string& pinCode) const override;
 
     virtual bool AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey) override;

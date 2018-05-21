@@ -241,6 +241,11 @@ public:
      */
     bool usePaperKey(const std::string& paperKey);
 
+    /*
+     * Connects wallet to authentication manager
+     */
+    void connectAuthenticator();
+
     // INVESTOR FEATURES
 
     /* Get the public key to be used for investor funding */

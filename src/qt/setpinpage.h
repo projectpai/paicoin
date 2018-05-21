@@ -5,12 +5,15 @@
 
 namespace Ui {
 class SetPinPage;
+const int DotWidth = 30;
+const int DotHeight = 30;
 }
 
 enum class PinPageState : std::int8_t
 {
     Init,
     ReEnter,
+    RequiredEntry,
     ReadyToVerify
 };
 
@@ -22,22 +25,24 @@ public:
     explicit SetPinPage(QWidget *parent = 0);
     ~SetPinPage();
 
+public:
+    void initSetPinLayout();
+    void initReEnterPinLayout();
+    void initPinRequiredLayout();
+
 Q_SIGNALS:
     void digitClicked(char digit);
     void backspaceClicked();
     void backToPreviousPage();
     void pinEntered();
     void pinReEntered();
-    void pinReadyForVerification(QString pin);
+    void pinReadyForConfirmation(const std::string &pin);
+    void pinReadyForAuthentication(const std::string &pin);
     void pinValidationFailed();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
     bool eventFilter(QObject* obj, QEvent* event) override;
-
-private:
-    void initSetPinLayout();
-    void initReEnterPinLayout();
 
 private Q_SLOTS:
     void onDigitClicked(char digit);
@@ -48,6 +53,10 @@ private Q_SLOTS:
 
 private:
     Ui::SetPinPage *ui;
+    QPixmap *pixmapBlack;
+    QPixmap *pixmapGray;
+    QPainter *painterBlack;
+    QPainter *painterGray;
     PinPageState pageState;
     QString pin;
     QString pinToVerify;
