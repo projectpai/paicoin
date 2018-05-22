@@ -16,7 +16,7 @@ SetPinPage::SetPinPage(QWidget *parent) :
     initialPinEntered(false)
 {
     ui->setupUi(this);
-    qApp->installEventFilter(this);
+    this->installEventFilter(this);
 
     connect(this, SIGNAL(digitClicked(char)), this, SLOT(onDigitClicked(char)));
     connect(this, SIGNAL(backspaceClicked()), this, SLOT(onBackspaceClicked()));
