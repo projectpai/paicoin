@@ -835,8 +835,10 @@ void PAIcoinGUI::interruptForPinRequest(bool newPin)
     if (newPin)
         setPinPage->initSetPinLayout();
     else
+    {
         setPinPage->initPinRequiredLayout();
-
+        installEventFilter(setPinPage);
+    }
     gotoSetPinPage();
 }
 
