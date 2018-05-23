@@ -1,5 +1,5 @@
-#DRAFT: PAIcoin Development Proposal (PDP)
-##Data Storage and Sharing
+# DRAFT: PAIcoin Development Proposal (PDP)
+## Data Storage and Sharing
 - [Abstract](#abstract)
 - [Copyright](#copyright)
 - [Motivation](#motivation)
@@ -148,7 +148,7 @@ In order to achieve our goals with using the PAI blockchain to track provisionin
 </table>
 
 
-####Protocol Operations and Operands
+#### Protocol Operations and Operands
 
 <table>
   <tr>
@@ -258,11 +258,10 @@ signature: [signed hash proving ownership of original submission]</td>
 
 In addition to these operations, the storage provider is free to use the ‘retention_period’ as returned in the ‘info’ request in order to cleanup old files.  Any files older than the retention period can be removed.  Likewise, if there is a cost for the data provider than the file can be removed after 24 hours if a transaction is not received to pay for storage for the length of the retention period to the ‘wallet’ specified by the ‘info’ endpoint.
 
-##Compatibility
+## Compatibility
 
 This PDP on its own does not cause any backwards incompatibility.
 
-##Implementation
+## Implementation
+
 An initial implementation of this PDP is included in the PAIcoin core in the contrib/data-store directory.  This includes a Python API implementation of the Data Provider specification and Dockerfiles for launching torrent nodes using OpenTracker.  It also includes sample code for submitting OP_RETURN transactions and exercising the protocol for Submitters and Recipients.
-
-
