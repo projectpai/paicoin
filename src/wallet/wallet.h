@@ -863,7 +863,7 @@ public:
     bool AddPaperKey(const std::string& paperKey) override;
     bool AddPaperKeyWithDB(CWalletDB &walletdb, const std::string& paperKey);
     //! Adds the paper key to the store, without saving it to disk (used by LoadWallet)
-    bool LoadPaperKey(const std::string& paperkey) { return CCryptoKeyStore::AddPaperKey(paperkey); }
+    bool LoadPaperKey(const std::string& paperkey);
     //! Adds the encrypted paper key to the store, without saving it to disk (used by LoadWallet)
     bool LoadCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey);
 

@@ -39,7 +39,7 @@ public:
      * Stores the investor public key (and generate the multisig addresses and redeem scripts)
      * this should be called as early as possible to have the information stored
      */
-    void SetPublicKey(const CPubKey& pubKey);
+    void SetPublicKey(const CWallet& wallet, const CPubKey& pubKey);
 
     /*
      * Gets all the multisig addresses for the investor

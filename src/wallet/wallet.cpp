@@ -164,9 +164,30 @@ bool CWallet::AddPaperKeyWithDB(CWalletDB &walletdb, const std::string& paperKey
     return true;
 }
 
+bool CWallet::LoadPaperKey(const std::string& paperkey)
+{
+    if (!CCryptoKeyStore::AddPaperKey(paperkey))
+        return false;
+
+    CPubKey pubKey;
+    if (GetInvestorPublicKey(pubKey)) {
+        Investor::GetInstance().SetPublicKey(*this, pubKey);
+    }
+
+    return true;
+}
+
 bool CWallet::LoadCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey)
 {
-    return CCryptoKeyStore::AddCryptedPaperKey(vchCryptedPaperKey);
+    if (!CCryptoKeyStore::AddCryptedPaperKey(vchCryptedPaperKey))
+        return false;
+
+    CPubKey pubKey;
+    if (GetInvestorPublicKey(pubKey)) {
+        Investor::GetInstance().SetPublicKey(*this, pubKey);
+    }
+
+    return true;
 }
 
 bool CWallet::AddCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode)
@@ -1623,7 +1644,7 @@ bool CWallet::SetCurrentPaperKey(const std::string& paperKey)
 
     CPubKey pubKey;
     if (GetInvestorPublicKey(pubKey)) {
-        Investor::GetInstance().SetPublicKey(pubKey);
+        Investor::GetInstance().SetPublicKey(*this, pubKey);
     }
 
     return true;
@@ -1732,7 +1753,7 @@ bool CWallet::SetInvestorPublicKey(const CPubKey& pubKey)
         return false;
     }
 
-    Investor::GetInstance().SetPublicKey(pubKey);
+    Investor::GetInstance().SetPublicKey(*this, pubKey);
 
     return true;
 }

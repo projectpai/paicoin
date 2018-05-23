@@ -375,7 +375,7 @@ bool Investor::CreateMultisig(std::string& address, CScript& redeemScript, const
 
 // keys
 
-void Investor::SetPublicKey(const CPubKey& pubKey)
+void Investor::SetPublicKey(const CWallet& wallet, const CPubKey& pubKey)
 {
     LOCK(csInvestor);
     
@@ -390,6 +390,9 @@ void Investor::SetPublicKey(const CPubKey& pubKey)
 
         period.balance = 0;
     }
+
+    // refresh the investor balance
+    UpdateGlobalBalance(wallet);
 }
 
 // all addreses
