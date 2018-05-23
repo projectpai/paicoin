@@ -392,7 +392,7 @@ void Investor::SetPublicKey(const CWallet& wallet, const CPubKey& pubKey)
     }
 
     // refresh the investor balance
-    UpdateGlobalBalance(wallet);
+    //UpdateGlobalBalance(wallet);
 }
 
 // all addreses
