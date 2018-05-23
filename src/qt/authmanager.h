@@ -22,6 +22,7 @@ public:
     bool AuthRequested();
     void SetPinCode(const std::string& pin);
     void Reset();
+    bool ShouldSet();
 Q_SIGNALS:
     void Authenticate();
     void Authenticated();

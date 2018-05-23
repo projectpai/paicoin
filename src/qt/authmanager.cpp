@@ -78,6 +78,16 @@ void AuthManager::Reset()
         SettingsHelper::PutPinCode("noPin");
 }
 
+bool AuthManager::ShouldSet()
+{
+    std::string storedPin;
+    if (wallet)
+        wallet->GetCurrentPinCode(storedPin);
+    else
+        storedPin = SettingsHelper::GetPinCode();
+    return storedPin.compare("noPin") == 0;
+}
+
 void AuthManager::RequestCheck(const std::string &pin)
 {
     if (Check(pin))

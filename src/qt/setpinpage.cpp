@@ -16,7 +16,7 @@ SetPinPage::SetPinPage(QWidget *parent) :
     initialPinEntered(false)
 {
     ui->setupUi(this);
-    qApp->installEventFilter(this);
+    installEventFilter(this);
 
     connect(this, SIGNAL(digitClicked(char)), this, SLOT(onDigitClicked(char)));
     connect(this, SIGNAL(backspaceClicked()), this, SLOT(onBackspaceClicked()));
@@ -174,12 +174,12 @@ void SetPinPage::onPinReEntered()
     if (pin.compare(pinToVerify) == 0)
     {
         Q_EMIT pinReadyForConfirmation(pin.toStdString());
-        initSetPinLayout(); // Re-init page in the case of getting back to previous screen
     }
     else
     {
         Q_EMIT pinValidationFailed();
     }
+    initSetPinLayout(); // Re-init page in the case of getting back to previous screen
 
     repaint();
 }

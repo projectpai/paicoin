@@ -1361,7 +1361,7 @@ If you do not update the application, your investment will remain in holding.</s
 <context>
     <name>PAIcoinGUI</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+437"/>
+        <location filename="../paicoingui.cpp" line="+438"/>
         <source>Sign &amp;message...</source>
         <translation>Sign &amp;message...</translation>
     </message>
@@ -1376,17 +1376,22 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>&amp;Overview</translation>
     </message>
     <message>
-        <location line="-197"/>
+        <location line="-198"/>
         <source>Node</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+198"/>
+        <location line="+199"/>
         <source>Show general overview of wallet</source>
         <translation>Show general overview of wallet</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+18"/>
+        <source>Request payments (generates QR codes and paicoin:// URIs)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>&amp;Transactions</source>
         <translation>&amp;Transactions</translation>
     </message>
@@ -1476,7 +1481,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+308"/>
+        <location line="+1"/>
+        <source>Open a paicoin:// URI or payment request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+307"/>
         <source>PIN Set</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1601,12 +1611,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Tabs toolbar</translation>
     </message>
     <message>
-        <location line="-165"/>
-        <source>Request payments (generates QR codes and paicoin: URIs)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+73"/>
+        <location line="-92"/>
         <source>Show the list of used sending addresses and labels</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1616,12 +1621,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
-        <source>Open a paicoin: URI or payment request</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+2"/>
+        <location line="+5"/>
         <source>&amp;Command-line options</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1752,7 +1752,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+103"/>
+        <location line="+108"/>
         <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1772,7 +1772,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+663"/>
+        <location filename="../paicoin.cpp" line="+666"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1883,7 +1883,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <location line="-401"/>
-        <source>Cannot start paicoin: click-to-pay handler</source>
+        <source>Cannot start paicoin:// click-to-pay handler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2031,7 +2031,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+785"/>
+        <location line="+777"/>
         <source>%1 d</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2134,7 +2134,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>QObject::QObject</name>
     <message>
-        <location filename="../paicoingui.cpp" line="-617"/>
+        <location filename="../paicoingui.cpp" line="-622"/>
         <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3256,7 +3256,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+443"/>
+        <location line="+10"/>
+        <source>A message that was attached to the paicoin:// URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAIcoin network.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+433"/>
         <source>This is an unauthenticated payment request.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3271,12 +3276,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+47"/>
-        <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAIcoin network.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+448"/>
+        <location line="+495"/>
         <location line="+529"/>
         <source>Pay To:</source>
         <translation type="unfinished"></translation>
@@ -3311,7 +3311,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <location line="+106"/>
-        <location filename="../setpinpage.cpp" line="+91"/>
+        <location filename="../setpinpage.cpp" line="+93"/>
         <source>Set PIN</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4160,7 +4160,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+739"/>
+        <location filename="../paicoingui.cpp" line="+744"/>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4194,7 +4194,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>WalletModel</name>
     <message>
-        <location filename="../walletmodel.cpp" line="+302"/>
+        <location filename="../walletmodel.cpp" line="+303"/>
         <source>Send Coins</source>
         <translation type="unfinished">Send Coins</translation>
     </message>

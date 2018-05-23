@@ -31,6 +31,7 @@
 #include "paperkeywritedownpage.h"
 #include "paperkeycompletionpage.h"
 #include "restorewalletpage.h"
+#include "authmanager.h"
 #endif
 
 #include "init.h"
@@ -558,7 +559,7 @@ void PAIcoinApplication::initializeResult(bool success)
 
 #ifdef ENABLE_WALLET
         // Now that initialization/startup is done, process any command-line
-        // paicoin: URIs or payment requests:
+        // paicoin:// URIs or payment requests:
         connect(paymentServer, SIGNAL(receivedPaymentRequest(SendCoinsRecipient)),
                          window, SLOT(handlePaymentRequest(SendCoinsRecipient)));
         connect(window, SIGNAL(receivedURI(QString)),
@@ -567,7 +568,7 @@ void PAIcoinApplication::initializeResult(bool success)
                          window, SLOT(message(QString,QString,unsigned int)));
         QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
 
-        window->interruptForPinRequest();
+        window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
 #endif
     } else {
         quit(); // Exit main loop
@@ -623,7 +624,7 @@ void PAIcoinApplication::restoreWallet(std::string paperKey)
 void PAIcoinApplication::completeNewWalletInitialization()
 {
     // Now that initialization/startup is done, process any command-line
-    // paicoin: URIs or payment requests:
+    // paicoin:// URIs or payment requests:
     connect(paymentServer, SIGNAL(receivedPaymentRequest(SendCoinsRecipient)),
             window, SLOT(handlePaymentRequest(SendCoinsRecipient)));
     connect(window, SIGNAL(receivedURI(QString)),
@@ -782,7 +783,7 @@ int main(int argc, char *argv[])
         exit(EXIT_SUCCESS);
 
     // Start up the payment server early, too, so impatient users that click on
-    // paicoin: links repeatedly have their payment requests routed to this process:
+    // paicoin:// links repeatedly have their payment requests routed to this process:
     app.createPaymentServer();
 #endif
 
