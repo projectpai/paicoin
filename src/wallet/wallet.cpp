@@ -1643,11 +1643,7 @@ bool CWallet::GetCurrentPinCode(std::string& pinCode)
 
 bool CWallet::SetCurrentPinCode(const std::string& pinCode)
 {
-    if (!AddPinCode(pinCode)) {
-        return false;
-    }
-
-    return true;
+    return AddPinCode(pinCode);
 }
 
 std::vector<unsigned char> CWallet::GetBIP39Seed(const std::string& phrase)

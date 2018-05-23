@@ -31,7 +31,7 @@
 #include "paperkeywritedownpage.h"
 #include "paperkeycompletionpage.h"
 #include "restorewalletpage.h"
-#include "settingshelper.h"
+#include "authmanager.h"
 #endif
 
 #include "init.h"
@@ -568,7 +568,7 @@ void PAIcoinApplication::initializeResult(bool success)
                          window, SLOT(message(QString,QString,unsigned int)));
         QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
 
-        window->interruptForPinRequest(SettingsHelper::ShouldSetNewPin());
+        window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
 #endif
     } else {
         quit(); // Exit main loop

@@ -25,12 +25,14 @@ void SettingsHelper::SetAuthFailCount(int failCount)
 {
     QSettings settings;
     settings.setValue("nAuthFailCount", failCount);
+    settings.sync();
 }
 
 void SettingsHelper::PutPinCode(const std::string &pin)
 {
     QSettings settings;
     settings.setValue("strPinCode", QString(pin.c_str()));
+    settings.sync();
 }
 
 std::string SettingsHelper::GetPinCode()
@@ -44,15 +46,11 @@ void SettingsHelper::SetAuthRequested(bool authRequested)
 {
     QSettings settings;
     settings.setValue("fAuthRequested", authRequested);
+    settings.sync();
 }
 
 bool SettingsHelper::IsAuthRequested()
 {
     QSettings settings;
     return settings.value("fAuthRequested", false).toBool();
-}
-
-bool SettingsHelper::ShouldSetNewPin()
-{
-    return SettingsHelper::GetPinCode().compare("noPin") == 0;
 }
