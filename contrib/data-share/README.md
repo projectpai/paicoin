@@ -1,12 +1,14 @@
-```PDP: 2
+<pre>PDP: 2
 Layer: Applications
 Title: PAI Data Storage and Sharing
-Author: Alex Waters <alex@waters.nyc>, Mark Harvilla <mark@oben.com>, Patrick Gerzanics <patrick.gerzanics@upandrunningsoftware.com>
+Author: Alex Waters <alex@waters.nyc>
+        Mark Harvilla <mark@oben.com>
+        Patrick Gerzanics <patrick.gerzanics@upandrunningsoftware.com>
 Status: Proposed
 Type: Informational
 Created: 2018-05-15
 License: MIT
-```
+</pre>
 
 # PAIcoin Development Proposal (PDP)
 ## Data Storage and Sharing
