@@ -428,14 +428,17 @@ void PAIcoinApplication::createWindow(const NetworkStyle *networkStyle, bool fir
     pollShutdownTimer = new QTimer(window);
     connect(pollShutdownTimer, SIGNAL(timeout()), window, SLOT(detectShutdown()));
 #ifdef ENABLE_WALLET
-    connect(this, SIGNAL(walletCreated(std::string)), window, SLOT(walletCreated(std::string)));
-    connect(this, SIGNAL(walletRestored(std::string)), window, SLOT(walletRestored(std::string)));
-    connect(this, SIGNAL(completeUiWalletInitialization()), window, SLOT(completeUiWalletInitialization()));
+    if (firstRun)
+    {
+        connect(this, SIGNAL(walletCreated(std::string)), window, SLOT(walletCreated(std::string)));
+        connect(this, SIGNAL(walletRestored(std::string)), window, SLOT(walletRestored(std::string)));
+        connect(this, SIGNAL(completeUiWalletInitialization()), window, SLOT(completeUiWalletInitialization()));
+        connect(window, SIGNAL(createNewWalletRequest()), this, SLOT(createNewWallet()));
+        connect(window, SIGNAL(restoreWalletRequest(std::string)), this, SLOT(restoreWallet(std::string)));
+        connect(window, SIGNAL(linkWalletToMainApp()), this, SLOT(completeNewWalletInitialization()));
+        connect(window, SIGNAL(enableWalletDisplay()), this, SLOT(enableWalletDisplay()));
+    }
     connect(window, SIGNAL(shutdown()), this, SLOT(shutdownResult()));
-    connect(window, SIGNAL(createNewWalletRequest()), this, SLOT(createNewWallet()));
-    connect(window, SIGNAL(restoreWalletRequest(std::string)), this, SLOT(restoreWallet(std::string)));
-    connect(window, SIGNAL(linkWalletToMainApp()), this, SLOT(completeNewWalletInitialization()));
-    connect(window, SIGNAL(enableWalletDisplay()), this, SLOT(enableWalletDisplay()));
 #endif // ENABLE_WALLET
     pollShutdownTimer->start(200);
 }
@@ -820,8 +823,7 @@ int main(int argc, char *argv[])
         QString dataDir = Intro::getDefaultDataDirectory();
         /* 2) Allow QSettings to override default dir */
         dataDir = settings.value("strDataDir", dataDir).toString();
-        bool firstRun = !fs::exists(GUIUtil::qstringToBoostPath(dataDir)) || settings.value("fReset", false).toBool() || gArgs.GetBoolArg("-resetguisettings", false);
-//        firstRun = false;
+        bool firstRun = !fs::exists(GUIUtil::qstringToBoostPath(dataDir)) && (settings.value("fReset", false).toBool() || gArgs.GetBoolArg("-resetguisettings", false));
         app.createWindow(networkStyle.data(), firstRun);
         // Perform base initialization before spinning up initialization/shutdown thread
         // This is acceptable because this function only contains steps that are quick to execute,
