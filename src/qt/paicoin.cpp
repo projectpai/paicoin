@@ -227,9 +227,9 @@ public:
     /// Create options model
     void createOptionsModel(bool resetSettings);
     /// Create main window
-    void createWindow(const NetworkStyle *networkStyle, bool firstRun);
+    void createWindow(bool firstRun);
     /// Create splash screen
-    void createSplashScreen(const NetworkStyle *networkStyle);
+    void createSplashScreen();
 
     /// Request core initialization
     void requestInitialize();
@@ -272,6 +272,7 @@ private:
 #ifdef ENABLE_WALLET
     PaymentServer* paymentServer;
     WalletModel *walletModel;
+    const NetworkStyle *networkStyle;
     std::string walletPhrase;
 #endif
     int returnValue;
@@ -371,6 +372,7 @@ PAIcoinApplication::PAIcoinApplication(int &argc, char **argv):
 #ifdef ENABLE_WALLET
     paymentServer(0),
     walletModel(0),
+    networkStyle(nullptr),
 #endif
     returnValue(0)
 {
@@ -385,6 +387,8 @@ PAIcoinApplication::PAIcoinApplication(int &argc, char **argv):
     if (!platformStyle) // Fall back to "other" if specified name not found
         platformStyle = PlatformStyle::instantiate("other");
     assert(platformStyle);
+    networkStyle = NetworkStyle::instantiate(QString::fromStdString(Params().NetworkIDString()));
+    assert(networkStyle);
 }
 
 PAIcoinApplication::~PAIcoinApplication()
@@ -402,6 +406,8 @@ PAIcoinApplication::~PAIcoinApplication()
 #ifdef ENABLE_WALLET
     delete paymentServer;
     paymentServer = 0;
+    delete networkStyle;
+    networkStyle = nullptr;
 #endif
     delete optionsModel;
     optionsModel = 0;
@@ -421,7 +427,7 @@ void PAIcoinApplication::createOptionsModel(bool resetSettings)
     optionsModel = new OptionsModel(nullptr, resetSettings);
 }
 
-void PAIcoinApplication::createWindow(const NetworkStyle *networkStyle, bool firstRun)
+void PAIcoinApplication::createWindow(bool firstRun)
 {
     window = new PAIcoinGUI(platformStyle, networkStyle, firstRun, 0);
 
@@ -441,9 +447,12 @@ void PAIcoinApplication::createWindow(const NetworkStyle *networkStyle, bool fir
     connect(window, SIGNAL(shutdown()), this, SLOT(shutdownResult()));
 #endif // ENABLE_WALLET
     pollShutdownTimer->start(200);
+
+    // Allow for separate UI settings for testnets
+    QApplication::setApplicationName(networkStyle->getAppName());
 }
 
-void PAIcoinApplication::createSplashScreen(const NetworkStyle *networkStyle)
+void PAIcoinApplication::createSplashScreen()
 {
     SplashScreen *splash = new SplashScreen(0, networkStyle);
     // We don't hold a direct pointer to the splash screen after creation, but the splash
@@ -523,6 +532,8 @@ void PAIcoinApplication::initializeResult(bool success)
     returnValue = success ? EXIT_SUCCESS : EXIT_FAILURE;
     if(success)
     {
+        createWindow(false);
+
         // Log this only after AppInitMain finishes, as then logging setup is guaranteed complete
         qWarning() << "Platform customization:" << platformStyle->getName();
 #ifdef ENABLE_WALLET
@@ -584,6 +595,8 @@ void PAIcoinApplication::initializeFirstRun()
 
     // Log this only after AppInitMain finishes, as then logging setup is guaranteed complete
     qWarning() << "Platform customization:" << platformStyle->getName();
+
+    createWindow(true);
 
     window->show();
 
@@ -701,7 +714,6 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(paicoin);
     Q_INIT_RESOURCE(paicoin_locale);
 
-    PAIcoinApplication app(argc, argv);
 #if QT_VERSION > 0x050100
     // Generate high-dpi pixmaps
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
@@ -768,12 +780,9 @@ int main(int argc, char *argv[])
     PaymentServer::ipcParseCommandLine(argc, argv);
 #endif
 
-    QScopedPointer<const NetworkStyle> networkStyle(NetworkStyle::instantiate(QString::fromStdString(Params().NetworkIDString())));
-    assert(!networkStyle.isNull());
-    // Allow for separate UI settings for testnets
-    QApplication::setApplicationName(networkStyle->getAppName());
-    // Re-initialize translations after changing application name (language in network-specific settings can be different)
     initTranslations(qtTranslatorBase, qtTranslator, translatorBase, translator);
+
+    PAIcoinApplication app(argc, argv);
 
 #ifdef ENABLE_WALLET
     /// 6. URI IPC sending
@@ -813,7 +822,7 @@ int main(int argc, char *argv[])
     uiInterface.InitMessage.connect(InitMessage);
 
     if (gArgs.GetBoolArg("-splash", DEFAULT_SPLASHSCREEN) && !gArgs.GetBoolArg("-min", false))
-        app.createSplashScreen(networkStyle.data());
+        app.createSplashScreen();
 
     int rv = EXIT_SUCCESS;
     try
@@ -823,8 +832,6 @@ int main(int argc, char *argv[])
         QString dataDir = Intro::getDefaultDataDirectory();
         /* 2) Allow QSettings to override default dir */
         dataDir = settings.value("strDataDir", dataDir).toString();
-        bool firstRun = !fs::exists(GUIUtil::qstringToBoostPath(dataDir)) && (settings.value("fReset", false).toBool() || gArgs.GetBoolArg("-resetguisettings", false));
-        app.createWindow(networkStyle.data(), firstRun);
         // Perform base initialization before spinning up initialization/shutdown thread
         // This is acceptable because this function only contains steps that are quick to execute,
         // so the GUI thread won't be held up.
