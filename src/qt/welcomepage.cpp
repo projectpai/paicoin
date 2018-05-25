@@ -10,7 +10,7 @@ WelcomePage::WelcomePage(QWidget *parent) :
     ui->setupUi(this);
 
     connect(ui->pushButtonEasy, SIGNAL(clicked()), this, SLOT(on_pushButtonEasy_clicked()));
-    connect(ui->pushButtonAdvanced, SIGNAL(clicked()), this, SLOT(on_pushButtonAdvanced_clicked()));
+    connect(ui->pushButtonAdvanced, SIGNAL(clicked()), this, SLOT(on_pushButtonAdvanced_clicked()), Qt::UniqueConnection);
 }
 
 WelcomePage::~WelcomePage()

@@ -781,32 +781,41 @@ void PAIcoinGUI::setPinCode(const std::string &pin)
 
 void PAIcoinGUI::pickDataDirectory()
 {
-    bool shouldShutdown = false;
     /// Ask user for data directory
     // User language is set up: pick a data directory
-    if (!Intro::pickDataDirectory())
-        shouldShutdown = true;
-
-    /// Determine availability of data directory and parse paicoin.conf
-    /// - Do not call GetDataDir(true) before this step finishes
-    if (!fs::is_directory(GetDataDir(false)))
+    if (Intro::pickDataDirectory())
     {
-        QMessageBox::critical(0, QObject::tr(PACKAGE_NAME),
-                              QObject::tr("Error: Specified data directory \"%1\" does not exist.").arg(QString::fromStdString(gArgs.GetArg("-datadir", ""))));
-        shouldShutdown = true;
-    }
-    try {
-        gArgs.ReadConfigFile(gArgs.GetArg("-conf", PAICOIN_CONF_FILENAME));
-    } catch (const std::exception& e) {
-        QMessageBox::critical(0, QObject::tr(PACKAGE_NAME),
-                              QObject::tr("Error: Cannot parse configuration file: %1. Only use key=value syntax.").arg(e.what()));
-        shouldShutdown = true;
-    }
+        bool shouldShutdown = false;
 
-    if (shouldShutdown)
-        Q_EMIT shutdown();
-    else
-        gotoWalletSelectionPage();
+        /// Determine availability of data directory and parse paicoin.conf
+        /// - Do not call GetDataDir(true) before this step finishes
+        if (!fs::is_directory(GetDataDir(false)))
+        {
+            QMessageBox::critical(0,
+                                  QObject::tr(PACKAGE_NAME),
+                                  QObject::tr("Error: Specified data directory \"%1\" does not exist.")
+                                  .arg(QString::fromStdString(gArgs.GetArg("-datadir", ""))));
+            shouldShutdown = true;
+        }
+
+        try
+        {
+            gArgs.ReadConfigFile(gArgs.GetArg("-conf", PAICOIN_CONF_FILENAME));
+        }
+        catch (const std::exception& e)
+        {
+            QMessageBox::critical(0,
+                                  QObject::tr(PACKAGE_NAME),
+                                  QObject::tr("Error: Cannot parse configuration file: %1. Only use key=value syntax.")
+                                  .arg(e.what()));
+            shouldShutdown = true;
+        }
+
+        if (shouldShutdown)
+            Q_EMIT shutdown();
+        else
+            gotoWalletSelectionPage();
+    }
 }
 
 #ifdef ENABLE_WALLET
