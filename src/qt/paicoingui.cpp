@@ -923,6 +923,7 @@ void PAIcoinGUI::gotoRestoreWalletPage()
 void PAIcoinGUI::processCreateWalletRequest()
 {
     state = PAIcoinGUIState::CreateWallet;
+    setPinPage->initSetPinLayout();
     gotoSetPinPage();
 }
 
