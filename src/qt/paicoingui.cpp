@@ -22,7 +22,6 @@
 #include "rpcconsole.h"
 #include "utilitydialog.h"
 
-
 #ifdef ENABLE_WALLET
 #include "walletframe.h"
 #include "walletmodel.h"
@@ -109,6 +108,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     progressDialog(0),
     tabGroup(0),
     appMenuBar(0),
+    toolbar(0),
     overviewAction(0),
     historyAction(0),
     quitAction(0),
@@ -345,8 +345,11 @@ PAIcoinGUI::~PAIcoinGUI()
     GUIUtil::saveWindowGeometry("nWindow", this);
     if(trayIcon) // Hide tray icon, as deleting will let it linger until quit (on Ubuntu)
         trayIcon->hide();
-#ifdef Q_OS_MAC
     delete appMenuBar;
+    appMenuBar = nullptr;
+    delete toolbar;
+    toolbar = nullptr;
+#ifdef Q_OS_MAC
     MacDockIconHandler::cleanup();
 #endif
 
@@ -541,7 +544,7 @@ void PAIcoinGUI::createToolBars()
 {
     if(walletFrame)
     {
-        QToolBar *toolbar = addToolBar(tr("Tabs toolbar"));
+        toolbar = addToolBar(tr("Tabs toolbar"));
         toolbar->setContextMenuPolicy(Qt::PreventContextMenu);
         toolbar->setMovable(false);
         toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
@@ -835,6 +838,7 @@ void PAIcoinGUI::interruptForPinRequest(bool newPin)
     if (previousState == PAIcoinGUIState::Init)
     {
         appMenuBar->hide();
+        toolbar->hide();
         tabGroup->setVisible(false);
         progressBar->hide();
         statusBar()->hide();
@@ -859,6 +863,7 @@ void PAIcoinGUI::continueFromPinRequest()
         mainStackedWidget->setCurrentWidget(walletFrame);
 
         appMenuBar->show();
+        toolbar->show();
         tabGroup->setVisible(true);
         progressBar->hide();
         statusBar()->show();

@@ -122,6 +122,7 @@ private:
 
     QActionGroup *tabGroup;
     QMenuBar *appMenuBar;
+    QToolBar *toolbar;
     QAction *overviewAction;
     QAction *historyAction;
     QAction *quitAction;
