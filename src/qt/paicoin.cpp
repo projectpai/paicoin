@@ -242,6 +242,9 @@ public:
     /// Get window identifier of QMainWindow (PAIcoinGUI)
     WId getMainWinId() const;
 
+    /// Get runtime application name
+    const QString& getName() const;
+
 public Q_SLOTS:
     void initializeResult(bool success);
     void initializeFirstRun();
@@ -447,9 +450,6 @@ void PAIcoinApplication::createWindow(bool firstRun)
     connect(window, SIGNAL(shutdown()), this, SLOT(shutdownResult()));
 #endif // ENABLE_WALLET
     pollShutdownTimer->start(200);
-
-    // Allow for separate UI settings for testnets
-    QApplication::setApplicationName(networkStyle->getAppName());
 }
 
 void PAIcoinApplication::createSplashScreen()
@@ -692,6 +692,11 @@ WId PAIcoinApplication::getMainWinId() const
     return window->winId();
 }
 
+const QString& PAIcoinApplication::getName() const
+{
+    return networkStyle->getAppName();
+}
+
 #ifndef PAICOIN_QT_TEST
 int main(int argc, char *argv[])
 {
@@ -780,9 +785,11 @@ int main(int argc, char *argv[])
     PaymentServer::ipcParseCommandLine(argc, argv);
 #endif
 
-    initTranslations(qtTranslatorBase, qtTranslator, translatorBase, translator);
-
     PAIcoinApplication app(argc, argv);
+    // Allow for separate UI settings for testnets
+    QApplication::setApplicationName(app.getName());
+    // Re-initialize translations after changing application name (language in network-specific settings can be different)
+    initTranslations(qtTranslatorBase, qtTranslator, translatorBase, translator);
 
 #ifdef ENABLE_WALLET
     /// 6. URI IPC sending
