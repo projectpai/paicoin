@@ -552,7 +552,6 @@ static CCriticalSection csPathCached;
 
 const fs::path &GetDataDir(bool fNetSpecific)
 {
-
     LOCK(csPathCached);
 
     fs::path &path = fNetSpecific ? pathCachedNetSpecific : pathCached;
@@ -585,6 +584,29 @@ void ClearDatadirCache()
 
     pathCached = fs::path();
     pathCachedNetSpecific = fs::path();
+}
+
+bool RemoveDataDirectory()
+{
+    LOCK(csPathCached);
+
+    fs::path &path = pathCached;
+
+    if (path.empty()) {
+        if (gArgs.IsArgSet("-datadir")) {
+            path = fs::system_complete(gArgs.GetArg("-datadir", ""));
+            if (!fs::is_directory(path)) {
+                return false;
+            }
+        } else {
+            path = GetDefaultDataDir();
+        }
+    }
+    boost::uintmax_t count = 0;
+    if (fs::exists(path)) {
+        count = fs::remove_all(path);
+    }
+    return count > 0;
 }
 
 fs::path GetConfigFile(const std::string& confPath)
@@ -662,7 +684,9 @@ bool TryCreateDirectories(const fs::path& p)
     try
     {
         return fs::create_directories(p);
-    } catch (const fs::filesystem_error&) {
+    }
+    catch (const fs::filesystem_error&)
+    {
         if (!fs::exists(p) || !fs::is_directory(p))
             throw;
     }
