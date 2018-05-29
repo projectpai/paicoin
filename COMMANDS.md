@@ -318,11 +318,11 @@ Wallet options:
        Set key pool size to <n> (default: 100)
 
   -mintxfee=<amt>
-       Fees (in BTC/Kb) smaller than this are considered zero fee for
+       Fees (in PAI/Kb) smaller than this are considered zero fee for
        transaction creation (default: 0.00001)
 
   -paytxfee=<amt>
-       Fee (in BTC/kB) to add to transactions you send (default: 0.00)
+       Fee (in PAI/kB) to add to transactions you send (default: 0.00)
 
   -rescan
        Rescan the block chain for missing wallet transactions on startup
@@ -423,7 +423,7 @@ Debugging/Testing options:
        Limit size of signature cache to <n> entries (default: 50000)
 
   -minrelaytxfee=<amt>
-       Fees (in BTC/Kb) smaller than this are considered zero fee for relaying
+       Fees (in PAI/Kb) smaller than this are considered zero fee for relaying
        (default: 0.00001)
 
   -printtoconsole

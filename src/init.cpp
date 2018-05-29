@@ -516,8 +516,8 @@ std::string HelpMessage(HelpMessageMode mode)
 
 std::string LicenseInfo()
 {
-    const std::string URL_SOURCE_CODE = "<https://github.com/paicoin/paicoin>";
-    const std::string URL_WEBSITE = "<https://paicoincore.org>";
+    const std::string URL_SOURCE_CODE = "<https://github.com/projectpai/paicoin>";
+    const std::string URL_WEBSITE = "<https://www.projectpai.com>";
 
     return CopyrightHolders(strprintf(_("Copyright (C) %i-%i"), 2009, COPYRIGHT_YEAR) + " ") + "\n" +
            "\n" +

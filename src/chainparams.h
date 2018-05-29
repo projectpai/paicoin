@@ -57,7 +57,7 @@ public:
         MAX_BASE58_TYPES
     };
 
-    CChainParams(std::initializer_list<std::pair<const std::string, int>> addrs): coinbaseAddrs(addrs) { }
+    CChainParams(const std::map<const std::string, const int>& addrs): coinbaseAddrs(addrs) { }
 
     const Consensus::Params& GetConsensus() const { return consensus; }
     const CMessageHeader::MessageStartChars& MessageStart() const { return pchMessageStart; }
@@ -82,7 +82,7 @@ public:
     bool HasGenesisBlockTxOutPoint(const COutPoint& out) const;
 
 public:
-    const std::map<const std::string, int> coinbaseAddrs;
+    const std::map<const std::string, const int> coinbaseAddrs;
 
 protected:
     CChainParams() {}

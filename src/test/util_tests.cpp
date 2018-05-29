@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(util_criticalsection)
 }
 
 /**
- * TODO PAICOIN no updating is required for this file, it's just about hex parser testing!
+ * Note: no updating is required for this file, it's just about hex parser testing!
  */
 
 static const unsigned char ParseHex_expected[65] = {
