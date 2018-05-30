@@ -204,21 +204,25 @@ void Shutdown()
         DumpMempool();
     }
 
-    if (fFeeEstimatesInitialized)
+    bool dataDirectoryExists = DataDirectoryExists();
+    if (dataDirectoryExists)
     {
-        ::feeEstimator.FlushUnconfirmed(::mempool);
-        fs::path est_path = GetDataDir() / FEE_ESTIMATES_FILENAME;
-        CAutoFile est_fileout(fsbridge::fopen(est_path, "wb"), SER_DISK, CLIENT_VERSION);
-        if (!est_fileout.IsNull())
-            ::feeEstimator.Write(est_fileout);
-        else
-            LogPrintf("%s: Failed to write fee estimates to %s\n", __func__, est_path.string());
-        fFeeEstimatesInitialized = false;
-    }
+        if (fFeeEstimatesInitialized)
+        {
+            ::feeEstimator.FlushUnconfirmed(::mempool);
+            fs::path est_path = GetDataDir() / FEE_ESTIMATES_FILENAME;
+            CAutoFile est_fileout(fsbridge::fopen(est_path, "wb"), SER_DISK, CLIENT_VERSION);
+            if (!est_fileout.IsNull())
+                ::feeEstimator.Write(est_fileout);
+            else
+                LogPrintf("%s: Failed to write fee estimates to %s\n", __func__, est_path.string());
+            fFeeEstimatesInitialized = false;
+        }
 
-    // FlushStateToDisk generates a SetBestChain callback, which we should avoid missing
-    if (pcoinsTip != nullptr) {
-        FlushStateToDisk();
+        // FlushStateToDisk generates a SetBestChain callback, which we should avoid missing
+        if (pcoinsTip != nullptr) {
+            FlushStateToDisk();
+        }
     }
 
     // After there are no more peers/RPC left to give us new data which may generate
@@ -233,7 +237,7 @@ void Shutdown()
 
     {
         LOCK(cs_main);
-        if (pcoinsTip != nullptr) {
+        if (dataDirectoryExists && pcoinsTip != nullptr) {
             FlushStateToDisk();
         }
         delete pcoinsTip;
