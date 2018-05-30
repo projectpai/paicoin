@@ -600,7 +600,8 @@ void PAIcoinGUI::setClientModel(ClientModel *_clientModel)
         }
     } else {
         // Disable possibility to show main window via action
-        toggleHideAction->setEnabled(false);
+        if (toggleHideAction)
+            toggleHideAction->setEnabled(false);
         if(trayIconMenu)
         {
             // Disable context menu on tray icon
@@ -1249,8 +1250,13 @@ void PAIcoinGUI::changeEvent(QEvent *e)
 
 void PAIcoinGUI::closeEvent(QCloseEvent *event)
 {
+    if (firstRun)
+    {
+        RemoveDataDirectory();
 #ifndef Q_OS_MAC // Ignored on Mac
-    if(clientModel && clientModel->getOptionsModel())
+        QApplication::quit();
+    }
+    else if(clientModel && clientModel->getOptionsModel())
     {
         if(!clientModel->getOptionsModel()->getMinimizeOnClose())
         {
@@ -1266,6 +1272,7 @@ void PAIcoinGUI::closeEvent(QCloseEvent *event)
         }
     }
 #else
+    }
     QMainWindow::closeEvent(event);
 #endif
 }
@@ -1308,8 +1315,6 @@ void PAIcoinGUI::walletRestored(std::string phrase)
 
 void PAIcoinGUI::createWalletFrame()
 {
-    firstRun = false;
-
     if (walletFrame != nullptr)
         mainStackedWidget->removeWidget(walletFrame);
 
@@ -1326,6 +1331,8 @@ void PAIcoinGUI::createWalletFrame()
 
     modalOverlay->setParent(this->centralWidget());
     modalOverlay->showHide();
+
+    firstRun = false;
 }
 
 void PAIcoinGUI::completeUiWalletInitialization()
