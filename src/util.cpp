@@ -609,6 +609,26 @@ bool RemoveDataDirectory()
     return count > 0;
 }
 
+bool DataDirectoryExists()
+{
+    LOCK(csPathCached);
+
+    fs::path &path = pathCached;
+
+    if (path.empty()) {
+        if (gArgs.IsArgSet("-datadir")) {
+            path = fs::system_complete(gArgs.GetArg("-datadir", ""));
+            if (!fs::is_directory(path)) {
+                return false;
+            }
+        } else {
+            path = GetDefaultDataDir();
+        }
+    }
+
+    return fs::exists(path);
+}
+
 fs::path GetConfigFile(const std::string& confPath)
 {
     fs::path pathConfigFile(confPath);

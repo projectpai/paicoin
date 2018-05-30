@@ -172,6 +172,7 @@ fs::path GetDefaultDataDir();
 const fs::path &GetDataDir(bool fNetSpecific = true);
 void ClearDatadirCache();
 bool RemoveDataDirectory();
+bool DataDirectoryExists();
 fs::path GetConfigFile(const std::string& confPath);
 #ifndef WIN32
 fs::path GetPidFile();
