@@ -40,6 +40,8 @@ SetPinPage::SetPinPage(QWidget *parent) :
     painterGray->setPen(Qt::NoPen);
     painterGray->setRenderHint(QPainter::Antialiasing, true);
     painterGray->drawEllipse(4, 4, 21, 21);
+
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 SetPinPage::~SetPinPage()
