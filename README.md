@@ -1,9 +1,9 @@
-PAIcoin Core integration/staging tree
+PAI Coin Core integration/staging tree
 =====================================
 
 https://projectpai.com
 
-What is Project PAI and PAIcoin?
+What is Project PAI and PAI Coin?
 ----------------
 
 Project PAI is an open-source, blockchain-based platform designed to allow
@@ -17,17 +17,17 @@ in their own unique experiences. The focal point of all interactions on the PAI
 blockchain are PAIs - intelligent 3D avatars that look, talk and behave just like their
 human counterparts, made from the digital profiles of the user's online behavior.
 
-PAIcoin is a digital currency that enables instant payments to anyone, anywhere in the world.
-PAIcoin uses peer-to-peer technology to operate with no central authority: managing
+PAI Coin is a digital currency that enables instant payments to anyone, anywhere in the world.
+PAI Coin uses peer-to-peer technology to operate with no central authority: managing
 transactions and issuing money are carried out collectively by the network.
-PAIcoin Core is the name of the open-source software which enables the use of this currency.
+PAI Coin Core is the name of the open-source software which enables the use of this currency.
 
 Read the whitepapers [here](https://projectpai.com/pai-whitepaper/).
 
 License
 -------
 
-PAIcoin Core is released under the terms of the MIT license. See [COPYING](COPYING) for more
+PAI Coin Core is released under the terms of the MIT license. See [COPYING](COPYING) for more
 information or see https://opensource.org/licenses/MIT.
 
 Development Process
@@ -35,7 +35,7 @@ Development Process
 
 The `master` branch is regularly built and tested, but is not guaranteed to be
 completely stable. [Tags](https://github.com/projectpai/paicoin/tags) are created
-regularly to indicate new official, stable release versions of PAIcoin Core.
+regularly to indicate new official, stable release versions of PAI Coin Core.
 
 The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
