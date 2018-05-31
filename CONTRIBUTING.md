@@ -1,7 +1,7 @@
-Contributing to PAIcoin Core
-============================
+Contributing to PAI Coin Core
+=============================
 
-The PAIcoin Core project operates an open contributor model where anyone is
+The PAI Coin Core project operates an open contributor model where anyone is
 welcome to contribute towards development in the form of peer review, testing
 and patches. This document explains the practical process and guidelines for
 contributing.
@@ -157,11 +157,11 @@ where possible keep them short, uncomplex and easy to verify.
 "Decision Making" Process
 -------------------------
 
-The following applies to code changes to the PAIcoin Core project (and related
-projects such as libsecp256k1), and is not to be confused with overall PAIcoin
+The following applies to code changes to the PAI Coin Core project (and related
+projects such as libsecp256k1), and is not to be confused with overall PAI Coin
 Network Protocol consensus changes.
 
-Whether a pull request is merged into PAIcoin Core rests with the project merge
+Whether a pull request is merged into PAI Coin Core rests with the project merge
 maintainers and ultimately the project lead.
 
 Maintainers will take into consideration if a patch is in line with the general
@@ -179,7 +179,7 @@ In general, all pull requests must:
   - Where bugs are fixed, where possible, there should be unit tests
     demonstrating the bug and also proving the fix. This helps prevent regression.
 
-Patches that change PAIcoin consensus rules are considerably more involved than
+Patches that change PAI Coin consensus rules are considerably more involved than
 normal because they affect the entire ecosystem and so must be preceded by
 extensive PAI Forum discussions and have a numbered PDP. While each case will
 be different, one should be prepared to expend more time and effort than for
@@ -220,7 +220,7 @@ higher in terms of discussion and peer review requirements, keeping in mind that
 mistakes could be very costly to the wider community. This includes refactoring
 of consensus critical code.
 
-Where a patch set proposes to change the PAIcoin consensus, it must have been
+Where a patch set proposes to change the PAI Coin consensus, it must have been
 discussed extensively on PAI Forum, be accompanied by a widely discussed PDP 
 and have a generally widely perceived technical consensus of being
 a worthwhile change based on the judgement of the maintainers.
@@ -260,7 +260,7 @@ about:
 Release Policy
 --------------
 
-The project leader is the release manager for each PAIcoin Core release.
+The project leader is the release manager for each PAI Coin Core release.
 
 Copyright
 ---------
