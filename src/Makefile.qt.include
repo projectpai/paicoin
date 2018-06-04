@@ -275,15 +275,12 @@ PAICOIN_QT_H = \
   qt/confirmationdialog.h
 
 RES_ICONS = \
-  qt/res/icons/add.png \
-  qt/res/icons/address-book.png \
   qt/res/icons/about.png \
   qt/res/icons/about_qt.png \
-  qt/res/icons/paicoin.ico \
-  qt/res/icons/paicoin_testnet.ico \
-  qt/res/icons/paicoin.png \
-  qt/res/icons/paiup_logo.png \
-  qt/res/icons/paiup.png \
+  qt/res/icons/accept.png \
+  qt/res/icons/add.png \
+  qt/res/icons/address-book.png \
+  qt/res/icons/back.png \
   qt/res/icons/chevron.png \
   qt/res/icons/clock1.png \
   qt/res/icons/clock2.png \
@@ -297,13 +294,14 @@ RES_ICONS = \
   qt/res/icons/connect3.png \
   qt/res/icons/connect4.png \
   qt/res/icons/debugwindow.png \
-  qt/res/icons/edit.png \
   qt/res/icons/editcopy.png \
   qt/res/icons/editpaste.png \
+  qt/res/icons/edit.png \
   qt/res/icons/export.png \
-  qt/res/icons/eye.png \
   qt/res/icons/eye_minus.png \
   qt/res/icons/eye_plus.png \
+  qt/res/icons/eye.png \
+  qt/res/icons/fail.png \
   qt/res/icons/filesave.png \
   qt/res/icons/fontbigger.png \
   qt/res/icons/fontsmaller.png \
@@ -317,6 +315,13 @@ RES_ICONS = \
   qt/res/icons/network_disabled.png \
   qt/res/icons/open.png \
   qt/res/icons/overview.png \
+  qt/res/icons/paicoin.icns \
+  qt/res/icons/paicoin.ico \
+  qt/res/icons/paicoin.png \
+  qt/res/icons/paicoin_testnet.ico \
+  qt/res/icons/paiup_logo.png \
+  qt/res/icons/paiup.png \
+  qt/res/icons/pass.png \
   qt/res/icons/quit.png \
   qt/res/icons/receive.png \
   qt/res/icons/remove.png \
@@ -328,10 +333,10 @@ RES_ICONS = \
   qt/res/icons/transaction_conflicted.png \
   qt/res/icons/tx_inout.png \
   qt/res/icons/tx_input.png \
-  qt/res/icons/tx_output.png \
   qt/res/icons/tx_mined.png \
+  qt/res/icons/tx_output.png \
+  qt/res/icons/verify.png \
   qt/res/icons/warning.png \
-  qt/res/icons/verify.png
 
 PAICOIN_QT_BASE_CPP = \
   qt/bantablemodel.cpp \
