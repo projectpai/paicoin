@@ -336,7 +336,7 @@ RES_ICONS = \
   qt/res/icons/tx_mined.png \
   qt/res/icons/tx_output.png \
   qt/res/icons/verify.png \
-  qt/res/icons/warning.png \
+  qt/res/icons/warning.png
 
 PAICOIN_QT_BASE_CPP = \
   qt/bantablemodel.cpp \
