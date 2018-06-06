@@ -866,7 +866,7 @@ void PAIcoinGUI::continueFromPinRequest()
         appMenuBar->show();
         toolbar->show();
         tabGroup->setVisible(true);
-        progressBar->hide();
+        progressBar->show();
         statusBar()->show();
         modalOverlay->showHide();
 
@@ -1315,6 +1315,8 @@ void PAIcoinGUI::walletRestored(std::string phrase)
 
 void PAIcoinGUI::createWalletFrame()
 {
+    firstRun = false;
+
     if (walletFrame != nullptr)
         mainStackedWidget->removeWidget(walletFrame);
 
@@ -1331,8 +1333,6 @@ void PAIcoinGUI::createWalletFrame()
 
     modalOverlay->setParent(this->centralWidget());
     modalOverlay->showHide();
-
-    firstRun = false;
 }
 
 void PAIcoinGUI::completeUiWalletInitialization()
