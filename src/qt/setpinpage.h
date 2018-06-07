@@ -61,6 +61,7 @@ private:
     QString pin;
     QString pinToVerify;
     bool initialPinEntered;
+    int currentNumOfSelectedDots;
 };
 
 #endif // SETPINPAGE_H

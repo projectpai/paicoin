@@ -13,7 +13,8 @@ SetPinPage::SetPinPage(QWidget *parent) :
     pageState(PinPageState::Init),
     pin(""),
     pinToVerify(""),
-    initialPinEntered(false)
+    initialPinEntered(false),
+    currentNumOfSelectedDots(-1)
 {
     ui->setupUi(this);
     installEventFilter(this);
@@ -55,17 +56,21 @@ void SetPinPage::paintEvent(QPaintEvent *event)
 
     int numOfSelectedDots = (pageState == PinPageState::Init || pageState == PinPageState::RequiredEntry)
             ? pin.length() : pinToVerify.length();
-    ui->labelDot1->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
-    numOfSelectedDots--;
-    ui->labelDot2->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
-    numOfSelectedDots--;
-    ui->labelDot3->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
-    numOfSelectedDots--;
-    ui->labelDot4->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
-    numOfSelectedDots--;
-    ui->labelDot5->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
-    numOfSelectedDots--;
-    ui->labelDot6->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
+    if (currentNumOfSelectedDots != numOfSelectedDots)
+    {
+        currentNumOfSelectedDots = numOfSelectedDots;
+        ui->labelDot1->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
+        numOfSelectedDots--;
+        ui->labelDot2->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
+        numOfSelectedDots--;
+        ui->labelDot3->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
+        numOfSelectedDots--;
+        ui->labelDot4->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
+        numOfSelectedDots--;
+        ui->labelDot5->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
+        numOfSelectedDots--;
+        ui->labelDot6->setPixmap(numOfSelectedDots <= 0 ? *pixmapGray : *pixmapBlack);
+    }
 }
 
 bool SetPinPage::eventFilter(QObject* obj, QEvent* event)
@@ -89,6 +94,7 @@ bool SetPinPage::eventFilter(QObject* obj, QEvent* event)
 
 void SetPinPage::initSetPinLayout()
 {
+    currentNumOfSelectedDots = -1;
     pageState = PinPageState::Init;
     pin.clear();
     pinToVerify.clear();
@@ -100,6 +106,7 @@ void SetPinPage::initSetPinLayout()
 
 void SetPinPage::initReEnterPinLayout()
 {
+    currentNumOfSelectedDots = -1;
     pageState = PinPageState::ReEnter;
     pinToVerify.clear();
     ui->labelTitle->setText(tr("Re-Enter PIN"));
@@ -110,6 +117,7 @@ void SetPinPage::initReEnterPinLayout()
 
 void SetPinPage::initPinRequiredLayout()
 {
+    currentNumOfSelectedDots = -1;
     pageState = PinPageState::RequiredEntry;
     pin.clear();
     ui->labelTitle->setText(tr("PIN Required"));
