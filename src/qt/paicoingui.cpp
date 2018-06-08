@@ -332,6 +332,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     connect(setPinPage, SIGNAL(pinReadyForConfirmation(const std::string&)), this, SLOT(setPinCode(const std::string&)));
     connect(setPinPage, SIGNAL(pinReadyForAuthentication(const std::string&)), &AuthManager::getInstance(), SLOT(RequestCheck(const std::string&)));
     connect(setPinPage, SIGNAL(pinValidationFailed()), this, SLOT(gotoSetPinPage()));
+    connect(setPinPage, SIGNAL(backToPreviousPage()), this, SLOT(goBackFromSetPinPage()));
 
     connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), this, SLOT(interruptForPinRequest()));
     connect(&AuthManager::getInstance(), SIGNAL(Authenticated()), this, SLOT(continueFromPinRequest()));
@@ -923,6 +924,7 @@ void PAIcoinGUI::restoreWallet(QStringList paperKeys)
 void PAIcoinGUI::gotoRestoreWalletPage()
 {
     state = PAIcoinGUIState::RestoreWallet;
+    restoreWalletPage->clear();
     mainStackedWidget->setCurrentWidget(restoreWalletPage);
 }
 
@@ -987,6 +989,14 @@ void PAIcoinGUI::gotoSendCoinsPage(QString addr)
 {
     sendCoinsAction->setChecked(true);
     if (walletFrame) walletFrame->gotoSendCoinsPage(addr);
+}
+
+void PAIcoinGUI::goBackFromSetPinPage()
+{
+    if (state == PAIcoinGUIState::RestoreWallet)
+        gotoRestoreWalletPage();
+    else
+        gotoWalletSelectionPage();
 }
 
 void PAIcoinGUI::gotoSignMessageTab(QString addr)

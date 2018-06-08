@@ -44,6 +44,34 @@ RestoreWalletPage::~RestoreWalletPage()
     delete ui;
 }
 
+void RestoreWalletPage::clear()
+{
+    ui->lineEdit01->clear();
+    ui->lineEdit01->setStyleSheet("color:black;");
+    ui->lineEdit02->clear();
+    ui->lineEdit02->setStyleSheet("color:black;");
+    ui->lineEdit03->clear();
+    ui->lineEdit03->setStyleSheet("color:black;");
+    ui->lineEdit04->clear();
+    ui->lineEdit04->setStyleSheet("color:black;");
+    ui->lineEdit05->clear();
+    ui->lineEdit05->setStyleSheet("color:black;");
+    ui->lineEdit06->clear();
+    ui->lineEdit06->setStyleSheet("color:black;");
+    ui->lineEdit07->clear();
+    ui->lineEdit07->setStyleSheet("color:black;");
+    ui->lineEdit08->clear();
+    ui->lineEdit08->setStyleSheet("color:black;");
+    ui->lineEdit09->clear();
+    ui->lineEdit09->setStyleSheet("color:black;");
+    ui->lineEdit10->clear();
+    ui->lineEdit10->setStyleSheet("color:black;");
+    ui->lineEdit11->clear();
+    ui->lineEdit11->setStyleSheet("color:black;");
+    ui->lineEdit12->clear();
+    ui->lineEdit12->setStyleSheet("color:black;");
+}
+
 bool RestoreWalletPage::eventFilter(QObject *object, QEvent *event)
 {
     if (object != nullptr && event != nullptr)

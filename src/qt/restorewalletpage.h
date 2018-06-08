@@ -16,6 +16,7 @@ class RestoreWalletPage : public QWidget
 public:
     explicit RestoreWalletPage(QWidget *parent = 0);
     ~RestoreWalletPage();
+    void clear();
 
 Q_SIGNALS:
     void backToPreviousPage();
