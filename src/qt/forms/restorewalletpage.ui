@@ -42,7 +42,7 @@ QLineEdit {
          <property name="maximumSize">
           <size>
            <width>43</width>
-           <height>31</height>
+           <height>38</height>
           </size>
          </property>
          <property name="font">
