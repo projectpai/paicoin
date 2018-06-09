@@ -81,11 +81,11 @@ install necessary parts of boost:
 
 BerkeleyDB is required for the wallet.
 
-**For Ubuntu only:** db4.8 packages are available [here](https://launchpad.net/~paicoin/+archive/paicoin).
+**For Ubuntu only:** db4.8 packages are available [here](https://launchpad.net/~bitcoin/+archive/bitcoin).
 You can add the repository and install using the following commands:
 
     sudo apt-get install software-properties-common
-    sudo add-apt-repository ppa:paicoin/paicoin
+    sudo add-apt-repository ppa:bitcoin/bitcoin
     sudo apt-get update
     sudo apt-get install libdb4.8-dev libdb4.8++-dev
 
