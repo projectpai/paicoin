@@ -1,7 +1,7 @@
 Dependencies
 ============
 
-These are the dependencies currently used by Bitcoin Core. You can find instructions for installing them in the `build-*.md` file for your platform.
+These are the dependencies currently used by PAIcoin Core. You can find instructions for installing them in the `build-*.md` file for your platform.
 
 | Dependency | Version used | Minimum Required | CVEs? | Shared | [Bundled Qt Library](https://doc.qt.io/qt-5/configure-options.html) |
 | --- | --- | --- | --- | --- | --- | --- |

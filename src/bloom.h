@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_BLOOM_H
-#define BITCOIN_BLOOM_H
+#ifndef PAICOIN_BLOOM_H
+#define PAICOIN_BLOOM_H
 
 #include "serialize.h"
 
@@ -140,4 +140,4 @@ private:
     int nHashFuncs;
 };
 
-#endif // BITCOIN_BLOOM_H
+#endif // PAICOIN_BLOOM_H

@@ -1,0 +1,37 @@
+version: "3"
+services:
+        transmission:
+                build:
+                        context: .
+                        dockerfile: Dockerfile-transmission
+                image: transmission
+                volumes:
+                        - ./configs/settings.json:/root/.transmission/settings.json:rw
+                        - ./Downloads:/root/Downloads:rw
+                        - ./Downloads:/home/ubuntu/Downloads:rw
+                        - ./scripts:/usr/local/sbin
+                ports:
+                        - 80:8000
+                        - 9091:9091
+                links:
+                  - opentracker
+                command: /bin/sh /usr/local/sbin/api.sh
+
+        opentracker:
+                build:
+                        context: .
+                        dockerfile: Dockerfile-opentracker
+                image: opentracker
+                ports:
+                  - 6969:6969/udp
+
+        # api:
+        #   build:
+        #     context: torrent_storage
+        #     dockerfile: Dockerfile-api
+        #   ports:
+        #     - "80:8000"
+        #   links:
+        #     - opentracker
+        #   depends_on:
+        #     - opentracker

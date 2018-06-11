@@ -10,7 +10,7 @@
 #include "script/script.h"
 #include "serialize.h"
 #include "streams.h"
-#include "test/test_bitcoin.h"
+#include "test/test_paicoin.h"
 #include "util.h"
 #include "utilstrencodings.h"
 #include "version.h"
@@ -116,6 +116,16 @@ void static RandomTransaction(CMutableTransaction &tx, bool fSingle) {
 }
 
 BOOST_FIXTURE_TEST_SUITE(sighash_tests, BasicTestingSetup)
+
+/**
+ * Note: If this unit test needs an update, follow this procedure:
+ * 1. uncomment the definition of PRINT_SIGHASH_JSON
+ * 2. make check
+ * 3. from test_paicoin.log copy the output json into sighash.json
+ * 4. comment the definition of PRINT_SIGHASH_JSON
+ * 5. make check
+ */ 
+//#define PRINT_SIGHASH_JSON
 
 BOOST_AUTO_TEST_CASE(sighash_test)
 {

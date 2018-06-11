@@ -1,8 +1,6 @@
 libsecp256k1
 ============
 
-[![Build Status](https://travis-ci.org/bitcoin-core/secp256k1.svg?branch=master)](https://travis-ci.org/bitcoin-core/secp256k1)
-
 Optimized C library for EC operations on curve secp256k1.
 
 This library is a work in progress and is being used to research best practices. Use at your own risk.
