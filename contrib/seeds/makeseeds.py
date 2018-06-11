@@ -3,6 +3,7 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
+# TODO_PAICOIN Update the following comment line with the appropriate information
 # Generate seeds.txt from Pieter's DNS seeder
 #
 
@@ -10,10 +11,12 @@ NSEEDS=512
 
 MAX_SEEDS_PER_ASN=2
 
-MIN_BLOCKS = 337600
+# TODO_PAICOIN Update the minimum number of blocks if needed
+MIN_BLOCKS = 100
 
 # These are hosts that have been observed to be behaving strangely (e.g.
 # aggressively connecting to every node).
+# TODO_PAICOIN Add the corresponding suspicious hosts
 SUSPICIOUS_HOSTS = {
     "130.211.129.106", "178.63.107.226",
     "83.81.130.26", "88.198.17.7", "148.251.238.178", "176.9.46.6",
@@ -155,7 +158,7 @@ def main():
     ips = [ip for ip in ips if PATTERN_AGENT.match(ip['agent'])]
     # Sort by availability (and use last success as tie breaker)
     ips.sort(key=lambda x: (x['uptime'], x['lastsuccess'], x['ip']), reverse=True)
-    # Filter out hosts with multiple bitcoin ports, these are likely abusive
+    # Filter out hosts with multiple paicoin ports, these are likely abusive
     ips = filtermultiport(ips)
     # Look up ASNs and limit results, both per ASN and globally.
     ips = filterbyasn(ips, MAX_SEEDS_PER_ASN, NSEEDS)
