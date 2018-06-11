@@ -348,7 +348,7 @@ BQAwITEfMB0GA1UEAwwWUGF5bWVudFJlcXVlc3QgVGVzdCBDQTAeFw0xNTAxMTEx\
 ODIxMDhaFw0yNTAxMDgxODIxMDhaMCExHzAdBgNVBAMMFlBheW1lbnRSZXF1ZXN0\
 IFRlc3QgQ0EwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMsZqzkzeBGo+i2N\
 mUak3Ciodr1V7S062VOy7N0OQYNDQHYkgDFAUET7cEb5VJaHPv5m3ppTBpU9xBcf\
-wbHHUt4VjA+mhRmYrl1khjvZM+X8kEqvWn20BtcM9R6r0yIYec8UERDDHBleL/P8\
+wbHHUt4VjA+mhRmYrl1khjvZM+X8kEqvWn20PAIM9R6r0yIYec8UERDDHBleL/P8\
 RkxEnVLjYTV9zigCXfMsgYb3EQShAgMBAAGjEDAOMAwGA1UdEwQFMAMBAf8wDQYJ\
 KoZIhvcNAQELBQADggEBABUJpl3QCqsoDSxAsQdV6zKT4VGV76AzoGj7etQsQY+r\
 +S26VfWh/fMobEzuxFChr0USgLJ6FoK78hAtoZvt1lrye9yqFv/ig3WLWsJKWHHb\
@@ -372,7 +372,7 @@ BQAwITEfMB0GA1UEAwwWUGF5bWVudFJlcXVlc3QgVGVzdCBDQTAeFw0xNTAxMTEx\
 ODIxMDhaFw0yNTAxMDgxODIxMDhaMCExHzAdBgNVBAMMFlBheW1lbnRSZXF1ZXN0\
 IFRlc3QgQ0EwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMsZqzkzeBGo+i2N\
 mUak3Ciodr1V7S062VOy7N0OQYNDQHYkgDFAUET7cEb5VJaHPv5m3ppTBpU9xBcf\
-wbHHUt4VjA+mhRmYrl1khjvZM+X8kEqvWn20BtcM9R6r0yIYec8UERDDHBleL/P8\
+wbHHUt4VjA+mhRmYrl1khjvZM+X8kEqvWn20PAIM9R6r0yIYec8UERDDHBleL/P8\
 RkxEnVLjYTV9zigCXfMsgYb3EQShAgMBAAGjEDAOMAwGA1UdEwQFMAMBAf8wDQYJ\
 KoZIhvcNAQELBQADggEBABUJpl3QCqsoDSxAsQdV6zKT4VGV76AzoGj7etQsQY+r\
 +S26VfWh/fMobEzuxFChr0USgLJ6FoK78hAtoZvt1lrye9yqFv/ig3WLWsJKWHHb\
@@ -396,7 +396,7 @@ BQAwITEfMB0GA1UEAwwWUGF5bWVudFJlcXVlc3QgVGVzdCBDQTAeFw0xNTAxMTEx\
 ODIxMDhaFw0yNTAxMDgxODIxMDhaMCExHzAdBgNVBAMMFlBheW1lbnRSZXF1ZXN0\
 IFRlc3QgQ0EwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMsZqzkzeBGo+i2N\
 mUak3Ciodr1V7S062VOy7N0OQYNDQHYkgDFAUET7cEb5VJaHPv5m3ppTBpU9xBcf\
-wbHHUt4VjA+mhRmYrl1khjvZM+X8kEqvWn20BtcM9R6r0yIYec8UERDDHBleL/P8\
+wbHHUt4VjA+mhRmYrl1khjvZM+X8kEqvWn20PAIM9R6r0yIYec8UERDDHBleL/P8\
 RkxEnVLjYTV9zigCXfMsgYb3EQShAgMBAAGjEDAOMAwGA1UdEwQFMAMBAf8wDQYJ\
 KoZIhvcNAQELBQADggEBABUJpl3QCqsoDSxAsQdV6zKT4VGV76AzoGj7etQsQY+r\
 +S26VfWh/fMobEzuxFChr0USgLJ6FoK78hAtoZvt1lrye9yqFv/ig3WLWsJKWHHb\
@@ -420,7 +420,7 @@ BQAwITEfMB0GA1UEAwwWUGF5bWVudFJlcXVlc3QgVGVzdCBDQTAeFw0xNTAxMTEx\
 ODIxMDhaFw0yNTAxMDgxODIxMDhaMCExHzAdBgNVBAMMFlBheW1lbnRSZXF1ZXN0\
 IFRlc3QgQ0EwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMsZqzkzeBGo+i2N\
 mUak3Ciodr1V7S062VOy7N0OQYNDQHYkgDFAUET7cEb5VJaHPv5m3ppTBpU9xBcf\
-wbHHUt4VjA+mhRmYrl1khjvZM+X8kEqvWn20BtcM9R6r0yIYec8UERDDHBleL/P8\
+wbHHUt4VjA+mhRmYrl1khjvZM+X8kEqvWn20PAIM9R6r0yIYec8UERDDHBleL/P8\
 RkxEnVLjYTV9zigCXfMsgYb3EQShAgMBAAGjEDAOMAwGA1UdEwQFMAMBAf8wDQYJ\
 KoZIhvcNAQELBQADggEBABUJpl3QCqsoDSxAsQdV6zKT4VGV76AzoGj7etQsQY+r\
 +S26VfWh/fMobEzuxFChr0USgLJ6FoK78hAtoZvt1lrye9yqFv/ig3WLWsJKWHHb\
@@ -434,27 +434,43 @@ HSLaRgHfUDeEPr4hydy4dtfu59KNwe2xsHOHu/SpO4L8SrA4Dm9A7SlNBVWdcLbw\
 d2hj739GDLz0b5KuJ2SG6VknMRQM976w/m2qlq0ccVGaaZ2zMIGfpzL3p6adwx/5\
 ";
 
+// PAICOIN Note: If updating the MAX_COINS
+// - git clone https://github.com/gavinandresen/paymentrequest.git
+// - sudo apt-get install openssl protobuf-compiler protobuf-c-compiler
+// - Edit the Makefile and insert SHELL=/bin/bash on the first non-comment line
+// - Edit paymentrequest-create.cpp and modify as follows:
+//      - on line 255, replace 0 with the decimal value for mainnet specfied in base58Prefixes[PUBKEY_ADDRESS] 
+//      - on line 266, replace 5 with the decimal value for mainnet specfied in base58Prefixes[SCRIPT_ADDRESS] 
+//      - on line 253, replace 111 with the decimal value for testnet specfied in base58Prefixes[PUBKEY_ADDRESS] 
+//      - on line 264, replace 196 with the decimal value for testnet specfied in base58Prefixes[SCRIPT_ADDRESS] 
+// - make
+// - copy ca_in_a_box from the project root into the c++ folder
+// - Create the <address> from the genesis block public key as described here: https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses
+//   If not modified, should be K4tpGha68X6fB67nLxMffsoTn9ULNHX2wD
+// - ./paymentrequest-create paytoaddress=<address> memo="Just Testing" amount=2100000001.0 | base64 > payment.out
+// - Copy the content of the payment.out file in the constant below (paymentrequest5_cert2_BASE64) and format it appropriately
+
 //
-// Payment request with amount overflow (amount is set to 21000001 BTC)
+// Payment request with amount overflow (amount is set to 21000001 PAI)
 //
 const char* paymentrequest5_cert2_BASE64 =
 "\
-Egt4NTA5K3NoYTI1NhrQBArNBDCCAkkwggExoAMCAQICAQEwDQYJKoZIhvcNAQEL\
-BQAwITEfMB0GA1UEAwwWUGF5bWVudFJlcXVlc3QgVGVzdCBDQTAeFw0xNTAxMTEx\
-ODIxMDhaFw0yNTAxMDgxODIxMDhaMCExHzAdBgNVBAMMFlBheW1lbnRSZXF1ZXN0\
-IFRlc3QgQ0EwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMsZqzkzeBGo+i2N\
-mUak3Ciodr1V7S062VOy7N0OQYNDQHYkgDFAUET7cEb5VJaHPv5m3ppTBpU9xBcf\
-wbHHUt4VjA+mhRmYrl1khjvZM+X8kEqvWn20BtcM9R6r0yIYec8UERDDHBleL/P8\
-RkxEnVLjYTV9zigCXfMsgYb3EQShAgMBAAGjEDAOMAwGA1UdEwQFMAMBAf8wDQYJ\
-KoZIhvcNAQELBQADggEBABUJpl3QCqsoDSxAsQdV6zKT4VGV76AzoGj7etQsQY+r\
-+S26VfWh/fMobEzuxFChr0USgLJ6FoK78hAtoZvt1lrye9yqFv/ig3WLWsJKWHHb\
-3RT6oR03CIwZXFSUasi08QDVLxafwsU5OMcPLucF3a1lRL1ccYrNgVCCx1+X7Bos\
-tIgDGRQQ4AyoHTcfVd2hEGeUv7k14mOxFsAp6851yosHq9Q2kwmdH+rHEJbjof87\
-yyKLagc4owyXBZYkQmkeHWCNqnuRmO5vUsfVb0UUrkD64o7Th/NjwooA7SCiUXl6\
-dfygT1b7ggpx7GC+sP2DsIM47IAZ55drjqX5u2f+Ba0iTAoEdGVzdBIkCIDC9P+F\
-vt0DEhl2qRQErGqUUwSsaMpDvWIaGnJGNQqi8oisGLzcrKYFKhhUZXN0aW5nIGFt\
-b3VudCBvdmVyZmxvdyEqgAG8S7WEDUC6tCL6q2CTBjop/AitgEy31RL9IqYruytR\
-iEBFUrBDJZU+UEezGwr7/zoECjo5ZY3PmtZcM2sILNjyweJF6XVzGqTxUw6pN6sW\
-XR2T3Gy2LzRvhVA25QgGqpz0/juS2BtmNbsZPkN9gMMwKimgzc+PuCzmEKwPK9cQ\
-YQ==\
+Egt4NTA5K3NoYTI1NhryBArvBDCCAmswggFToAMCAQICAQEwDQYJKoZIhvcNAQEL\
+BQAwITEfMB0GA1UEAwwWUGF5bWVudFJlcXVlc3QgVGVzdCBDQTAeFw0xODAxMjQw\
+MzEyNTdaFw0yODAxMjIwMzEyNTdaMEMxGTAXBgNVBAMMEHRlc3RtZXJjaGFudC5v\
+cmcxJjAkBgNVBAoMHVBheW1lbnQgUmVxdWVzdCBUZXN0IE1lcmNoYW50MIGfMA0G\
+CSqGSIb3DQEBAQUAA4GNADCBiQKBgQDhuOzHb5jWE3cgVjX1Qk9mIGxw009ZdWB8\
+/zlpWUBOb1n3sAriBnjjhgrOIuJvoG7vOecHvoYOQUrghy0zSvM4/koe+UWrWn7t\
+8mWNK0esHr4+CsJOk+k8kF2so6Z+jQ1KTr7BothriXqf2eOlVWvM1DMo/C6LKsuD\
+KBpWf5k1/wIDAQABoxAwDjAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IB\
+AQBzEcvj+q5TsElO/eqp7uU4MWeSbp4Ftp3LGU5bJ155Aj3vuq6LONECC8yDwcsS\
+4Sxs+zM2lVPmMBNQy6bPW52mAUlMYrJ+gPEQEWp9hDBfBQ53199YSQeIRoZcQf8U\
+LHb4VeejvC/1y/m85Eft45WKh338OmqEvvoqFgo4SARikQid2yLyBc6yJfliE3I5\
+yTZ8LtyO8FD4++mwhweDURYBRsUyeqcszcdlo5g4BMWQ/VF05ECyArTghTOaMkEF\
+pUw9H5QJ5NalONQ7tZOSS+qcXBgbsjWY7gGitudoc5gHaw0WcbsaK95GY61SWM7V\
+qbCX8cJINvTH2sbJFFbT0OxBIjsSJQiAwquGs7yE9QISGXapFOaYXobAezaJWlVK\
+vfB8fNbJV0VqiKwY3Yeg0wUqDEp1c3QgVGVzdGluZyqAAdAyotxVN8UiLpY3TcHq\
+PNqwD3meBTMq8BU31T2tOeQJzlkcbtViacki7BZCenWfvz/bGgaCHpnbrzRC9F4B\
+ZoQfMm6YMtoMOkvrExrcWns4ZHkuiwHQnkust1a5i9kPMtY/APu8kVsFYYid3IXv\
+seXQ2JMPSg/AHvinU7/F0MIF\
 ";
