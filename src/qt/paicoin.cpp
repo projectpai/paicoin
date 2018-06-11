@@ -582,7 +582,8 @@ void PAIcoinApplication::initializeResult(bool success)
                          window, SLOT(message(QString,QString,unsigned int)));
         QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
 
-        window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
+        if (walletModel->isWalletEnabled())
+            window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
 #endif
     } else {
         quit(); // Exit main loop
@@ -758,15 +759,6 @@ int main(int argc, char *argv[])
     initTranslations(qtTranslatorBase, qtTranslator, translatorBase, translator);
     translationInterface.Translate.connect(Translate);
 
-    // Show help message immediately after parsing command-line options (for "-lang") and setting locale,
-    // but before showing splash screen.
-    if (gArgs.IsArgSet("-?") || gArgs.IsArgSet("-h") || gArgs.IsArgSet("-help") || gArgs.IsArgSet("-version"))
-    {
-        HelpMessageDialog help(nullptr, gArgs.IsArgSet("-version"));
-        help.showOrPrint();
-        return EXIT_SUCCESS;
-    }
-
     /// 5. Determine network (and switch to network specific options)
     // - Do not call Params() before this step
     // - Do this after parsing the configuration file, as the network can be switched there
@@ -790,6 +782,15 @@ int main(int argc, char *argv[])
     QApplication::setApplicationName(app.getName());
     // Re-initialize translations after changing application name (language in network-specific settings can be different)
     initTranslations(qtTranslatorBase, qtTranslator, translatorBase, translator);
+
+    // Show help message immediately after parsing command-line options (for "-lang") and setting locale,
+    // but before showing splash screen.
+    if (gArgs.IsArgSet("-?") || gArgs.IsArgSet("-h") || gArgs.IsArgSet("-help") || gArgs.IsArgSet("-version"))
+    {
+        HelpMessageDialog help(nullptr, gArgs.IsArgSet("-version"));
+        help.showOrPrint();
+        return EXIT_SUCCESS;
+    }
 
 #ifdef ENABLE_WALLET
     /// 6. URI IPC sending
