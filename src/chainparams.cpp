@@ -82,30 +82,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
 }
 
 /**
- * Build the genesis block. Note that the output of its generation
- * transaction cannot be spent since it did not originally exist in the
- * database.
- *
- * Mainnet:
- * CBlock(hash=000000005bcab4d8d77d338d3719c1cda996c5181ffd1c46ee311a69ac3f9397, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e, nTime=1504706400, nBits=1d00ffff, nNonce=2876968165, vtx=1)
- *   CTransaction(hash=4121f4f0d8, ver=1, vin.size=1, vout.size=1, nLockTime=0)
- *     CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff001d01043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
- *     CScriptWitness()
- *     CTxOut(nValue=1470000000.00000000, scriptPubKey=410439cc2db2636303ea74af82dea7)
- *
- * Testnet
- * CBlock(hash=0000000003976df1a1393912d10ea68fae1175ee2c7e6011a0dc4e05f18f8403, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19, nTime=1504706516, nBits=1c09fe61, nNonce=2253953817, vtx=1)
- *  CTransaction(hash=017c8b7b91, ver=1, vin.size=1, vout.size=1, nLockTime=0)
- *   CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff001d01043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
- *  CScriptWitness()
- *  CTxOut(nValue=1470000000.00000000, scriptPubKey=a9149a8abac6c3d97d37d627e6ebca)
- *
- * Regtest
- * CBlock(hash=190a4f6022b980ee9719200b024c1b9df515baea3afbccf1adc93c70aa93941f, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e, nTime=1509798928, nBits=207fffff, nNonce=1, vtx=1)
- *  CTransaction(hash=4121f4f0d8, ver=1, vin.size=1, vout.size=1, nLockTime=0)
- *     CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff001d01043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
- *     CScriptWitness()
- *     CTxOut(nValue=1470000000.00000000, scriptPubKey=410439cc2db2636303ea74af82dea7)
+ * Build the genesis block.
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const char* signature)
 {
