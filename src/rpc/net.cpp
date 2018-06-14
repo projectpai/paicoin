@@ -90,7 +90,8 @@ UniValue getpeerinfo(const JSONRPCRequest& request)
             "    \"minping\": n,              (numeric) minimum observed ping time (if any at all)\n"
             "    \"pingwait\": n,             (numeric) ping wait (if non-zero)\n"
             "    \"version\": v,              (numeric) The peer version, such as 7001\n"
-            "    \"subver\": \"/Turing:0.8.5/\",  (string) The string version\n"
+// TODO_PAICOIN Update the agent if needed
+            "    \"subver\": \"/Satoshi:0.8.5/\",  (string) The string version\n"
             "    \"inbound\": true|false,     (boolean) Inbound (true) or Outbound (false)\n"
             "    \"addnode\": true|false,     (boolean) Whether connection was due to addnode and is using an addnode slot\n"
             "    \"startingheight\": n,       (numeric) The starting height (block) of the peer\n"
@@ -420,7 +421,8 @@ UniValue getnetworkinfo(const JSONRPCRequest& request)
             "\nResult:\n"
             "{\n"
             "  \"version\": xxxxx,                      (numeric) the server version\n"
-            "  \"subversion\": \"/Turing:x.x.x/\",     (string) the server subversion string\n"
+// TODO_PAICOIN Update the agent if needed
+            "  \"subversion\": \"/Satoshi:x.x.x/\",     (string) the server subversion string\n"
             "  \"protocolversion\": xxxxx,              (numeric) the protocol version\n"
             "  \"localservices\": \"xxxxxxxxxxxxxxxx\", (string) the services we offer to the network\n"
             "  \"localrelay\": true|false,              (bool) true if transaction relay is requested from peers\n"
