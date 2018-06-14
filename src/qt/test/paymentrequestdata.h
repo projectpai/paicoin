@@ -434,7 +434,7 @@ HSLaRgHfUDeEPr4hydy4dtfu59KNwe2xsHOHu/SpO4L8SrA4Dm9A7SlNBVWdcLbw\
 d2hj739GDLz0b5KuJ2SG6VknMRQM976w/m2qlq0ccVGaaZ2zMIGfpzL3p6adwx/5\
 ";
 
-// TODO PAICOIN If updating the MAX_COINS
+// PAICOIN Note: If updating the MAX_COINS
 // - git clone https://github.com/gavinandresen/paymentrequest.git
 // - sudo apt-get install openssl protobuf-compiler protobuf-c-compiler
 // - Edit the Makefile and insert SHELL=/bin/bash on the first non-comment line

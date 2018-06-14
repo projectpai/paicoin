@@ -57,6 +57,8 @@ public:
         MAX_BASE58_TYPES
     };
 
+    CChainParams(const std::map<const std::string, const int>& addrs): coinbaseAddrs(addrs) { }
+
     const Consensus::Params& GetConsensus() const { return consensus; }
     const CMessageHeader::MessageStartChars& MessageStart() const { return pchMessageStart; }
     int GetDefaultPort() const { return nDefaultPort; }
@@ -79,6 +81,10 @@ public:
     void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout);
     bool HasGenesisBlockTxOutPoint(const COutPoint& out) const;
     void LoadGenesisParams() const;
+
+public:
+    const std::map<const std::string, const int> coinbaseAddrs;
+
 protected:
     CChainParams() {}
 

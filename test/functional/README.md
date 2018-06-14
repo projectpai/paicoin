@@ -124,7 +124,7 @@ Each `TestInstance` consists of:
 ### test-framework modules
 
 #### [test_framework/authproxy.py](test_framework/authproxy.py)
-Taken from the [python-paicoinrpc repository](https://github.com/jgarzik/python-paicoinrpc).
+Taken from the [python-bitcoinrpc repository](https://github.com/jgarzik/python-bitcoinrpc).
 
 #### [test_framework/test_framework.py](test_framework/test_framework.py)
 Base class for functional tests.
@@ -139,13 +139,13 @@ Basic code to support P2P connectivity to a paicoind.
 Framework for comparison-tool style, P2P tests.
 
 #### [test_framework/script.py](test_framework/script.py)
-Utilities for manipulating transaction scripts (originally from python-paicoinlib)
+Utilities for manipulating transaction scripts (originally from python-bitcoinlib)
 
 #### [test_framework/blockstore.py](test_framework/blockstore.py)
 Implements disk-backed block and tx storage.
 
 #### [test_framework/key.py](test_framework/key.py)
-Wrapper around OpenSSL EC_Key (originally from python-paicoinlib)
+Wrapper around OpenSSL EC_Key (originally from python-bitcoinlib)
 
 #### [test_framework/bignum.py](test_framework/bignum.py)
 Helpers for script.py

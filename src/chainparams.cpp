@@ -15,6 +15,7 @@
 #include <stdlib.h>
 
 #include "chainparamsseeds.h"
+#include "coinbase_addresses.h"
 
 /**
  * To initialize the block chain by mining a new genesis block use --mine-genesis-block command line option
@@ -50,9 +51,9 @@
 #define REGTEST_GENESIS_BLOCK_SIGNATURE  "23103f0e2d2abbaad0d79b7a37759b1a382b7821"
 
 #define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509798928
-#define REGTEST_GENESIS_BLOCK_NONCE          1
-#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x190a4f6022b980ee9719200b024c1b9df515baea3afbccf1adc93c70aa93941f")
-#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0x4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e")
+#define REGTEST_GENESIS_BLOCK_NONCE          0
+#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x47b736c948f15d787327c84bb3ad30a064e67c79154c7608da4b062c1adfe7bb")
+#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0xcaed1b804a2aa916d899cb398aed398fa9316d972f615903aafe06d10bedca44")
 
 #include "arith_uint256.h"
 
@@ -220,7 +221,7 @@ void SaveGenesisParams(const std::string & prefix, const CBlock & genesis)
 
 class CMainParams : public CChainParams {
 public:
-    CMainParams() {
+    CMainParams(): CChainParams(fCoinbaseAddrs) {
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
@@ -353,21 +354,35 @@ public:
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
 
-        // TODO PAICOIN Update this when releasing, using the suitable blocks heights and corresponding hashes
-        // Check the above note for what make a good checkpoint
         checkpointData = (CCheckpointData) {
             {
+#ifdef PAI_BABY
                 { 0, GENESIS_UINT256("MAINNET_CONSENSUS_HASH_GENESIS_BLOCK", MAINNET_CONSENSUS_HASH_GENESIS_BLOCK) }
+#else
+                {     0, MAINNET_CONSENSUS_HASH_GENESIS_BLOCK },
+                {   500, uint256S("0x0000000004d612f13cf5426902fb1533a659b16b2e349d941588d6b2de60f99c")},
+                { 15000, uint256S("0x00000000000031c7063e5c25c471474d8e983a0456944bef32a09ebfbe38adcd")},
+                { 25000, uint256S("0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec")}
+#endif
             }
         };
 
-        // TODO PAICOIN Update this when releasing, using the block timestamp and the number of transactions upto that block
-        // use the blockchain info
         chainTxData = ChainTxData{
+#ifdef PAI_BABY
             CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP), // * UNIX timestamp of last known number of transactions
             0,          // * total number of transactions between genesis and that timestamp
+#else
+			// tx hash = c54bee8227b2b009dcd4d53b1f01de328b86417b475a1f0540b8cca91797b256
+			// block hash = 0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec
+			// block index = 25000
+			// tx index = 25073
+			// tx timestamp = 1523981287
+			
+            1523981287, // * UNIX timestamp of last known number of transactions
+            25073,      // * total number of transactions between genesis and that timestamp
+#endif
                         //   (the tx=... number in the SetBestChain debug.log lines)
-            3.1         // * estimated number of transactions per second after that timestamp
+            0.00179     // * estimated number of transactions per second after that timestamp
         };
     }
 };
@@ -377,7 +392,7 @@ public:
  */
 class CTestNetParams : public CChainParams {
 public:
-    CTestNetParams() {
+    CTestNetParams(): CChainParams(fCoinbaseAddrs) {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
@@ -396,7 +411,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         // Deployment of BIP68, BIP112, and BIP113.
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 1;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
 
@@ -504,21 +519,35 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
 
-        // TODO PAICOIN Update this when releasing, using the suitable blocks heights and corresponding hashes
-        // Check the above note for what make a good checkpoint
         checkpointData = (CCheckpointData) {
             {
+#ifdef PAI_BABY
                 { 0, GENESIS_UINT256("TESTNET_CONSENSUS_HASH_GENESIS_BLOCK", TESTNET_CONSENSUS_HASH_GENESIS_BLOCK) }
+#else
+                {    0, TESTNET_CONSENSUS_HASH_GENESIS_BLOCK },
+                {    1, uint256S("0x0000000007f33c46116ced43fbb7eb0307080ab7071c134e4b9ccd1334c61177")},
+                { 1000, uint256S("0x0000000008668e5c597a6f0a97c3aced17389a8bd842afe61dd2310b4f301c9a")},
+                { 2500, uint256S("0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b")}
+#endif
             }
         };
 
-        // TODO PAICOIN Update this when releasing, using the block timestamp and the number of transactions upto that block
-        // use the blockchain info
         chainTxData = ChainTxData{
+#ifdef PAI_BABY
             CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP), // * UNIX timestamp of last known number of transactions
             0,          // * total number of transactions between genesis and that timestamp
+#else
+			// tx hash = 0xd714e38737c9a4f2f0f59bdd6ffa6e527a6874a7f599849dfe042c8bd1f49ce5
+			// block hash = 0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b
+			// block index = 2500
+			// tx index = 3434
+			// tx timestamp = 1523601213
+			
+            1523601213, // * UNIX timestamp of last known number of transactions
+            3434,       // * total number of transactions between genesis and that timestamp
+#endif
                         //   (the tx=... number in the SetBestChain debug.log lines)
-            3.1         // * estimated number of transactions per second after that timestamp
+            0.00052     // * estimated number of transactions per second after that timestamp
         };
     }
 };
@@ -548,7 +577,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 999999999999ULL;
 
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 1;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
 
