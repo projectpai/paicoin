@@ -337,6 +337,10 @@ std::string HelpMessage(HelpMessageMode mode)
         strUsage += HelpMessageOpt("-blocksonly", strprintf(_("Whether to operate in a blocks only mode (default: %u)"), DEFAULT_BLOCKSONLY));
     strUsage +=HelpMessageOpt("-assumevalid=<hex>", strprintf(_("If this block is in the chain assume that it and its ancestors are valid and potentially skip their script verification (0 to verify all, default: %s, testnet: %s)"), defaultChainParams->GetConsensus().defaultAssumeValid.GetHex(), testnetChainParams->GetConsensus().defaultAssumeValid.GetHex()));
     strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), PAICOIN_CONF_FILENAME));
+    #ifdef PAI_BABY
+		strUsage += HelpMessageOpt("-chainparams-conf=<file>", strprintf(_("Specify chainparams configuration file for PAI baby(default: %s)"), PAICOIN_CHAINPARAMS_CONF_FILENAME));
+    #endif
+
     if (mode == HMM_PAICOIND)
     {
 #if HAVE_DECL_DAEMON
@@ -482,7 +486,11 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-datacarrier", strprintf(_("Relay and mine data carrier transactions (default: %u)"), DEFAULT_ACCEPT_DATACARRIER));
     strUsage += HelpMessageOpt("-datacarriersize", strprintf(_("Maximum size of data in data carrier transactions we relay and mine (default: %u)"), MAX_OP_RETURN_RELAY));
     strUsage += HelpMessageOpt("-mempoolreplacement", strprintf(_("Enable transaction replacement in the memory pool (default: %u)"), DEFAULT_ENABLE_REPLACEMENT));
-	strUsage += HelpMessageOpt("-mine-genesis-block", strprintf(_("Mine genesis block and create genesis.conf")));
+    #ifdef PAI_BABY
+		strUsage += HelpMessageOpt("-mine-genesis-block", strprintf(_("Mine genesis block and create genesis.conf")));
+	#else
+		strUsage += HelpMessageOpt("-mine-genesis-block", strprintf(_("Mine genesis block")));
+	#endif
     strUsage += HelpMessageOpt("-minrelaytxfee=<amt>", strprintf(_("Fees (in %s/kB) smaller than this are considered zero fee for relaying, mining and transaction creation (default: %s)"),
         CURRENCY_UNIT, FormatMoney(DEFAULT_MIN_RELAY_TX_FEE)));
     strUsage += HelpMessageOpt("-whitelistrelay", strprintf(_("Accept relayed transactions received from whitelisted peers even when not relaying transactions (default: %d)"), DEFAULT_WHITELISTRELAY));

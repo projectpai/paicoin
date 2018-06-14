@@ -55,8 +55,11 @@ extern CTranslationInterface translationInterface;
 
 extern const char * const PAICOIN_CONF_FILENAME;
 extern const char * const PAICOIN_PID_FILENAME;
-extern const char * const PAICOIN_CHAINPARAMS_CONF_FILENAME;
-extern const char * const PAICOIN_GENESIS_CONF_FILENAME;
+
+#ifdef PAI_BABY
+	extern const char * const PAICOIN_CHAINPARAMS_CONF_FILENAME;
+	extern const char * const PAICOIN_GENESIS_CONF_FILENAME;
+#endif
 
 extern std::atomic<uint32_t> logCategories;
 
@@ -274,8 +277,11 @@ public:
 };
 
 extern ArgsManager gArgs;
-extern ArgsManager gChainparams;
-extern ArgsManager gGenesisparams;
+
+#ifdef PAI_BABY
+	extern ArgsManager gChainparams;
+	extern ArgsManager gGenesisparams;
+#endif
 
 /**
  * Format a string to be used as group of options in help messages

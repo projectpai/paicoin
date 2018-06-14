@@ -89,13 +89,16 @@ const int64_t nStartupTime = GetTime();
 
 const char * const PAICOIN_CONF_FILENAME = "paicoin.conf";
 const char * const PAICOIN_PID_FILENAME = "paicoind.pid";
-const char * const PAICOIN_CHAINPARAMS_CONF_FILENAME = "chainparams.conf";
-const char * const PAICOIN_GENESIS_CONF_FILENAME = "genesis.conf";
-
 
 ArgsManager gArgs;
-ArgsManager gChainparams(false);
-ArgsManager gGenesisparams(false);
+
+#ifdef PAI_BABY
+	const char * const PAICOIN_CHAINPARAMS_CONF_FILENAME = "chainparams.conf";
+	const char * const PAICOIN_GENESIS_CONF_FILENAME = "genesis.conf";
+	
+	ArgsManager gChainparams(false);
+	ArgsManager gGenesisparams(false);
+#endif
 
 bool fPrintToConsole = false;
 bool fPrintToDebugLog = true;
@@ -581,7 +584,7 @@ const fs::path &GetDataDir(bool fNetSpecific)
         path /= BaseParams().DataDir();
 
     fs::create_directories(path);
-    
+
     return path;
 }
 

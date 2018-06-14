@@ -104,6 +104,13 @@ AC_ARG_ENABLE([wallet],
   [enable_wallet=$enableval],
   [enable_wallet=yes])
 
+# Enable chainparams.conf
+AC_ARG_ENABLE([chainparams-conf],
+    [AS_HELP_STRING([--enable-chainparams-conf],
+                    [use chainparams.conf for PAI baby (default is no)])],
+    [enable_chainparams_conf=$enableval],
+    [enable_chainparams_conf=no])
+
 AC_ARG_WITH([miniupnpc],
   [AS_HELP_STRING([--with-miniupnpc],
   [enable UPNP (default is yes if libminiupnpc is found)])],
@@ -224,6 +231,10 @@ AC_ARG_ENABLE([werror],
 
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-Werror],[CXXFLAG_WERROR="-Werror"],[CXXFLAG_WERROR=""])
+
+if test "x$enable_chainparams_conf" = xyes; then
+    CPPFLAGS="$CPPFLAGS -DPAI_BABY"
+fi
 
 if test "x$enable_debug" = xyes; then
     CPPFLAGS="$CPPFLAGS -DDEBUG -DDEBUG_LOCKORDER"
