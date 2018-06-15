@@ -270,7 +270,8 @@ HEADERS += \
     ../src/qt/paperkeycompletionpage.h \
     ../src/qt/restorewalletpage.h \
     ../src/qt/viewinvestorkeydialog.h \
-    ../src/qt/holdingperiodcompletedialog.h
+    ../src/qt/holdingperiodcompletedialog.h \
+    ../src/coinbase_addresses.h
 
 UI_DIR = ../src/qt/forms
 
