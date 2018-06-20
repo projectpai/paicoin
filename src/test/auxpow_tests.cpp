@@ -107,8 +107,7 @@ public:
    * @param nonce The nonce value to use.
    * @return The constructed data.
    */
-  static valtype buildCoinbaseData (bool header, const valtype& auxRoot,
-                                    unsigned h, int nonce);
+  static valtype buildCoinbaseData (bool header, const valtype& auxRoot);
 
 };
 
@@ -165,8 +164,7 @@ CAuxpowBuilder::get (const CTransactionRef tx) const
 }
 
 valtype
-CAuxpowBuilder::buildCoinbaseData (bool header, const valtype& auxRoot,
-                                   unsigned h, int nonce)
+CAuxpowBuilder::buildCoinbaseData (bool header, const valtype& auxRoot)
 {
   valtype res;
 
@@ -174,10 +172,6 @@ CAuxpowBuilder::buildCoinbaseData (bool header, const valtype& auxRoot,
     res.insert (res.end (), UBEGIN (pchMergedMiningHeader),
                 UEND (pchMergedMiningHeader));
   res.insert (res.end (), auxRoot.begin (), auxRoot.end ());
-
-  const int size = (1 << h);
-  res.insert (res.end (), UBEGIN (size), UEND (size));
-  res.insert (res.end (), UBEGIN (nonce), UEND (nonce));
 
   return res;
 }
@@ -192,14 +186,13 @@ BOOST_AUTO_TEST_CASE (check_auxpow)
 
   const uint256 hashAux = ArithToUint256 (arith_uint256(12345));
   const unsigned height = 30;
-  const int nonce = 7;
 
   valtype auxRoot, data;
   CScript scr;
 
-  /* Build a correct auxpow.  The height is the maximally allowed one.  */
+  /* Build a correct auxpow. */
   auxRoot = builder.buildAuxpowChain (hashAux, height);
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot, height, nonce);
+  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot);
   scr = (CScript () << 2809 << 2013) + COINBASE_FLAGS;
   scr = (scr << OP_2 << data);
   builder.setCoinbase (scr);
@@ -222,17 +215,8 @@ BOOST_AUTO_TEST_CASE (check_auxpow)
   auxpow = builder.get (builder.parentBlock.vtx[1]);
   BOOST_CHECK (!auxpow.check (hashAux, params));
 
-  /* Disallow too long merkle branches.  */
-  CAuxpowBuilder builder2 = builder;
-  auxRoot = builder2.buildAuxpowChain (hashAux, height + 1);
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot, height + 1, nonce);
-  scr = (CScript () << 2809 << 2013) + COINBASE_FLAGS;
-  scr = (scr << OP_2 << data);
-  builder2.setCoinbase (scr);
-  BOOST_CHECK (!builder2.get ().check (hashAux, params));
-
   /* Verify that we compare correctly to the parent block's merkle root.  */
-  builder2 = builder;
+  CAuxpowBuilder builder2 = builder;
   BOOST_CHECK (builder2.get ().check (hashAux, params));
   tamperWith (builder2.parentBlock.hashMerkleRoot);
   BOOST_CHECK (!builder2.get ().check (hashAux, params));
@@ -240,7 +224,7 @@ BOOST_AUTO_TEST_CASE (check_auxpow)
   /* Build a non-header legacy version and check that it is also accepted.  */
   builder2 = builder;
   auxRoot = builder2.buildAuxpowChain (hashAux, height);
-  data = CAuxpowBuilder::buildCoinbaseData (false, auxRoot, height, nonce);
+  data = CAuxpowBuilder::buildCoinbaseData (false, auxRoot);
   scr = (CScript () << 2809 << 2013) + COINBASE_FLAGS;
   scr = (scr << OP_2 << data);
   builder2.setCoinbase (scr);
@@ -249,60 +233,28 @@ BOOST_AUTO_TEST_CASE (check_auxpow)
   /* However, various attempts at smuggling two roots in should be detected.  */
 
   const valtype wrongAuxRoot = builder2.buildAuxpowChain (modifiedAux, height);
-  valtype data2
-    = CAuxpowBuilder::buildCoinbaseData (false, wrongAuxRoot, height, nonce);
+  valtype data2 = CAuxpowBuilder::buildCoinbaseData (false, wrongAuxRoot);
   builder2.setCoinbase (CScript () << data << data2);
   BOOST_CHECK (builder2.get ().check (hashAux, params));
   builder2.setCoinbase (CScript () << data2 << data);
   BOOST_CHECK (!builder2.get ().check (hashAux, params));
 
-  data2 = CAuxpowBuilder::buildCoinbaseData (true, wrongAuxRoot, height, nonce);
+  data2 = CAuxpowBuilder::buildCoinbaseData (true, wrongAuxRoot);
   builder2.setCoinbase (CScript () << data << data2);
   BOOST_CHECK (!builder2.get ().check (hashAux, params));
   builder2.setCoinbase (CScript () << data2 << data);
   BOOST_CHECK (!builder2.get ().check (hashAux, params));
 
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot, height, nonce);
+  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot);
   builder2.setCoinbase (CScript () << data << data2);
   BOOST_CHECK (!builder2.get ().check (hashAux, params));
   builder2.setCoinbase (CScript () << data2 << data);
   BOOST_CHECK (!builder2.get ().check (hashAux, params));
 
-  data2 = CAuxpowBuilder::buildCoinbaseData (false, wrongAuxRoot,
-                                             height, nonce);
+  data2 = CAuxpowBuilder::buildCoinbaseData (false, wrongAuxRoot);
   builder2.setCoinbase (CScript () << data << data2);
   BOOST_CHECK (builder2.get ().check (hashAux, params));
   builder2.setCoinbase (CScript () << data2 << data);
-  BOOST_CHECK (builder2.get ().check (hashAux, params));
-
-  /* Verify that the appended nonce/size values are checked correctly.  */
-
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot, height, nonce);
-  builder2.setCoinbase (CScript () << data);
-  BOOST_CHECK (builder2.get ().check (hashAux, params));
-
-  data.pop_back ();
-  builder2.setCoinbase (CScript () << data);
-  BOOST_CHECK (!builder2.get ().check (hashAux, params));
-
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot, height - 1, nonce);
-  builder2.setCoinbase (CScript () << data);
-  BOOST_CHECK (!builder2.get ().check (hashAux, params));
-
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot, height, nonce + 3);
-  builder2.setCoinbase (CScript () << data);
-  BOOST_CHECK (!builder2.get ().check (hashAux, params));
-
-  /* Put the aux hash in an invalid merkle tree position.  */
-
-  auxRoot = builder.buildAuxpowChain (hashAux, height);
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot, height, nonce);
-  builder2.setCoinbase (CScript () << data);
-  BOOST_CHECK (!builder2.get ().check (hashAux, params));
-
-  auxRoot = builder.buildAuxpowChain (hashAux, height);
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot, height, nonce);
-  builder2.setCoinbase (CScript () << data);
   BOOST_CHECK (builder2.get ().check (hashAux, params));
 }
 
@@ -373,12 +325,11 @@ BOOST_AUTO_TEST_CASE (auxpow_pow)
   CAuxpowBuilder builder(5);
   CAuxPow auxpow;
   const unsigned height = 3;
-  const int nonce = 7;
   valtype auxRoot, data;
 
   /* Valid auxpow, PoW check of parent block.  */
   auxRoot = builder.buildAuxpowChain (block.GetHash (), height);
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot, height, nonce);
+  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot);
   builder.setCoinbase (CScript () << data);
   mineBlock (builder.parentBlock, false, block.nBits);
   block.SetAuxpow (new CAuxPow (builder.get ()));
@@ -393,7 +344,7 @@ BOOST_AUTO_TEST_CASE (auxpow_pow)
      This requires some work arounds.  */
   const uint256 hashAux = block.GetHash ();
   auxRoot = builder.buildAuxpowChain (hashAux, height);
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot, height, nonce);
+  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot);
   builder.setCoinbase (CScript () << data);
   mineBlock (builder.parentBlock, true, block.nBits);
   block.SetAuxpow (new CAuxPow (builder.get ()));
@@ -403,7 +354,7 @@ BOOST_AUTO_TEST_CASE (auxpow_pow)
 
   /* Modifying the block invalidates the PoW.  */
   auxRoot = builder.buildAuxpowChain (block.GetHash (), height);
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot, height, nonce);
+  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot);
   builder.setCoinbase (CScript () << data);
   mineBlock (builder.parentBlock, true, block.nBits);
   block.SetAuxpow (new CAuxPow (builder.get ()));

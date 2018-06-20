@@ -128,21 +128,7 @@ CAuxPow::check (const uint256& hashAuxBlock, const Consensus::Params& params) co
 
     // FIXME: Check that the same work is not submitted twice to our chain.
     //        We need to scan some number of blocks back and check if the same auxpow has been used before.
-
-    pc += vchRootHash.size();
-    if (script.end() - pc < 8)
-        return error("Aux POW missing chain merkle tree size and nonce in parent coinbase");
-
-    uint32_t nSize;
-    memcpy(&nSize, &pc[0], 4);
-    nSize = le32toh (nSize);
-    const unsigned merkleHeight = vChainMerkleBranch.size ();
-    if (nSize != (1u << merkleHeight))
-        return error("Aux POW merkle branch size does not match parent coinbase");
-
-    uint32_t nNonce;
-    memcpy(&nNonce, &pc[4], 4);
-    nNonce = le32toh (nNonce);
+    //        We also need to forbid self merge mining: an auxpow must not be a block from our chain.
 
     return true;
 }
@@ -175,8 +161,6 @@ CAuxPow::initAuxPow (CBlockHeader& header)
   const uint256 blockHash = header.GetHash ();
   valtype inputData(blockHash.begin (), blockHash.end ());
   std::reverse (inputData.begin (), inputData.end ());
-  inputData.push_back (1);
-  inputData.insert (inputData.end (), 7, 0);
 
   /* Fake a parent-block coinbase with just the required input
      script and no outputs.  */
