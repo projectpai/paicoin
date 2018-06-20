@@ -3,11 +3,11 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <primitives/pureheader.h>
-#include <chainparams.h>
+#include "primitives/pureheader.h"
+#include "chainparams.h"
 
-#include <hash.h>
-#include <utilstrencodings.h>
+#include "hash.h"
+#include "utilstrencodings.h"
 
 uint256 CPureBlockHeader::GetHash() const
 {

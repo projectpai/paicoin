@@ -7,11 +7,11 @@
 #ifndef BITCOIN_AUXPOW_H
 #define BITCOIN_AUXPOW_H
 
-#include <consensus/params.h>
-#include <primitives/pureheader.h>
-#include <primitives/transaction.h>
-#include <serialize.h>
-#include <uint256.h>
+#include "consensus/params.h"
+#include "primitives/pureheader.h"
+#include "primitives/transaction.h"
+#include "serialize.h"
+#include "uint256.h"
 
 #include <vector>
 
