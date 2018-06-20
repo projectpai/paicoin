@@ -129,6 +129,11 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
     return false;
 }
 
+void CChainParams::TurnOffSegwitForUnitTests ()
+{
+  consensus.BIP16Height = 1000000;
+}
+
 /**
  * Main network
  */
@@ -145,6 +150,7 @@ public:
     CMainParams(): CChainParams(fCoinbaseAddrs) {
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 210000;
+        consensus.BIP16Height = 1;  // BIP16 is activated from the genesis block
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
@@ -160,21 +166,19 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
-        // Deployment of BIP68, BIP112, and BIP113.
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
-
-        // Deployment of SegWit (BIP141, BIP143, and BIP147)
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
+        // CSV (BIP68, BIP112 and BIP113) as well as segwit (BIP141, BIP143 and
+        // BIP147) are deployed together with P2SH.
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000058dbc3b60ba2df18");
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
+
+        consensus.nAuxpowChainId = 0x0001;
+        consensus.nAuxpowStartHeight = 19200;
+        consensus.fStrictChainId = true;
+        consensus.nLegacyBlocksBefore = 19200;
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -276,6 +280,7 @@ public:
     CTestNetParams(): CChainParams(fCoinbaseAddrs) {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 210000;
+        consensus.BIP16Height = 1;  // BIP16 is activated from the genesis block
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
@@ -291,21 +296,19 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
-        // Deployment of BIP68, BIP112, and BIP113.
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
-
-        // Deployment of SegWit (BIP141, BIP143, and BIP147)
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
+        // CSV (BIP68, BIP112 and BIP113) as well as segwit (BIP141, BIP143 and
+        // BIP147) are deployed together with P2SH.
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000c886e8450964");
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000000b13e58c76917eb3b416fc284e36641d952a96c3422b0808d828646");
+
+        consensus.nAuxpowStartHeight = 0;
+        consensus.nAuxpowChainId = 0x0001;
+        consensus.fStrictChainId = false;
+        consensus.nLegacyBlocksBefore = -1;
 
         pchMessageStart[0] = 0x0b;
         pchMessageStart[1] = 0x09;
@@ -405,6 +408,7 @@ public:
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
         // NOTE PAICOIN Do not mofify the BIP settings, otherwise the current txvalidationcache_tests will fail
+        consensus.BIP16Height = 432;       // Corresponds to activation height using BIP9 rules
         consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
@@ -421,19 +425,16 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 999999999999ULL;
 
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
-
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
-
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x00");
+
+        consensus.nAuxpowStartHeight = 0;
+        consensus.nAuxpowChainId = 0x0001;
+        consensus.fStrictChainId = true;
+        consensus.nLegacyBlocksBefore = -1;
 
         pchMessageStart[0] = 0xff;
         pchMessageStart[1] = 0xd1;
@@ -537,4 +538,9 @@ void SelectParams(const std::string& network)
 void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout)
 {
     globalChainParams->UpdateVersionBitsParameters(d, nStartTime, nTimeout);
+}
+
+void TurnOffSegwitForUnitTests ()
+{
+  globalChainParams->TurnOffSegwitForUnitTests ();
 }

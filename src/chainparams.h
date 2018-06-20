@@ -80,6 +80,7 @@ public:
     const ChainTxData& TxData() const { return chainTxData; }
     void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout);
     bool HasGenesisBlockTxOutPoint(const COutPoint& out) const;
+    void TurnOffSegwitForUnitTests();
 
 public:
     const std::map<const std::string, const int> coinbaseAddrs;
@@ -126,5 +127,10 @@ void SelectParams(const std::string& chain);
  * Allows modifying the Version Bits regtest parameters.
  */
 void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout);
+
+/**
+ * Allows turning off segwit for unit tests.
+ */
+void TurnOffSegwitForUnitTests();
 
 #endif // PAICOIN_CHAINPARAMS_H

@@ -77,6 +77,7 @@ endif
 PAICOIN_CORE_H = \
   addrdb.h \
   addrman.h \
+  auxpow.h \
   base58.h \
   bloom.h \
   blockencodings.h \
@@ -293,6 +294,8 @@ libpaicoin_consensus_a_SOURCES = \
   prevector.h \
   primitives/block.cpp \
   primitives/block.h \
+  primitives/pureheader.cpp \
+  primitives/pureheader.h \
   primitives/transaction.cpp \
   primitives/transaction.h \
   pubkey.cpp \
@@ -316,6 +319,7 @@ libpaicoin_consensus_a_SOURCES = \
 libpaicoin_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES)
 libpaicoin_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpaicoin_common_a_SOURCES = \
+  auxpow.cpp \
   base58.cpp \
   chainparams.cpp \
   coins.cpp \
