@@ -12,13 +12,12 @@
 
 void CBlockHeader::SetAuxpow (CAuxPow* apow)
 {
-    if (apow) {
-        auxpow.reset(apow);
-        SetAuxpowVersion(true);
-    }
-    else {
-        auxpow.reset();
-        SetAuxpowVersion(false);
+    if (this->SupportsAuxpow())
+    {
+        if (apow)
+            auxpow.reset(apow);
+        else
+            auxpow.reset();
     }
 }
 

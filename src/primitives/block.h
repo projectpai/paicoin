@@ -39,7 +39,7 @@ public:
     {
         READWRITE(*(CPureBlockHeader*)this);
 
-        if (this->IsAuxpow())
+        if (this->SupportsAuxpow())
         {
             if (ser_action.ForRead())
                 auxpow.reset (new CAuxPow());

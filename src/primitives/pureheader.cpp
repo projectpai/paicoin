@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <primitives/pureheader.h>
+#include <chainparams.h>
 
 #include <hash.h>
 #include <utilstrencodings.h>
@@ -13,9 +14,7 @@ uint256 CPureBlockHeader::GetHash() const
     return SerializeHash(*this);
 }
 
-void CPureBlockHeader::SetBaseVersion(int32_t nBaseVersion, int32_t nChainId)
+bool CPureBlockHeader::SupportsAuxpow() const
 {
-    assert(nBaseVersion >= 1 && nBaseVersion < VERSION_AUXPOW);
-    assert(!IsAuxpow());
-    nVersion = nBaseVersion | (nChainId * VERSION_CHAIN_START);
+    return nTime > Params().GetConsensus().nAuxpowActivationTime;
 }

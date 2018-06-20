@@ -65,22 +65,7 @@ struct Params {
     uint256 defaultAssumeValid;
 
     /** Auxpow parameters */
-    int32_t nAuxpowChainId;
-    int nAuxpowStartHeight;
-    bool fStrictChainId;
-    int nLegacyBlocksBefore; // -1 for "always allow"
-
-    /**
-     * Check whether or not to allow legacy blocks at the given height.
-     * @param nHeight Height of the block to check.
-     * @return True if it is allowed to have a legacy version.
-     */
-    bool AllowLegacyBlocks(unsigned nHeight) const
-    {
-        if (nLegacyBlocksBefore < 0)
-            return true;
-        return static_cast<int> (nHeight) < nLegacyBlocksBefore;
-    }
+    uint32_t nAuxpowActivationTime;
 };
 } // namespace Consensus
 

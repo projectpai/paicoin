@@ -157,16 +157,14 @@ public:
   }
 
   /**
-   * Check the auxpow, given the merge-mined block's hash and our chain ID.
+   * Verify auxpow.
    * Note that this does not verify the actual PoW on the parent block!  It
    * just confirms that all the merkle branches are valid.
    * @param hashAuxBlock Hash of the merge-mined block.
-   * @param nChainId The auxpow chain ID of the block to check.
    * @param params Consensus parameters.
    * @return True if the auxpow is valid.
    */
-  bool check (const uint256& hashAuxBlock, int nChainId,
-              const Consensus::Params& params) const;
+  bool check (const uint256& hashAuxBlock, const Consensus::Params& params) const;
 
   /**
    * Get the parent block's hash.  This is used to verify that it
@@ -178,16 +176,6 @@ public:
   {
     return parentBlock.GetHash ();
   }
-
-  /**
-   * Calculate the expected index in the merkle tree.  This is also used
-   * for the test-suite.
-   * @param nNonce The coinbase's nonce value.
-   * @param nChainId The chain ID.
-   * @param h The merkle block height.
-   * @return The expected index for the aux hash.
-   */
-  static int getExpectedIndex (uint32_t nNonce, int nChainId, unsigned h);
 
   /**
    * Check a merkle branch.  This used to be in CBlock, but was removed

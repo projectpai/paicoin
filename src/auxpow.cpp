@@ -17,6 +17,7 @@
 #include <util.h>
 #include <utilstrencodings.h>
 #include <validation.h>
+#include <chainparams.h>
 
 #include <algorithm>
 
@@ -75,14 +76,10 @@ bool CMerkleTx::AcceptToMemoryPool(const CAmount& nAbsurdFee, CValidationState& 
 /* ************************************************************************** */
 
 bool
-CAuxPow::check (const uint256& hashAuxBlock, int nChainId,
-                const Consensus::Params& params) const
+CAuxPow::check (const uint256& hashAuxBlock, const Consensus::Params& params) const
 {
     if (nIndex != 0)
         return error("AuxPow is not a generate");
-
-    if (params.fStrictChainId && parentBlock.GetChainId () == nChainId)
-        return error("Aux POW parent has our chain ID");
 
     if (vChainMerkleBranch.size() > 30)
         return error("Aux POW chain merkle branch too long");
@@ -100,15 +97,13 @@ CAuxPow::check (const uint256& hashAuxBlock, int nChainId,
 
     const CScript script = tx->vin[0].scriptSig;
 
-    // Check that the same work is not submitted twice to our chain.
-    //
-
     CScript::const_iterator pcHead =
         std::search(script.begin(), script.end(), UBEGIN(pchMergedMiningHeader), UEND(pchMergedMiningHeader));
 
     CScript::const_iterator pc =
         std::search(script.begin(), script.end(), vchRootHash.begin(), vchRootHash.end());
 
+    // Check that parent coinbase references the block from our chain
     if (pc == script.end())
         return error("Aux POW missing chain merkle root in parent coinbase");
 
@@ -131,8 +126,9 @@ CAuxPow::check (const uint256& hashAuxBlock, int nChainId,
     }
 
 
-    // Ensure we are at a deterministic point in the merkle leaves by hashing
-    // a nonce and our chain ID and comparing to the index.
+    // FIXME: Check that the same work is not submitted twice to our chain.
+    //        We need to scan some number of blocks back and check if the same auxpow has been used before.
+
     pc += vchRootHash.size();
     if (script.end() - pc < 8)
         return error("Aux POW missing chain merkle tree size and nonce in parent coinbase");
@@ -147,36 +143,8 @@ CAuxPow::check (const uint256& hashAuxBlock, int nChainId,
     uint32_t nNonce;
     memcpy(&nNonce, &pc[4], 4);
     nNonce = le32toh (nNonce);
-    if (nChainIndex != getExpectedIndex (nNonce, nChainId, merkleHeight))
-        return error("Aux POW wrong index");
 
     return true;
-}
-
-int
-CAuxPow::getExpectedIndex (uint32_t nNonce, int nChainId, unsigned h)
-{
-  // Choose a pseudo-random slot in the chain merkle tree
-  // but have it be fixed for a size/nonce/chain combination.
-  //
-  // This prevents the same work from being used twice for the
-  // same chain while reducing the chance that two chains clash
-  // for the same slot.
-
-  /* This computation can overflow the uint32 used.  This is not an issue,
-     though, since we take the mod against a power-of-two in the end anyway.
-     This also ensures that the computation is, actually, consistent
-     even if done in 64 bits as it was in the past on some systems.
-
-     Note that h is always <= 30 (enforced by the maximum allowed chain
-     merkle branch length), so that 32 bits are enough for the computation.  */
-
-  uint32_t rand = nNonce;
-  rand = rand * 1103515245 + 12345;
-  rand += nChainId;
-  rand = rand * 1103515245 + 12345;
-
-  return rand % (1 << h);
 }
 
 uint256
@@ -201,8 +169,7 @@ CAuxPow::CheckMerkleBranch (uint256 hash,
 void
 CAuxPow::initAuxPow (CBlockHeader& header)
 {
-  /* Set auxpow flag right now, since we take the block hash below.  */
-  header.SetAuxpowVersion(true);
+  assert (header.nTime >= Params().GetConsensus().nAuxpowActivationTime);
 
   /* Build a minimal coinbase script input for merge-mining.  */
   const uint256 blockHash = header.GetHash ();

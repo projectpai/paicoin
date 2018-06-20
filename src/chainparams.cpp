@@ -175,10 +175,7 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
 
-        consensus.nAuxpowChainId = 0x0001;
-        consensus.nAuxpowStartHeight = 19200;
-        consensus.fStrictChainId = true;
-        consensus.nLegacyBlocksBefore = 19200;
+        consensus.nAuxpowActivationTime = 1537833600; // September 25, 2018
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -305,10 +302,7 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000000b13e58c76917eb3b416fc284e36641d952a96c3422b0808d828646");
 
-        consensus.nAuxpowStartHeight = 0;
-        consensus.nAuxpowChainId = 0x0001;
-        consensus.fStrictChainId = false;
-        consensus.nLegacyBlocksBefore = -1;
+        consensus.nAuxpowActivationTime = 1532476800; // July 25, 2018
 
         pchMessageStart[0] = 0x0b;
         pchMessageStart[1] = 0x09;
@@ -431,10 +425,7 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x00");
 
-        consensus.nAuxpowStartHeight = 0;
-        consensus.nAuxpowChainId = 0x0001;
-        consensus.fStrictChainId = true;
-        consensus.nLegacyBlocksBefore = -1;
+        consensus.nAuxpowActivationTime = 1529884800; // June 25, 2018
 
         pchMessageStart[0] = 0xff;
         pchMessageStart[1] = 0xd1;
