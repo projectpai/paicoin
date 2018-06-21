@@ -41,11 +41,29 @@ public:
 
         if (this->SupportsAuxpow())
         {
-            if (ser_action.ForRead())
-                auxpow.reset (new CAuxPow());
-            assert(auxpow);
-            READWRITE(*auxpow);
-        } else if (ser_action.ForRead())
+            if (ser_action.ForRead()) {
+                // see if auxpow is present
+                bool hasAuxpow = false;
+                READWRITE(hasAuxpow);
+                // read auxpow if present
+                if (hasAuxpow) {
+                    auxpow.reset(new CAuxPow());
+                    assert(auxpow);
+                    READWRITE(*auxpow);
+                }
+                else
+                    auxpow.reset();
+            }
+            else {
+                // write auxpow presence
+                bool hasAuxpow = auxpow != nullptr;
+                READWRITE(hasAuxpow);
+                // write auxpow if exists
+                if (hasAuxpow)
+                    READWRITE(*auxpow);
+            }
+        }
+        else if (ser_action.ForRead())
             auxpow.reset();
     }
 
