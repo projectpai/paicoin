@@ -425,7 +425,7 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x00");
 
-        consensus.nAuxpowActivationTime = 1529884800; // June 25, 2018
+        consensus.nAuxpowActivationTime = 1529688242;  // Fri, 22 Jun 2018 17:24:02 GMT
 
         pchMessageStart[0] = 0xff;
         pchMessageStart[1] = 0xd1;
