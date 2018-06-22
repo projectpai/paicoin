@@ -66,12 +66,6 @@ public:
         return (int64_t)nTime;
     }
 
-    /* Below are methods to interpret the version with respect to
-       auxpow data and chain ID.  This used to be in the CBlockVersion
-       class, but was moved here when we switched back to nVersion being
-       a pure int member as preparation to undoing the "abuse" and
-       allowing BIP9 to work.  */
-
     /**
      * Is the block created after auxpow is activated?
      * Blocks that do not support auxpow must not have auxpow (they could not have been merge-mined).

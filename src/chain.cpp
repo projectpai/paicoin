@@ -14,6 +14,7 @@ CBlockHeader CBlockIndex::GetBlockHeader(const Consensus::Params& consensusParam
     CBlockHeader block;
 
     block.nVersion       = nVersion;
+    block.nTime          = nTime;       // needed for SupportsAuxpow() check below
 
     /* The CBlockIndex object's block header is missing the auxpow.
        So if this is an auxpow block, read it from disk instead.  We only
