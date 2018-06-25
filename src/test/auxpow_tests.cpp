@@ -102,9 +102,7 @@ public:
    * of the aux hash, the merkle tree size and the nonce.  Optionally,
    * the header can be added as well.
    * @param header Add the header?
-   * @param hashAux The aux merkle root hash.
-   * @param h Height of the merkle tree.
-   * @param nonce The nonce value to use.
+   * @param auxRoot The aux merkle root hash.
    * @return The constructed data.
    */
   static valtype buildCoinbaseData (bool header, const valtype& auxRoot);
@@ -198,11 +196,10 @@ BOOST_AUTO_TEST_CASE (check_auxpow)
   builder.setCoinbase (scr);
   BOOST_CHECK (builder.get ().check (hashAux, params));
 
-  /* Check that the auxpow is invalid if we change either the aux block's hash.  */
+  /* Check that the auxpow is invalid if we change the aux block's hash.  */
   uint256 modifiedAux(hashAux);
   tamperWith (modifiedAux);
   BOOST_CHECK (!builder.get ().check (modifiedAux, params));
-  BOOST_CHECK (!builder.get ().check (hashAux, params));
 
   /* Non-coinbase parent tx should fail.  Note that we can't just copy
      the coinbase literally, as we have to get a tx with different hash.  */
@@ -298,26 +295,14 @@ BOOST_AUTO_TEST_CASE (auxpow_pow)
   SelectParams (CBaseChainParams::REGTEST);
   const Consensus::Params& params = Params().GetConsensus();
 
+  /* Verify mining */
   const arith_uint256 target = (~arith_uint256(0) >> 1);
   CBlockHeader block;
   block.nBits = target.GetCompact ();
-
-  /* Verify the block version checks.  */
-
-  block.nVersion = 1;
-  mineBlock (block, true);
-  BOOST_CHECK (CheckProofOfWork (block, params));
-
-  block.nVersion = 2;
-  mineBlock (block, true);
-  BOOST_CHECK (!CheckProofOfWork (block, params));
-
-  block.nVersion = 3;
-  mineBlock (block, true);
-  BOOST_CHECK (!CheckProofOfWork (block, params));
-
   mineBlock (block, false);
   BOOST_CHECK (!CheckProofOfWork (block, params));
+  mineBlock (block, true);
+  BOOST_CHECK (CheckProofOfWork (block, params));
 
   /* ****************************************** */
   /* Check the case that the block has auxpow.  */
@@ -337,20 +322,6 @@ BOOST_AUTO_TEST_CASE (auxpow_pow)
   mineBlock (builder.parentBlock, true, block.nBits);
   block.SetAuxpow (new CAuxPow (builder.get ()));
   BOOST_CHECK (CheckProofOfWork (block, params));
-
-  /* Mismatch between auxpow being present and block.nVersion.  Note that
-     block.SetAuxpow sets also the version and that we want to ensure
-     that the block hash itself doesn't change due to version changes.
-     This requires some work arounds.  */
-  const uint256 hashAux = block.GetHash ();
-  auxRoot = builder.buildAuxpowChain (hashAux, height);
-  data = CAuxpowBuilder::buildCoinbaseData (true, auxRoot);
-  builder.setCoinbase (CScript () << data);
-  mineBlock (builder.parentBlock, true, block.nBits);
-  block.SetAuxpow (new CAuxPow (builder.get ()));
-  BOOST_CHECK (hashAux != block.GetHash ());
-  BOOST_CHECK (hashAux == block.GetHash ());
-  BOOST_CHECK (!CheckProofOfWork (block, params));
 
   /* Modifying the block invalidates the PoW.  */
   auxRoot = builder.buildAuxpowChain (block.GetHash (), height);
