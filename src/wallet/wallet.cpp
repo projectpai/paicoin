@@ -1613,6 +1613,9 @@ bool CWallet::GetCurrentPaperKey(std::string& paperKey)
 
 bool CWallet::SetCurrentPaperKey(const std::string& paperKey)
 {
+    // Completely rewrite the wallet file
+    dbw->Rewrite();
+
     std::vector<unsigned char> seed = GetBIP39Seed(paperKey);
     if (seed.size() == 0) {
         return false;
@@ -1632,13 +1635,13 @@ bool CWallet::SetCurrentPaperKey(const std::string& paperKey)
         return false;
     }
 
-    //if (!TopUpKeyPool()) {
-    //    return false;
-    //}
-
     SetBestChain(chainActive.GetLocator());
 
     if (!AddPaperKey(paperKey)) {
+        return false;
+    }
+
+    if (!NewKeyPool()) {
         return false;
     }
 

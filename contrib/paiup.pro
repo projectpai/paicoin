@@ -119,13 +119,20 @@ SOURCES += \
     ../src/crypto/sha512.cpp \
     ../src/primitives/block.cpp \
     ../src/primitives/transaction.cpp \
-    ../src/rpc/server.cpp \
+    ../src/rpc/blockchain.cpp \
+    ../src/rpc/client.cpp \
+    ../src/rpc/mining.cpp \
+    ../src/rpc/misc.cpp \
+#    ../src/rpc/net.cpp \
     ../src/rpc/protocol.cpp \
     ../src/rpc/rawtransaction.cpp \
+    ../src/rpc/safemode.cpp \
+    ../src/rpc/server.cpp \
     ../src/script/interpreter.cpp \
     ../src/script/ismine.cpp \
     ../src/script/script.cpp \
     ../src/script/standard.cpp \
+    ../src/script/sign.cpp \
     ../src/support/cleanse.cpp \
     ../src/support/lockedpool.cpp \
     ../src/wallet/crypter.cpp \

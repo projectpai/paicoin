@@ -664,9 +664,6 @@ void PAIcoinApplication::enableWalletDisplay()
     walletModel->usePaperKey(walletPhrase);
     walletModel->connectAuthenticator();
 
-    bool firstRun = false;
-    CWallet::CreateWalletFromFile("wallet.dat", firstRun, false);
-
     window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
     window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
 
