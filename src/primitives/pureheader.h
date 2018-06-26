@@ -59,6 +59,16 @@ public:
         return (nBits == 0);
     }
 
+    friend bool operator==(const CPureBlockHeader& a, const CPureBlockHeader& b)
+    {
+        return a.nVersion == b.nVersion &&
+               a.hashPrevBlock == b.hashPrevBlock &&
+               a.hashMerkleRoot == b.hashMerkleRoot &&
+               a.nTime == b.nTime &&
+               a.nBits == b.nBits &&
+               a.nNonce == b.nNonce;
+    }
+
     uint256 GetHash() const;
 
     int64_t GetBlockTime() const
