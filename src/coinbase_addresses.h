@@ -11,7 +11,8 @@ static std::map<const std::string, const int> fCoinbaseAddrs{
 	{"MjwNUSrTPDnSK9z36M1ZqXjfGE8GxByfd7", -1},
 	{"MYCHhbJkpbTapKbF6pyRQJ3sqApKmyaBGG", -1},
 	{"MbB4bAmhws8yr5MRuAqvKck3LfffBkxT8C", -1},
-	{"McvP9ELi7SN4rE2JU5X9E2h7txQyH7nUQd", -1}
+	{"McvP9ELi7SN4rE2JU5X9E2h7txQyH7nUQd", -1},
+	{"PuS1S2d5WsibDRSXyHynPB5BMRMT7xn7BeP", -1}
 
 };
 #endif // COINBASE_ADDRESSES_H
