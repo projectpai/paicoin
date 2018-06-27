@@ -1,8 +1,8 @@
 Multisig with P2SH
 ==================
 
-This document provides instructions on how to create M-of-N (M<=N) multisig P2SH addresses
-for safe storage of PAI Coin.
+This document provides instructions on how to create M-of-N (M<=N) multisig
+pay-to-script hash (P2SH) addresses for safe storage of PAI Coin.
 
 Keypair generation
 ------------------
