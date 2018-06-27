@@ -525,6 +525,35 @@ class CTransaction(object):
         return "CTransaction(nVersion=%i vin=%s vout=%s wit=%s nLockTime=%i)" \
             % (self.nVersion, repr(self.vin), repr(self.vout), repr(self.wit), self.nLockTime)
 
+class CAuxPow(CTransaction):
+    def __init__(self):
+        super(CAuxPow, self).__init__()
+        self.hashBlock = 0
+        self.vMerkleBranch = []
+        self.nIndex = 0
+        self.vChainMerkleBranch = []
+        self.nChainIndex = 0
+        self.parentBlock = CBlockHeader()
+
+    def deserialize(self, f):
+        super(CAuxPow, self).deserialize(f)
+        self.hashBlock = deser_uint256(f)
+        self.vMerkleBranch = deser_uint256_vector(f)
+        self.nIndex = struct.unpack("<I", f.read(4))[0]
+        self.vChainMerkleBranch = deser_uint256_vector(f)
+        self.nChainIndex = struct.unpack("<I", f.read(4))[0]
+        self.parentBlock.deserialize(f)
+
+    def serialize(self):
+        r = b""
+        r += super(CAuxPow, self).serialize()
+        r += ser_uint256(self.hashBlock)
+        r += ser_uint256_vector(self.vMerkleBranch)
+        r += struct.pack("<I", self.nIndex)
+        r += ser_uint256_vector(self.vChainMerkleBranch)
+        r += struct.pack("<I", self.nChainIndex)
+        r += self.parentBlock.serialize()
+        return r
 
 class CBlockHeader(object):
     def __init__(self, header=None):
@@ -537,6 +566,7 @@ class CBlockHeader(object):
             self.nTime = header.nTime
             self.nBits = header.nBits
             self.nNonce = header.nNonce
+            self.auxpow = header.auxpow
             self.sha256 = header.sha256
             self.hash = header.hash
             self.calc_sha256()
@@ -548,8 +578,12 @@ class CBlockHeader(object):
         self.nTime = 0
         self.nBits = 0
         self.nNonce = 0
+        self.auxpow = None
         self.sha256 = None
         self.hash = None
+
+    def has_auxpow(self):
+        return self.auxpow is not None
 
     def deserialize(self, f):
         self.nVersion = struct.unpack("<i", f.read(4))[0]
@@ -558,6 +592,10 @@ class CBlockHeader(object):
         self.nTime = struct.unpack("<I", f.read(4))[0]
         self.nBits = struct.unpack("<I", f.read(4))[0]
         self.nNonce = struct.unpack("<I", f.read(4))[0]
+        hasauxpow = struct.unpack("<?", f.read(1))[0]
+        if hasauxpow:
+            self.auxpow = CAuxPow()
+            self.auxpow.deserialize(f)
         self.sha256 = None
         self.hash = None
 
@@ -569,6 +607,12 @@ class CBlockHeader(object):
         r += struct.pack("<I", self.nTime)
         r += struct.pack("<I", self.nBits)
         r += struct.pack("<I", self.nNonce)
+
+        hasauxpow = self.has_auxpow()
+        r += struct.pack("<?", hasauxpow)
+        if hasauxpow:
+            r += self.auxpow.serialize()
+
         return r
 
     def calc_sha256(self):
