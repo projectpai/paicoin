@@ -94,9 +94,9 @@ Result:
 }
 ```
 
-### Examples 
+### Example
 
-Create a multisig address from 2 public real keys, using PAI Coin CLI (just an example, DO NOT USE the resulting address):
+Create a 2-of-2 multisig address from 2 real mainnet public keys, using PAI Coin CLI (just an example, DO NOT USE the resulting address):
 ```
 ./paicoin-cli createmultisig 2 "[\"048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e1\",\"04cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda47\"]"
 ```
@@ -118,3 +118,20 @@ Response:
 ```
 {"result":{"address":"uNMTaHRJS1vM4FwqLtoURoDm6UPjNaWbzt","redeemScript":"5241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752ae"},"error":null,"id":"curltest"}
 ```
+
+Spending funds from a multisig address 
+--------------------------------------
+
+In order to spend funds from an M-of-N multisig address, the raw transaction needs to be signed by M of the private keys (the `privateAddress` in the key pair text file, under the appropriate network, e.g., mainnet, testnet). The `redeemScript` is also required.
+
+### Create the raw transaction
+
+In progress.
+
+### Sign the raw transaction M times
+
+In progress.
+
+### Send the raw transaction
+
+In progress.
