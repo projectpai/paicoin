@@ -125,11 +125,6 @@ CAuxPow::check (const uint256& hashAuxBlock, const Consensus::Params& params) co
             return error("Aux POW chain merkle root must start in the first 20 bytes of the parent coinbase");
     }
 
-
-    // FIXME: Check that the same work is not submitted twice to our chain.
-    //        We need to scan some number of blocks back and check if the same auxpow has been used before.
-    //        We also need to forbid self merge mining: an auxpow must not be a block from our chain.
-
     return true;
 }
 

@@ -3022,6 +3022,22 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
             return state.Invalid(false, REJECT_OBSOLETE, strprintf("bad-version(0x%08x)", block.nVersion),
                                  strprintf("rejected nVersion=0x%08x block", block.nVersion));
 
+    // Check against self-merge-mining and double-proof attacks via merged mining
+    const int MERGE_MINING_ATTACKS_CHECK_DEPTH = 20; // changing this constant might affect consensus
+    CBlockIndex *blkIndex = chainActive.Tip();
+    for (int i=0; i<MERGE_MINING_ATTACKS_CHECK_DEPTH; i++) {
+        if (blkIndex) {
+            CBlockHeader blkHeader = blkIndex->GetBlockHeader(Params().GetConsensus());
+            if (block.auxpow && blkHeader.auxpow && block.auxpow->parentBlock == blkHeader.auxpow->parentBlock)
+                return state.Invalid(false, REJECT_INVALID, "auxpow-double-proof", "same auxpow parent already used in another block");
+            if (block.auxpow && block.auxpow->parentBlock == blkHeader)
+                return state.Invalid(false, REJECT_INVALID, "auxpow-self", "auxpow parent already exists as a block in this chain");
+            if (blkHeader.auxpow && block == blkHeader.auxpow->parentBlock)
+                return state.Invalid(false, REJECT_INVALID, "auxpow-self", "block already exists as auxpow parent in this chain");
+            blkIndex = blkIndex->pprev;
+        }
+    }
+
     return true;
 }
 
