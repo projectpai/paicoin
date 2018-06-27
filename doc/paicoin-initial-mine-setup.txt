@@ -1,0 +1,54 @@
+Blockchain initialization
+
+1. Difficulty level
+	In chainparams.cpp, select the desired difficulty as one of the INITIAL_DIFFICULTY_LEVEL_LOW, INITIAL_DIFFICULTY_LEVEL_MEDIUM, or INITIAL_DIFFICULTY_LEVEL_HIGH by settings it to the INITIAL_DIFFICULTY_LEVEL macro. This level will be applied only until the retargeting is getting into action.
+
+2. Enable genesis block mining
+	In chainparams.cpp, uncomment the MINE_FOR_THE_GENESIS_BLOCK definition line.
+
+3. Timestamps
+	In chainparams.cpp, set the desired Unix timestamp in second in GENESIS_BLOCK_UNIX_TIMESTAMP.
+	In chainparams.cpp, set the desired timestamp string in GENESIS_BLOCK_TIMESTAMP_STRING.
+
+4. Genesis script signature
+	Generate the private / public key pair using the generate-keys.py script and store the values in a safe place.
+	In chainparams.cpp, store the public key in GENESIS_BLOCK_SIGNATURE.
+
+5. Build the code
+
+6. Clean-up
+	WARNING! The previous blockchain information (if any) will be lost!
+	Delete the ~/.paicoin folder, or the datadir where the node has run before (if applicable).
+
+7. Get the genesis block for the main net
+	Run ./paicoind
+	When the tail -f debug.log prints the new genesis block, stop.
+
+8. Embed the new genesis block into the code
+	In chainparams.cpp, comment the MINE_FOR_THE_GENESIS_BLOCK definition line.
+	In chainparams.cpp, replace the current value of the nonce in the GENESIS_BLOCK_NONCE with the one from the new genesis block, for the specified difficulty.
+	In chainparams.cpp, replace the current value of the CONSENSUS_HASH_GENESIS_BLOCK with the one from the new genesis block, for the specified difficulty.
+	In chainparams.cpp, replace the current value of the GENESIS_HASH_MERKLE_ROOT with the one from the new genesis block, for the specified difficulty.
+
+9. Build the code
+
+10. Build the initial blocks
+	Run ./paicoind
+	Run ./paicoin-block-generator <number of blocks>
+
+11. Repeat steps 1.2, 1.5, 1.7 to 1.10 for the testnet and regtest, if needed
+
+12. Add the checkpoints
+	Examine the generated blockchain and select as many blocks that meet the informal requirements for a checkpoint as you want, and add them in the checkpointData variable in the corresponding section of the chain parameters class.
+	/**
+	 * What makes a good checkpoint block?
+ 	 * + Is surrounded by blocks with reasonable timestamps
+ 	 *   (no blocks before with a timestamp after, none after with
+ 	 *    timestamp before)
+ 	 * + Contains no strange transactions
+ 	 */
+
+13. Add TxData
+	Select the appropriate chekpoint and extract its Unix timestamp, total number of transactions from the genesis block up to that block and and the estimated number of transations afterwards and fill in the this data into the chainTxData variable in the corresponding section of the chain parameters class.
+
+14. Run ./paicoin-qt to visually use the blockchain
