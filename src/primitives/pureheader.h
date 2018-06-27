@@ -9,6 +9,8 @@
 #include "serialize.h"
 #include "uint256.h"
 
+#include <boost/shared_ptr.hpp>
+
 /**
  * A block header without auxpow information.  This "intermediate step"
  * in constructing the full header is useful, because it breaks the cyclic
@@ -26,6 +28,7 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
+    boost::shared_ptr<uint256> pAuxpowChildrenHash;
 
     CPureBlockHeader()
     {
@@ -42,6 +45,35 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+
+        bool ParamsInitialized();
+
+        if (ParamsInitialized() && this->SupportsAuxpow()) // chainParams aren't initialized only during genesis block serialization
+        {
+            if (ser_action.ForRead()) {
+                // see if auxpow is present
+                bool hasAuxpow = false;
+                READWRITE(hasAuxpow);
+                // read auxpow if present
+                if (hasAuxpow) {
+                    pAuxpowChildrenHash.reset(new uint256);
+                    assert(pAuxpowChildrenHash);
+                    READWRITE(*pAuxpowChildrenHash);
+                }
+                else
+                    pAuxpowChildrenHash.reset();
+            }
+            else {
+                // write auxpow presence
+                bool hasAuxpow = pAuxpowChildrenHash != nullptr;
+                READWRITE(hasAuxpow);
+                // write auxpow if exists
+                if (hasAuxpow)
+                    READWRITE(*pAuxpowChildrenHash);
+            }
+        }
+        else if (ser_action.ForRead())
+            pAuxpowChildrenHash.reset();
     }
 
     void SetNull()
@@ -52,6 +84,7 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        pAuxpowChildrenHash.reset();
     }
 
     bool IsNull() const
