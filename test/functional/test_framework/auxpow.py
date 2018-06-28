@@ -9,6 +9,9 @@
 import binascii
 import hashlib
 
+def getAuxpowActivationTime():
+    return 1529688242 # Fri, 22 Jun 2018 17:24:02 GMT, see chainparams.cpp
+
 def computeAuxpow (block, target, ok):
   """
   Build an auxpow object (serialised as hex string) that solves

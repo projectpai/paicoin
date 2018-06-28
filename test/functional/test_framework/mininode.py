@@ -36,6 +36,7 @@ from threading import RLock, Thread
 
 from test_framework.siphash import siphash256
 from test_framework.util import hex_str_to_bytes, bytes_to_hex_str, wait_until
+from test_framework.auxpow import getAuxpowActivationTime
 
 BIP0031_VERSION = 60000
 MY_VERSION = 70014  # past bip-31 for ping/pong
@@ -567,6 +568,7 @@ class CBlockHeader(object):
             self.nBits = header.nBits
             self.nNonce = header.nNonce
             self.auxpow = header.auxpow
+            self.auxpowChildrenHash = header.auxpowChildrenHash
             self.sha256 = header.sha256
             self.hash = header.hash
             self.calc_sha256()
@@ -579,11 +581,15 @@ class CBlockHeader(object):
         self.nBits = 0
         self.nNonce = 0
         self.auxpow = None
+        self.auxpowChildrenHash = None
         self.sha256 = None
         self.hash = None
 
     def has_auxpow(self):
         return self.auxpow is not None
+
+    def has_auxpow_children_hash(self):
+        return self.auxpowChildrenHash is not None
 
     def deserialize(self, f):
         self.nVersion = struct.unpack("<i", f.read(4))[0]
@@ -592,6 +598,12 @@ class CBlockHeader(object):
         self.nTime = struct.unpack("<I", f.read(4))[0]
         self.nBits = struct.unpack("<I", f.read(4))[0]
         self.nNonce = struct.unpack("<I", f.read(4))[0]
+
+        if self.nTime > getAuxpowActivationTime():
+            hasAuxpowChildrenHash = struct.unpack("<?", f.read(1))[0]
+            if hasAuxpowChildrenHash:
+                self.auxpowChildrenHash = deser_uint256(f)
+
         hasauxpow = struct.unpack("<?", f.read(1))[0]
         if hasauxpow:
             self.auxpow = CAuxPow()
@@ -607,6 +619,12 @@ class CBlockHeader(object):
         r += struct.pack("<I", self.nTime)
         r += struct.pack("<I", self.nBits)
         r += struct.pack("<I", self.nNonce)
+
+        if self.nTime > getAuxpowActivationTime():
+            hasAuxpowChildrenHash = self.has_auxpow_children_hash()
+            r += struct.pack("<?", hasAuxpowChildrenHash)
+            if hasAuxpowChildrenHash:
+                r += ser_uint256(self.auxpowChildrenHash)
 
         hasauxpow = self.has_auxpow()
         r += struct.pack("<?", hasauxpow)
