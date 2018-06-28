@@ -642,6 +642,13 @@ class CBlockHeader(object):
             r += struct.pack("<I", self.nTime)
             r += struct.pack("<I", self.nBits)
             r += struct.pack("<I", self.nNonce)
+
+            if self.nTime > getAuxpowActivationTime():
+                hasAuxpowChildrenHash = self.has_auxpow_children_hash()
+                r += struct.pack("<?", hasAuxpowChildrenHash)
+                if hasAuxpowChildrenHash:
+                    r += ser_uint256(self.auxpowChildrenHash)
+
             self.sha256 = uint256_from_str(hash256(r))
             self.hash = encode(hash256(r)[::-1], 'hex_codec').decode('ascii')
 
