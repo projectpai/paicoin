@@ -68,14 +68,17 @@ def serialize_script_num(value):
 # Create a coinbase transaction, assuming no miner fees.
 # If pubkey is passed in, the coinbase output will be a P2PK output;
 # otherwise an anyone-can-spend output.
-def create_coinbase(height, pubkey = None):
+def create_coinbase(height, pubkey = None, coinbasevalue = None):
     coinbase = CTransaction()
     coinbase.vin.append(CTxIn(COutPoint(0, 0xffffffff), 
                 ser_string(serialize_script_num(height)), 0xffffffff))
     coinbaseoutput = CTxOut()
-    coinbaseoutput.nValue = 50 * COIN
-    halvings = int(height/150) # regtest
-    coinbaseoutput.nValue >>= halvings
+    if not coinbasevalue:
+        coinbaseoutput.nValue = 50 * COIN
+        halvings = int(height/150) # regtest
+        coinbaseoutput.nValue >>= halvings
+    else:
+        coinbaseoutput.nValue = coinbasevalue
     if (pubkey != None):
         coinbaseoutput.scriptPubKey = CScript([pubkey, OP_CHECKSIG])
     else:

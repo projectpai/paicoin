@@ -79,6 +79,7 @@ BASE_SCRIPTS= [
     'rawtransactions.py',
     'reindex.py',
     'auxpow_mining.py',
+    'auxpow_attacks.py',
     # vv Tests less than 30s vv
     'keypool-topup.py',
     'zmq_test.py',

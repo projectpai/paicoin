@@ -574,7 +574,7 @@ class CAuxPow():
 
         r += ser_uint256_vector(self.vChainMerkleBranch)
         r += struct.pack("<I", self.nChainIndex)
-        r += self.parentBlock.serialize()
+        r += self.parentBlock.serialize(include_auxpow=False)
         return r
 
 class CBlockHeader(object):
@@ -625,14 +625,14 @@ class CBlockHeader(object):
             if hasAuxpowChildrenHash:
                 self.auxpowChildrenHash = deser_uint256(f)
 
-        hasauxpow = struct.unpack("<?", f.read(1))[0]
-        if hasauxpow:
-            self.auxpow = CAuxPow()
-            self.auxpow.deserialize(f)
+            hasauxpow = struct.unpack("<?", f.read(1))[0]
+            if hasauxpow:
+                self.auxpow = CAuxPow()
+                self.auxpow.deserialize(f)
         self.sha256 = None
         self.hash = None
 
-    def serialize(self):
+    def serialize(self, include_auxpow=True):
         r = b""
         r += struct.pack("<i", self.nVersion)
         r += ser_uint256(self.hashPrevBlock)
@@ -647,10 +647,11 @@ class CBlockHeader(object):
             if hasAuxpowChildrenHash:
                 r += ser_uint256(self.auxpowChildrenHash)
 
-        hasauxpow = self.has_auxpow()
-        r += struct.pack("<?", hasauxpow)
-        if hasauxpow:
-            r += self.auxpow.serialize()
+            if include_auxpow:
+                hasauxpow = self.has_auxpow()
+                r += struct.pack("<?", hasauxpow)
+                if hasauxpow:
+                    r += self.auxpow.serialize()
 
         return r
 
@@ -666,8 +667,9 @@ class CBlockHeader(object):
 
             if self.nTime > getAuxpowActivationTime():
                 hasAuxpowChildrenHash = self.has_auxpow_children_hash()
-                r += struct.pack("<?", hasAuxpowChildrenHash)
+
                 if hasAuxpowChildrenHash:
+                    r += struct.pack("<?", hasAuxpowChildrenHash)
                     r += ser_uint256(self.auxpowChildrenHash)
 
             self.sha256 = uint256_from_str(hash256(r))
