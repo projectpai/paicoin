@@ -113,21 +113,22 @@ public:
 };
 
 /**
- * Data for the merge-mining auxpow.  This is a merkle tx (the parent block's
+ * Data for the merge-mining auxpow. This includes a merkle tx (the parent block's
  * coinbase tx) that can be verified to be in the parent block, and this
  * transaction's input (the coinbase script) contains the reference
  * to the actual merge-mined block.
  */
-class CAuxPow : public CMerkleTx
+class CAuxPow
 {
 
 /* Public for the unit tests.  */
 public:
+  CMerkleTx* pParentCoinbase;
 
-  /** The merkle branch connecting the aux block to our coinbase.  */
+  /** The merkle branch that proves that parent block references child block.  */
   std::vector<uint256> vChainMerkleBranch;
 
-  /** Merkle tree index of the aux block header in the coinbase.  */
+  /** A companion to the merkle branch, this describes position of child block hash in the merkle tree.  */
   int nChainIndex;
 
   /** Parent block header (on which the real PoW is done).  */
@@ -137,12 +138,39 @@ public:
 
   /* Prevent accidental conversion.  */
   inline explicit CAuxPow (CTransactionRef txIn)
-    : CMerkleTx (txIn)
-  {}
+  {
+      pParentCoinbase = new CMerkleTx(txIn);
+  }
 
   inline CAuxPow ()
-    : CMerkleTx ()
-  {}
+  {
+      pParentCoinbase = nullptr;
+  }
+
+  inline CAuxPow (const CAuxPow &obj)
+  {
+      *this = obj;
+  }
+
+  inline ~CAuxPow ()
+  {
+      delete pParentCoinbase;
+  }
+
+  CAuxPow& operator=(const CAuxPow& obj)
+  {
+      vChainMerkleBranch = obj.vChainMerkleBranch;
+      nChainIndex = obj.nChainIndex;
+      parentBlock = obj.parentBlock;
+
+      pParentCoinbase = nullptr;
+      if (obj.pParentCoinbase) {
+          pParentCoinbase = new CMerkleTx;
+          *pParentCoinbase = *obj.pParentCoinbase;
+      }
+
+      return *this;
+  }
 
   ADD_SERIALIZE_METHODS;
 
@@ -150,7 +178,29 @@ public:
     inline void
     SerializationOp (Stream& s, Operation ser_action)
   {
-    READWRITE (*static_cast<CMerkleTx*> (this));
+    if (ser_action.ForRead()) {
+        // see if parent coinbase is present
+        bool parentCoinbasePresent = false;
+        READWRITE(parentCoinbasePresent);
+        // read parent coinbase if present
+        if (parentCoinbasePresent) {
+            delete pParentCoinbase;
+            pParentCoinbase = new CMerkleTx;
+            assert(pParentCoinbase);
+            READWRITE(*pParentCoinbase);
+        }
+        else
+            pParentCoinbase = nullptr;
+    }
+    else {
+        // write coinbase presence
+        bool hasParentCoinbase = pParentCoinbase != nullptr;
+        READWRITE(hasParentCoinbase);
+        // write coinbase if exists
+        if (hasParentCoinbase)
+            READWRITE(*pParentCoinbase);
+    }
+
     READWRITE (vChainMerkleBranch);
     READWRITE (nChainIndex);
     READWRITE (parentBlock);

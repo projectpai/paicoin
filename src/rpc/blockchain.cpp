@@ -81,22 +81,26 @@ UniValue AuxpowToJSON(const CAuxPow& auxpow)
 {
     UniValue result(UniValue::VOBJ);
 
+    if (auxpow.pParentCoinbase != nullptr)   // standard auxpow format
     {
         UniValue tx(UniValue::VOBJ);
-        tx.push_back(Pair("hex", EncodeHexTx(*auxpow.tx)));
-        TxToJSON(*auxpow.tx, auxpow.parentBlock.GetHash(), tx);
+        tx.push_back(Pair("hex", EncodeHexTx(*auxpow.pParentCoinbase->tx)));
+        TxToJSON(*auxpow.pParentCoinbase->tx, auxpow.parentBlock.GetHash(), tx);
         result.push_back(Pair("tx", tx));
-    }
 
-    result.push_back(Pair("index", auxpow.nIndex));
-    result.push_back(Pair("chainindex", auxpow.nChainIndex));
+        result.push_back(Pair("index", auxpow.pParentCoinbase->nIndex));
 
-    {
         UniValue branch(UniValue::VARR);
-        for (const auto& node : auxpow.vMerkleBranch)
+        for (const auto& node : auxpow.pParentCoinbase->vMerkleBranch)
             branch.push_back(node.GetHex());
         result.push_back(Pair("merklebranch", branch));
     }
+    else if (auxpow.parentBlock.pAuxpowChildrenHash != nullptr) // lean auxpow format
+    {
+        result.push_back(Pair("childrenhash", auxpow.parentBlock.pAuxpowChildrenHash->GetHex()));
+    }
+
+    result.push_back(Pair("chainindex", auxpow.nChainIndex));
 
     {
         UniValue branch(UniValue::VARR);

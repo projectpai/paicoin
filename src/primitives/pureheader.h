@@ -20,6 +20,8 @@
  */
 class CPureBlockHeader
 {
+    static bool _serializationForHashCompatibility;
+
 public:
     // header
     int32_t nVersion;
@@ -45,6 +47,13 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+
+        // block header hash is calculated using serialization and hashing the serialized stream (see GetHash() member);
+        // in case "auxpow children hash" is not present, we must not let null pointer contribute to header hash;
+        // without this provision, it wouldn't be possible to use Bitcoin block header as auxpow,
+        // as it would hash to something else than it did in Bitcoin, and thus no longer satisfy difficulty
+        if (pAuxpowChildrenHash == nullptr && _serializationForHashCompatibility)
+            return;
 
         bool ParamsInitialized();
 
