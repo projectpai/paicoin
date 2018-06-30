@@ -290,17 +290,12 @@ bool Investor::DoesScriptPayToMultisigAddress(const CScript& script, const std::
         return false;
     }
 
-    std::vector<unsigned char> vaddr;
-    vaddr.resize(21 - 1);
-
-    std::vector<unsigned char> prefix = Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS);
-    vaddr.insert(vaddr.begin(), prefix.begin(), prefix.begin() + 1);
-
-    CHash160 hash160;
-    hash160.Write(&script[2], 20);
-    hash160.Finalize(&vaddr[1]);
-
-    std::string scriptAddress = EncodeBase58Check(vaddr);
+    CTxDestination txDestination;
+    std::string scriptAddress;
+    if (ExtractDestination(script, txDestination))
+    {
+        scriptAddress = EncodeDestination(txDestination);
+    }
 
     if ((scriptAddress.size() == 0) || (multisigAddress != scriptAddress)) {
         return false;
@@ -392,7 +387,7 @@ void Investor::SetPublicKey(const CWallet& wallet, const CPubKey& pubKey)
     }
 
     // refresh the investor balance
-    //UpdateGlobalBalance(wallet);
+    UpdateGlobalBalance(wallet);
 }
 
 // all addreses
