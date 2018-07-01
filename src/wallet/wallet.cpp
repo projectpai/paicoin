@@ -1192,7 +1192,6 @@ bool CWallet::AddToWalletIfInvolvingMe(const CTransactionRef& ptx, const CBlockI
              * This can happen when restoring an old wallet backup that does not contain
              * the mostly recently created transactions from newer versions of the wallet.
              */
-
             // loop though all outputs
             for (const CTxOut& txout: tx.vout) {
                 // extract addresses and check if they match with an unused keypool key
@@ -1354,6 +1353,7 @@ void CWallet::MarkConflicted(const uint256& hashBlock, const uint256& hashTx)
 }
 
 void CWallet::SyncTransaction(const CTransactionRef& ptx, const CBlockIndex *pindex, int posInBlock) {
+
     const CTransaction& tx = *ptx;
 
     if (!AddToWalletIfInvolvingMe(ptx, pindex, posInBlock, true))
@@ -1368,6 +1368,8 @@ void CWallet::SyncTransaction(const CTransactionRef& ptx, const CBlockIndex *pin
             it->second.MarkDirty();
         }
     }
+
+    Investor::GetInstance().UpdateGlobalBalance(*this);
 }
 
 void CWallet::TransactionAddedToMempool(const CTransactionRef& ptx) {
