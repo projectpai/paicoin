@@ -526,31 +526,52 @@ class CTransaction(object):
         return "CTransaction(nVersion=%i vin=%s vout=%s wit=%s nLockTime=%i)" \
             % (self.nVersion, repr(self.vin), repr(self.vout), repr(self.wit), self.nLockTime)
 
-class CAuxPow(CTransaction):
+class CMerkleTx():
     def __init__(self):
-        super(CAuxPow, self).__init__()
+        self.tx = None
         self.hashBlock = 0
         self.vMerkleBranch = []
         self.nIndex = 0
+
+    def deserialize(self, f):
+        self.tx.deserialize(f)
+        self.hashBlock = deser_uint256(f)
+        self.vMerkleBranch = deser_uint256_vector(f)
+        self.nIndex = struct.unpack("<I", f.read(4))[0]
+
+    def serialize(self):
+        r = b""
+        r += self.tx.serialize()
+        r += ser_uint256(self.hashBlock)
+        r += ser_uint256_vector(self.vMerkleBranch)
+        r += struct.pack("<I", self.nIndex)
+        return r
+
+class CAuxPow():
+    def __init__(self):
+        self.parentCoinbase = None
         self.vChainMerkleBranch = []
         self.nChainIndex = 0
         self.parentBlock = CBlockHeader()
 
     def deserialize(self, f):
-        super(CAuxPow, self).deserialize(f)
-        self.hashBlock = deser_uint256(f)
-        self.vMerkleBranch = deser_uint256_vector(f)
-        self.nIndex = struct.unpack("<I", f.read(4))[0]
+        hasCoinbase = struct.unpack("<?", f.read(1))[0]
+        if hasCoinbase:
+            if not self.parentCoinbase:
+                self.parentCoinbase = CMerkleTx()
+            self.parentCoinbase.deserialize(f)
+
         self.vChainMerkleBranch = deser_uint256_vector(f)
         self.nChainIndex = struct.unpack("<I", f.read(4))[0]
         self.parentBlock.deserialize(f)
 
     def serialize(self):
         r = b""
-        r += super(CAuxPow, self).serialize()
-        r += ser_uint256(self.hashBlock)
-        r += ser_uint256_vector(self.vMerkleBranch)
-        r += struct.pack("<I", self.nIndex)
+        hasCoinbase = self.parentCoinbase is not None
+        r += struct.pack("<?", hasCoinbase)
+        if hasCoinbase:
+            r += self.parentCoinbase.serialize()
+
         r += ser_uint256_vector(self.vChainMerkleBranch)
         r += struct.pack("<I", self.nChainIndex)
         r += self.parentBlock.serialize()
