@@ -50,7 +50,8 @@ def computeAuxpow (block, target, ok):
   (header, blockhash) = mineBlock (header, target, ok)
 
   # Build the MerkleTx part of the auxpow.
-  auxpow = tx
+  auxpow = b"01"
+  auxpow += tx
   auxpow += blockhash
   auxpow += b"00"
   auxpow += b"00" * 4
