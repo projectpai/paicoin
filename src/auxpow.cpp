@@ -78,51 +78,59 @@ bool CMerkleTx::AcceptToMemoryPool(const CAmount& nAbsurdFee, CValidationState& 
 bool
 CAuxPow::check (const uint256& hashAuxBlock, const Consensus::Params& params) const
 {
-    if (nIndex != 0)
-        return error("AuxPow is not a generate");
-
     if (vChainMerkleBranch.size() > 30)
         return error("Aux POW chain merkle branch too long");
 
-    // Check that the chain merkle root is in the coinbase
-    const uint256 nRootHash
-      = CheckMerkleBranch (hashAuxBlock, vChainMerkleBranch, nChainIndex);
-    valtype vchRootHash(nRootHash.begin (), nRootHash.end ());
-    std::reverse (vchRootHash.begin (), vchRootHash.end ()); // correct endian
+    // Calculate children hash root using our child block hash
+    const uint256 nRootHash = CheckMerkleBranch (hashAuxBlock, vChainMerkleBranch, nChainIndex);
 
-    // Check that we are in the parent block merkle tree
-    if (CheckMerkleBranch(GetHash(), vMerkleBranch, nIndex)
-          != parentBlock.hashMerkleRoot)
-        return error("Aux POW merkle root incorrect");
-
-    const CScript script = tx->vin[0].scriptSig;
-
-    CScript::const_iterator pcHead =
-        std::search(script.begin(), script.end(), UBEGIN(pchMergedMiningHeader), UEND(pchMergedMiningHeader));
-
-    CScript::const_iterator pc =
-        std::search(script.begin(), script.end(), vchRootHash.begin(), vchRootHash.end());
-
-    // Check that parent coinbase references the block from our chain
-    if (pc == script.end())
-        return error("Aux POW missing chain merkle root in parent coinbase");
-
-    if (pcHead != script.end())
+    if (pParentCoinbase) // classic auxpow
     {
-        // Enforce only one chain merkle root by checking that a single instance of the merged
-        // mining header exists just before.
-        if (script.end() != std::search(pcHead + 1, script.end(), UBEGIN(pchMergedMiningHeader), UEND(pchMergedMiningHeader)))
-            return error("Multiple merged mining headers in coinbase");
-        if (pcHead + sizeof(pchMergedMiningHeader) != pc)
-            return error("Merged mining header is not just before chain merkle root");
+        // Coinbase should be the first transaction and thus its merkle branch index should be 0
+        if (pParentCoinbase->nIndex != 0)
+            return error("AuxPow is not a generate");
+
+        // Check that the coinbase indeed belongs to parent transactions
+        if (CheckMerkleBranch(pParentCoinbase->GetHash(), pParentCoinbase->vMerkleBranch, pParentCoinbase->nIndex) != parentBlock.hashMerkleRoot)
+            return error("Aux POW merkle root incorrect");
+
+        const CScript script = pParentCoinbase->tx->vin[0].scriptSig;
+
+        // Check that the children hash is in the coinbase
+        valtype vchRootHash(nRootHash.begin (), nRootHash.end ());
+        std::reverse (vchRootHash.begin (), vchRootHash.end ()); // correct endian
+        CScript::const_iterator pc = std::search(script.begin(), script.end(), vchRootHash.begin(), vchRootHash.end());
+        if (pc == script.end())
+            return error("Aux POW missing chain merkle root in parent coinbase");
+
+        // Check merged mining header in the script
+        CScript::const_iterator pcHead = std::search(script.begin(), script.end(), UBEGIN(pchMergedMiningHeader), UEND(pchMergedMiningHeader));
+        if (pcHead != script.end())
+        {
+            // Enforce only one chain merkle root by checking that a single instance of the merged
+            // mining header exists just before.
+            if (script.end() != std::search(pcHead + 1, script.end(), UBEGIN(pchMergedMiningHeader), UEND(pchMergedMiningHeader)))
+                return error("Multiple merged mining headers in coinbase");
+            if (pcHead + sizeof(pchMergedMiningHeader) != pc)
+                return error("Merged mining header is not just before chain merkle root");
+        }
+        else
+        {
+            // For backward compatibility.
+            // Enforce only one chain merkle root by checking that it starts early in the coinbase.
+            // 8-12 bytes are enough to encode extraNonce and nBits.
+            if (pc - script.begin() > 20)
+                return error("Aux POW chain merkle root must start in the first 20 bytes of the parent coinbase");
+        }
     }
-    else
+    else    // lean auxpow
     {
-        // For backward compatibility.
-        // Enforce only one chain merkle root by checking that it starts early in the coinbase.
-        // 8-12 bytes are enough to encode extraNonce and nBits.
-        if (pc - script.begin() > 20)
-            return error("Aux POW chain merkle root must start in the first 20 bytes of the parent coinbase");
+        assert(parentBlock.pAuxpowChildrenHash != nullptr);
+        if (parentBlock.pAuxpowChildrenHash == nullptr)
+            return error("Missing children root hash");
+
+        if (nRootHash != *parentBlock.pAuxpowChildrenHash)
+            return error("Aux POW missing chain merkle root in parent block header");
     }
 
     return true;
@@ -152,6 +160,9 @@ CAuxPow::initAuxPow (CBlockHeader& header)
 {
   assert (header.nTime >= Params().GetConsensus().nAuxpowActivationTime);
 
+#if 1
+  // build a classic auxpow object
+
   /* Build a minimal coinbase script input for merge-mining.  */
   const uint256 blockHash = header.GetHash ();
   valtype inputData(blockHash.begin (), blockHash.end ());
@@ -177,7 +188,23 @@ CAuxPow::initAuxPow (CBlockHeader& header)
   header.SetAuxpow (new CAuxPow (coinbaseRef));
   assert (header.auxpow->vChainMerkleBranch.empty ());
   header.auxpow->nChainIndex = 0;
-  assert (header.auxpow->vMerkleBranch.empty ());
-  header.auxpow->nIndex = 0;
+  assert (header.auxpow->pParentCoinbase->vMerkleBranch.empty ());
+  header.auxpow->pParentCoinbase->nIndex = 0;
   header.auxpow->parentBlock = parent;
+
+#else
+  // build a lean auxpow object
+
+  /* Build a fake parent block that references our (child) block.  */
+  CBlock parent;
+  parent.nVersion = 1;
+  parent.hashMerkleRoot = BlockMerkleRoot (parent);
+  parent.pAuxpowChildrenHash.reset(new uint256(header.GetHash()));
+
+  /* Construct the auxpow object.  */
+  header.SetAuxpow (new CAuxPow ());
+  assert (header.auxpow->vChainMerkleBranch.empty ());
+  header.auxpow->nChainIndex = 0;
+  header.auxpow->parentBlock = parent;
+#endif
 }
