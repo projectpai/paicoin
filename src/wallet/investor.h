@@ -114,7 +114,7 @@ private:
         CScript redeemScript;
 
         // the current balance of the multisig address
-        uint64_t balance;
+        int64_t balance;
     } HoldingPeriod;
 
     std::vector<HoldingPeriod> HoldingPeriods;
