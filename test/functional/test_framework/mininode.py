@@ -533,6 +533,15 @@ class CMerkleTx():
         self.vMerkleBranch = []
         self.nIndex = 0
 
+    @classmethod
+    def fromData(cls, tx, hashBlock, vMerkleBranch, nIndex):
+        merkleTx = cls()
+        merkleTx.tx = tx
+        merkleTx.hashBlock = hashBlock
+        merkleTx.vMerkleBranch = vMerkleBranch
+        merkleTx.nIndex = nIndex
+        return merkleTx
+
     def deserialize(self, f):
         self.tx.deserialize(f)
         self.hashBlock = deser_uint256(f)
@@ -553,6 +562,15 @@ class CAuxPow():
         self.vChainMerkleBranch = []
         self.nChainIndex = 0
         self.parentBlock = CBlockHeader()
+
+    @classmethod
+    def fromData(cls, parentCoinbase, vChainMerkleBranch, nChainIndex, parentBlock):
+        auxpow = cls()
+        auxpow.parentCoinbase = parentCoinbase
+        auxpow.vChainMerkleBranch = vChainMerkleBranch
+        auxpow.nChainIndex = nChainIndex
+        auxpow.parentBlock = CBlockHeader(header=parentBlock)
+        return auxpow
 
     def deserialize(self, f):
         hasCoinbase = struct.unpack("<?", f.read(1))[0]
