@@ -41,38 +41,16 @@ class AuxPowAttackTest(PAIcoinTestFramework):
         child_blk_tmpl = node_child_chain.getblocktemplate()
 
         # create first child block of auxpow attack
-        coinbase_tx = create_coinbase(height=int(child_blk_tmpl["height"]) + 1)
-        coinbase_tx.vin[0].nSequence = 2 ** 32 - 2
-        coinbase_tx.rehash()
-
-        block1 = CBlock()
-        block1.nVersion = child_blk_tmpl["version"]
-        block1.hashPrevBlock = int(child_blk_tmpl["previousblockhash"], 16)
-        block1.nTime = child_blk_tmpl["curtime"]
-        block1.nBits = int(child_blk_tmpl["bits"], 16)
-        block1.nNonce = 0
-        block1.vtx = [coinbase_tx]
-        block1.hashMerkleRoot = block1.calc_merkle_root()
-        block1.rehash()
+        coinbase_tx = self.createCoinbaseWithSequence(height=int(child_blk_tmpl["height"]) + 1)
+        child_block1 = self.createBlockFromTemplate(block_template=child_blk_tmpl, coinbase_tx=coinbase_tx)
 
         # create second child block of auxpow attack
-        coinbase_tx = create_coinbase(height=int(child_blk_tmpl["height"]) + 2)
-        coinbase_tx.vin[0].nSequence = 2 ** 32 - 2
-        coinbase_tx.rehash()
+        coinbase_tx = self.createCoinbaseWithSequence(height=int(child_blk_tmpl["height"]) + 2)
+        child_block2 = self.createBlockFromTemplate(block_template=child_blk_tmpl, coinbase_tx=coinbase_tx, hash_prevblock=child_block1.sha256)
 
-        block2 = CBlock()
-        block2.nVersion = child_blk_tmpl["version"]
-        block2.hashPrevBlock = block1.sha256
-        block2.nTime = child_blk_tmpl["curtime"]
-        block2.nBits = int(child_blk_tmpl["bits"], 16)
-        block2.nNonce = 0
-        block2.vtx = [coinbase_tx]
-        block2.hashMerkleRoot = block2.calc_merkle_root()
-        block2.rehash()
-
-        hash_block1 = bytearray(binascii.unhexlify(block1.hash))
+        hash_block1 = bytearray(binascii.unhexlify(child_block1.hash))
         hash_block1.reverse()
-        hash_block2 = bytearray(binascii.unhexlify(block2.hash))
+        hash_block2 = bytearray(binascii.unhexlify(child_block2.hash))
         hash_block2.reverse()
 
         combined_hash = hash256(hash_block1 + hash_block2)
@@ -82,51 +60,27 @@ class AuxPowAttackTest(PAIcoinTestFramework):
         # create parent block of auxpow attack
         node_parent_chain.generate(1)
         parent_blk_tmpl = node_parent_chain.getblocktemplate()
-        coinbase_tx = create_coinbase(height=int(parent_blk_tmpl["height"]) + 1)
-        coinbase_tx.vin[0].nSequence = 2 ** 32 - 2
+        coinbase_tx = self.createCoinbaseWithSequence(height=int(parent_blk_tmpl["height"]) + 1)
         coinbase_tx.vin[0].scriptSig += b"fabe" + binascii.hexlify (b"m" * 2)
         coinbase_tx.vin[0].scriptSig += combined_hash
         coinbase_tx.vin[0].scriptSig += b"01000000" + (b"00" * 4)
         coinbase_tx.rehash()
 
-        block_parent = CBlock()
-        block_parent.nVersion = parent_blk_tmpl["version"]
-        block_parent.hashPrevBlock = int(parent_blk_tmpl["previousblockhash"], 16)
-        block_parent.nTime = parent_blk_tmpl["curtime"]
-        block_parent.nBits = int(parent_blk_tmpl["bits"], 16)
-        block_parent.nNonce = 0
-        block_parent.vtx = [coinbase_tx]
-        block_parent.hashMerkleRoot = block_parent.calc_merkle_root()
-        block_parent.rehash()
-        block_parent.solve()
+        parent_block = self.createBlockFromTemplate(block_template=parent_blk_tmpl, coinbase_tx=coinbase_tx)
+        parent_block.solve()
 
-        node_parent_chain.submitblock(ToHex(block_parent))
-
-        # Now, build valid auxpow information to submit to child chain
-        merkleTx = CMerkleTx()
-        merkleTx.tx = copy.deepcopy(coinbase_tx)
-        merkleTx.hashBlock = block_parent.sha256
-        merkleTx.vMerkleBranch = []
-        merkleTx.nIndex = 0
-
-        auxpow = CAuxPow()
-        auxpow.parentCoinbase = merkleTx
-        auxpow.vChainMerkleBranch = [block2.sha256]
-        auxpow.nChainIndex = 0
-        auxpow.parentBlock = CBlockHeader(header=block_parent)
-
-        block1.auxpow = auxpow
-        result = node_child_chain.submitblock(ToHex(block1))
+        result = node_parent_chain.submitblock(ToHex(parent_block))
         assert result is None
 
-        auxpow2 = CAuxPow()
-        auxpow2.parentCoinbase = copy.deepcopy(merkleTx)
-        auxpow2.vChainMerkleBranch = [block1.sha256]
-        auxpow2.nChainIndex = 1
-        auxpow2.parentBlock = CBlockHeader(header=block_parent)
+        # Now, build valid auxpow information to submit to child chain
+        merkleTx = CMerkleTx.fromData(copy.deepcopy(coinbase_tx), parent_block.sha256, [], 0)
 
-        block2.auxpow = auxpow2
-        result = node_child_chain.submitblock(ToHex(block2))
+        child_block1.auxpow = CAuxPow.fromData(merkleTx, [child_block2.sha256], 0, parent_block)
+        result = node_child_chain.submitblock(ToHex(child_block1))
+        assert result is None
+
+        child_block2.auxpow = CAuxPow.fromData(copy.deepcopy(merkleTx), [child_block1.sha256], 1, parent_block)
+        result = node_child_chain.submitblock(ToHex(child_block2))
         assert 'auxpow-double-proof' in result
 
         # Sync blocks within their own chains
@@ -212,10 +166,15 @@ class AuxPowAttackTest(PAIcoinTestFramework):
         return coinbase_tx
 
     @staticmethod
-    def createBlockFromTemplate(block_template, coinbase_tx=None):
+    def createBlockFromTemplate(block_template, coinbase_tx=None, hash_prevblock=None):
         block = CBlock()
         block.nVersion = block_template["version"]
-        block.hashPrevBlock = int(block_template["previousblockhash"], 16)
+
+        if hash_prevblock is None:
+            block.hashPrevBlock = int(block_template["previousblockhash"], 16)
+        else:
+            block.hashPrevBlock = hash_prevblock
+
         block.nTime = block_template["curtime"]
         block.nBits = int(block_template["bits"], 16)
         block.nNonce = 0
