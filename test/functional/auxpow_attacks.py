@@ -140,58 +140,28 @@ class AuxPowAttackTest(PAIcoinTestFramework):
         node_chain.generate(1)
         block_template = node_chain.getblocktemplate()
 
-        # create first child block of auxpow attack
-        coinbase_tx = create_coinbase(height=int(block_template["height"]) + 1)
-        coinbase_tx.vin[0].nSequence = 2 ** 32 - 2
-        coinbase_tx.rehash()
+        # create merged mined block of auxpow attack
+        coinbase_tx = self.createCoinbaseWithSequence(height=int(block_template["height"]) + 1)
+        merged_mined_block = self.createBlockFromTemplate(block_template=block_template, coinbase_tx=coinbase_tx)
+        hash_merged_mined_block = bytearray(binascii.unhexlify(merged_mined_block.hash))
 
-        merged_mined_block = CBlock()
-        merged_mined_block.nVersion = block_template["version"]
-        merged_mined_block.hashPrevBlock = int(block_template["previousblockhash"], 16)
-        merged_mined_block.nTime = block_template["curtime"]
-        merged_mined_block.nBits = int(block_template["bits"], 16)
-        merged_mined_block.nNonce = 0
-        merged_mined_block.vtx = [coinbase_tx]
-        merged_mined_block.hashMerkleRoot = merged_mined_block.calc_merkle_root()
-        merged_mined_block.rehash()
-
-        hash_block1 = bytearray(binascii.unhexlify(merged_mined_block.hash))
-
-        # create parent block of auxpow attack
-        coinbase_tx = create_coinbase(height=int(block_template["height"]) + 1)
-        coinbase_tx.vin[0].nSequence = 2 ** 32 - 2
+        # create parent block of auxpow attack, include in coinbase the merged mined block hash
+        coinbase_tx = self.createCoinbaseWithSequence(height=int(block_template["height"]) + 1)
         coinbase_tx.vin[0].scriptSig += b"fabe" + binascii.hexlify (b"m" * 2)
-        coinbase_tx.vin[0].scriptSig += hash_block1
+        coinbase_tx.vin[0].scriptSig += hash_merged_mined_block
         coinbase_tx.vin[0].scriptSig += b"01000000" + (b"00" * 4)
         coinbase_tx.rehash()
 
-        block_parent = CBlock()
-        block_parent.nVersion = block_template["version"]
-        block_parent.hashPrevBlock = int(block_template["previousblockhash"], 16)
-        block_parent.nTime = block_template["curtime"]
-        block_parent.nBits = int(block_template["bits"], 16)
-        block_parent.nNonce = 0
-        block_parent.vtx = [coinbase_tx]
-        block_parent.hashMerkleRoot = block_parent.calc_merkle_root()
-        block_parent.rehash()
-        block_parent.solve()
+        parent_block = self.createBlockFromTemplate(block_template=block_template, coinbase_tx=coinbase_tx)
+        parent_block.solve()
 
-        node_chain.submitblock(ToHex(block_parent))
+        result = node_chain.submitblock(ToHex(parent_block))
+        assert result is None
 
-        # Now, build valid auxpow information to submit to child chain
-        merkleTx = CMerkleTx()
-        merkleTx.tx = copy.deepcopy(coinbase_tx)
-        merkleTx.hashBlock = block_parent.sha256
-        merkleTx.vMerkleBranch = []
-        merkleTx.nIndex = 0
+        # Now, build valid auxpow information to try to submit to the chain
+        merkleTx = CMerkleTx.fromData(copy.deepcopy(coinbase_tx), parent_block.sha256, [], 0)
+        merged_mined_block.auxpow = CAuxPow.fromData(merkleTx, [], 0, parent_block)
 
-        auxpow = CAuxPow()
-        auxpow.parentCoinbase = merkleTx
-        auxpow.vChainMerkleBranch = []
-        auxpow.nChainIndex = 0
-        auxpow.parentBlock = CBlockHeader(header=block_parent)
-
-        merged_mined_block.auxpow = auxpow
         result = node_chain.submitblock(ToHex(merged_mined_block))
         assert 'auxpow-self' in result
 
