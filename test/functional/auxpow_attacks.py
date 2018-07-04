@@ -30,10 +30,10 @@ class AuxPowAttackTest(PAIcoinTestFramework):
     def run_test(self):
         # simulate 2 chains/networks for parent/child chain
         self.split_network()
-        #self.test_doubleProofAttack()
-        #self.test_selfMergeAttack_Parent_Merged()
-        #self.test_selfMergeAttack_Merged_Parent()
-        #self.test_selfMergeAttack_Parent_Merged_WithDepth()
+        self.test_doubleProofAttack()
+        self.test_selfMergeAttack_Parent_Merged()
+        self.test_selfMergeAttack_Merged_Parent()
+        self.test_selfMergeAttack_Parent_Merged_WithDepth()
         self.test_invalidMerkleBranch()
 
     def test_doubleProofAttack(self):
