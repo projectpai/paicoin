@@ -837,7 +837,7 @@ void PAIcoinGUI::interruptForPinRequest(bool newPin)
 {
     previousState = state;
 
-    if (previousState == PAIcoinGUIState::Init)
+    if (previousState == PAIcoinGUIState::Init || previousState == PAIcoinGUIState::PaperKeyCompletion)
     {
         appMenuBar->hide();
         toolbar->hide();
@@ -862,6 +862,7 @@ void PAIcoinGUI::continueFromPinRequest()
     switch(previousState)
     {
     case PAIcoinGUIState::Init:
+    case PAIcoinGUIState::PaperKeyCompletion:
         mainStackedWidget->setCurrentWidget(walletFrame);
 
         appMenuBar->show();
@@ -887,8 +888,6 @@ void PAIcoinGUI::continueFromPinRequest()
         createNewWallet();
         break;
     case PAIcoinGUIState::PaperKeyWritedown:
-        break;
-    case PAIcoinGUIState::PaperKeyCompletion:
         break;
     default:
         break;
