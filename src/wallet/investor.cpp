@@ -147,6 +147,16 @@ Investor::Investor()
                                    .multisigAddress = std::string(""),
                                    .redeemScript = CScript(),
                                    .balance = 0});
+
+        privKeyVector = ParseHex("");
+        privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
+        HoldingPeriods.push_back( {.expirationTimestamp = 1544572800,  // December 12, 2018, 00:00:00 GMT
+                                   .paiPublicKey = CPubKey(ParseHex("04de53fc46e886859f2cd7a6b4fb96edfa4de3c3a59357339dd94e5702a70ab70af9262880015d0cfddf9bca53b5e89efe23368ac1154d4376b5230c6d457788ff")),
+                                   .paiPrivateKey = privKey,
+                                   .investorPublicKey = CPubKey(),
+                                   .multisigAddress = std::string(""),
+                                   .redeemScript = CScript(),
+                                   .balance = 0});
     }
 
     // testnet or regtest
