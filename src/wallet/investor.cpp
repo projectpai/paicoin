@@ -12,6 +12,8 @@
 #include "wallet.h"
 #include "script/standard.h"
 #include "fees.h"
+#include <core_io.h>
+#include "policy/policy.h"
 
 Investor& Investor::GetInstance()
 {
@@ -722,99 +724,97 @@ bool Investor::CreateUnlockTransaction(CWallet& wallet, const CKey& privateKey, 
         return false;
     }
     
-    // calculate the miner fee (including the output size of approx. 34 bytes)
-    uint64_t fee = GetRequiredFee(CTransaction(unlockTransaction).GetTotalSize() + 34);
-    
     // add the personal address output
     CTxOut output;
-    output.nValue = totalAmount - fee;
+    output.nValue = totalAmount;
     output.scriptPubKey = CScript() << OP_DUP << OP_HASH160 << ToByteVector(pubKey.GetID()) << OP_EQUALVERIFY << OP_CHECKSIG;
 
     unlockTransaction.vout.push_back(output);
-    
-//    // sign all inputs (maintain all the signature separated from the transaction until finishing all signatures)
-//    uint8_t *sigScript[unlockTransaction->inCount];
-//    memset(sigScript, 0, sizeof(sigScript));
-//    size_t sigScriptLen[unlockTransaction->inCount];
-//    memset(sigScriptLen, 0, sizeof(sigScriptLen));
-//    for (int i = 0; i < unlockTransaction->inCount; i++) {
-//        BRTxInput *input = &unlockTransaction->inputs[i];
-        
-//        // find PAI private key
-//        BRKey paiPrivateKey = { .secret = UINT256_ZERO, .pubKey = {0}, .compressed = 0 };
-//        for (int j = 0; (j < BRHoldingPeriodsCount) && UInt256IsZero(paiPrivateKey.secret); j++) {
-//            _BRHoldingPeriod *period = &BRHoldingPeriods[j];
-            
-//            if (BRAddressEq(input->address, period->multisigAddress)) {
-//                paiPrivateKey.secret = u256_hex_decode(period->paiPrivateKey);
-//            }
-//        }
-        
-//        if (UInt256IsZero(paiPrivateKey.secret)) {
-//            continue;
-//        }
-        
-//        // create the message hash to be signed
-//        UInt256 md = UINT256_ZERO;
-//        uint8_t data[BRTransactionData(unlockTransaction, NULL, 0, i, SIGHASH_ALL)];
-//        size_t dataLen = BRTransactionData(unlockTransaction, data, sizeof(data), i, SIGHASH_ALL);
-//        BRSHA256_2(&md, data, dataLen);
-        
-//        // sign by the investor
-//        uint8_t sigInvestor[73];
-//        memset(sigInvestor, 0, sizeof(sigInvestor));
-//        size_t sigInvestorLen = BRKeySign(privateKey, sigInvestor, sizeof(sigInvestor) - 1, md);
-//        sigInvestor[sigInvestorLen++] = SIGHASH_ALL;
-        
-//        // sign by PAI
-//        uint8_t sigPai[73];
-//        memset(sigPai, 0, sizeof(sigPai));
-//        size_t sigPaiLen = BRKeySign(&paiPrivateKey, sigPai, sizeof(sigPai) - 1, md);
-//        sigPai[sigPaiLen++] = SIGHASH_ALL;
-        
-//        // build signature script
-//        size_t sigScriptMaxSize = 1 + 1 + sigInvestorLen + 1 + sigPaiLen + (input->scriptLen >= OP_PUSHDATA1 ? 1 : 0) + 1 + input->scriptLen;
-//        sigScript[i] = (uint8_t*)malloc(sigScriptMaxSize);
-//        memset(sigScript[i], 0, sigScriptMaxSize);
-//        sigScriptLen[i] = 0;
-        
-//        sigScript[i][sigScriptLen[i]++] = OP_0;
 
-//        sigScript[i][sigScriptLen[i]++] = sigInvestorLen;
-//        memcpy(&sigScript[i][sigScriptLen[i]], sigInvestor, sigInvestorLen);
-//        sigScriptLen[i] += sigInvestorLen;
+    // duplicate the unlocking transaction and add the signatures in order to calculate the fee using the correct size
+    CMutableTransaction unlockTransactionForSigning(unlockTransaction);
+    SignUnlockTransaction(wallet, privateKey, unlockTransactionForSigning);
 
-//        sigScript[i][sigScriptLen[i]++] = sigPaiLen;
-//        memcpy(&sigScript[i][sigScriptLen[i]], sigPai, sigPaiLen);
-//        sigScriptLen[i] += sigPaiLen;
+    // calculate the miner fee (based on the size round up to the nearest kb)
+    uint64_t fee = GetRequiredFee(GetVirtualTransactionSize(unlockTransactionForSigning, 2));
 
-//        if (input->scriptLen >= OP_PUSHDATA1) {
-//            sigScript[i][sigScriptLen[i]++] = OP_PUSHDATA1;
-//        }
-//        sigScript[i][sigScriptLen[i]++] = input->scriptLen;
-//        memcpy(&sigScript[i][sigScriptLen[i]], input->script, input->scriptLen);
-//        sigScriptLen[i] += input->scriptLen;
-//    }
-    
-//    // store the signatures
-//    for (int i = 0; i < unlockTransaction->inCount; i++) {
-//        BRTxInputSetSignature(&unlockTransaction->inputs[i], sigScript[i], sigScriptLen[i]);
-//        free(sigScript[i]);
-//        sigScript[i] = NULL;
-//    }
+    // adjust the output value to consider the fee and sign the original transaction
+    unlockTransaction.vout[0].nValue = totalAmount - fee;
+    SignUnlockTransaction(wallet, privateKey, unlockTransaction);
 
-    wallet.SignTransaction(unlockTransaction);
-    
-//    if (BRTransactionIsSigned(unlockTransaction)) {
-//        uint8_t data[BRTransactionData(unlockTransaction, NULL, 0, SIZE_MAX, 0)];
-//        size_t len = BRTransactionData(unlockTransaction, data, sizeof(data), SIZE_MAX, 0);
-        
-//        BRSHA256_2(&unlockTransaction->txHash, data, len);
-//    }
-    
-    std::cout << "Unlock transaction: " << CTransaction(unlockTransaction).ToString();
+    //std::cout << "Unlock transaction: " << CTransaction(unlockTransaction).ToString();
+    //std::cout.flush();
+
+    //std::cout << "Unlock transaction hex: " << EncodeHexTx(unlockTransaction);
+    //std::cout.flush();
     
     return true;
+}
+
+void Investor::SignUnlockTransaction(CWallet& wallet, const CKey& privateKey, CMutableTransaction& unlockTransaction) {
+    // sign all inputs (maintain all the signature separated from the transaction until finishing all signatures)
+    std::vector<CScript> sigScript;
+    for (size_t i = 0; i < unlockTransaction.vin.size(); i++) {
+        CTxIn *input = &unlockTransaction.vin[i];
+
+        // find PAI private key
+        CKey paiPrivateKey;
+        for (auto&& period : HoldingPeriods) {
+            if (!period.paiPrivateKey.IsValid()) {
+                continue;
+            }
+
+            if (input->scriptSig == period.redeemScript) {
+                paiPrivateKey = period.paiPrivateKey;
+                break;
+            }
+        }
+
+        if (!paiPrivateKey.IsValid()) {
+            continue;
+        }
+
+        // create the message hash to be signed
+        uint256 md = SignatureHash(input->scriptSig, unlockTransaction, i, SIGHASH_ALL, 0 /* not necessary for SIGVERSION_BASE */, SIGVERSION_BASE);
+        if (md.IsNull()) {
+            continue;
+        }
+
+        // sign by the investor
+        std::vector<unsigned char> sigInvestor;
+        if (!privateKey.Sign(md, sigInvestor)) {
+            continue;
+        }
+        sigInvestor.push_back(SIGHASH_ALL);
+
+        // sign by PAI
+        std::vector<unsigned char> sigPai;
+        if (!paiPrivateKey.Sign(md, sigPai)) {
+            continue;
+        }
+        sigPai.push_back(SIGHASH_ALL);
+
+        // build signature script
+        CScript script;
+
+        script << OP_0;
+
+        script << sigInvestor;
+
+        script << sigPai;
+
+        script << std::vector<unsigned char>(input->scriptSig.begin(), input->scriptSig.end());
+
+        sigScript.push_back(script);
+
+        script.clear();
+    }
+
+    // store the signatures
+    for (size_t i = 0; i < unlockTransaction.vin.size(); i++) {
+        unlockTransaction.vin[i].scriptSig = sigScript[i];
+        sigScript[i].clear();
+    }
 }
 
 bool Investor::IsUnlockTransaction(const CWallet& wallet, const CWalletTx* tx)
