@@ -137,6 +137,8 @@ private:
 
     bool FundingOutputForInput(const CWallet& wallet, const CTxIn& input, CTxOut& output);
     bool MultisigFundingOutputForInput(const CWallet& wallet, const CTxIn& input, const std::string& multisigAddress, CTxOut& output);
+
+    void SignUnlockTransaction(CWallet& wallet, const CKey& privateKey, CMutableTransaction& unlockTransaction);
 };
 
 #endif // INVESTOR_H

@@ -14,6 +14,8 @@
 #include "fees.h"
 #include <core_io.h>
 #include "policy/policy.h"
+#include "validation.h"
+#include "random.h"
 
 Investor& Investor::GetInstance()
 {
@@ -677,7 +679,14 @@ bool Investor::CreateUnlockTransaction(CWallet& wallet, const CKey& privateKey, 
     
     // initial values and standard settings
     unlockTransaction.nVersion = 2;
-    unlockTransaction.nLockTime = 0;
+
+    // enforce transaction to be mined only staring from next block to to discourage fee sniping
+    // also note the input nSequence set to max - 1, to enable this
+    // see CWallet::CreateTransaction() for more details
+    unlockTransaction.nLockTime = chainActive.Height();
+    if (GetRandInt(10) == 0) {
+        unlockTransaction.nLockTime = std::max(0, (int)unlockTransaction.nLockTime - GetRandInt(100));
+    }
     
     // process all the transaction and add the appropriate inputs for all the holding periods that have been unlocked, while also calculating the total input
     unlockTransaction.vin.clear();
@@ -719,7 +728,7 @@ bool Investor::CreateUnlockTransaction(CWallet& wallet, const CKey& privateKey, 
                     CTxIn input;
                     input.prevout = prevOut;
                     input.scriptSig = period.redeemScript;
-                    input.nSequence = CTxIn::SEQUENCE_FINAL;
+                    input.nSequence = CTxIn::SEQUENCE_FINAL - 1;
 
                     unlockTransaction.vin.push_back(input);
 
