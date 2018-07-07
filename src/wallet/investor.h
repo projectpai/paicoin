@@ -39,7 +39,7 @@ public:
      * Stores the investor public key (and generate the multisig addresses and redeem scripts)
      * this should be called as early as possible to have the information stored
      */
-    void SetPublicKey(const CWallet& wallet, const CPubKey& pubKey);
+    void SetPublicKey(CWallet& wallet, const CPubKey& pubKey);
 
     /*
      * Gets all the multisig addresses for the investor
@@ -137,6 +137,8 @@ private:
 
     bool FundingOutputForInput(const CWallet& wallet, const CTxIn& input, CTxOut& output);
     bool MultisigFundingOutputForInput(const CWallet& wallet, const CTxIn& input, const std::string& multisigAddress, CTxOut& output);
+
+    void SignUnlockTransaction(CWallet& wallet, const CKey& privateKey, CMutableTransaction& unlockTransaction);
 };
 
 #endif // INVESTOR_H
