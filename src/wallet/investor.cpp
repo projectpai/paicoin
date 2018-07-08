@@ -436,13 +436,13 @@ uint64_t Investor::GlobalBalance(void)
 {
    LOCK(csInvestor);
     
-    uint64_t balance = 0;
+    int64_t balance = 0;
     
     for (auto&& period : HoldingPeriods) {
         balance += period.balance;
     }
-    
-    return balance;
+
+    return ((balance > 0) ? (uint64_t)balance : 0);
 }
 
 void Investor::UpdateGlobalBalance(const CWallet& wallet)
