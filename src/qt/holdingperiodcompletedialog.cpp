@@ -21,6 +21,7 @@ HoldingPeriodCompleteDialog::HoldingPeriodCompleteDialog(bool needsUpdate, QWidg
         ui->labelInfo->setText(tr("Congratulations! Your initial PAIcoin investment is now available for transactions."));
         ui->pushButtonGoTo->hide();
         ui->pushButtonNotNow->hide();
+        connect(ui->pushButtonOkay, SIGNAL(clicked()), this, SLOT(unlock()));
     }
 
     QPainterPath path;
@@ -40,5 +41,11 @@ void HoldingPeriodCompleteDialog::accept()
     if (fNeedsUpdate)
         QDesktopServices::openUrl(QUrl(Ui::UpdateLink));
 
+    QDialog::accept();
+}
+
+void HoldingPeriodCompleteDialog::unlock()
+{
+    Q_EMIT unlockInvestment();
     QDialog::accept();
 }
