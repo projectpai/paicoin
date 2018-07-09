@@ -844,6 +844,7 @@ bool WalletModel::unlockInvestment() const
     }
 
     CWalletTx tx;
+    tx.BindWallet(wallet);
     if (!wallet->CreateInvestorUnlockTransaction(tx, personalPubKey)) {
         return false;
     }

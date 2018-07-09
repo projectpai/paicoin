@@ -713,6 +713,7 @@ void SendCoinsDialog::showHoldingDialog()
 void SendCoinsDialog::showHoldingCompleteDialog()
 {
     HoldingPeriodCompleteDialog *holdingPeriodCompleteDialog = new HoldingPeriodCompleteDialog();
+    connect(holdingPeriodCompleteDialog, SIGNAL(unlockInvestment()), this, SLOT(unlockInvestment()));
     holdingPeriodCompleteDialog->exec();
 }
 
@@ -760,6 +761,15 @@ void SendCoinsDialog::setNumBlocks(int count, const QDateTime& blockDate, double
     fSynced = (secs < 90 * 60);
 
     updateSmartFeeLabel();
+}
+
+void SendCoinsDialog::unlockInvestment()
+{
+    if (!model->unlockInvestment())
+    {
+        uiInterface.ThreadSafeMessageBox(tr("Could not create transaction.").toStdString(), "",
+                                         CClientUIInterface::MSG_ERROR);
+    }
 }
 
 // Coin Control: copy label "Quantity" to clipboard

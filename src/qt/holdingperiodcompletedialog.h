@@ -18,6 +18,10 @@ public:
 
 public Q_SLOTS:
     virtual void accept();
+    virtual void unlock();
+
+Q_SIGNALS:
+    void unlockInvestment();
 
 private:
     Ui::HoldingPeriodCompleteDialog *ui;
