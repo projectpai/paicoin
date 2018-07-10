@@ -573,8 +573,8 @@ class CAuxPow():
         return auxpow
 
     def deserialize(self, f):
-        hasCoinbase = struct.unpack("<?", f.read(1))[0]
-        if hasCoinbase:
+        parentCoinbaseVersion = struct.unpack("<i", f.read(4))[0]
+        if parentCoinbaseVersion > 0:
             if not self.parentCoinbase:
                 self.parentCoinbase = CMerkleTx()
             self.parentCoinbase.deserialize(f)
@@ -585,9 +585,11 @@ class CAuxPow():
 
     def serialize(self):
         r = b""
-        hasCoinbase = self.parentCoinbase is not None
-        r += struct.pack("<?", hasCoinbase)
-        if hasCoinbase:
+        parentCoinbaseVersion = 0
+        if self.parentCoinbase is not None:
+            parentCoinbaseVersion = 1
+        r += struct.pack("<i", parentCoinbaseVersion)
+        if parentCoinbaseVersion > 0:
             r += self.parentCoinbase.serialize()
 
         r += ser_uint256_vector(self.vChainMerkleBranch)
@@ -639,8 +641,8 @@ class CBlockHeader(object):
         self.nNonce = struct.unpack("<I", f.read(4))[0]
 
         if self.nTime > getAuxpowActivationTime():
-            hasAuxpowChildrenHash = struct.unpack("<?", f.read(1))[0]
-            if hasAuxpowChildrenHash:
+            auxpowChildrenHashVersion = struct.unpack("<i", f.read(4))[0]
+            if auxpowChildrenHashVersion > 0:
                 self.auxpowChildrenHash = deser_uint256(f)
 
             hasauxpow = struct.unpack("<?", f.read(1))[0]
@@ -660,9 +662,12 @@ class CBlockHeader(object):
         r += struct.pack("<I", self.nNonce)
 
         if self.nTime > getAuxpowActivationTime():
-            hasAuxpowChildrenHash = self.has_auxpow_children_hash()
-            r += struct.pack("<?", hasAuxpowChildrenHash)
-            if hasAuxpowChildrenHash:
+            auxpowChildrenHashVersion = 0
+            if self.has_auxpow_children_hash():
+                auxpowChildrenHashVersion = 1
+
+            r += struct.pack("<i", auxpowChildrenHashVersion)
+            if auxpowChildrenHashVersion > 0:
                 r += ser_uint256(self.auxpowChildrenHash)
 
             if include_auxpow:
