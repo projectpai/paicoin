@@ -60,24 +60,24 @@ public:
         if (ParamsInitialized() && this->SupportsAuxpow()) // chainParams aren't initialized only during genesis block serialization
         {
             if (ser_action.ForRead()) {
-                // see if auxpow is present
-                bool hasAuxpow = false;
-                READWRITE(hasAuxpow);
-                // read auxpow if present
-                if (hasAuxpow) {
+                // see if merged mining children hash is present
+                int childrenHashVersion = 0;
+                READWRITE(childrenHashVersion);
+                // read children hash if present
+                if (childrenHashVersion == 0)   // zero is reserved for "not present"
+                    pAuxpowChildrenHash.reset();
+                else {
                     pAuxpowChildrenHash.reset(new uint256);
                     assert(pAuxpowChildrenHash);
                     READWRITE(*pAuxpowChildrenHash);
                 }
-                else
-                    pAuxpowChildrenHash.reset();
             }
             else {
-                // write auxpow presence
-                bool hasAuxpow = pAuxpowChildrenHash != nullptr;
-                READWRITE(hasAuxpow);
-                // write auxpow if exists
-                if (hasAuxpow)
+                // write children hash presence
+                int childrenHashVersion = pAuxpowChildrenHash ? 1 : 0;
+                READWRITE(childrenHashVersion);
+                // write children hash if exists
+                if (childrenHashVersion != 0)
                     READWRITE(*pAuxpowChildrenHash);
             }
         }

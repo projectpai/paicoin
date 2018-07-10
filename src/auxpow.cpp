@@ -160,51 +160,50 @@ CAuxPow::initAuxPow (CBlockHeader& header)
 {
   assert (header.nTime >= Params().GetConsensus().nAuxpowActivationTime);
 
-#if 1
+  CBlock parent;
+  parent.nVersion = 1;
+  parent.nTime = Params().GetConsensus().nAuxpowActivationTime + 1;
+
   // build a classic auxpow object
+  if (gArgs.GetBoolArg("-classicauxpow", false))
+  {
+      /* Build a minimal coinbase script input for merge-mining.  */
+      const uint256 blockHash = header.GetHash ();
+      valtype inputData(blockHash.begin (), blockHash.end ());
+      std::reverse (inputData.begin (), inputData.end ());
 
-  /* Build a minimal coinbase script input for merge-mining.  */
-  const uint256 blockHash = header.GetHash ();
-  valtype inputData(blockHash.begin (), blockHash.end ());
-  std::reverse (inputData.begin (), inputData.end ());
+      /* Fake a parent-block coinbase with just the required input
+         script and no outputs.  */
+      CMutableTransaction coinbase;
+      coinbase.vin.resize (1);
+      coinbase.vin[0].prevout.SetNull ();
+      coinbase.vin[0].scriptSig = (CScript () << inputData);
+      assert (coinbase.vout.empty ());
+      CTransactionRef coinbaseRef = MakeTransactionRef (coinbase);
 
-  /* Fake a parent-block coinbase with just the required input
-     script and no outputs.  */
-  CMutableTransaction coinbase;
-  coinbase.vin.resize (1);
-  coinbase.vin[0].prevout.SetNull ();
-  coinbase.vin[0].scriptSig = (CScript () << inputData);
-  assert (coinbase.vout.empty ());
-  CTransactionRef coinbaseRef = MakeTransactionRef (coinbase);
+      /* Build a fake parent block with the coinbase.  */
+      parent.vtx.resize (1);
+      parent.vtx[0] = coinbaseRef;
+      parent.hashMerkleRoot = BlockMerkleRoot (parent);
 
-  /* Build a fake parent block with the coinbase.  */
-  CBlock parent;
-  parent.nVersion = 1;
-  parent.vtx.resize (1);
-  parent.vtx[0] = coinbaseRef;
-  parent.hashMerkleRoot = BlockMerkleRoot (parent);
+      /* Construct the auxpow object.  */
+      header.SetAuxpow (new CAuxPow (coinbaseRef));
+      assert (header.auxpow->vChainMerkleBranch.empty ());
+      header.auxpow->nChainIndex = 0;
+      assert (header.auxpow->pParentCoinbase->vMerkleBranch.empty ());
+      header.auxpow->pParentCoinbase->nIndex = 0;
+      header.auxpow->parentBlock = parent;
+  }
+  else   // build a lean auxpow object
+  {
+      /* Build a fake parent block that references our (child) block.  */
+      parent.hashMerkleRoot = BlockMerkleRoot (parent);
+      parent.pAuxpowChildrenHash.reset(new uint256(header.GetHash()));
 
-  /* Construct the auxpow object.  */
-  header.SetAuxpow (new CAuxPow (coinbaseRef));
-  assert (header.auxpow->vChainMerkleBranch.empty ());
-  header.auxpow->nChainIndex = 0;
-  assert (header.auxpow->pParentCoinbase->vMerkleBranch.empty ());
-  header.auxpow->pParentCoinbase->nIndex = 0;
-  header.auxpow->parentBlock = parent;
-
-#else
-  // build a lean auxpow object
-
-  /* Build a fake parent block that references our (child) block.  */
-  CBlock parent;
-  parent.nVersion = 1;
-  parent.hashMerkleRoot = BlockMerkleRoot (parent);
-  parent.pAuxpowChildrenHash.reset(new uint256(header.GetHash()));
-
-  /* Construct the auxpow object.  */
-  header.SetAuxpow (new CAuxPow ());
-  assert (header.auxpow->vChainMerkleBranch.empty ());
-  header.auxpow->nChainIndex = 0;
-  header.auxpow->parentBlock = parent;
-#endif
+      /* Construct the auxpow object.  */
+      header.SetAuxpow (new CAuxPow ());
+      assert (header.auxpow->vChainMerkleBranch.empty ());
+      header.auxpow->nChainIndex = 0;
+      header.auxpow->parentBlock = parent;
+  }
 }

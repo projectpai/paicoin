@@ -180,24 +180,24 @@ public:
   {
     if (ser_action.ForRead()) {
         // see if parent coinbase is present
-        bool parentCoinbasePresent = false;
-        READWRITE(parentCoinbasePresent);
+        int parentCoinbaseVersion = 0;
+        READWRITE(parentCoinbaseVersion);
         // read parent coinbase if present
-        if (parentCoinbasePresent) {
+        if (parentCoinbaseVersion == 0) // zero is reserved for "not present"
+            pParentCoinbase = nullptr;
+        else {
             delete pParentCoinbase;
             pParentCoinbase = new CMerkleTx;
             assert(pParentCoinbase);
             READWRITE(*pParentCoinbase);
         }
-        else
-            pParentCoinbase = nullptr;
     }
     else {
         // write coinbase presence
-        bool hasParentCoinbase = pParentCoinbase != nullptr;
-        READWRITE(hasParentCoinbase);
+        int parentCoinbaseVersion = pParentCoinbase ? 1 : 0;
+        READWRITE(parentCoinbaseVersion);
         // write coinbase if exists
-        if (hasParentCoinbase)
+        if (parentCoinbaseVersion != 0)
             READWRITE(*pParentCoinbase);
     }
 
