@@ -262,7 +262,7 @@ bool CCryptoKeyStore::AddCryptedPinCode(const std::vector<unsigned char>& vchCry
         if (!SetCrypted())
             return false;
 
-        this->vchCryptedPaperKey = vchCryptedPinCode;
+        this->vchCryptedPinCode = vchCryptedPinCode;
     }
     return true;
 }

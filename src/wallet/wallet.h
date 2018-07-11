@@ -872,7 +872,7 @@ public:
     bool AddPinCode(const std::string& pinCode) override;
     bool AddPinCodeWithDB(CWalletDB &walletdb, const std::string& pinCode);
     //! Adds the PIN code to the store, without saving it to disk (used by LoadWallet)
-    bool LoadPinCode(const std::string& pinCode) { return CCryptoKeyStore::AddPinCode(pinCode); }
+    bool LoadPinCode(const std::string& pinCode);
     //! Adds the encrypted PIN code to the store, without saving it to disk (used by LoadWallet)
     bool LoadCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode);
 

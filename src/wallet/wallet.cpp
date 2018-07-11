@@ -211,7 +211,7 @@ bool CWallet::AddPinCode(const std::string& pinCode)
 
 bool CWallet::AddPinCodeWithDB(CWalletDB &walletdb, const std::string& pinCode)
 {
-    // CCryptoKeyStore has no concept of wallet databases, but calls AddCryptedPaperKey
+    // CCryptoKeyStore has no concept of wallet databases, but calls AddCryptedPinCode
     // which is overridden above. To avoid flushes, the database handle is
     // tunneled through to it.
     bool needsDB = !pwalletdbEncryption;
@@ -228,6 +228,11 @@ bool CWallet::AddPinCodeWithDB(CWalletDB &walletdb, const std::string& pinCode)
         return walletdb.WritePinCode(pinCode);
     }
     return true;
+}
+
+bool CWallet::LoadPinCode(const std::string& pinCode)
+{
+    return CCryptoKeyStore::AddPinCode(pinCode);
 }
 
 bool CWallet::LoadCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode)
