@@ -763,6 +763,16 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase, const bool 
     if (IsCrypted())
         return false;
 
+    // store the pin code and paper key for later encryption
+    std::string pinCode;
+    if (!GetPinCode(pinCode)) {
+        pinCode = "";
+    }
+    std::string paperKey;
+    if (!GetPaperKey(paperKey)) {
+        paperKey = "";
+    }
+
     CKeyingMaterial _vMasterKey;
 
     _vMasterKey.resize(WALLET_CRYPTO_KEY_SIZE);
@@ -829,16 +839,29 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase, const bool 
         Lock();
         Unlock(strWalletPassphrase);
 
-        // if we are using HD, replace the HD master key (seed) with a new one
-        if (IsHDEnabled() && generateNewMasterKey) {
-            // generate a new paper key
-            std::string paperKey = GeneratePaperKey();
-            if  (paperKey.size() == 0)
-                throw std::runtime_error(std::string(__func__) + ": Generating new paper key failed");
+        // if we are using HD, encrypt the paper key or replace the HD master key (seed) with a new one
+        if (IsHDEnabled()) {
+            // encrypt the PIN code
+            if (pinCode.size() > 0) {
+                AddPinCode(pinCode);
+                pinCode = "";
+            }
 
-            // use the new paper key to generated the HD wallet
-            if (!SetCurrentPaperKey(paperKey))
-                throw std::runtime_error(std::string(__func__) + ": Using paper key failed");
+            // if we have a paper key, just encrypt it, otherwise replace the master key / seed
+            if (paperKey.size() > 0) {
+                AddPaperKey(paperKey);
+                paperKey = "";
+            }
+            else if (generateNewMasterKey) {
+                // generate a new paper key
+                std::string paperKey = GeneratePaperKey();
+                if  (paperKey.size() == 0)
+                    throw std::runtime_error(std::string(__func__) + ": Generating new paper key failed");
+
+                // use the new paper key to generated the HD wallet
+                if (!SetCurrentPaperKey(paperKey))
+                    throw std::runtime_error(std::string(__func__) + ": Using paper key failed");
+            }
         }
 
         NewKeyPool();
