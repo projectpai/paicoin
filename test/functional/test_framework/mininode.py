@@ -692,7 +692,7 @@ class CBlockHeader(object):
                 hasAuxpowChildrenHash = self.has_auxpow_children_hash()
 
                 if hasAuxpowChildrenHash:
-                    r += struct.pack("<?", hasAuxpowChildrenHash)
+                    r += struct.pack("<i", 1)
                     r += ser_uint256(self.auxpowChildrenHash)
 
             self.sha256 = uint256_from_str(hash256(r))
