@@ -241,6 +241,10 @@ bool CCryptoKeyStore::GetPaperKey(std::string& paperKey) const
 {
     {
         LOCK(cs_KeyStore);
+
+        if (!this->paperKey.empty())
+            return CBasicKeyStore::GetPaperKey(paperKey);
+
         if (!IsCrypted())
             return CBasicKeyStore::GetPaperKey(paperKey);
 
@@ -253,6 +257,11 @@ bool CCryptoKeyStore::GetPaperKey(std::string& paperKey) const
         return true;
     }
     return false;
+}
+
+void CCryptoKeyStore::DecryptPaperKey()
+{
+    GetPaperKey(this->paperKey);
 }
 
 bool CCryptoKeyStore::AddCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode)
@@ -292,6 +301,10 @@ bool CCryptoKeyStore::GetPinCode(std::string& pinCode) const
 {
     {
         LOCK(cs_KeyStore);
+
+        if (!this->pinCode.empty())
+            return CBasicKeyStore::GetPinCode(pinCode);
+
         if (!IsCrypted())
             return CBasicKeyStore::GetPinCode(pinCode);
 
@@ -304,6 +317,11 @@ bool CCryptoKeyStore::GetPinCode(std::string& pinCode) const
         return true;
     }
     return false;
+}
+
+void CCryptoKeyStore::DecryptPinCode()
+{
+    GetPinCode(this->pinCode);
 }
 
 bool CCryptoKeyStore::AddKeyPubKey(const CKey& key, const CPubKey &pubkey)

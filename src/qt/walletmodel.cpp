@@ -789,6 +789,16 @@ bool WalletModel::usePaperKey(const std::string& paperKey)
     return wallet->SetCurrentPaperKey(paperKey);
 }
 
+void WalletModel::DecryptPaperKey()
+{
+    wallet->DecryptPaperKey();
+}
+
+void WalletModel::DecryptPinCode()
+{
+    wallet->DecryptPinCode();
+}
+
 void WalletModel::connectAuthenticator()
 {
     AuthManager::getInstance().ConnectWallet(wallet);

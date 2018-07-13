@@ -241,6 +241,9 @@ public:
      */
     bool usePaperKey(const std::string& paperKey);
 
+    void DecryptPaperKey();
+    void DecryptPinCode();
+
     /*
      * Connects wallet to authentication manager
      */
