@@ -728,6 +728,11 @@ private:
 
     const uint32_t InvestorKeyIndex = 100;
 
+    //! Explicitly encrypt the paper key and store it to disk
+    bool EncryptPaperKey(CKeyingMaterial& vMasterKeyIn);
+    //! Explicitly encrypt the pin code and store it to disk
+    bool EncryptPinCode(CKeyingMaterial& vMasterKeyIn);
+
 public:
     /*
      * Main wallet lock.

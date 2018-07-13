@@ -190,6 +190,30 @@ bool CWallet::LoadCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPa
     return true;
 }
 
+bool CWallet::EncryptPaperKey(CKeyingMaterial& vMasterKeyIn) {
+    if (!CCryptoKeyStore::EncryptPaperKey(vMasterKeyIn))
+        return false;
+
+    std::vector<unsigned char> vchCryptedPaperKey;
+    if (!CCryptoKeyStore::GetCryptedPaperKey(vchCryptedPaperKey))
+        return false;
+
+    bool result;
+
+    {
+        LOCK(cs_wallet);
+        if (pwalletdbEncryption)
+            result = pwalletdbEncryption->WriteCryptedPaperKey(vchCryptedPaperKey);
+        else
+            result = CWalletDB(*dbw).WriteCryptedPaperKey(vchCryptedPaperKey);
+    }
+
+    memory_cleanse(vchCryptedPaperKey.data(), vchCryptedPaperKey.size());
+    vchCryptedPaperKey.clear();
+
+    return result;
+}
+
 bool CWallet::AddCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode)
 {
     if (!CCryptoKeyStore::AddCryptedPinCode(vchCryptedPinCode))
@@ -238,6 +262,31 @@ bool CWallet::LoadPinCode(const std::string& pinCode)
 bool CWallet::LoadCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode)
 {
     return CCryptoKeyStore::AddCryptedPinCode(vchCryptedPinCode);
+}
+
+bool CWallet::EncryptPinCode(CKeyingMaterial& vMasterKeyIn) {
+    if (!CCryptoKeyStore::EncryptPinCode(vMasterKeyIn))
+        return false;
+
+    std::vector<unsigned char> vchCryptedPinCode;
+    if (!CCryptoKeyStore::GetCryptedPinCode(vchCryptedPinCode))
+        return false;
+
+    bool result;
+
+    {
+        LOCK(cs_wallet);
+
+        if (pwalletdbEncryption)
+            result = pwalletdbEncryption->WriteCryptedPinCode(vchCryptedPinCode);
+        else
+            result = CWalletDB(*dbw).WriteCryptedPinCode(vchCryptedPinCode);
+    }
+
+    memory_cleanse(vchCryptedPinCode.data(), vchCryptedPinCode.size());
+    vchCryptedPinCode.clear();
+
+    return result;
 }
 
 CPubKey CWallet::GenerateNewKey(CWalletDB &walletdb, bool internal)
@@ -763,16 +812,6 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase, const bool 
     if (IsCrypted())
         return false;
 
-    // store the pin code and paper key for later encryption
-    std::string pinCode;
-    if (!GetPinCode(pinCode)) {
-        pinCode = "";
-    }
-    std::string paperKey;
-    if (!GetPaperKey(paperKey)) {
-        paperKey = "";
-    }
-
     CKeyingMaterial _vMasterKey;
 
     _vMasterKey.resize(WALLET_CRYPTO_KEY_SIZE);
@@ -814,6 +853,14 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase, const bool 
         }
         pwalletdbEncryption->WriteMasterKey(nMasterKeyMaxID, kMasterKey);
 
+        // if we are using HD, encrypt the paper key or replace the HD master key (seed) with a new one
+        bool generateNewPaperKey = generateNewMasterKey;
+        if (IsHDEnabled()) {
+            generateNewPaperKey = false;
+            EncryptPinCode(_vMasterKey);
+            EncryptPaperKey(_vMasterKey);
+        }
+
         if (!EncryptKeys(_vMasterKey))
         {
             pwalletdbEncryption->TxnAbort();
@@ -839,29 +886,16 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase, const bool 
         Lock();
         Unlock(strWalletPassphrase);
 
-        // if we are using HD, encrypt the paper key or replace the HD master key (seed) with a new one
-        if (IsHDEnabled()) {
-            // encrypt the PIN code
-            if (pinCode.size() > 0) {
-                AddPinCode(pinCode);
-                pinCode = "";
-            }
+        // if we are using HD, replace the HD master key (seed) with a new one
+        if (IsHDEnabled() && generateNewPaperKey) {
+            // generate a new paper key
+            std::string paperKey = GeneratePaperKey();
+            if  (paperKey.size() == 0)
+                throw std::runtime_error(std::string(__func__) + ": Generating new paper key failed");
 
-            // if we have a paper key, just encrypt it, otherwise replace the master key / seed
-            if (paperKey.size() > 0) {
-                AddPaperKey(paperKey);
-                paperKey = "";
-            }
-            else if (generateNewMasterKey) {
-                // generate a new paper key
-                std::string paperKey = GeneratePaperKey();
-                if  (paperKey.size() == 0)
-                    throw std::runtime_error(std::string(__func__) + ": Generating new paper key failed");
-
-                // use the new paper key to generated the HD wallet
-                if (!SetCurrentPaperKey(paperKey))
-                    throw std::runtime_error(std::string(__func__) + ": Using paper key failed");
-            }
+            // use the new paper key to generated the HD wallet
+            if (!SetCurrentPaperKey(paperKey))
+                throw std::runtime_error(std::string(__func__) + ": Using paper key failed");
         }
 
         NewKeyPool();

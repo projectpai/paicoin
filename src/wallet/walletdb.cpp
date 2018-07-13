@@ -374,7 +374,8 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         }
         else if (strType == "cpaperkey")
         {
-            const std::vector<unsigned char> cpaperkey(ssValue.begin(), ssValue.end());
+            std::vector<unsigned char> cpaperkey;
+            ssValue >> cpaperkey;
             if (cpaperkey.size() == 0)
             {
                 strErr = "Error reading wallet database: encrypted paper key corrupt";
@@ -407,7 +408,8 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         }
         else if (strType == "cpincode")
         {
-            const std::vector<unsigned char> cpincode(ssValue.begin(), ssValue.end());
+            std::vector<unsigned char> cpincode;
+            ssValue >> cpincode;
             if (cpincode.size() == 0)
             {
                 strErr = "Error reading wallet database: encrypted pin corrupt";

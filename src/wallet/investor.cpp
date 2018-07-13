@@ -880,8 +880,13 @@ void Investor::Wipe(void)
     
     for (auto&& period : HoldingPeriods) {
         period.investorPublicKey = CPubKey();
+
+        memory_cleanse(&(period.multisigAddress[0]), period.multisigAddress.size());
         period.multisigAddress = "";
+
+        memory_cleanse(period.redeemScript.data(), period.redeemScript.size());
         period.redeemScript = CScript();
+
         period.balance = 0;
     }
     

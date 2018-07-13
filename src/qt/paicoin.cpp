@@ -582,8 +582,18 @@ void PAIcoinApplication::initializeResult(bool success)
                          window, SLOT(message(QString,QString,unsigned int)));
         QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
 
-        if (walletModel->isWalletEnabled())
-            window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
+        if (walletModel->isWalletEnabled()) {
+            if (walletModel->getEncryptionStatus() == WalletModel::EncryptionStatus::Locked)
+            {
+                WalletModel::UnlockContext ctx(walletModel->requestUnlock());
+                if (ctx.isValid())
+                {
+                    window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
+                }
+            } else {
+                window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
+            }
+        }
 #endif
     } else {
         quit(); // Exit main loop

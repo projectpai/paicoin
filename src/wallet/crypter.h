@@ -127,11 +127,25 @@ private:
 
     std::vector<unsigned char> vchCryptedPinCode;
 
+    uint256 DoubleHashOfString(const std::string& str) const;
+
 protected:
     bool SetCrypted();
 
     //! will encrypt previously unencrypted keys
     bool EncryptKeys(CKeyingMaterial& vMasterKeyIn);
+
+    //! get the encrypted form of the paper key (this is only meant for saving into the database)
+    bool GetCryptedPaperKey(std::vector<unsigned char>& vchCryptedPaperKey);
+
+    //! will encrypt the paper key
+    bool EncryptPaperKey(CKeyingMaterial& vMasterKeyIn);
+
+    //! get the encrypted form of the pin code (this is only meant for saving into the database)
+    bool GetCryptedPinCode(std::vector<unsigned char>& vchCryptedPinCode);
+
+    //! will encrypt the pin code
+    bool EncryptPinCode(CKeyingMaterial& vMasterKeyIn);
 
     bool Unlock(const CKeyingMaterial& vMasterKeyIn);
     CryptedKeyMap mapCryptedKeys;
