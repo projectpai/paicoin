@@ -29,7 +29,7 @@ bool AuthManager::Check(const std::string& pin)
     std::string storedPin;
     if (wallet) {
         wallet->GetCurrentPinCode(secPin);
-        storedPin = std::string(secPin);
+        storedPin = std::string(secPin.begin(), secPin.end());
     }
     else
         storedPin = SettingsHelper::GetPinCode();
@@ -87,7 +87,7 @@ bool AuthManager::ShouldSet()
     std::string storedPin;
     if (wallet) {
         wallet->GetCurrentPinCode(secPin);
-        storedPin = std::string(secPin);
+        storedPin = std::string(secPin.begin(), secPin.end());
     }
     else
         storedPin = SettingsHelper::GetPinCode();

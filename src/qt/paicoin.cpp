@@ -626,7 +626,9 @@ void PAIcoinApplication::createNewWallet()
 
     if (!vpwallets.empty())
     {
-        std::string paperKey(vpwallets[0]->GeneratePaperKey());
+        SecureString secPaperKey;
+        secPaperKey = vpwallets[0]->GeneratePaperKey();
+        std::string paperKey(secPaperKey.begin(), secPaperKey.end());
         walletPhrase = paperKey;
 
         Q_EMIT walletCreated(paperKey);

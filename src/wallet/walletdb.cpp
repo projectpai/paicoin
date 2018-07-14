@@ -58,7 +58,7 @@ bool CWalletDB::EraseTx(uint256 hash)
 
 bool CWalletDB::WritePaperKey(const SecureString& paperKey)
 {
-    std::string str(paperKey);
+    std::string str(paperKey.begin(), paperKey.end());
 
     bool result = WriteIC(std::string("paperkey"), str, true);
 
@@ -81,7 +81,7 @@ bool CWalletDB::WriteCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey)
 
 bool CWalletDB::WritePinCode(const SecureString& pinCode)
 {
-    std::string str(pinCode);
+    std::string str(pinCode.begin(), pinCode.end());
 
     bool result =  WriteIC(std::string("pincode"), str, true);
 
