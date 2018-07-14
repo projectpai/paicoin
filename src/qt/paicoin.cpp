@@ -626,7 +626,7 @@ void PAIcoinApplication::createNewWallet()
 
     if (!vpwallets.empty())
     {
-        std::string paperKey = vpwallets[0]->GeneratePaperKey();
+        std::string paperKey(vpwallets[0]->GeneratePaperKey());
         walletPhrase = paperKey;
 
         Q_EMIT walletCreated(paperKey);
@@ -673,7 +673,7 @@ void PAIcoinApplication::completeNewWalletInitialization()
 void PAIcoinApplication::enableWalletDisplay()
 {
     walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
-    walletModel->usePaperKey(walletPhrase);
+    walletModel->usePaperKey(SecureString(walletPhrase));
     walletModel->connectAuthenticator();
 
     window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);

@@ -30,6 +30,7 @@ Investor::Investor()
 
     // mainnet
     if (Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS)[0] == 56) {
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("998aaf457ccc93c1a53d441b543873a7b06302da5f8be312545e18d0695fc085");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), true);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521244800,  // March 17, 2018, 00:00:00 GMT
@@ -40,6 +41,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("f528921e82974e6558661f38ca3d9115500cf8d5bd1864b5a3e12b97ec549204");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), true);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521331200,  // March 18, 2018, 00:00:00 GMT
@@ -50,6 +52,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("7c35252be5a8f611df846e2c4845027c3dc9899ba6486660d16f5c3cc2900ef1");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), true);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521417600,  // March 19, 2018, 00:00:00 GMT
@@ -60,6 +63,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("6a4fdc702ecfa9faec92d51d959d881c1780d08262e142a72f90409075b25a58");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), true);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521504000,  // March 20, 2018, 00:00:00 GMT
@@ -70,6 +74,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("e24f7ac3dbcce1f8e5e70f4bbf61a7fdd2a26f499d8bdcd85d1a56a3e281ae66");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), true);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521590400,  // March 21, 2018, 00:00:00 GMT
@@ -80,6 +85,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("e79dc8a7ff42bc98b43ef7ce9258379eea60c57860713a73da7396aa650cd43e");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), true);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521676800,  // March 22, 2018, 00:00:00 GMT
@@ -90,6 +96,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("93a345c257bbf437b0d08cadf423483eefcb2c4bf0fdea1885d40765efb2de32");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521763200,  // March 23, 2018, 00:00:00 GMT
@@ -100,6 +107,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("025e0145a1d4881bf7123e5dd6ff9a4fac7a5497d00305de43b0b1c1452c3ecc");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521849600,  // March 24, 2018, 00:00:00 GMT
@@ -110,6 +118,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("a0cff2e13b74234ddec423dbf17664c12a0088fe8739d715218fc82e091c11bc");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521936000,  // March 25, 2018, 00:00:00 GMT
@@ -120,6 +129,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("373980ac51ba168b84654c38fc2f11140159a2e18c9dc48d0575049a7a6580ee");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1522022400,  // March 26, 2018, 00:00:00 GMT
@@ -130,6 +140,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1524268800,  // April 21, 2018, 00:00:00 GMT
@@ -140,6 +151,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1529452800,  // June 20, 2018, 00:00:00 GMT
@@ -150,6 +162,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1544572800,  // December 12, 2018, 00:00:00 GMT
@@ -163,6 +176,7 @@ Investor::Investor()
 
     // testnet or regtest
     else {
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("2d23cd993314116f26ef2ca59bf328fcab7aff938cd124ccaafca53c8381f07b");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), true);
         HoldingPeriods.push_back( {.expirationTimestamp = 1520553600,
@@ -173,6 +187,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("1913898777938eb55365df14e507e737a691d3cc65fc55820a8c0671b65467f2");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), true);
         HoldingPeriods.push_back( {.expirationTimestamp = 1520640000,
@@ -183,6 +198,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("dd1d85cb8dc57f8f8580f184b97cd9041a820c984b1d592050a56212de4d6a8e");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), true);
         HoldingPeriods.push_back( {.expirationTimestamp = 1520726400,
@@ -193,6 +209,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("c5843bae53e2ed85ba5279f7b8b01a2e1983fa588765a35f61ae8cd18b14bff7");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), true);
         HoldingPeriods.push_back( {.expirationTimestamp = 1520812800,
@@ -203,6 +220,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("77b2c82926cd6a408fb771f7e1c266a4390169d67c043ee192d035b8b5bdae0c");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1520899200,
@@ -213,6 +231,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("f7fa92f75621f3996d4deb163fc961fe957aa163b748124c93b10964a6077bea");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1520985600,
@@ -223,6 +242,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("ca1df1606be5eda42e1138ec94597a38da6bff1068ba6e5daf0492d99d20b651");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521072000,
@@ -233,6 +253,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("46d5e4afd1240bda94398eb05941b443b4796d7479709e9cd5592bc1e275325a");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521158400,
@@ -243,6 +264,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("a813c5053f08791899faa0f90dffa18bdfe3f9f6d1bfeb1a56425d35e8be4df7");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521244800,
@@ -253,6 +275,7 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
 
+        memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("277690f9977de9de9e1b4d61e417f2a4cc51711bdf771895c77dedd18966afb0");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1521331200,
@@ -263,6 +286,9 @@ Investor::Investor()
                                    .redeemScript = CScript(),
                                    .balance = 0});
     }
+
+    memory_cleanse(&privKeyVector[0], privKeyVector.size());
+    privKeyVector.clear();
 }
 
 Investor::~Investor()
@@ -834,6 +860,8 @@ void Investor::SignUnlockTransaction(CWallet& wallet, const CKey& privateKey, CM
         unlockTransaction.vin[i].scriptSig = sigScript[i];
         sigScript[i].clear();
     }
+
+    sigScript.clear();
 }
 
 bool Investor::IsUnlockTransaction(const CWallet& wallet, const CWalletTx* tx)

@@ -17,7 +17,7 @@ void AuthManager::ConnectWallet(CWallet* wallet)
     if (!(storedPin.compare("noPin") == 0 || storedPin.length() == 0))
     {
         // Until this point, newly created PIN is being stored within Settings, in unencrypted form
-        this->wallet->SetCurrentPinCode(storedPin);
+        this->wallet->SetCurrentPinCode(SecureString(storedPin));
         SettingsHelper::PutPinCode("noPin");
         // From this point on, PIN is being stored within wallet itself
     }
@@ -25,9 +25,12 @@ void AuthManager::ConnectWallet(CWallet* wallet)
 
 bool AuthManager::Check(const std::string& pin)
 {
+    SecureString secPin;
     std::string storedPin;
-    if (wallet)
-        wallet->GetCurrentPinCode(storedPin);
+    if (wallet) {
+        wallet->GetCurrentPinCode(secPin);
+        storedPin = std::string(secPin);
+    }
     else
         storedPin = SettingsHelper::GetPinCode();
     bool fMatch = storedPin.compare(pin) == 0;
@@ -57,7 +60,7 @@ void AuthManager::SetPinCode(const std::string& pin)
     SettingsHelper::ResetAuthFailCount();
     if (wallet)
     {
-        if (!wallet->SetCurrentPinCode(pin))
+        if (!wallet->SetCurrentPinCode(SecureString(pin)))
         {
             // PIN code storing failed
         }
@@ -80,9 +83,12 @@ void AuthManager::Reset()
 
 bool AuthManager::ShouldSet()
 {
+    SecureString secPin;
     std::string storedPin;
-    if (wallet)
-        wallet->GetCurrentPinCode(storedPin);
+    if (wallet) {
+        wallet->GetCurrentPinCode(secPin);
+        storedPin = std::string(secPin);
+    }
     else
         storedPin = SettingsHelper::GetPinCode();
     return storedPin.compare("noPin") == 0 || storedPin.empty();

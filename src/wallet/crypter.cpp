@@ -204,7 +204,7 @@ bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
     return true;
 }
 
-bool CCryptoKeyStore::AddCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey)
+bool CCryptoKeyStore::AddCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey)
 {
     {
         LOCK(cs_KeyStore);
@@ -216,7 +216,7 @@ bool CCryptoKeyStore::AddCryptedPaperKey(const std::vector<unsigned char>& vchCr
     return true;
 }
 
-bool CCryptoKeyStore::AddPaperKey(const std::string& paperKey)
+bool CCryptoKeyStore::AddPaperKey(const SecureString& paperKey)
 {
     {
         LOCK(cs_KeyStore);
@@ -226,18 +226,22 @@ bool CCryptoKeyStore::AddPaperKey(const std::string& paperKey)
         if (IsLocked())
             return false;
 
-        std::vector<unsigned char> vchCryptedPaperKey;
+        std::vector<unsigned char> vchOut;
         CKeyingMaterial vchPaperKey(paperKey.begin(), paperKey.end());
-        if (!EncryptSecret(vMasterKey, vchPaperKey, DoubleHashOfString("paperkey"), vchCryptedPaperKey))
-            return false;
+        bool result = EncryptSecret(vMasterKey, vchPaperKey, DoubleHashOfString("paperkey"), vchOut);
 
-        if (!AddCryptedPaperKey(vchCryptedPaperKey))
-            return false;
+        if (result)
+            result = AddCryptedPaperKey(CKeyingMaterial(vchOut.begin(), vchOut.end()));
+
+        memory_cleanse(&vchOut[0], vchOut.size());
+        vchOut.clear();
+
+        return result;
     }
     return true;
 }
 
-bool CCryptoKeyStore::GetPaperKey(std::string& paperKey) const
+bool CCryptoKeyStore::GetPaperKey(SecureString& paperKey) const
 {
     {
         LOCK(cs_KeyStore);
@@ -248,13 +252,17 @@ bool CCryptoKeyStore::GetPaperKey(std::string& paperKey) const
         if (!IsCrypted())
             return CBasicKeyStore::GetPaperKey(paperKey);
 
+        std::vector<unsigned char> vchIn(vchCryptedPaperKey.begin(), vchCryptedPaperKey.end());
         CKeyingMaterial vchPaperKey;
-        if (!DecryptSecret(vMasterKey, vchCryptedPaperKey, DoubleHashOfString("paperkey"), vchPaperKey))
-            return false;
+        bool result = DecryptSecret(vMasterKey, vchIn, DoubleHashOfString("paperkey"), vchPaperKey);
 
-        paperKey = std::string(vchPaperKey.begin(), vchPaperKey.end());
+        memory_cleanse(&vchIn[0], vchIn.size());
+        vchIn.clear();
 
-        return true;
+        if (result)
+            paperKey = SecureString(vchPaperKey.begin(), vchPaperKey.end());
+
+        return result;
     }
     return false;
 }
@@ -264,7 +272,7 @@ void CCryptoKeyStore::DecryptPaperKey()
     GetPaperKey(this->paperKey);
 }
 
-bool CCryptoKeyStore::AddCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode)
+bool CCryptoKeyStore::AddCryptedPinCode(const CKeyingMaterial& vchCryptedPinCode)
 {
     {
         LOCK(cs_KeyStore);
@@ -276,7 +284,7 @@ bool CCryptoKeyStore::AddCryptedPinCode(const std::vector<unsigned char>& vchCry
     return true;
 }
 
-bool CCryptoKeyStore::AddPinCode(const std::string& pinCode)
+bool CCryptoKeyStore::AddPinCode(const SecureString& pinCode)
 {
     {
         LOCK(cs_KeyStore);
@@ -286,18 +294,22 @@ bool CCryptoKeyStore::AddPinCode(const std::string& pinCode)
         if (IsLocked())
             return false;
 
-        std::vector<unsigned char> vchCryptedPinCode;
+        std::vector<unsigned char> vchOut;
         CKeyingMaterial vchPinCode(pinCode.begin(), pinCode.end());
-        if (!EncryptSecret(vMasterKey, vchPinCode, DoubleHashOfString("pincode"), vchCryptedPinCode))
-            return false;
+        bool result = EncryptSecret(vMasterKey, vchPinCode, DoubleHashOfString("pincode"), vchOut);
 
-        if (!AddCryptedPinCode(vchCryptedPinCode))
-            return false;
+        if (result)
+            result = AddCryptedPinCode(CKeyingMaterial(vchOut.begin(), vchOut.end()));
+
+        memory_cleanse(&vchOut[0], vchOut.size());
+        vchOut.clear();
+
+        return result;
     }
     return true;
 }
 
-bool CCryptoKeyStore::GetPinCode(std::string& pinCode) const
+bool CCryptoKeyStore::GetPinCode(SecureString& pinCode) const
 {
     {
         LOCK(cs_KeyStore);
@@ -308,13 +320,17 @@ bool CCryptoKeyStore::GetPinCode(std::string& pinCode) const
         if (!IsCrypted())
             return CBasicKeyStore::GetPinCode(pinCode);
 
+        std::vector<unsigned char> vchIn(vchCryptedPinCode.begin(), vchCryptedPinCode.end());
         CKeyingMaterial vchPinCode;
-        if (!DecryptSecret(vMasterKey, vchCryptedPinCode, DoubleHashOfString("pincode"), vchPinCode))
-            return false;
+        bool result = DecryptSecret(vMasterKey, vchIn, DoubleHashOfString("pincode"), vchPinCode);
 
-        pinCode = std::string(vchPinCode.begin(), vchPinCode.end());
+        memory_cleanse(&vchIn[0], vchIn.size());
+        vchIn.clear();
 
-        return true;
+        if (result)
+            pinCode = SecureString(vchPinCode.begin(), vchPinCode.end());
+
+        return result;
     }
     return false;
 }
@@ -418,7 +434,7 @@ bool CCryptoKeyStore::EncryptKeys(CKeyingMaterial& vMasterKeyIn)
     return true;
 }
 
-bool CCryptoKeyStore::GetCryptedPaperKey(std::vector<unsigned char>& vchCryptedPaperKey)
+bool CCryptoKeyStore::GetCryptedPaperKey(CKeyingMaterial& vchCryptedPaperKey)
 {
     {
         LOCK(cs_KeyStore);
@@ -442,28 +458,32 @@ bool CCryptoKeyStore::EncryptPaperKey(CKeyingMaterial& vMasterKeyIn)
         if (IsLocked())
             return false;
 
-        std::string paperKey;
+        SecureString paperKey;
         if (!GetPaperKey(paperKey)) {
-            memory_cleanse(&paperKey[0], paperKey.size());
-            paperKey = "";
             return false;
         }
 
-        std::vector<unsigned char> vchCryptedPaperKey;
+        std::vector<unsigned char> vchOut;
         CKeyingMaterial vchPaperKey(paperKey.begin(), paperKey.end());
-        if (!EncryptSecret(vMasterKeyIn, vchPaperKey, DoubleHashOfString("paperkey"), vchCryptedPaperKey))
-            return false;
+        bool result = EncryptSecret(vMasterKeyIn, vchPaperKey, DoubleHashOfString("paperkey"), vchOut);
 
-        this->vchCryptedPaperKey = vchCryptedPaperKey;
+        if (result)
+        {
+            this->vchCryptedPaperKey = CKeyingMaterial(vchOut.begin(), vchOut.end());
 
-        memory_cleanse(&(this->paperKey[0]), this->paperKey.size());
-        this->paperKey = "";
+            memory_cleanse(&(this->paperKey[0]), this->paperKey.size());
+            this->paperKey = "";
+        }
+
+        memory_cleanse(&vchOut[0], vchOut.size());
+        vchOut.clear();
+
+        return result;
     }
     return true;
 }
 
-
-bool CCryptoKeyStore::GetCryptedPinCode(std::vector<unsigned char>& vchCryptedPinCode)
+bool CCryptoKeyStore::GetCryptedPinCode(CKeyingMaterial& vchCryptedPinCode)
 {
     {
         LOCK(cs_KeyStore);
@@ -487,23 +507,27 @@ bool CCryptoKeyStore::EncryptPinCode(CKeyingMaterial& vMasterKeyIn)
         if (IsLocked())
             return false;
 
-        std::string pinCode;
+        SecureString pinCode;
         if (!GetPinCode(pinCode)) {
-            memory_cleanse(&pinCode[0], pinCode.size());
-            pinCode = "";
             return false;
         }
 
-        std::vector<unsigned char> vchCryptedPinCode;
+        std::vector<unsigned char> vchOut;
         CKeyingMaterial vchPinCode(pinCode.begin(), pinCode.end());
+        bool result = EncryptSecret(vMasterKeyIn, vchPinCode, DoubleHashOfString("pincode"), vchOut);
 
-        if (!EncryptSecret(vMasterKeyIn, vchPinCode, DoubleHashOfString("pincode"), vchCryptedPinCode))
-            return false;
+        if (result)
+        {
+            this->vchCryptedPinCode = CKeyingMaterial(vchOut.begin(), vchOut.end());
 
-        this->vchCryptedPinCode = vchCryptedPinCode;
+            memory_cleanse(&(this->pinCode[0]), this->pinCode.size());
+            this->pinCode = "";
+        }
 
-        memory_cleanse(&(this->pinCode[0]), this->pinCode.size());
-        this->pinCode = "";
+        memory_cleanse(&vchOut[0], vchOut.size());
+        vchOut.clear();
+
+        return result;
     }
     return true;
 }

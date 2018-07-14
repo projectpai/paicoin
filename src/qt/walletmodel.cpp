@@ -46,7 +46,7 @@ WalletModel::WalletModel(const PlatformStyle *platformStyle, CWallet *_wallet, O
     cachedEncryptionStatus(Unencrypted),
     cachedNumBlocks(0)
 {
-    std::string paperKey = getCurrentPaperKey();
+    SecureString paperKey = getCurrentPaperKey();
     if (paperKey.size() != 0) {
         CPubKey pubKey;
         if (wallet->GetInvestorPublicKey(pubKey)) {
@@ -772,19 +772,19 @@ bool WalletModel::getDefaultWalletRbf() const
 
 // MNEMONIC FEATURES
 
-std::string WalletModel::generateNewPaperKey()
+SecureString WalletModel::generateNewPaperKey()
 {
     return wallet->GeneratePaperKey();
 }
 
-std::string WalletModel::getCurrentPaperKey()
+SecureString WalletModel::getCurrentPaperKey()
 {
-    std::string paperKey;
+    SecureString paperKey;
     wallet->GetPaperKey(paperKey);
     return paperKey;
 }
 
-bool WalletModel::usePaperKey(const std::string& paperKey)
+bool WalletModel::usePaperKey(const SecureString& paperKey)
 {
     return wallet->SetCurrentPaperKey(paperKey);
 }
