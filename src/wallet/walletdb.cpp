@@ -380,7 +380,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 return false;
             }
 
-            SecureString paperkey(out);
+            SecureString paperkey(out.begin(), out.end());
 
             memory_cleanse(&out[0], out.size());
             out.clear();
@@ -419,7 +419,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 return false;
             }
 
-            SecureString pincode(out);
+            SecureString pincode(out.begin(), out.end());
 
             memory_cleanse(&out[0], out.size());
             out.clear();

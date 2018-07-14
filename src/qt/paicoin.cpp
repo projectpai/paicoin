@@ -675,7 +675,7 @@ void PAIcoinApplication::completeNewWalletInitialization()
 void PAIcoinApplication::enableWalletDisplay()
 {
     walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
-    walletModel->usePaperKey(SecureString(walletPhrase));
+    walletModel->usePaperKey(SecureString(walletPhrase.begin(), walletPhrase.end()));
     walletModel->connectAuthenticator();
 
     window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
