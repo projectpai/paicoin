@@ -1803,6 +1803,15 @@ bool CWallet::SetInvestorPublicKey(const CPubKey& pubKey)
     return true;
 }
 
+bool CWallet::RefreshInvestorPublicKey()
+{
+    CPubKey pubKey;
+    if (!GetInvestorPublicKey(pubKey))
+        return false;
+
+    return SetInvestorPublicKey(pubKey);
+}
+
 std::vector<std::string> CWallet::GetAllMultisigAddresses()
 {
     return Investor::GetInstance().AllMultisigAddresses();
@@ -3460,6 +3469,8 @@ DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
     // With new wallet creation flow, splash screen is being hidden before LoadWallet is called
     // thus, calling LoadWallet on non-existent splash screen will lead to error
     uiInterface.LoadWallet(this);
+
+    RefreshInvestorPublicKey();
 
     return DB_LOAD_OK;
 }

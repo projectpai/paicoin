@@ -588,8 +588,11 @@ void PAIcoinApplication::initializeResult(bool success)
                 WalletModel::UnlockContext ctx(walletModel->requestUnlock());
                 if (ctx.isValid())
                 {
-                    walletModel->DecryptPaperKey();
-                    walletModel->DecryptPinCode();
+                    walletModel->decryptPaperKey();
+                    walletModel->decryptPinCode();
+
+                    walletModel->refreshInvestorKey();
+
                     window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
                 }
             } else {

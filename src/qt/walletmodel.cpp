@@ -47,10 +47,14 @@ WalletModel::WalletModel(const PlatformStyle *platformStyle, CWallet *_wallet, O
     cachedNumBlocks(0)
 {
     SecureString paperKey = getCurrentPaperKey();
-    if (paperKey.size() != 0) {
+    if (paperKey.size() != 0)
+    {
         CPubKey pubKey;
-        if (wallet->GetInvestorPublicKey(pubKey)) {
+        if (wallet->GetInvestorPublicKey(pubKey))
+        {
             wallet->SetInvestorPublicKey(pubKey);
+
+            checkInvestorBalanceChanged();
         }
     }
 
@@ -175,6 +179,20 @@ void WalletModel::checkBalanceChanged()
         cachedWatchImmatureBalance = newWatchImmatureBalance;
         Q_EMIT balanceChanged(newBalance, newUnconfirmedBalance, newImmatureBalance, newInvestorBalance,
                             newWatchOnlyBalance, newWatchUnconfBalance, newWatchImmatureBalance);
+    }
+
+    Q_EMIT balanceChangeCheckComplete();
+}
+
+void WalletModel::checkInvestorBalanceChanged()
+{
+    CAmount newInvestorBalance = getInvestorBalance();
+    if (cachedInvestorBalance != newInvestorBalance)
+    {
+        cachedInvestorBalance = newInvestorBalance;
+
+        Q_EMIT balanceChanged(cachedBalance, cachedUnconfirmedBalance, cachedImmatureBalance, newInvestorBalance,
+                              cachedWatchOnlyBalance, cachedWatchUnconfBalance, cachedWatchImmatureBalance);
     }
 
     Q_EMIT balanceChangeCheckComplete();
@@ -789,14 +807,25 @@ bool WalletModel::usePaperKey(const SecureString& paperKey)
     return wallet->SetCurrentPaperKey(paperKey);
 }
 
-void WalletModel::DecryptPaperKey()
+void WalletModel::decryptPaperKey()
 {
     wallet->DecryptPaperKey();
 }
 
-void WalletModel::DecryptPinCode()
+void WalletModel::decryptPinCode()
 {
     wallet->DecryptPinCode();
+}
+
+void WalletModel::refreshInvestorKey()
+{
+    CPubKey pubKey;
+    if (wallet->GetInvestorPublicKey(pubKey))
+    {
+        wallet->SetInvestorPublicKey(pubKey);
+
+        checkInvestorBalanceChanged();
+    }
 }
 
 void WalletModel::connectAuthenticator()

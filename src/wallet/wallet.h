@@ -1183,6 +1183,9 @@ public:
     /* Set the public key to be used for investor funding */
     bool SetInvestorPublicKey(const CPubKey& pubKey);
 
+    /* Forcefully refresh the investor key */
+    bool RefreshInvestorPublicKey();
+
     /* Get all the multisig addresses for the investor */
     std::vector<std::string> GetAllMultisigAddresses();
 

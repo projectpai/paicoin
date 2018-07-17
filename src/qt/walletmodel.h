@@ -241,8 +241,10 @@ public:
      */
     bool usePaperKey(const SecureString& paperKey);
 
-    void DecryptPaperKey();
-    void DecryptPinCode();
+    void decryptPaperKey();
+    void decryptPinCode();
+
+    void refreshInvestorKey();
 
     /*
      * Connects wallet to authentication manager
@@ -316,6 +318,7 @@ private:
     void subscribeToCoreSignals();
     void unsubscribeFromCoreSignals();
     void checkBalanceChanged();
+    void checkInvestorBalanceChanged();
 
 Q_SIGNALS:
     // Signal that balance in wallet changed
