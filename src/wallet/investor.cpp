@@ -412,27 +412,30 @@ bool Investor::CreateMultisig(std::string& address, CScript& redeemScript, const
 
 void Investor::SetPublicKey(CWallet& wallet, const CPubKey& pubKey)
 {
-    LOCK(csInvestor);
-
     bool updated = false;
-    for (auto&& period : HoldingPeriods) {
-        // check whether the public key is different and skip if so, to avoid a potential deadlock
-        // note that if at least one public key needs update, then the deadlock might still occur
-        if (period.investorPublicKey == pubKey) {
-            continue;
+
+    {
+        LOCK(csInvestor);
+
+        for (auto&& period : HoldingPeriods) {
+            // check whether the public key is different and skip if so, to avoid a potential deadlock
+            // note that if at least one public key needs update, then the deadlock might still occur
+            if (period.investorPublicKey == pubKey) {
+                continue;
+            }
+
+            period.investorPublicKey = pubKey;
+
+            updated = true;
+
+            std::vector<CPubKey> pubKeys;
+            pubKeys.push_back(pubKey);
+            pubKeys.push_back(period.paiPublicKey);
+
+            CreateMultisig(period.multisigAddress, period.redeemScript, 2, pubKeys);
+
+            period.balance = 0;
         }
-
-        period.investorPublicKey = pubKey;
-
-        updated = true;
-
-        std::vector<CPubKey> pubKeys;
-        pubKeys.push_back(pubKey);
-        pubKeys.push_back(period.paiPublicKey);
-
-        CreateMultisig(period.multisigAddress, period.redeemScript, 2, pubKeys);
-
-        period.balance = 0;
     }
 
     // refresh the investor balance only if there was an update in a public key
@@ -473,7 +476,7 @@ uint64_t Investor::GlobalBalance(void)
 
 void Investor::UpdateGlobalBalance(const CWallet& wallet)
 {
-    LOCK(csInvestor);
+    LOCK2(wallet.cs_wallet, csInvestor);
 
     ResetBalance();
 
