@@ -554,8 +554,7 @@ void PAIcoinApplication::initializeResult(bool success)
             window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
             window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
 
-
-            connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
+			connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
                              paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
         }
 #endif

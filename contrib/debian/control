@@ -26,9 +26,9 @@ Build-Depends: debhelper,
  python,
  libzmq3-dev
 Standards-Version: 3.9.2
-Homepage: https://paicoincore.org/
-Vcs-Git: git://github.com/paicoin/paicoin.git
-Vcs-Browser: https://github.com/paicoin/paicoin
+Homepage: https://www.projectpai.com/
+Vcs-Git: git://github.com/projectpai/paicoin.git
+Vcs-Browser: https://github.com/projectpai/paicoin
 
 Package: paicoind
 Architecture: any

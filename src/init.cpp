@@ -520,8 +520,8 @@ std::string HelpMessage(HelpMessageMode mode)
 
 std::string LicenseInfo()
 {
-    const std::string URL_SOURCE_CODE = "<https://github.com/projectpai>";
-    const std::string URL_WEBSITE = "<https://projectpai.com/>";
+    const std::string URL_SOURCE_CODE = "<https://github.com/projectpai/paicoin>";
+    const std::string URL_WEBSITE = "<https://www.projectpai.com/>";
 
     std::stringstream stringStreamLicenseInfo;
 

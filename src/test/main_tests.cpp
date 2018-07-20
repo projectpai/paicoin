@@ -16,7 +16,7 @@ BOOST_FIXTURE_TEST_SUITE(main_tests, TestingSetup)
 static void TestBlockSubsidyHalvings(const Consensus::Params& consensusParams)
 {
     int maxHalvings = 64;
-    // TODO PAICOIN If the initial block subsidy has been changed,
+    // PAICOIN Note: If the initial block subsidy has been changed,
     // update the subsidy with the correct value
     CAmount nInitialSubsidy = 1500 * COIN;
 
@@ -53,13 +53,13 @@ BOOST_AUTO_TEST_CASE(subsidy_limit_test)
     CAmount nSum = 0;
     for (int nHeight = 0; nHeight < 14000000; nHeight += 1000) {
         CAmount nSubsidy = GetBlockSubsidy(nHeight, chainParams->GetConsensus());
-        // TODO PAICOIN If the initial block subsidy has been changed,
+        // PAICOIN Note: If the initial block subsidy has been changed,
         // update the subsidy with the correct value
         BOOST_CHECK(nSubsidy <= 1500 * COIN);
         nSum += nSubsidy * 1000;
         BOOST_CHECK(MoneyRange(nSum));
     }
-    // TODO PAICOIN If the initial block subsidy has been changed,
+    // PAICOIN Note: If the initial block subsidy has been changed,
     // update this sum with the correct value
     BOOST_CHECK_EQUAL(nSum, 62999999996850000ULL);
 }
