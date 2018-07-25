@@ -40,8 +40,6 @@ ReceiveRequestDialog::ReceiveRequestDialog(QWidget *parent) :
     ui->btnSaveAs->setVisible(false);
     ui->lblQRCode->setVisible(false);
 #endif
-
-    connect(ui->btnSaveAs, SIGNAL(clicked()), ui->lblQRCode, SLOT(saveImage()));
 }
 
 ReceiveRequestDialog::~ReceiveRequestDialog()
@@ -146,4 +144,9 @@ void ReceiveRequestDialog::on_btnCopyURI_clicked()
 void ReceiveRequestDialog::on_btnCopyAddress_clicked()
 {
     GUIUtil::setClipboard(info.address);
+}
+
+void ReceiveRequestDialog::on_btnSaveAs_clicked()
+{
+    ui->lblQRCode->saveImage();
 }
