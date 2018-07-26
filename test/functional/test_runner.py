@@ -78,6 +78,8 @@ BASE_SCRIPTS= [
     'bip68-112-113-p2p.py',
     'rawtransactions.py',
     'reindex.py',
+    'auxpow_mining.py',
+    'auxpow_attacks.py',
     # vv Tests less than 30s vv
     'keypool-topup.py',
     'zmq_test.py',

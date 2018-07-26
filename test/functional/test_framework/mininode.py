@@ -36,6 +36,7 @@ from threading import RLock, Thread
 
 from test_framework.siphash import siphash256
 from test_framework.util import hex_str_to_bytes, bytes_to_hex_str, wait_until
+from test_framework.auxpow import getAuxpowActivationTime
 
 BIP0031_VERSION = 60000
 MY_VERSION = 70014  # past bip-31 for ping/pong
@@ -525,6 +526,76 @@ class CTransaction(object):
         return "CTransaction(nVersion=%i vin=%s vout=%s wit=%s nLockTime=%i)" \
             % (self.nVersion, repr(self.vin), repr(self.vout), repr(self.wit), self.nLockTime)
 
+class CMerkleTx():
+    def __init__(self):
+        self.tx = None
+        self.hashBlock = 0
+        self.vMerkleBranch = []
+        self.nIndex = 0
+
+    @classmethod
+    def fromData(cls, tx, hashBlock, vMerkleBranch, nIndex):
+        merkleTx = cls()
+        merkleTx.tx = tx
+        merkleTx.hashBlock = hashBlock
+        merkleTx.vMerkleBranch = vMerkleBranch
+        merkleTx.nIndex = nIndex
+        return merkleTx
+
+    def deserialize(self, f):
+        self.tx.deserialize(f)
+        self.hashBlock = deser_uint256(f)
+        self.vMerkleBranch = deser_uint256_vector(f)
+        self.nIndex = struct.unpack("<I", f.read(4))[0]
+
+    def serialize(self):
+        r = b""
+        r += self.tx.serialize()
+        r += ser_uint256(self.hashBlock)
+        r += ser_uint256_vector(self.vMerkleBranch)
+        r += struct.pack("<I", self.nIndex)
+        return r
+
+class CAuxPow():
+    def __init__(self):
+        self.parentCoinbase = None
+        self.vChainMerkleBranch = []
+        self.nChainIndex = 0
+        self.parentBlock = CBlockHeader()
+
+    @classmethod
+    def fromData(cls, parentCoinbase, vChainMerkleBranch, nChainIndex, parentBlock):
+        auxpow = cls()
+        auxpow.parentCoinbase = parentCoinbase
+        auxpow.vChainMerkleBranch = vChainMerkleBranch
+        auxpow.nChainIndex = nChainIndex
+        auxpow.parentBlock = CBlockHeader(header=parentBlock)
+        return auxpow
+
+    def deserialize(self, f):
+        parentCoinbaseVersion = struct.unpack("<i", f.read(4))[0]
+        if parentCoinbaseVersion > 0:
+            if not self.parentCoinbase:
+                self.parentCoinbase = CMerkleTx()
+            self.parentCoinbase.deserialize(f)
+
+        self.vChainMerkleBranch = deser_uint256_vector(f)
+        self.nChainIndex = struct.unpack("<I", f.read(4))[0]
+        self.parentBlock.deserialize(f)
+
+    def serialize(self):
+        r = b""
+        parentCoinbaseVersion = 0
+        if self.parentCoinbase is not None:
+            parentCoinbaseVersion = 1
+        r += struct.pack("<i", parentCoinbaseVersion)
+        if parentCoinbaseVersion > 0:
+            r += self.parentCoinbase.serialize()
+
+        r += ser_uint256_vector(self.vChainMerkleBranch)
+        r += struct.pack("<I", self.nChainIndex)
+        r += self.parentBlock.serialize(include_auxpow=False)
+        return r
 
 class CBlockHeader(object):
     def __init__(self, header=None):
@@ -537,6 +608,8 @@ class CBlockHeader(object):
             self.nTime = header.nTime
             self.nBits = header.nBits
             self.nNonce = header.nNonce
+            self.auxpow = header.auxpow
+            self.auxpowChildrenHash = header.auxpowChildrenHash
             self.sha256 = header.sha256
             self.hash = header.hash
             self.calc_sha256()
@@ -548,8 +621,16 @@ class CBlockHeader(object):
         self.nTime = 0
         self.nBits = 0
         self.nNonce = 0
+        self.auxpow = None
+        self.auxpowChildrenHash = None
         self.sha256 = None
         self.hash = None
+
+    def has_auxpow(self):
+        return self.auxpow is not None
+
+    def has_auxpow_children_hash(self):
+        return self.auxpowChildrenHash is not None
 
     def deserialize(self, f):
         self.nVersion = struct.unpack("<i", f.read(4))[0]
@@ -558,10 +639,20 @@ class CBlockHeader(object):
         self.nTime = struct.unpack("<I", f.read(4))[0]
         self.nBits = struct.unpack("<I", f.read(4))[0]
         self.nNonce = struct.unpack("<I", f.read(4))[0]
+
+        if self.nTime > getAuxpowActivationTime():
+            auxpowChildrenHashVersion = struct.unpack("<i", f.read(4))[0]
+            if auxpowChildrenHashVersion > 0:
+                self.auxpowChildrenHash = deser_uint256(f)
+
+            hasauxpow = struct.unpack("<?", f.read(1))[0]
+            if hasauxpow:
+                self.auxpow = CAuxPow()
+                self.auxpow.deserialize(f)
         self.sha256 = None
         self.hash = None
 
-    def serialize(self):
+    def serialize(self, include_auxpow=True):
         r = b""
         r += struct.pack("<i", self.nVersion)
         r += ser_uint256(self.hashPrevBlock)
@@ -569,6 +660,22 @@ class CBlockHeader(object):
         r += struct.pack("<I", self.nTime)
         r += struct.pack("<I", self.nBits)
         r += struct.pack("<I", self.nNonce)
+
+        if self.nTime > getAuxpowActivationTime():
+            auxpowChildrenHashVersion = 0
+            if self.has_auxpow_children_hash():
+                auxpowChildrenHashVersion = 1
+
+            r += struct.pack("<i", auxpowChildrenHashVersion)
+            if auxpowChildrenHashVersion > 0:
+                r += ser_uint256(self.auxpowChildrenHash)
+
+            if include_auxpow:
+                hasauxpow = self.has_auxpow()
+                r += struct.pack("<?", hasauxpow)
+                if hasauxpow:
+                    r += self.auxpow.serialize()
+
         return r
 
     def calc_sha256(self):
@@ -580,6 +687,14 @@ class CBlockHeader(object):
             r += struct.pack("<I", self.nTime)
             r += struct.pack("<I", self.nBits)
             r += struct.pack("<I", self.nNonce)
+
+            if self.nTime > getAuxpowActivationTime():
+                hasAuxpowChildrenHash = self.has_auxpow_children_hash()
+
+                if hasAuxpowChildrenHash:
+                    r += struct.pack("<i", 1)
+                    r += ser_uint256(self.auxpowChildrenHash)
+
             self.sha256 = uint256_from_str(hash256(r))
             self.hash = encode(hash256(r)[::-1], 'hex_codec').decode('ascii')
 

@@ -103,8 +103,8 @@ class MiningTest(PAIcoinTestFramework):
         assert_template(node, bad_block, 'bad-txns-nonfinal')
 
         self.log.info("getblocktemplate: Test bad tx count")
-        # The tx count is immediately after the block header
-        TX_COUNT_OFFSET = 80
+        # The tx count is immediately after the block header and the auxpow flag
+        TX_COUNT_OFFSET = 82
         bad_block_sn = bytearray(block.serialize())
         assert_equal(bad_block_sn[TX_COUNT_OFFSET], 1)
         bad_block_sn[TX_COUNT_OFFSET] += 1
