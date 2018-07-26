@@ -843,8 +843,14 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase, const bool 
         bool generateNewPaperKey = generateNewMasterKey;
         if (IsHDEnabled()) {
             generateNewPaperKey = false;
-            EncryptPinCode(_vMasterKey);
-            EncryptPaperKey(_vMasterKey);
+            if (!EncryptPinCode(_vMasterKey) || !EncryptPaperKey(_vMasterKey))
+            {
+                pwalletdbEncryption->TxnAbort();
+                delete pwalletdbEncryption;
+                // We now have the PIN Code and/or the Paper Key unencrypted in memory...
+                // die and let the user reload the unencrypted wallet.
+                assert(false);
+            }
         }
 
         if (!EncryptKeys(_vMasterKey))
