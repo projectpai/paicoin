@@ -41,8 +41,8 @@
 #define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
 #define TESTNET_GENESIS_BLOCK_SIGNATURE  "9a8abac6c3d97d37d627e6ebcaf68be72275168b"
 
-#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706516  
-#define TESTNET_GENESIS_BLOCK_NONCE          2253953817  
+#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706516
+#define TESTNET_GENESIS_BLOCK_NONCE          2253953817
 #define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x0000000003976df1a1393912d10ea68fae1175ee2c7e6011a0dc4e05f18f8403")
 #define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19")
 
@@ -52,8 +52,8 @@
 #define REGTEST_GENESIS_BLOCK_SIGNATURE  "23103f0e2d2abbaad0d79b7a37759b1a382b7821"
 
 #define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509798928
-#define REGTEST_GENESIS_BLOCK_NONCE          0
-#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x47b736c948f15d787327c84bb3ad30a064e67c79154c7608da4b062c1adfe7bb")
+#define REGTEST_GENESIS_BLOCK_NONCE          1
+#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0xbb9305842d9a965a175e86d101c3b1460057b045a9183fb1441e8593d4cfe524")
 #define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0xcaed1b804a2aa916d899cb398aed398fa9316d972f615903aafe06d10bedca44")
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
@@ -178,7 +178,7 @@ public:
         LogPrintf("- old mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
         // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { }
 
         LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
@@ -210,7 +210,7 @@ public:
         vSeeds.emplace_back("193.112.7.193", false);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
-        
+
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,56);  // P
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,130); // u
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247); // 9
@@ -304,7 +304,7 @@ public:
         LogPrintf("- old testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
         // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { }
 
         LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
@@ -329,7 +329,7 @@ public:
 
         vFixedSeeds.clear();
         vSeeds.clear();
-       
+
         // nodes with support for servicebits filtering should be at the top
         vSeeds.emplace_back("52.37.189.65", false);
         vSeeds.emplace_back("13.59.205.159", false);
@@ -337,7 +337,7 @@ public:
         vSeeds.emplace_back("193.112.4.118", false);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
-        
+
         // same as for the CRegTestParams
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
@@ -432,7 +432,7 @@ public:
         LogPrintf("- old regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
         // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { }
 
         LogPrintf("- new regtest genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new regtest genesis hash: %s\n", genesis.GetHash().ToString().c_str());
