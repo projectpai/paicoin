@@ -35,18 +35,25 @@
 #include <string>
 #include <vector>
 
-static const int CLIENT_VERSION =
-                           1000000 * CLIENT_VERSION_MAJOR
-                         +   10000 * CLIENT_VERSION_MINOR
-                         +     100 * CLIENT_VERSION_REVISION
-                         +       1 * CLIENT_VERSION_BUILD;
-
 extern const std::string CLIENT_NAME;
 extern const std::string CLIENT_BUILD;
 
-
 std::string FormatFullVersion();
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments);
+
+/**
+ * Convert string representatin of client version into integer value
+ * NOTE: clientVerison is expected to be in format "major.minor.revision.build"
+ */
+int ToClientVersion(std::string clientVersion);
+
+/** Convert provided client version into integer value */
+int ToClientVersion(int major, int minor, int revision, int build = 0);
+
+static const int CLIENT_VERSION = ToClientVersion(CLIENT_VERSION_MAJOR,
+                                                  CLIENT_VERSION_MINOR,
+                                                  CLIENT_VERSION_REVISION,
+                                                  CLIENT_VERSION_BUILD);
 
 #endif // WINDRES_PREPROC
 

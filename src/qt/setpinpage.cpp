@@ -1,6 +1,9 @@
 #include "setpinpage.h"
 #include "ui_setpinpage.h"
 
+#include "versioncheckutil.h"
+#include "updateavailabledialog.h"
+
 #include <QPainter>
 #include <QPixmap>
 #include <QKeyEvent>
@@ -92,6 +95,11 @@ bool SetPinPage::eventFilter(QObject* obj, QEvent* event)
     return QObject::eventFilter(obj, event);
 }
 
+void SetPinPage::showEvent(QShowEvent *event)
+{
+    VersionCheckUtil::getInstance().Check();
+}
+
 void SetPinPage::initSetPinLayout()
 {
     currentNumOfSelectedDots = -1;
@@ -124,6 +132,8 @@ void SetPinPage::initPinRequiredLayout()
     ui->labelSubtitle->setText(tr("Please enter your PIN to continue"));
     ui->labelNotice->hide();
     ui->pushButton->hide();
+    connect(&VersionCheckUtil::getInstance(), SIGNAL(UpdateNeeded()),
+            this, SLOT(ShowUpdateAvailableDialog()));
 }
 
 void SetPinPage::onDigitClicked(char digit)
@@ -206,4 +216,12 @@ void SetPinPage::onBackClicked()
         initSetPinLayout();
         repaint();
     }
+}
+
+void SetPinPage::ShowUpdateAvailableDialog()
+{
+    disconnect(&VersionCheckUtil::getInstance(), SIGNAL(UpdateNeeded()),
+               this, SLOT(ShowUpdateAvailableDialog()));
+    UpdateAvailableDialog dialog(this);
+    dialog.exec();
 }

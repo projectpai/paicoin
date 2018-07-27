@@ -7,6 +7,9 @@
 #include "tinyformat.h"
 
 #include <string>
+#include <algorithm>
+
+#include <boost/algorithm/string.hpp>
 
 /**
  * Name of client reported in the 'version' message. Report the same name
@@ -100,4 +103,44 @@ std::string FormatSubVersion(const std::string& name, int nClientVersion, const 
     }
     ss << "/";
     return ss.str();
+}
+
+bool IsNumber(const std::string &strNumber) {
+  return !strNumber.empty() && std::all_of(strNumber.begin(), strNumber.end(), ::isdigit);
+}
+
+int ToClientVersion(std::string clientVersion)
+{
+    int nClientVersion = 0;
+    std::vector<std::string> clientVersionParts;
+    boost::split(clientVersionParts, clientVersion, boost::is_any_of("."));
+    if (clientVersionParts.size() == 3 || clientVersionParts.size() == 4)
+    {
+        bool validClientVersion = true;
+        for (auto& clientVersionPart : clientVersionParts)
+        {
+            if (!clientVersionPart.empty() && !IsNumber(clientVersionPart))
+            {
+                validClientVersion = false;
+                break;
+            }
+        }
+        if (validClientVersion)
+        {
+            nClientVersion = ToClientVersion(std::stoi(clientVersionParts[0]),
+                                             std::stoi(clientVersionParts[1]),
+                                             std::stoi(clientVersionParts[2]),
+                                             clientVersionParts.size() == 4 ? std::stoi(clientVersionParts[3]) : 0);
+        }
+    }
+    return nClientVersion;
+}
+
+int ToClientVersion(int nMajor, int nMinor, int nRevision, int nBuild)
+{
+    return
+            1000000 * nMajor
+            + 10000 * nMinor
+            +   100 * nRevision
+            +     1 * nBuild;
 }
