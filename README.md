@@ -1,22 +1,28 @@
-PAIcoin Core integration/staging tree
+PAI Coin Core integration/staging tree
 =====================================
 
-[![Build Status](https://travis-ci.org/paicoin/paicoin.svg?branch=master)](https://travis-ci.org/paicoin/paicoin)
+https://projectpai.com
 
-https://paicoincore.org
-
-What is PAIcoin?
+What is Project PAI and PAI Coin?
 ----------------
 
-PAIcoin is an experimental digital currency that enables instant payments to
-anyone, anywhere in the world. PAIcoin uses peer-to-peer technology to operate
-with no central authority: managing transactions and issuing money are carried
-out collectively by the network. PAIcoin Core is the name of open source
-software which enables the use of this currency.
+Project PAI is an open-source, blockchain-based platform designed to allow
+everyone to create, manage, and use their own Personal Artificial Intelligence (PAI).
+The PAI Blockchain Protocol (PAI blockchain) enables a decentralized AI economy
+where application developers can create products and services that will be beneficial
+to the PAI ecosystem and users can contribute their PAI data to improve and enhance the
+platform's AI algorithms. In addition, companies and developers can easily create
+their own token on top of the PAI blockchain to facilitate interaction and transaction
+in their own unique experiences. The focal point of all interactions on the PAI
+blockchain are PAIs - intelligent 3D avatars that look, talk and behave just like their
+human counterparts, made from the digital profiles of the user's online behavior.
 
-For more information, as well as an immediately useable, binary version of
-the PAIcoin Core software, see https://paicoin.org/en/download, or read the
-[original whitepaper](https://paicoincore.org/paicoin.pdf).
+PAI Coin is a digital currency that enables instant payments to anyone, anywhere in the world.
+PAI Coin uses peer-to-peer technology to operate with no central authority: managing
+transactions and issuing money are carried out collectively by the network.
+PAI Coin Core is the name of the open-source software which enables the use of this currency.
+
+Read the whitepapers [here](https://projectpai.com/pai-whitepaper/).
 
 License
 -------
@@ -28,16 +34,13 @@ Development Process
 -------------------
 
 The `master` branch is regularly built and tested, but is not guaranteed to be
-completely stable. [Tags](https://github.com/paicoin/paicoin/tags) are created
-regularly to indicate new official, stable release versions of PAIcoin Core.
+completely stable. [Tags](https://github.com/projectpai/paicoin/tags) are created
+regularly to indicate new official, stable release versions of PAI Coin Core.
 
 The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-The developer [mailing list](https://lists.linuxfoundation.org/mailman/listinfo/paicoin-dev)
-should be used to discuss complicated or controversial changes before working
-on a patch set.
-
-Developer IRC can be found on Freenode at #paicoin-core-dev.
+The developer [forum](https://www.paiforum.com/?forum=665374) should be used 
+to discuss complicated or controversial changes before working on a patch set.
 
 Testing
 -------
@@ -58,25 +61,9 @@ There are also [regression and integration tests](/test), written
 in Python, that are run automatically on the build server.
 These tests can be run (if the [test dependencies](/test) are installed) with: `test/functional/test_runner.py`
 
-The Travis CI system makes sure that every pull request is built for Windows, Linux, and OS X, and that unit/sanity tests are run automatically.
-
 ### Manual Quality Assurance (QA) Testing
 
 Changes should be tested by somebody other than the developer who wrote the
 code. This is especially important for large or high-risk changes. It is useful
 to add a test plan to the pull request description if testing the changes is
 not straightforward.
-
-Translations
-------------
-
-Changes to translations as well as new translations can be submitted to
-[PAIcoin Core's Transifex page](https://www.transifex.com/projects/p/paicoin/).
-
-Translations are periodically pulled from Transifex and merged into the git repository. See the
-[translation process](doc/translation_process.md) for details on how this works.
-
-**Important**: We do not accept translation changes as GitHub pull requests because the next
-pull from Transifex would automatically overwrite them again.
-
-Translators should also subscribe to the [mailing list](https://groups.google.com/forum/#!forum/paicoin-translators).

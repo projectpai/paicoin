@@ -37,7 +37,7 @@ struct TestVector {
 };
 
 /**
- * TODO PAICOIN if unit test updating is required
+ * PAICOIN Note: if unit test updating is required
  * For updating the following test vectors:
  * - clone bip32utils from https://github.com/prusnak/bip32utils.git;
  * - in BIP32Key.py (lines 26-29), update the EX_MAIN_PRIVATE, EX_MAIN_PUBLIC, EX_TEST_PRIVATE and EX_TEST_PUBLIC with their corresponding base58Prefixes from chainparams.cpp;

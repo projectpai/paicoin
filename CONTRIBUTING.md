@@ -1,7 +1,7 @@
-Contributing to PAIcoin Core
-============================
+Contributing to PAI Coin Core
+=============================
 
-The PAIcoin Core project operates an open contributor model where anyone is
+The PAI Coin Core project operates an open contributor model where anyone is
 welcome to contribute towards development in the form of peer review, testing
 and patches. This document explains the practical process and guidelines for
 contributing.
@@ -76,14 +76,10 @@ the pull request affects. Valid areas as:
 
 Examples:
 
-    Consensus: Add new opcode for BIP-XXXX OP_CHECKAWESOMESIG
+    Consensus: Add new opcode for PDP-XXXX OP_CHECKAWESOMESIG
     Net: Automatically create hidden service, listen on Tor
     Qt: Add feed bump button
     Trivial: Fix typo in init.cpp
-
-Note that translations should not be submitted as pull requests, please see
-[Translation Process](https://github.com/paicoin/paicoin/blob/master/doc/translation_process.md) 
-for more information on helping with translations.
 
 If a pull request is specifically not to be considered for merging (yet) please
 prefix the title with [WIP] or use [Tasks Lists](https://help.github.com/articles/basic-writing-and-formatting-syntax/#task-lists)
@@ -91,7 +87,7 @@ in the body of the pull request to indicate tasks are pending.
 
 The body of the pull request should contain enough description about what the
 patch does together with any justification/reasoning. You should include
-references to any discussions (for example other tickets or mailing list
+references to any discussions (for example other tickets or PAI Forum 
 discussions).
 
 At this stage one should expect comments and review from other contributors. You
@@ -161,11 +157,11 @@ where possible keep them short, uncomplex and easy to verify.
 "Decision Making" Process
 -------------------------
 
-The following applies to code changes to the PAIcoin Core project (and related
-projects such as libsecp256k1), and is not to be confused with overall PAIcoin
+The following applies to code changes to the PAI Coin Core project (and related
+projects such as libsecp256k1), and is not to be confused with overall PAI Coin
 Network Protocol consensus changes.
 
-Whether a pull request is merged into PAIcoin Core rests with the project merge
+Whether a pull request is merged into PAI Coin Core rests with the project merge
 maintainers and ultimately the project lead.
 
 Maintainers will take into consideration if a patch is in line with the general
@@ -183,9 +179,9 @@ In general, all pull requests must:
   - Where bugs are fixed, where possible, there should be unit tests
     demonstrating the bug and also proving the fix. This helps prevent regression.
 
-Patches that change PAIcoin consensus rules are considerably more involved than
+Patches that change PAI Coin consensus rules are considerably more involved than
 normal because they affect the entire ecosystem and so must be preceded by
-extensive mailing list discussions and have a numbered BIP. While each case will
+extensive PAI Forum discussions and have a numbered PDP. While each case will
 be different, one should be prepared to expend more time and effort than for
 other kinds of patches because of increased peer review and consensus building
 requirements.
@@ -198,8 +194,8 @@ request. Typically reviewers will review the code for obvious errors, as well as
 test out the patch set and opine on the technical merits of the patch. Project
 maintainers take into account the peer review when determining if there is
 consensus to merge a pull request (remember that discussions may have been
-spread out over GitHub, mailing list and IRC discussions). The following
-language is used within pull-request comments:
+spread out over GitHub, PAI Forum and so forth). The following language 
+is used within pull-request comments:
 
   - ACK means "I have tested the code and I agree it should be merged";
   - NACK means "I disagree this should be merged", and must be accompanied by
@@ -224,9 +220,9 @@ higher in terms of discussion and peer review requirements, keeping in mind that
 mistakes could be very costly to the wider community. This includes refactoring
 of consensus critical code.
 
-Where a patch set proposes to change the PAIcoin consensus, it must have been
-discussed extensively on the mailing list and IRC, be accompanied by a widely
-discussed BIP and have a generally widely perceived technical consensus of being
+Where a patch set proposes to change the PAI Coin consensus, it must have been
+discussed extensively on PAI Forum, be accompanied by a widely discussed PDP 
+and have a generally widely perceived technical consensus of being
 a worthwhile change based on the judgement of the maintainers.
 
 ### Finding Reviewers
@@ -247,7 +243,7 @@ about:
     that personally, though! Instead, take another critical look at what you are suggesting
     and see if it: changes too much, is too broad, doesn't adhere to the
     [developer notes](doc/developer-notes.md), is dangerous or insecure, is messily written, etc.
-    Identify and address any of the issues you find. Then ask e.g. on IRC if someone could give
+    Identify and address any of the issues you find. Then ask e.g. on PAI Forum if someone could give
     their opinion on the concept itself.
   - It may be because your code is too complex for all but a few people. And those people
     may not have realized your pull request even exists. A great way to find people who
@@ -255,7 +251,7 @@ about:
     [Git Blame feature](https://help.github.com/articles/tracing-changes-in-a-file/). Simply
     find the person touching the code you are touching before you and see if you can find
     them and give them a nudge. Don't be incessant about the nudging though.
-  - Finally, if all else fails, ask on IRC or elsewhere for someone to give your pull request
+  - Finally, if all else fails, ask on PAI Forum or elsewhere for someone to give your pull request
     a look. If you think you've been waiting an unreasonably long amount of time (month+) for
     no particular reason (few lines changed, etc), this is totally fine. Try to return the favor
     when someone else is asking for feedback on their code, and universe balances out.
@@ -264,7 +260,7 @@ about:
 Release Policy
 --------------
 
-The project leader is the release manager for each PAIcoin Core release.
+The project leader is the release manager for each PAI Coin Core release.
 
 Copyright
 ---------

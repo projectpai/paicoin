@@ -387,7 +387,7 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
         CWallet wallet;
         AddKey(wallet, coinbaseKey);
         BOOST_CHECK_EQUAL(nullBlock, wallet.ScanForWalletTransactions(oldTip));
-        // TODO PAICOIN If the initial block subsidy has been changed,
+        // PAICOIN Note: If the initial block subsidy has been changed,
         // update this sum with the correct value
         BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 3000 * COIN);
     }
@@ -402,7 +402,7 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
         CWallet wallet;
         AddKey(wallet, coinbaseKey);
         BOOST_CHECK_EQUAL(oldTip, wallet.ScanForWalletTransactions(oldTip));
-        // TODO PAICOIN If the initial block subsidy has been changed,
+        // PAICOIN Note: If the initial block subsidy has been changed,
         // update the subsidy with the correct value
         BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 1500 * COIN);
     }
@@ -528,7 +528,7 @@ BOOST_FIXTURE_TEST_CASE(coin_mark_dirty_immature_credit, TestChain100Setup)
     // credit amount is calculated.
     wtx.MarkDirty();
     wallet.AddKeyPubKey(coinbaseKey, coinbaseKey.GetPubKey());
-    // TODO PAICOIN If the initial block subsidy has been changed,
+    // PAICOIN Note: If the initial block subsidy has been changed,
     // update the subsidy with the correct value
     BOOST_CHECK_EQUAL(wtx.GetImmatureCredit(), 1500 * COIN);
 }
@@ -654,7 +654,7 @@ BOOST_FIXTURE_TEST_CASE(ListCoins, ListCoinsTestingSetup)
     BOOST_CHECK_EQUAL(list.begin()->second.size(), 1);
 
     // Check initial balance from one mature coinbase transaction.
-    // TODO PAICOIN If the initial block subsidy has been changed,
+    // PAICOIN Note: If the initial block subsidy has been changed,
     // update the subsidy with the correct value
     BOOST_CHECK_EQUAL(1500 * COIN, wallet->GetAvailableBalance());
 

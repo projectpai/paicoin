@@ -11,7 +11,6 @@
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "checkqueue.h"
-#include "coinbase_addresses.h"
 #include "consensus/consensus.h"
 #include "consensus/merkle.h"
 #include "consensus/tx_verify.h"
@@ -1032,7 +1031,7 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
     if (halvings >= 64)
         return 0;
 
-    // TODO PAICOIN If the initial block subsidy has been changed,
+    // PAICOIN Note: If the initial block subsidy has been changed,
     // update the subsidy with the correct value
     CAmount nSubsidy = 1500 * COIN;
     // Subsidy is cut in half every 210,000 blocks which will occur approximately every 4 years.
@@ -1654,7 +1653,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     int64_t nTimeStart = GetTimeMicros();
 
     // Check it again in case a previous version let a bad block in
-    if (!CheckBlock(block, state, chainparams.GetConsensus(), !fJustCheck, !fJustCheck))
+    if (!CheckBlock(block, state, chainparams.GetConsensus(), !fJustCheck, !fJustCheck, !fJustCheck))
         return error("%s: Consensus::CheckBlock: %s", __func__, FormatStateMessage(state));
 
     // verify that the view's current state corresponds to the previous block
@@ -2791,7 +2790,7 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
     return true;
 }
 
-bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot)
+bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase)
 {
     // These are checks that are independent of context.
 
@@ -2840,24 +2839,26 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
             return state.Invalid(false, state.GetRejectCode(), state.GetRejectReason(),
                                  strprintf("Transaction check failed (tx hash %s) %s", tx->GetHash().ToString(), state.GetDebugMessage()));
 
-    if (block.GetHash() != consensusParams.hashGenesisBlock) {
-         for (const CTxOut& out : block.vtx[0]->vout) {
-             if (out.nValue > 0.00) {
-                 CTxDestination address;
-                 if (ExtractDestination(out.scriptPubKey, address)) {
-                     std::string pubKey(EncodeDestination(address));
-                     std::map<std::string, int>::iterator validCoinbaseIter = PUB_KEYS.find(pubKey);
-                     if (validCoinbaseIter == PUB_KEYS.end() ||
-                         (validCoinbaseIter->second > -1 && validCoinbaseIter->second < chainActive.Height() + 1)) {
-                             return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
-                                 REJECT_INVALID, "bad-cb-address");
-		      }
-                 } else {
-                     return state.DoS(100, error("CheckBlock(): invalid coinbase script: %s", HexStr(out.scriptPubKey)),
-                         REJECT_INVALID, "bad-cb-script");
-                 }
-             }
-	}
+    if (fCheckCoinbase && block.GetHash() != consensusParams.hashGenesisBlock) {
+        const auto& coinbaseAddrs = Params().coinbaseAddrs;
+        if (!coinbaseAddrs.empty()) {
+            for (const CTxOut& out : block.vtx[0]->vout) {
+                if (out.nValue > 0.00) {
+                    CTxDestination address;
+                    if (ExtractDestination(out.scriptPubKey, address)) {
+                        std::string pubKey(EncodeDestination(address));
+                        auto validCoinbaseIter = coinbaseAddrs.find(pubKey);
+                        if (validCoinbaseIter == coinbaseAddrs.end() || (validCoinbaseIter->second > -1 && validCoinbaseIter->second < chainActive.Height() + 1)) {
+                            return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
+                                REJECT_INVALID, "bad-cb-address");
+                        }
+                    } else {
+                        return state.DoS(100, error("CheckBlock(): invalid coinbase script: %s", HexStr(out.scriptPubKey)),
+                            REJECT_INVALID, "bad-cb-script");
+                    }
+                }
+            }
+        }
     }
 
     unsigned int nSigOps = 0;
@@ -3234,7 +3235,7 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
     return true;
 }
 
-bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW, bool fCheckMerkleRoot)
+bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase)
 {
     AssertLockHeld(cs_main);
     assert(pindexPrev && pindexPrev == chainActive.Tip());
@@ -3246,7 +3247,7 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
     // NOTE: CheckBlockHeader is called by CheckBlock
     if (!ContextualCheckBlockHeader(block, state, chainparams, pindexPrev, GetAdjustedTime()))
         return error("%s: Consensus::ContextualCheckBlockHeader: %s", __func__, FormatStateMessage(state));
-    if (!CheckBlock(block, state, chainparams.GetConsensus(), fCheckPOW, fCheckMerkleRoot))
+    if (!CheckBlock(block, state, chainparams.GetConsensus(), fCheckPOW, fCheckMerkleRoot, fCheckCoinbase))
         return error("%s: Consensus::CheckBlock: %s", __func__, FormatStateMessage(state));
     if (!ContextualCheckBlock(block, state, chainparams.GetConsensus(), pindexPrev))
         return error("%s: Consensus::ContextualCheckBlock: %s", __func__, FormatStateMessage(state));

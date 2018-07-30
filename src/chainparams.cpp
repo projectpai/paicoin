@@ -15,6 +15,50 @@
 #include <stdlib.h>
 
 #include "chainparamsseeds.h"
+#include "coinbase_addresses.h"
+
+/**
+ * To initialize the block chain by mining a new genesis block uncomment the following define.
+ * WARNING: this should only be done once and prior to release in production!
+ */
+//#define MINE_FOR_THE_GENESIS_BLOCK
+
+#define GENESIS_BLOCK_TIMESTAMP_STRING  "09/06/2017 - Create your own avatar twin that talks like you"
+#define GENESIS_BLOCK_REWARD            1470000000
+
+#define MAINNET_CONSENSUS_POW_LIMIT      uint256S("0x0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff");
+#define MAINNET_GENESIS_BLOCK_POW_BITS   36 // 32
+#define MAINNET_GENESIS_BLOCK_NBITS      0x1c09fe61
+#define MAINNET_GENESIS_BLOCK_SIGNATURE  "95ba0161eb524f97d3847653057baaef7d7ba0ff"
+
+#define MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706776
+#define MAINNET_GENESIS_BLOCK_NONCE          460938808
+#define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343")
+#define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x585ac65f505138efceefb3255086b6d7f63c606219b01f115a2941bb93c8362b")
+
+#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
+#define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
+#define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
+#define TESTNET_GENESIS_BLOCK_SIGNATURE  "9a8abac6c3d97d37d627e6ebcaf68be72275168b"
+
+#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706516  
+#define TESTNET_GENESIS_BLOCK_NONCE          2253953817  
+#define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x0000000003976df1a1393912d10ea68fae1175ee2c7e6011a0dc4e05f18f8403")
+#define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19")
+
+#define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+#define REGTEST_GENESIS_BLOCK_POW_BITS   1
+#define REGTEST_GENESIS_BLOCK_NBITS      0x207fffff
+#define REGTEST_GENESIS_BLOCK_SIGNATURE  "23103f0e2d2abbaad0d79b7a37759b1a382b7821"
+
+#define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509798928
+#define REGTEST_GENESIS_BLOCK_NONCE          0
+#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x47b736c948f15d787327c84bb3ad30a064e67c79154c7608da4b062c1adfe7bb")
+#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0xcaed1b804a2aa916d899cb398aed398fa9316d972f615903aafe06d10bedca44")
+
+#ifdef MINE_FOR_THE_GENESIS_BLOCK
+#   include "arith_uint256.h"
+#endif // MINE_FOR_THE_GENESIS_BLOCK
 
 /**
  * To initialize the block chain by mining a new genesis block uncomment the following define.
@@ -81,30 +125,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
 }
 
 /**
- * Build the genesis block. Note that the output of its generation
- * transaction cannot be spent since it did not originally exist in the
- * database.
- *
- * Mainnet:
- * CBlock(hash=000000005bcab4d8d77d338d3719c1cda996c5181ffd1c46ee311a69ac3f9397, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e, nTime=1504706400, nBits=1d00ffff, nNonce=2876968165, vtx=1)
- *   CTransaction(hash=4121f4f0d8, ver=1, vin.size=1, vout.size=1, nLockTime=0)
- *     CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff001d01043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
- *     CScriptWitness()
- *     CTxOut(nValue=1470000000.00000000, scriptPubKey=410439cc2db2636303ea74af82dea7)
- *
- * Testnet
- * CBlock(hash=0000000003976df1a1393912d10ea68fae1175ee2c7e6011a0dc4e05f18f8403, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19, nTime=1504706516, nBits=1c09fe61, nNonce=2253953817, vtx=1)
- *  CTransaction(hash=017c8b7b91, ver=1, vin.size=1, vout.size=1, nLockTime=0)
- *   CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff001d01043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
- *  CScriptWitness()
- *  CTxOut(nValue=1470000000.00000000, scriptPubKey=a9149a8abac6c3d97d37d627e6ebca)
- *
- * Regtest
- * CBlock(hash=190a4f6022b980ee9719200b024c1b9df515baea3afbccf1adc93c70aa93941f, ver=0x00000004, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e, nTime=1509798928, nBits=207fffff, nNonce=1, vtx=1)
- *  CTransaction(hash=4121f4f0d8, ver=1, vin.size=1, vout.size=1, nLockTime=0)
- *     CTxIn(COutPoint(0000000000, 4294967295), coinbase 04ffff001d01043c30392f30362f32303137202d2043726561746520796f7572206f776e20617661746172207477696e20746861742074616c6b73206c696b6520796f75)
- *     CScriptWitness()
- *     CTxOut(nValue=1470000000.00000000, scriptPubKey=410439cc2db2636303ea74af82dea7)
+ * Build the genesis block.
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const char* signature)
 {
@@ -141,7 +162,7 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
 
 class CMainParams : public CChainParams {
 public:
-    CMainParams() {
+    CMainParams(): CChainParams(fCoinbaseAddrs) {
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
@@ -247,17 +268,26 @@ public:
         // Check the above note for what make a good checkpoint
         checkpointData = (CCheckpointData) {
             {
-                { 0, MAINNET_CONSENSUS_HASH_GENESIS_BLOCK }
+                {     0, MAINNET_CONSENSUS_HASH_GENESIS_BLOCK },
+                {   500, uint256S("0x0000000004d612f13cf5426902fb1533a659b16b2e349d941588d6b2de60f99c")},
+                { 15000, uint256S("0x00000000000031c7063e5c25c471474d8e983a0456944bef32a09ebfbe38adcd")},
+                { 25000, uint256S("0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec")}
             }
         };
 
         // TODO PAICOIN Update this when releasing, using the block timestamp and the number of transactions upto that block
         // use the blockchain info
         chainTxData = ChainTxData{
-            MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, // * UNIX timestamp of last known number of transactions
-            0,          // * total number of transactions between genesis and that timestamp
+			// tx hash = c54bee8227b2b009dcd4d53b1f01de328b86417b475a1f0540b8cca91797b256
+			// block hash = 0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec
+			// block index = 25000
+			// tx index = 25073
+			// tx timestamp = 1523981287
+			
+            1523981287, // * UNIX timestamp of last known number of transactions
+            25073,      // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
-            3.1         // * estimated number of transactions per second after that timestamp
+            0.00179     // * estimated number of transactions per second after that timestamp
         };
     }
 };
@@ -267,7 +297,7 @@ public:
  */
 class CTestNetParams : public CChainParams {
 public:
-    CTestNetParams() {
+    CTestNetParams(): CChainParams(fCoinbaseAddrs) {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
@@ -286,7 +316,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         // Deployment of BIP68, BIP112, and BIP113.
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 1;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
 
@@ -366,21 +396,28 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
 
-        // TODO PAICOIN Update this when releasing, using the suitable blocks heights and corresponding hashes
-        // Check the above note for what make a good checkpoint
         checkpointData = (CCheckpointData) {
             {
-                { 0, TESTNET_CONSENSUS_HASH_GENESIS_BLOCK }
+                {    0, TESTNET_CONSENSUS_HASH_GENESIS_BLOCK },
+                {    1, uint256S("0x0000000007f33c46116ced43fbb7eb0307080ab7071c134e4b9ccd1334c61177")},
+                { 1000, uint256S("0x0000000008668e5c597a6f0a97c3aced17389a8bd842afe61dd2310b4f301c9a")},
+                { 2500, uint256S("0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b")}
             }
         };
 
         // TODO PAICOIN Update this when releasing, using the block timestamp and the number of transactions upto that block
         // use the blockchain info
         chainTxData = ChainTxData{
-            TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, // * UNIX timestamp of last known number of transactions
-            0,          // * total number of transactions between genesis and that timestamp
+			// tx hash = 0xd714e38737c9a4f2f0f59bdd6ffa6e527a6874a7f599849dfe042c8bd1f49ce5
+			// block hash = 0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b
+			// block index = 2500
+			// tx index = 3434
+			// tx timestamp = 1523601213
+			
+            1523601213, // * UNIX timestamp of last known number of transactions
+            3434,       // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
-            3.1         // * estimated number of transactions per second after that timestamp
+            0.00052     // * estimated number of transactions per second after that timestamp
         };
     }
 };
@@ -410,7 +447,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 999999999999ULL;
 
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 1;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
 

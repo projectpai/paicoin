@@ -237,7 +237,6 @@ libpaicoin_zmq_a_SOURCES = \
   zmq/zmqpublishnotifier.cpp
 endif
 
-
 # wallet: shared between paicoind and paiup, but only linked
 # when wallet enabled
 libpaicoin_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES)
