@@ -122,7 +122,8 @@ QT_FORMS_UI = \
   qt/forms/restorewalletpage.ui \
   qt/forms/viewinvestorkeydialog.ui \
   qt/forms/holdingperiodcompletedialog.ui \
-  qt/forms/confirmationdialog.ui
+  qt/forms/confirmationdialog.ui \
+  qt/forms/updateavailabledialog.ui
 
 QT_MOC_CPP = \
   qt/moc_authmanager.cpp \
