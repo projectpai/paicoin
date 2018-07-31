@@ -182,7 +182,9 @@ QT_MOC_CPP = \
   qt/moc_restorewalletpage.cpp \
   qt/moc_viewinvestorkeydialog.cpp \
   qt/moc_holdingperiodcompletedialog.cpp \
-  qt/moc_confirmationdialog.cpp
+  qt/moc_confirmationdialog.cpp \
+  qt/moc_versioncheckutil.cpp \
+  qt/moc_updateavailabledialog.cpp
 
 PAICOIN_MM = \
   qt/macdockiconhandler.mm \
@@ -272,7 +274,9 @@ PAICOIN_QT_H = \
   qt/restorewalletpage.h \
   qt/viewinvestorkeydialog.h \
   qt/holdingperiodcompletedialog.h \
-  qt/confirmationdialog.h
+  qt/confirmationdialog.h \
+  qt/versioncheckutil.h \
+  qt/updateavailabledialog.h
 
 RES_ICONS = \
   qt/res/icons/about.png \
@@ -404,7 +408,9 @@ PAICOIN_QT_WALLET_CPP = \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
   qt/walletview.cpp \
-  qt/qrimagewidget.cpp
+  qt/qrimagewidget.cpp \
+  qt/versioncheckutil.cpp \
+  qt/updateavailabledialog.cpp
 
 PAICOIN_QT_CPP = $(PAICOIN_QT_BASE_CPP)
 if TARGET_WINDOWS

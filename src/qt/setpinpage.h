@@ -22,7 +22,7 @@ class SetPinPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit SetPinPage(QWidget *parent = 0);
+    explicit SetPinPage(QWidget *parent = nullptr);
     ~SetPinPage();
 
 public:
@@ -43,6 +43,7 @@ Q_SIGNALS:
 protected:
     void paintEvent(QPaintEvent *event) override;
     bool eventFilter(QObject* obj, QEvent* event) override;
+    void showEvent(QShowEvent *event) override;
 
 private Q_SLOTS:
     void onDigitClicked(char digit);
@@ -50,6 +51,7 @@ private Q_SLOTS:
     void onPinEntered();
     void onPinReEntered();
     void onBackClicked();
+    void ShowUpdateAvailableDialog();
 
 private:
     Ui::SetPinPage *ui;

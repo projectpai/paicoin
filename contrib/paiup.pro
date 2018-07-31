@@ -209,7 +209,9 @@ SOURCES += \
     ../src/qt/paperkeycompletionpage.cpp \
     ../src/qt/restorewalletpage.cpp \
     ../src/qt/viewinvestorkeydialog.cpp \
-    ../src/qt/holdingperiodcompletedialog.cpp
+    ../src/qt/holdingperiodcompletedialog.cpp \
+    ../src/qt/versioncheckutil.cpp \
+    ../src/qt/updateavailabledialog.cpp
 
 HEADERS += \
     ../src/qt/authmanager.h \
@@ -278,7 +280,9 @@ HEADERS += \
     ../src/qt/restorewalletpage.h \
     ../src/qt/viewinvestorkeydialog.h \
     ../src/qt/holdingperiodcompletedialog.h \
-    ../src/coinbase_addresses.h
+    ../src/coinbase_addresses.h \
+    ../src/qt/versioncheckutil.h \
+    ../src/qt/updateavailabledialog.h
 
 UI_DIR = ../src/qt/forms
 
@@ -310,7 +314,8 @@ FORMS += \
     ../src/qt/forms/restorewalletpage.ui \
     ../src/qt/forms/viewinvestorkeydialog.ui \
     ../src/qt/forms/holdingperiodcompletedialog.ui \
-    ../src/qt/forms/confirmationdialog.ui
+    ../src/qt/forms/confirmationdialog.ui \
+    ../src/qt/forms/updateavailabledialog.ui
 
 RESOURCES += \
     ../src/qt/paicoin.qrc
