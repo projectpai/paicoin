@@ -236,7 +236,7 @@ bool InitLoadWallet(bool& firstRun)
     }
 
     for (const std::string& walletFile : gArgs.GetArgs("-wallet")) {
-        CWallet * const pwallet = CWallet::CreateWalletFromFile(walletFile, firstRun, false);
+        CWallet * const pwallet = CWallet::CreateWalletFromFile(walletFile, firstRun);
         if (!(pwallet || firstRun)) {
             return false;
         }
