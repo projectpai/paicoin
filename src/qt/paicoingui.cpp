@@ -123,9 +123,11 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     receiveCoinsMenuAction(0),
     optionsAction(0),
     toggleHideAction(0),
+    #ifdef ENABLE_ENCRYPT_WALLET
     encryptWalletAction(0),
-    backupWalletAction(0),
     changePassphraseAction(0),
+    #endif
+    backupWalletAction(0),
     aboutQtAction(0),
     openRPCConsoleAction(0),
     openAction(0),
@@ -432,13 +434,15 @@ void PAIcoinGUI::createActions()
     toggleHideAction = new QAction(platformStyle->TextColorIcon(":/icons/about"), tr("&Show / Hide"), this);
     toggleHideAction->setStatusTip(tr("Show or hide the main Window"));
 
+#ifdef ENABLE_ENCRYPT_WALLET
     encryptWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_closed"), tr("&Encrypt Wallet..."), this);
     encryptWalletAction->setStatusTip(tr("Encrypt the private keys that belong to your wallet"));
     encryptWalletAction->setCheckable(true);
-    backupWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/filesave"), tr("&Backup Wallet..."), this);
-    backupWalletAction->setStatusTip(tr("Backup wallet to another location"));
     changePassphraseAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Change Passphrase..."), this);
     changePassphraseAction->setStatusTip(tr("Change the passphrase used for wallet encryption"));
+#endif // ENABLE_ENCRYPT_WALLET
+    backupWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/filesave"), tr("&Backup Wallet..."), this);
+    backupWalletAction->setStatusTip(tr("Backup wallet to another location"));
     signMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/edit"), tr("Sign &message..."), this);
     signMessageAction->setStatusTip(tr("Sign messages with your PAIcoin addresses to prove you own them"));
     verifyMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/verify"), tr("&Verify message..."), this);
@@ -477,9 +481,11 @@ void PAIcoinGUI::createActions()
 #ifdef ENABLE_WALLET
     if(walletFrame)
     {
+#ifdef ENABLE_ENCRYPT_WALLET
         connect(encryptWalletAction, SIGNAL(triggered(bool)), walletFrame, SLOT(encryptWallet(bool)));
-        connect(backupWalletAction, SIGNAL(triggered()), walletFrame, SLOT(backupWallet()));
         connect(changePassphraseAction, SIGNAL(triggered()), walletFrame, SLOT(changePassphrase()));
+#endif // ENABLE_ENCRYPT_WALLET
+        connect(backupWalletAction, SIGNAL(triggered()), walletFrame, SLOT(backupWallet()));
         connect(signMessageAction, SIGNAL(triggered()), this, SLOT(gotoSignMessageTab()));
         connect(verifyMessageAction, SIGNAL(triggered()), this, SLOT(gotoVerifyMessageTab()));
         connect(usedSendingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedSendingAddresses()));
@@ -523,8 +529,10 @@ void PAIcoinGUI::createMenuBar()
     QMenu *settings = appMenuBar->addMenu(tr("&Settings"));
     if(walletFrame)
     {
+#ifdef ENABLE_ENCRYPT_WALLET
         settings->addAction(encryptWalletAction);
         settings->addAction(changePassphraseAction);
+#endif // ENABLE_ENCRYPT_WALLET
         settings->addAction(viewInvestorKeyAction);
         settings->addSeparator();
     }
@@ -653,9 +661,11 @@ void PAIcoinGUI::setWalletActionsEnabled(bool enabled)
     receiveCoinsAction->setEnabled(enabled);
     receiveCoinsMenuAction->setEnabled(enabled);
     historyAction->setEnabled(enabled);
+#ifdef ENABLE_ENCRYPT_WALLET
     encryptWalletAction->setEnabled(enabled);
-    backupWalletAction->setEnabled(enabled);
     changePassphraseAction->setEnabled(enabled);
+#endif // ENABLE_ENCRYPT_WALLET
+    backupWalletAction->setEnabled(enabled);
     signMessageAction->setEnabled(enabled);
     verifyMessageAction->setEnabled(enabled);
     usedSendingAddressesAction->setEnabled(enabled);
@@ -1430,14 +1440,15 @@ void PAIcoinGUI::setHDStatus(int hdEnabled)
     labelWalletHDStatusIcon->setEnabled(hdEnabled);
 }
 
+#ifdef ENABLE_ENCRYPT_WALLET
 void PAIcoinGUI::setEncryptionStatus(int status)
 {
     switch(status)
     {
     case WalletModel::Unencrypted:
         labelWalletEncryptionIcon->hide();
-        encryptWalletAction->setChecked(false);
         changePassphraseAction->setEnabled(false);
+        encryptWalletAction->setChecked(false);
         encryptWalletAction->setEnabled(true);
         break;
     case WalletModel::Unlocked:
@@ -1458,6 +1469,8 @@ void PAIcoinGUI::setEncryptionStatus(int status)
         break;
     }
 }
+#endif // ENABLE_ENCRYPT_WALLET
+
 #endif // ENABLE_WALLET
 
 void PAIcoinGUI::showNormalIfMinimized(bool fToggleHidden)
