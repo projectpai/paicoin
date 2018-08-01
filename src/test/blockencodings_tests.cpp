@@ -54,7 +54,7 @@ static CBlock BuildBlockTestCase() {
 // Number of shared use_counts we expect for a tx we haven't touched
 // == 2 (mempool + our copy from the GetSharedTx call)
 #define SHARED_TX_OFFSET 2
-/** TODO: Fix
+
 BOOST_AUTO_TEST_CASE(SimpleRoundTripTest)
 {
     CTxMemPool pool;
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(SimpleRoundTripTest)
         BOOST_CHECK(!mutated);
     }
 }
-*/
+
 class TestHeaderAndShortIDs {
     // Utility to encode custom CBlockHeaderAndShortTxIDs
 public:
@@ -153,7 +153,7 @@ public:
         READWRITE(prefilledtxn);
     }
 };
-/* TODO: Fix
+
 BOOST_AUTO_TEST_CASE(NonCoinbasePreforwardRTTest)
 {
     CTxMemPool pool;
@@ -334,5 +334,5 @@ BOOST_AUTO_TEST_CASE(TransactionsRequestSerializationTest) {
     BOOST_CHECK_EQUAL(req1.indexes[2], req2.indexes[2]);
     BOOST_CHECK_EQUAL(req1.indexes[3], req2.indexes[3]);
 }
-*/
+
 BOOST_AUTO_TEST_SUITE_END()
