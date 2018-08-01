@@ -137,9 +137,11 @@ private:
     QAction *receiveCoinsMenuAction;
     QAction *optionsAction;
     QAction *toggleHideAction;
+#ifdef ENABLE_ENCRYPT_WALLET
     QAction *encryptWalletAction;
-    QAction *backupWalletAction;
     QAction *changePassphraseAction;
+#endif // ENABLE_ENCRYPT_WALLET
+    QAction *backupWalletAction;
     QAction *aboutQtAction;
     QAction *openRPCConsoleAction;
     QAction *openAction;
@@ -224,11 +226,14 @@ public Q_SLOTS:
     void message(const QString &title, const QString &message, unsigned int style, bool *ret = nullptr);
 
 #ifdef ENABLE_WALLET
+
+#ifdef ENABLE_ENCRYPT_WALLET
     /** Set the encryption status as shown in the UI.
        @param[in] status            current encryption status
        @see WalletModel::EncryptionStatus
     */
     void setEncryptionStatus(int status);
+#endif // ENABLE_ENCRYPT_WALLET
 
     /** Set the hd-enabled status as shown in the UI.
      @param[in] status            current hd enabled status

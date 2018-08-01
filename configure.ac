@@ -106,6 +106,13 @@ AC_ARG_ENABLE([wallet],
   [enable_wallet=$enableval],
   [enable_wallet=yes])
 
+# Disable encrypt wallet
+AC_ARG_ENABLE([encrypt-wallet],
+  [AS_HELP_STRING([--enable-encrypt-wallet],
+  [enable encrypt wallet (disabled by default)])],
+  [enable_encrypt_wallet=$enableval],
+  [enable_encrypt_wallet=no])
+
 # Enable lite variant
 AC_ARG_ENABLE([variant_lite],
   [AS_HELP_STRING([--disable-variant-lite],
@@ -1086,6 +1093,15 @@ else
   AC_MSG_RESULT(no)
 fi
 
+dnl enable encrypt wallet
+AC_MSG_CHECKING([if wallet encryption should be enabled])
+if test x$enable_encrypt_wallet != xno; then
+  AC_MSG_RESULT(yes)
+  AC_DEFINE_UNQUOTED([ENABLE_ENCRYPT_WALLET],[1],[Define to 1 to enable wallet encryption])
+else
+  AC_MSG_RESULT(no)
+fi
+
 dnl enable upnp support
 AC_MSG_CHECKING([whether to build with support for UPnP])
 if test x$have_miniupnpc = xno; then
@@ -1188,6 +1204,7 @@ AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])
 AM_CONDITIONAL([BUILD_DARWIN], [test x$BUILD_OS = xdarwin])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x$TARGET_OS = xwindows])
 AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet = xyes])
+AM_CONDITIONAL([ENABLE_ENCRYPT_WALLET],[test x$enable_encrypt_wallet = xyes])
 AM_CONDITIONAL([ENABLE_TESTS],[test x$BUILD_TEST = xyes])
 AM_CONDITIONAL([ENABLE_QT],[test x$paicoin_enable_qt = xyes])
 AM_CONDITIONAL([ENABLE_QT_TESTS],[test x$BUILD_TEST_QT = xyes])
@@ -1317,29 +1334,30 @@ esac
 
 echo
 echo "Options used to compile and link:"
-echo "  with wallet   = $enable_wallet"
-echo "  lite variant  = $variant_lite"
-echo "  with gui / qt = $paicoin_enable_qt"
+echo "  with wallet         = $enable_wallet"
+echo "  with encrypt wallet = $enable_encrypt_wallet"
+echo "  lite variant        = $variant_lite"
+echo "  with gui / qt       = $paicoin_enable_qt"
 if test x$paicoin_enable_qt != xno; then
-    echo "    qt version  = $paiup_got_major_vers"
-    echo "    with qr     = $use_qr"
+    echo "    qt version    = $paiup_got_major_vers"
+    echo "    with qr       = $use_qr"
 fi
-echo "  with zmq      = $use_zmq"
-echo "  with test     = $use_tests"
-echo "  with bench    = $use_bench"
-echo "  with upnp     = $use_upnp"
-echo "  use asm       = $use_asm"
-echo "  debug enabled = $enable_debug"
-echo "  werror        = $enable_werror"
+echo "  with zmq            = $use_zmq"
+echo "  with test           = $use_tests"
+echo "  with bench          = $use_bench"
+echo "  with upnp           = $use_upnp"
+echo "  use asm             = $use_asm"
+echo "  debug enabled       = $enable_debug"
+echo "  werror              = $enable_werror"
 echo
-echo "  target os     = $TARGET_OS"
-echo "  build os      = $BUILD_OS"
+echo "  target os           = $TARGET_OS"
+echo "  build os            = $BUILD_OS"
 echo
-echo "  CC            = $CC"
-echo "  CFLAGS        = $CFLAGS"
-echo "  CPPFLAGS      = $CPPFLAGS"
-echo "  CXX           = $CXX"
-echo "  CXXFLAGS      = $CXXFLAGS"
-echo "  LDFLAGS       = $LDFLAGS"
-echo "  ARFLAGS       = $ARFLAGS"
+echo "  CC                  = $CC"
+echo "  CFLAGS              = $CFLAGS"
+echo "  CPPFLAGS            = $CPPFLAGS"
+echo "  CXX                 = $CXX"
+echo "  CXXFLAGS            = $CXXFLAGS"
+echo "  LDFLAGS             = $LDFLAGS"
+echo "  ARFLAGS             = $ARFLAGS"
 echo
