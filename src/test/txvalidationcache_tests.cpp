@@ -31,7 +31,7 @@ ToMemPool(CMutableTransaction& tx)
     CValidationState state;
     return AcceptToMemoryPool(mempool, state, MakeTransactionRef(tx), false, nullptr, nullptr, true, 0);
 }
-/*TODO:Fix
+
 BOOST_FIXTURE_TEST_CASE(tx_mempool_block_doublespend, TestChain100Setup)
 {
     // Make sure skipping validation of transctions that were
@@ -89,7 +89,7 @@ BOOST_FIXTURE_TEST_CASE(tx_mempool_block_doublespend, TestChain100Setup)
     // block with spends[0] is accepted:
     BOOST_CHECK_EQUAL(mempool.size(), 0);
 }
-*/
+
 // Run CheckInputs (using pcoinsTip) on the given transaction, for all script
 // flags.  Test that CheckInputs passes for all flags that don't overlap with
 // the failing_flags argument, but otherwise fails.
@@ -145,7 +145,7 @@ void ValidateCheckInputsForAllFlags(CMutableTransaction &tx, uint32_t failing_fl
         }
     }
 }
-/*TODO: Fix
+
 BOOST_FIXTURE_TEST_CASE(checkinputs_test, TestChain100Setup)
 {
     // Test that passing CheckInputs with one set of script flags doesn't imply
@@ -367,5 +367,5 @@ BOOST_FIXTURE_TEST_CASE(checkinputs_test, TestChain100Setup)
         BOOST_CHECK_EQUAL(scriptchecks.size(), 2);
     }
 }
-*/
+
 BOOST_AUTO_TEST_SUITE_END()
