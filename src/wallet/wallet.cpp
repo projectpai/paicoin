@@ -4229,7 +4229,7 @@ std::vector<std::string> CWallet::GetDestValues(const std::string& prefix) const
     return values;
 }
 
-CWallet* CWallet::CreateWalletFromFile(const std::string walletFile, bool& fFirstRun, const bool generateNewMasterKey)
+CWallet* CWallet::CreateWalletFromFile(const std::string walletFile, bool& fFirstRun)
 {
     // needed to restore wallet transaction meta data after -zapwallettxes
     std::vector<CWalletTx> vWtx;
@@ -4298,34 +4298,16 @@ CWallet* CWallet::CreateWalletFromFile(const std::string walletFile, bool& fFirs
         walletInstance->SetMaxVersion(nMaxVersion);
     }
 
-    if (fFirstRun && generateNewMasterKey)
+    if (fFirstRun)
     {
-        // Create new keyUser and set as default key
-        if (gArgs.GetBoolArg("-usehd", DEFAULT_USE_HD_WALLET) && !walletInstance->IsHDEnabled()) {
-
-            // ensure this wallet.dat can only be opened by clients supporting HD with chain split
-            walletInstance->SetMinVersion(FEATURE_HD_SPLIT);
-
-            // generate a new paper key
-            SecureString paperKey = walletInstance->GeneratePaperKey();
-            if  (paperKey.size() == 0)
-                throw std::runtime_error(std::string(__func__) + ": Generating new paper key failed");
-
-            // use the new paper key to generated the HD wallet
-            if (!walletInstance->SetCurrentPaperKey(paperKey))
-                throw std::runtime_error(std::string(__func__) + ": Using paper key failed");
+        // ensure this wallet.dat can only be opened by clients supporting HD with chain split and expects no default key
+        if (!gArgs.GetBoolArg("-usehd", true)) {
+            InitError(strprintf(_("Error creating %s: You can't create non-HD wallets with this version."), walletFile));
+            return nullptr;
         }
-
-        // Top up the keypool
-        if (!walletInstance->TopUpKeyPool()) {
-            InitError(_("Unable to generate initial keys") += "\n");
-            return NULL;
-        }
-
-        walletInstance->SetBestChain(chainActive.GetLocator());
     }
     else if (gArgs.IsArgSet("-usehd")) {
-        bool useHD = gArgs.GetBoolArg("-usehd", DEFAULT_USE_HD_WALLET);
+        bool useHD = gArgs.GetBoolArg("-usehd", true);
         if (walletInstance->IsHDEnabled() && !useHD) {
             InitError(strprintf(_("Error loading %s: You can't disable HD on an already existing HD wallet"), walletFile));
             return nullptr;
