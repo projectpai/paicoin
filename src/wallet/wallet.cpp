@@ -4306,7 +4306,7 @@ CWallet* CWallet::CreateWalletFromFile(const std::string walletFile, bool& fFirs
             return nullptr;
         }
     }
-    if (!fFirstRun && gArgs.IsArgSet("-usehd")) {
+    else if (gArgs.IsArgSet("-usehd")) {
         bool useHD = gArgs.GetBoolArg("-usehd", true);
         if (walletInstance->IsHDEnabled() && !useHD) {
             InitError(strprintf(_("Error loading %s: You can't disable HD on an already existing HD wallet"), walletFile));
