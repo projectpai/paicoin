@@ -1878,7 +1878,7 @@ bool CWallet::CreateInvestorUnlockTransaction(CWalletTx& tx, const CPubKey& pubK
     return true;
 }
 
-bool CWallet::IsUnlockTransaction(const CWalletTx* tx)
+bool CWallet::IsUnlockTransaction(const CWalletTx* tx) const
 {
     return Investor::GetInstance().IsUnlockTransaction(*this, tx);
 }

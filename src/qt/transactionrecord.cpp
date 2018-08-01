@@ -92,7 +92,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
             if(fAllToMe > mine) fAllToMe = mine;
         }
 
-        if (fAllFromMe && fAllToMe)
+        if (fAllFromMe && fAllToMe && !wallet->IsUnlockTransaction(&wtx))
         {
             // Payment to self
             CAmount nChange = wtx.GetChange();
