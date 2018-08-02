@@ -4305,6 +4305,8 @@ CWallet* CWallet::CreateWalletFromFile(const std::string walletFile, bool& fFirs
             InitError(strprintf(_("Error creating %s: You can't create non-HD wallets with this version."), walletFile));
             return nullptr;
         }
+
+        walletInstance->SetMinVersion(FEATURE_LATEST);
     }
     else if (gArgs.IsArgSet("-usehd")) {
         bool useHD = gArgs.GetBoolArg("-usehd", true);
