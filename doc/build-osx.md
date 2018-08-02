@@ -16,7 +16,7 @@ Then install [Homebrew](https://brew.sh).
 Dependencies
 ----------------------
 
-    brew install automake libtool pkg-config python3 libevent
+    brew install automake libtool pkg-config python3
 
 See [dependencies.md](dependencies.md) for a complete overview.
 
