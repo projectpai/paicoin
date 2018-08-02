@@ -52,8 +52,8 @@
 #define REGTEST_GENESIS_BLOCK_SIGNATURE  "23103f0e2d2abbaad0d79b7a37759b1a382b7821"
 
 #define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509798928
-#define REGTEST_GENESIS_BLOCK_NONCE          1
-#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0xbb9305842d9a965a175e86d101c3b1460057b045a9183fb1441e8593d4cfe524")
+#define REGTEST_GENESIS_BLOCK_NONCE          0
+#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x47b736c948f15d787327c84bb3ad30a064e67c79154c7608da4b062c1adfe7bb")
 #define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0xcaed1b804a2aa916d899cb398aed398fa9316d972f615903aafe06d10bedca44")
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
@@ -231,12 +231,12 @@ public:
         };
 
         chainTxData = ChainTxData{
-			// tx hash = c54bee8227b2b009dcd4d53b1f01de328b86417b475a1f0540b8cca91797b256
-			// block hash = 0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec
-			// block index = 25000
-			// tx index = 25073
-			// tx timestamp = 1523981287
-			
+      // tx hash = c54bee8227b2b009dcd4d53b1f01de328b86417b475a1f0540b8cca91797b256
+      // block hash = 0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec
+      // block index = 25000
+      // tx index = 25073
+      // tx timestamp = 1523981287
+
             1523981287, // * UNIX timestamp of last known number of transactions
             25073,      // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
@@ -359,12 +359,12 @@ public:
         };
 
         chainTxData = ChainTxData{
-			// tx hash = 0xd714e38737c9a4f2f0f59bdd6ffa6e527a6874a7f599849dfe042c8bd1f49ce5
-			// block hash = 0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b
-			// block index = 2500
-			// tx index = 3434
-			// tx timestamp = 1523601213
-			
+      // tx hash = 0xd714e38737c9a4f2f0f59bdd6ffa6e527a6874a7f599849dfe042c8bd1f49ce5
+      // block hash = 0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b
+      // block index = 2500
+      // tx index = 3434
+      // tx timestamp = 1523601213
+
             1523601213, // * UNIX timestamp of last known number of transactions
             3434,       // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
