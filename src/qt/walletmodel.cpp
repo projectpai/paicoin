@@ -46,11 +46,15 @@ WalletModel::WalletModel(const PlatformStyle *platformStyle, CWallet *_wallet, O
     cachedEncryptionStatus(Unencrypted),
     cachedNumBlocks(0)
 {
-    std::string paperKey = getCurrentPaperKey();
-    if (paperKey.size() != 0) {
+    SecureString paperKey = getCurrentPaperKey();
+    if (paperKey.size() != 0)
+    {
         CPubKey pubKey;
-        if (wallet->GetInvestorPublicKey(pubKey)) {
+        if (wallet->GetInvestorPublicKey(pubKey))
+        {
             wallet->SetInvestorPublicKey(pubKey);
+
+            checkInvestorBalanceChanged();
         }
     }
 
@@ -175,6 +179,20 @@ void WalletModel::checkBalanceChanged()
         cachedWatchImmatureBalance = newWatchImmatureBalance;
         Q_EMIT balanceChanged(newBalance, newUnconfirmedBalance, newImmatureBalance, newInvestorBalance,
                             newWatchOnlyBalance, newWatchUnconfBalance, newWatchImmatureBalance);
+    }
+
+    Q_EMIT balanceChangeCheckComplete();
+}
+
+void WalletModel::checkInvestorBalanceChanged()
+{
+    CAmount newInvestorBalance = getInvestorBalance();
+    if (cachedInvestorBalance != newInvestorBalance)
+    {
+        cachedInvestorBalance = newInvestorBalance;
+
+        Q_EMIT balanceChanged(cachedBalance, cachedUnconfirmedBalance, cachedImmatureBalance, newInvestorBalance,
+                              cachedWatchOnlyBalance, cachedWatchUnconfBalance, cachedWatchImmatureBalance);
     }
 
     Q_EMIT balanceChangeCheckComplete();
@@ -772,21 +790,42 @@ bool WalletModel::getDefaultWalletRbf() const
 
 // MNEMONIC FEATURES
 
-std::string WalletModel::generateNewPaperKey()
+SecureString WalletModel::generateNewPaperKey()
 {
     return wallet->GeneratePaperKey();
 }
 
-std::string WalletModel::getCurrentPaperKey()
+SecureString WalletModel::getCurrentPaperKey()
 {
-    std::string paperKey;
+    SecureString paperKey;
     wallet->GetPaperKey(paperKey);
     return paperKey;
 }
 
-bool WalletModel::usePaperKey(const std::string& paperKey)
+bool WalletModel::usePaperKey(const SecureString& paperKey)
 {
     return wallet->SetCurrentPaperKey(paperKey);
+}
+
+void WalletModel::decryptPaperKey()
+{
+    wallet->DecryptPaperKey();
+}
+
+void WalletModel::decryptPinCode()
+{
+    wallet->DecryptPinCode();
+}
+
+void WalletModel::refreshInvestorKey()
+{
+    CPubKey pubKey;
+    if (wallet->GetInvestorPublicKey(pubKey))
+    {
+        wallet->SetInvestorPublicKey(pubKey);
+
+        checkInvestorBalanceChanged();
+    }
 }
 
 void WalletModel::connectAuthenticator()

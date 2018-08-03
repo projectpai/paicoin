@@ -13,14 +13,14 @@ bool CKeyStore::AddKey(const CKey &key) {
     return AddKeyPubKey(key, key.GetPubKey());
 }
 
-bool CBasicKeyStore::AddPaperKey(const std::string& paperKey)
+bool CBasicKeyStore::AddPaperKey(const SecureString& paperKey)
 {
     LOCK(cs_KeyStore);
     this->paperKey = paperKey;
     return true;
 }
 
-bool CBasicKeyStore::GetPaperKey(std::string& paperKey) const
+bool CBasicKeyStore::GetPaperKey(SecureString& paperKey) const
 {
     {
         LOCK(cs_KeyStore);
@@ -32,14 +32,14 @@ bool CBasicKeyStore::GetPaperKey(std::string& paperKey) const
     return false;
 }
 
-bool CBasicKeyStore::AddPinCode(const std::string& pinCode)
+bool CBasicKeyStore::AddPinCode(const SecureString& pinCode)
 {
     LOCK(cs_KeyStore);
     this->pinCode = pinCode;
     return true;
 }
 
-bool CBasicKeyStore::GetPinCode(std::string& pinCode) const
+bool CBasicKeyStore::GetPinCode(SecureString& pinCode) const
 {
     {
         LOCK(cs_KeyStore);

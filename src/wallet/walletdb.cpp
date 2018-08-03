@@ -56,12 +56,19 @@ bool CWalletDB::EraseTx(uint256 hash)
     return EraseIC(std::make_pair(std::string("tx"), hash));
 }
 
-bool CWalletDB::WritePaperKey(const std::string& paperKey)
+bool CWalletDB::WritePaperKey(const SecureString& paperKey)
 {
-    return WriteIC(std::string("paperkey"), paperKey, true);
+    std::string str(paperKey.begin(), paperKey.end());
+
+    bool result = WriteIC(std::string("paperkey"), str, true);
+
+    memory_cleanse(&str[0], str.size());
+    str.clear();
+
+    return result;
 }
 
-bool CWalletDB::WriteCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey)
+bool CWalletDB::WriteCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey)
 {
     if (!WriteIC(std::string("cpaperkey"), vchCryptedPaperKey, true)) {
         return false;
@@ -72,12 +79,19 @@ bool CWalletDB::WriteCryptedPaperKey(const std::vector<unsigned char>& vchCrypte
     return true;
 }
 
-bool CWalletDB::WritePinCode(const std::string& pinCode)
+bool CWalletDB::WritePinCode(const SecureString& pinCode)
 {
-    return WriteIC(std::string("pincode"), pinCode, true);
+    std::string str(pinCode.begin(), pinCode.end());
+
+    bool result =  WriteIC(std::string("pincode"), str, true);
+
+    memory_cleanse(&str[0], str.size());
+    str.clear();
+
+    return result;
 }
 
-bool CWalletDB::WriteCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode)
+bool CWalletDB::WriteCryptedPinCode(const CKeyingMaterial& vchCryptedPinCode)
 {
     if (!WriteIC(std::string("cpincode"), vchCryptedPinCode, true)) {
         return false;
@@ -358,13 +372,18 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         }
         else if (strType == "paperkey")
         {
-            std::string paperkey;
-            ssValue >> paperkey;
-            if (paperkey.empty())
+            std::string out;
+            ssValue >> out;
+            if (out.empty())
             {
                 strErr = "Error reading wallet database: paper key corrupt";
                 return false;
             }
+
+            SecureString paperkey(out.begin(), out.end());
+
+            memory_cleanse(&out[0], out.size());
+            out.clear();
 
             if (!pwallet->LoadPaperKey(paperkey))
             {
@@ -374,7 +393,8 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         }
         else if (strType == "cpaperkey")
         {
-            const std::vector<unsigned char> cpaperkey(ssValue.begin(), ssValue.end());
+            CKeyingMaterial cpaperkey;
+            ssValue >> cpaperkey;
             if (cpaperkey.size() == 0)
             {
                 strErr = "Error reading wallet database: encrypted paper key corrupt";
@@ -391,32 +411,38 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         }
         else if (strType == "pincode")
         {
-            std::string pincode;
-            ssValue >> pincode;
-            if (pincode.empty())
+            std::string out;
+            ssValue >> out;
+            if (out.empty())
             {
-                strErr = "Error reading wallet database: paper key corrupt";
+                strErr = "Error reading wallet database: pin corrupt";
                 return false;
             }
 
+            SecureString pincode(out.begin(), out.end());
+
+            memory_cleanse(&out[0], out.size());
+            out.clear();
+
             if (!pwallet->LoadPinCode(pincode))
             {
-                strErr = "Error reading wallet database: LoadPaperKey failed";
+                strErr = "Error reading wallet database: LoadPinCode failed";
                 return false;
             }
         }
         else if (strType == "cpincode")
         {
-            const std::vector<unsigned char> cpincode(ssValue.begin(), ssValue.end());
+            CKeyingMaterial cpincode;
+            ssValue >> cpincode;
             if (cpincode.size() == 0)
             {
-                strErr = "Error reading wallet database: encrypted paper key corrupt";
+                strErr = "Error reading wallet database: encrypted pin corrupt";
                 return false;
             }
 
             if (!pwallet->LoadCryptedPinCode(cpincode))
             {
-                strErr = "Error reading wallet database: LoadCryptedPaperKey failed";
+                strErr = "Error reading wallet database: LoadCryptedPinCode failed";
                 return false;
             }
 
