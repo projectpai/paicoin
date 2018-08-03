@@ -123,15 +123,29 @@ private:
     //! keeps track of whether Unlock has run a thorough check before
     bool fDecryptionThoroughlyChecked;
 
-    std::vector<unsigned char> vchCryptedPaperKey;
+    CKeyingMaterial vchCryptedPaperKey;
 
-    std::vector<unsigned char> vchCryptedPinCode;
+    CKeyingMaterial vchCryptedPinCode;
+
+    uint256 DoubleHashOfString(const std::string& str) const;
 
 protected:
     bool SetCrypted();
 
     //! will encrypt previously unencrypted keys
     bool EncryptKeys(CKeyingMaterial& vMasterKeyIn);
+
+    //! get the encrypted form of the paper key (this is only meant for saving into the database)
+    bool GetCryptedPaperKey(CKeyingMaterial& vchCryptedPaperKey);
+
+    //! will encrypt the paper key
+    bool EncryptPaperKey(CKeyingMaterial& vMasterKeyIn);
+
+    //! get the encrypted form of the pin code (this is only meant for saving into the database)
+    bool GetCryptedPinCode(CKeyingMaterial& vchCryptedPinCode);
+
+    //! will encrypt the pin code
+    bool EncryptPinCode(CKeyingMaterial& vMasterKeyIn);
 
     bool Unlock(const CKeyingMaterial& vMasterKeyIn);
     CryptedKeyMap mapCryptedKeys;
@@ -160,13 +174,15 @@ public:
 
     bool Lock();
 
-    virtual bool AddCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey);
-    bool AddPaperKey(const std::string& paperKey) override;
-    bool GetPaperKey(std::string& paperKey) const override;
+    virtual bool AddCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey);
+    bool AddPaperKey(const SecureString& paperKey) override;
+    bool GetPaperKey(SecureString& paperKey) const override;
+    void DecryptPaperKey();
 
-    virtual bool AddCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode);
-    bool AddPinCode(const std::string& pinCode) override;
-    bool GetPinCode(std::string& pinCode) const override;
+    virtual bool AddCryptedPinCode(const CKeyingMaterial& vchCryptedPinCode);
+    bool AddPinCode(const SecureString& pinCode) override;
+    bool GetPinCode(SecureString& pinCode) const override;
+    void DecryptPinCode();
 
     virtual bool AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey) override;

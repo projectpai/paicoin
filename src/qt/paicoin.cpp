@@ -581,8 +581,23 @@ void PAIcoinApplication::initializeResult(bool success)
                          window, SLOT(message(QString,QString,unsigned int)));
         QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
 
-        if (walletModel->isWalletEnabled())
-            window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
+        if (walletModel->isWalletEnabled()) {
+            if (walletModel->getEncryptionStatus() == WalletModel::EncryptionStatus::Locked)
+            {
+                WalletModel::UnlockContext ctx(walletModel->requestUnlock());
+                if (ctx.isValid())
+                {
+                    walletModel->decryptPaperKey();
+                    walletModel->decryptPinCode();
+
+                    walletModel->refreshInvestorKey();
+
+                    window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
+                }
+            } else {
+                window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
+            }
+        }
 #endif
     } else {
         quit(); // Exit main loop
@@ -613,7 +628,9 @@ void PAIcoinApplication::createNewWallet()
 
     if (!vpwallets.empty())
     {
-        std::string paperKey = vpwallets[0]->GeneratePaperKey();
+        SecureString secPaperKey;
+        secPaperKey = vpwallets[0]->GeneratePaperKey();
+        std::string paperKey(secPaperKey.begin(), secPaperKey.end());
         walletPhrase = paperKey;
 
         Q_EMIT walletCreated(paperKey);
@@ -660,7 +677,7 @@ void PAIcoinApplication::completeNewWalletInitialization()
 void PAIcoinApplication::enableWalletDisplay()
 {
     walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
-    walletModel->usePaperKey(walletPhrase);
+    walletModel->usePaperKey(SecureString(walletPhrase.begin(), walletPhrase.end()));
     walletModel->connectAuthenticator();
 
     window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);

@@ -1772,7 +1772,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+681"/>
+        <location filename="../paicoin.cpp" line="+698"/>
         <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1820,7 +1820,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <location line="+25"/>
-        <source>Your paper key is the only way to restore your PAIcoin Wallet if your phone is lost, stolen, broken, or updated.
+        <source>Your paper key is the only way to restore your PAIcoin Wallet if your device is lost, stolen, broken, or updated.
 
 We will show you a list of words to write down on a piece of paper and keep safe.</source>
         <translation type="unfinished"></translation>
@@ -4199,7 +4199,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>WalletModel</name>
     <message>
-        <location filename="../walletmodel.cpp" line="+303"/>
+        <location filename="../walletmodel.cpp" line="+321"/>
         <source>Send Coins</source>
         <translation type="unfinished">Send Coins</translation>
     </message>

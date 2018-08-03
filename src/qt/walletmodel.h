@@ -226,20 +226,25 @@ public:
      * This method does NOT set this as current mnemonic paper key; use usePaperKey() to accomplish that.
      * Returns a string with the mnemonic phrase. To be stored and used exactly as generated here.
      */
-    std::string generateNewPaperKey();
+    SecureString generateNewPaperKey();
 
     /*
      * Get the current BIP39 mnemonic phrase (paper key)
      * Returns a string with the mnemonic phrase. To be stored and used exactly as generated here.
      */
-    std::string getCurrentPaperKey();
+    SecureString getCurrentPaperKey();
 
     /*
      * Set the BIP39 mnemonic phrase (paper key) as BIP32 HD seed
      * IMPORTANT! This method sets the paper key as seed for the HD wallet and resets the child indexes.
      * Returns true if successfully set, false otherwise.
      */
-    bool usePaperKey(const std::string& paperKey);
+    bool usePaperKey(const SecureString& paperKey);
+
+    void decryptPaperKey();
+    void decryptPinCode();
+
+    void refreshInvestorKey();
 
     /*
      * Connects wallet to authentication manager
@@ -313,6 +318,7 @@ private:
     void subscribeToCoreSignals();
     void unsubscribeFromCoreSignals();
     void checkBalanceChanged();
+    void checkInvestorBalanceChanged();
 
 Q_SIGNALS:
     // Signal that balance in wallet changed

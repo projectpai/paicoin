@@ -66,8 +66,6 @@ static const unsigned int DEFAULT_TX_CONFIRM_TARGET = 6;
 static const bool DEFAULT_WALLET_RBF = false;
 static const bool DEFAULT_WALLETBROADCAST = true;
 static const bool DEFAULT_DISABLE_WALLET = false;
-//! if set, all keys will be derived by using BIP32
-static const bool DEFAULT_USE_HD_WALLET = true;
 
 extern const char * DEFAULT_WALLET_DAT;
 
@@ -97,7 +95,7 @@ enum WalletFeature
 
     FEATURE_HD_SPLIT = 139900, // Wallet with HD chain split (change outputs will use m/0'/1'/k)
 
-    FEATURE_LATEST = FEATURE_COMPRPUBKEY // HD is optional, use FEATURE_COMPRPUBKEY as latest version
+    FEATURE_LATEST = FEATURE_HD_SPLIT
 };
 
 
@@ -728,6 +726,11 @@ private:
 
     const uint32_t InvestorKeyIndex = 100;
 
+    //! Explicitly encrypt the paper key and store it to disk
+    bool EncryptPaperKey(CKeyingMaterial& vMasterKeyIn);
+    //! Explicitly encrypt the pin code and store it to disk
+    bool EncryptPinCode(CKeyingMaterial& vMasterKeyIn);
+
 public:
     /*
      * Main wallet lock.
@@ -859,22 +862,22 @@ public:
     bool IsScanning() { return fScanningWallet; }
 
     //! Adds paper keys to the store
-    bool AddCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey) override;
-    bool AddPaperKey(const std::string& paperKey) override;
-    bool AddPaperKeyWithDB(CWalletDB &walletdb, const std::string& paperKey);
+    bool AddCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey) override;
+    bool AddPaperKey(const SecureString& paperKey) override;
+    bool AddPaperKeyWithDB(CWalletDB &walletdb, const SecureString& paperKey);
     //! Adds the paper key to the store, without saving it to disk (used by LoadWallet)
-    bool LoadPaperKey(const std::string& paperkey);
+    bool LoadPaperKey(const SecureString& paperkey);
     //! Adds the encrypted paper key to the store, without saving it to disk (used by LoadWallet)
-    bool LoadCryptedPaperKey(const std::vector<unsigned char>& vchCryptedPaperKey);
+    bool LoadCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey);
 
     //! Adds PIN code to the store
-    bool AddCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode) override;
-    bool AddPinCode(const std::string& pinCode) override;
-    bool AddPinCodeWithDB(CWalletDB &walletdb, const std::string& pinCode);
+    bool AddCryptedPinCode(const CKeyingMaterial& vchCryptedPinCode) override;
+    bool AddPinCode(const SecureString& pinCode) override;
+    bool AddPinCodeWithDB(CWalletDB &walletdb, const SecureString& pinCode);
     //! Adds the PIN code to the store, without saving it to disk (used by LoadWallet)
-    bool LoadPinCode(const std::string& pinCode) { return CCryptoKeyStore::AddPinCode(pinCode); }
+    bool LoadPinCode(const SecureString& pinCode);
     //! Adds the encrypted PIN code to the store, without saving it to disk (used by LoadWallet)
-    bool LoadCryptedPinCode(const std::vector<unsigned char>& vchCryptedPinCode);
+    bool LoadCryptedPinCode(const CKeyingMaterial& vchCryptedPinCode);
 
     /**
      * keystore implementation
@@ -1105,7 +1108,7 @@ public:
     bool MarkReplaced(const uint256& originalHash, const uint256& newHash);
 
     /* Initializes the wallet, returns a new CWallet instance or a null pointer in case of an error */
-    static CWallet* CreateWalletFromFile(const std::string walletFile, bool& fFirstRun, const bool generateNewMasterKey = true);
+    static CWallet* CreateWalletFromFile(const std::string walletFile, bool& fFirstRun);
 
     /**
      * Wallet post-init setup
@@ -1134,41 +1137,41 @@ public:
      * Generates a new BIP39 phrase
      * Returns a string with the phrase. To be used exactly as generated here.
      */
-    std::string GeneratePaperKey();
+    SecureString GeneratePaperKey();
 
     /*
      * Get the current BIP39 phrase
      * Returns true if the string with the paper key is valid. To be used exactly as generated here.
      */
-    bool GetCurrentPaperKey(std::string& paperKey);
+    bool GetCurrentPaperKey(SecureString& paperKey);
 
     /*
      * Set the current BIP39 phrase
      * Returns true if the paper key has been set.
      */
-    bool SetCurrentPaperKey(const std::string& paperKey);
+    bool SetCurrentPaperKey(const SecureString& paperKey);
 
     /*
      * Get the current PIN code
      * Returns true if the string with the PIN code is valid.
      */
-    bool GetCurrentPinCode(std::string& pinCode);
+    bool GetCurrentPinCode(SecureString& pinCode);
 
     /*
      * Set the current PIN code
      * Returns true if the PIN code has been set.
      */
-    bool SetCurrentPinCode(const std::string& pinCode);
+    bool SetCurrentPinCode(const SecureString& pinCode);
 
     /*
      * Get the BIP39 key of 64 bytes to be used in the master key generation
      * Phrase is the mnemonic phrase from which to compute the seed.
      * Returns a vector filled with the 64 bytes of seed; might be empty.
      */
-    std::vector<unsigned char> GetBIP39Seed(const std::string& phrase);
+    CKeyingMaterial GetBIP39Seed(const SecureString& phrase);
 
     /* Generates a new HD master key using the BIP39 key of 64 bytes (will not be activated) */
-    CPubKey GenerateNewHDMasterKey(const std::vector<unsigned char>& key64);
+    CPubKey GenerateNewHDMasterKey(const CKeyingMaterial& key64);
 
     // INVESTOR
 
@@ -1177,6 +1180,9 @@ public:
 
     /* Set the public key to be used for investor funding */
     bool SetInvestorPublicKey(const CPubKey& pubKey);
+
+    /* Forcefully refresh the investor key */
+    bool RefreshInvestorPublicKey();
 
     /* Get all the multisig addresses for the investor */
     std::vector<std::string> GetAllMultisigAddresses();

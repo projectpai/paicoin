@@ -15,7 +15,7 @@ class WalletHDTest(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2
-        self.extra_args = [['-usehd=0'], ['-usehd=1', '-keypool=0']]
+        self.extra_args = [[], ['-keypool=0']]
 
     def run_test (self):
         tmpdir = self.options.tmpdir
