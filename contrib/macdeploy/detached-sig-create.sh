@@ -6,7 +6,7 @@
 set -e
 
 ROOTDIR=dist
-BUNDLE="${ROOTDIR}/PAIcoin-Core.app"
+BUNDLE="${ROOTDIR}/PAI-Up.app"
 CODESIGN=codesign
 TEMPDIR=sign.temp
 TEMPLIST=${TEMPDIR}/signatures.txt
