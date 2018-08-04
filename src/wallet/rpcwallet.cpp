@@ -574,8 +574,10 @@ UniValue signmessage(const JSONRPCRequest& request)
             "\nResult:\n"
             "\"signature\"          (string) The signature of the message encoded in base 64\n"
             "\nExamples:\n"
+#ifdef ENABLE_ENCRYPT_WALLET
             "\nUnlock the wallet for 30 seconds\n"
             + HelpExampleCli("walletpassphrase", "\"mypassphrase\" 30") +
+#endif
             "\nCreate the signature\n"
             + HelpExampleCli("signmessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"my message\"") +
             "\nVerify the signature\n"
@@ -3204,7 +3206,9 @@ static const CRPCCommand commands[] =
     { "wallet",             "bumpfee",                  &bumpfee,                  {"txid", "options"} },
     { "wallet",             "dumpprivkey",              &dumpprivkey,              {"address"}  },
     { "wallet",             "dumpwallet",               &dumpwallet,               {"filename"} },
+  #ifdef ENABLE_ENCRYPT_WALLET
     { "wallet",             "encryptwallet",            &encryptwallet,            {"passphrase"} },
+  #endif
     { "wallet",             "getaccountaddress",        &getaccountaddress,        {"account"} },
     { "wallet",             "getaccount",               &getaccount,               {"address"} },
     { "wallet",             "getaddressesbyaccount",    &getaddressesbyaccount,    {"account"} },
@@ -3240,9 +3244,11 @@ static const CRPCCommand commands[] =
     { "wallet",             "setaccount",               &setaccount,               {"address","account"} },
     { "wallet",             "settxfee",                 &settxfee,                 {"amount"} },
     { "wallet",             "signmessage",              &signmessage,              {"address","message"} },
+#ifdef ENABLE_ENCRYPT_WALLET
     { "wallet",             "walletlock",               &walletlock,               {} },
     { "wallet",             "walletpassphrasechange",   &walletpassphrasechange,   {"oldpassphrase","newpassphrase"} },
     { "wallet",             "walletpassphrase",         &walletpassphrase,         {"passphrase","timeout"} },
+#endif
     { "wallet",             "removeprunedfunds",        &removeprunedfunds,        {"txid"} },
 
     { "generating",         "generate",                 &generate,                 {"nblocks","maxtries"} },
