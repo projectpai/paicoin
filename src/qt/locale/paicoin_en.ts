@@ -4346,7 +4346,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <location line="+23"/>
-        <source>  By using this application I agree to the &lt;a href=&quot;https://lanier.ai/terms-of-service/&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://lanier.ai/privacy-policy/&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</source>
+        <source>  By using this application I agree to the &lt;a href=&quot;https://paiup.com/terms-of-service.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://paiup.com/privacy-policy.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
