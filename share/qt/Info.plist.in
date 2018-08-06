@@ -29,10 +29,10 @@
   <string>????</string>
 
   <key>CFBundleExecutable</key>
-  <string>PAIcoin-Core</string>
+  <string>PAI-Up</string>
   
   <key>CFBundleName</key>
-  <string>PAIcoin-Core</string>
+  <string>PAI-Up</string>
 
   <key>LSHasLocalizedDisplayName</key>
   <true/>
