@@ -470,6 +470,10 @@ public:
         file = filenew;
     }
 
+    CAutoFile(CAutoFile&& other): nType(other.nType), nVersion(other.nVersion), file(std::move(other.file))
+    {
+    }
+
     ~CAutoFile()
     {
         fclose();

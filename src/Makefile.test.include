@@ -81,7 +81,8 @@ PAICOIN_TESTS =\
   test/versionbits_tests.cpp \
   test/uint256_tests.cpp \
   test/univalue_tests.cpp \
-  test/util_tests.cpp
+  test/util_tests.cpp \
+  test/coinbase_index_tests.cpp
 
 if ENABLE_WALLET
 PAICOIN_TESTS += \
