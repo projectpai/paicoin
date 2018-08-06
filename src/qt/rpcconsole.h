@@ -27,7 +27,7 @@ class QMenu;
 class QItemSelection;
 QT_END_NAMESPACE
 
-/** Local PAIcoin RPC console. */
+/** Local PAI Coin RPC console. */
 class RPCConsole: public QWidget
 {
     Q_OBJECT

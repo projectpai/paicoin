@@ -80,9 +80,9 @@ font-weight:600;</string>
         <enum>Qt::LeftToRight</enum>
        </property>
        <property name="text">
-        <string>Your initial PAIcoin investment is currently in the holding period and is unavailable for transactions. You will receive a notification once the holding period is complete.
+        <string>Your initial PAI Coin investment is currently in the holding period and is unavailable for transactions. You will receive a notification once the holding period is complete.
 
-You may still send and receive any PAIcoin in your &quot;Available Funds&quot;</string>
+You may still send and receive any PAI Coin in your &quot;Available Funds&quot;</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

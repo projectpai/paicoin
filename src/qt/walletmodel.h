@@ -94,7 +94,7 @@ public:
     }
 };
 
-/** Interface to PAIcoin wallet from Qt view code. */
+/** Interface to PAI Coin wallet from Qt view code. */
 class WalletModel : public QObject
 {
     Q_OBJECT

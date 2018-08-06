@@ -484,7 +484,7 @@
         <translation>Opsiynau:</translation>
     </message>
     <message>
-        <source>PAIcoin Core</source>
+        <source>PAI Coin Core</source>
         <translation>Craidd PAIcoin</translation>
     </message>
     <message>

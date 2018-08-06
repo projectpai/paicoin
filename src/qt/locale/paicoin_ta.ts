@@ -708,8 +708,8 @@
 <context>
     <name>paicoin-core</name>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>PAIcoin மையம்</translation>
+        <source>PAI Coin Core</source>
+        <translation>PAI Coin மையம்</translation>
     </message>
     <message>
         <source>(default: %u)</source>
