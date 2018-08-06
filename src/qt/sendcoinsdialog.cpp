@@ -16,6 +16,7 @@
 #include "walletmodel.h"
 #include "fundsinholdingdialog.h"
 #include "holdingperiodcompletedialog.h"
+#include "authmanager.h"
 
 #include "base58.h"
 #include "chainparams.h"
@@ -953,6 +954,7 @@ SendConfirmationDialog::SendConfirmationDialog(const QString &title, const QStri
     yesButton = button(QMessageBox::Yes);
     updateYesButton();
     connect(&countDownTimer, SIGNAL(timeout()), this, SLOT(countDown()));
+    connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), this, SLOT(hide()));
 }
 
 int SendConfirmationDialog::exec()
