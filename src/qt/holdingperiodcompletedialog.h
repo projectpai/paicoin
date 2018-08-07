@@ -5,7 +5,7 @@
 
 namespace Ui {
 class HoldingPeriodCompleteDialog;
-const QString UpdateLink = "https://lanier.ai";
+const QString UpdateLink = "https://paiup.com";
 }
 
 class HoldingPeriodCompleteDialog : public QDialog

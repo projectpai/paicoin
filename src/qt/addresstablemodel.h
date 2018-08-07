@@ -26,7 +26,7 @@ public:
 
     enum ColumnIndex {
         Label = 0,   /**< User specified label */
-        Address = 1  /**< PAIcoin address */
+        Address = 1  /**< PAI Coin address */
     };
 
     enum RoleIndex {

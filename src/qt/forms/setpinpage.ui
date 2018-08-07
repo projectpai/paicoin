@@ -139,7 +139,7 @@ border:1px solid #dedede;</string>
           </size>
          </property>
          <property name="text">
-          <string>Your PIN will be used to unlock your PAIcoin Wallet and send money. Use only numbers to create your PIN.</string>
+          <string>Your PIN will be used to unlock your PAI Coin Wallet and send money. Use only numbers to create your PIN.</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

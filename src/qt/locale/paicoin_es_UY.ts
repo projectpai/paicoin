@@ -110,7 +110,7 @@
         <translation>Recibiendo direcciones</translation>
     </message>
     <message>
-        <source>Send coins to a PAIcoin address</source>
+        <source>Send coins to a PAI Coin address</source>
         <translation>Enviar monedas a una dirección PAIcoin</translation>
     </message>
     <message>

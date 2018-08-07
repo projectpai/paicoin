@@ -59,7 +59,7 @@ enum class PAIcoinGUIState : std::int8_t
 };
 
 /**
-  PAIcoin GUI main class. This class represents the main window of the PAIcoin UI. It communicates with both the client and
+  PAI Coin GUI main class. This class represents the main window of the PAI Coin UI. It communicates with both the client and
   wallet models to give the user an up-to-date view of the current core state.
 */
 class PAIcoinGUI : public QMainWindow

@@ -20,7 +20,7 @@ public:
     State validate(QString &input, int &pos) const;
 };
 
-/** PAIcoin address widget validator, checks for a valid paicoin address.
+/** PAI Coin address widget validator, checks for a valid paicoin address.
  */
 class PAIcoinAddressCheckValidator : public QValidator
 {

@@ -41,7 +41,7 @@
 #define THIN_SP_UTF8 REAL_THIN_SP_UTF8
 #define THIN_SP_HTML HTML_HACK_SP
 
-/** PAIcoin unit definitions. Encapsulates parsing and formatting
+/** PAI Coin unit definitions. Encapsulates parsing and formatting
    and serves as list model for drop-down selection boxes.
 */
 class PAIcoinUnits: public QAbstractListModel
@@ -51,7 +51,7 @@ class PAIcoinUnits: public QAbstractListModel
 public:
     explicit PAIcoinUnits(QObject *parent);
 
-    /** PAIcoin units.
+    /** PAI Coin units.
       @note Source: https://en.paicoin.it/wiki/Units . Please add only sensible ones
      */
     enum Unit

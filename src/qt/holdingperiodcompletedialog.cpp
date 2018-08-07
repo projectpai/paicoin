@@ -13,12 +13,12 @@ HoldingPeriodCompleteDialog::HoldingPeriodCompleteDialog(bool needsUpdate, QWidg
 
     if (fNeedsUpdate)
     {
-        ui->labelInfo->setText(tr("Please update PAIcoin wallet to unlock your investment.\nYou may update by downloading the latest version from Lanier.ai\n\nIf you do not update the application, your investment will remain in holding."));
+        ui->labelInfo->setText(tr("Please update PAI Coin wallet to unlock your investment.\nYou may update by downloading the latest version from Lanier.ai\n\nIf you do not update the application, your investment will remain in holding."));
         ui->pushButtonOkay->hide();
     }
     else
     {
-        ui->labelInfo->setText(tr("Congratulations! Your initial PAIcoin investment is now available for transactions."));
+        ui->labelInfo->setText(tr("Congratulations! Your initial PAI Coin investment is now available for transactions."));
         ui->pushButtonGoTo->hide();
         ui->pushButtonNotNow->hide();
         connect(ui->pushButtonOkay, SIGNAL(clicked()), this, SLOT(unlock()));
