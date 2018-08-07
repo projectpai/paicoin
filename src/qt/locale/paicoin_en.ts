@@ -4260,7 +4260,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <location line="+122"/>
-        <source>Send and receive PAIcoin</source>
+        <source>Send and receive PAI Coin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4331,7 +4331,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <location line="+27"/>
-        <source>Send and receive PAIcoin</source>
+        <source>Send and receive PAI Coin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
