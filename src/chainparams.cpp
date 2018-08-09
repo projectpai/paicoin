@@ -175,7 +175,9 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
 
-        consensus.nAuxpowActivationTime = 1537833600; // September 25, 2018
+        consensus.vDeployments[Consensus::DEPLOYMENT_AUXPOW].bit = 3;
+        consensus.vDeployments[Consensus::DEPLOYMENT_AUXPOW].nStartTime = 1542672000; // November 20, 2018
+        consensus.vDeployments[Consensus::DEPLOYMENT_AUXPOW].nTimeout = 1574208000; // November 20, 2019
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -302,7 +304,9 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000000b13e58c76917eb3b416fc284e36641d952a96c3422b0808d828646");
 
-        consensus.nAuxpowActivationTime = 1532476800; // July 25, 2018
+        consensus.vDeployments[Consensus::DEPLOYMENT_AUXPOW].bit = 3;
+        consensus.vDeployments[Consensus::DEPLOYMENT_AUXPOW].nStartTime = 1537401600; // September 20, 2018
+        consensus.vDeployments[Consensus::DEPLOYMENT_AUXPOW].nTimeout = 1568937600; // September 20, 2019
 
         pchMessageStart[0] = 0x0b;
         pchMessageStart[1] = 0x09;
@@ -425,7 +429,9 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x00");
 
-        consensus.nAuxpowActivationTime = 1529688242;  // Fri, 22 Jun 2018 17:24:02 GMT
+        consensus.vDeployments[Consensus::DEPLOYMENT_AUXPOW].bit = 3;
+        consensus.vDeployments[Consensus::DEPLOYMENT_AUXPOW].nStartTime = 1530921600; // July 7, 2018
+        consensus.vDeployments[Consensus::DEPLOYMENT_AUXPOW].nTimeout = 1562457600; // July 7, 2019
 
         pchMessageStart[0] = 0xff;
         pchMessageStart[1] = 0xd1;
@@ -538,4 +544,22 @@ void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime,
 void TurnOffSegwitForUnitTests ()
 {
   globalChainParams->TurnOffSegwitForUnitTests ();
+}
+
+uint32_t nVersionBitActivationTime[Consensus::MAX_VERSION_BITS_DEPLOYMENTS];
+
+void ClearVersionBitActivationTimes()
+{
+    for (unsigned int d = 0; d < Consensus::MAX_VERSION_BITS_DEPLOYMENTS; d++)
+        nVersionBitActivationTime[d] = 0;
+}
+
+uint32_t GetActivationTime(Consensus::DeploymentPos pos)
+{
+    return nVersionBitActivationTime[pos];
+}
+
+void SetActivationTime(Consensus::DeploymentPos pos, uint32_t time)
+{
+    nVersionBitActivationTime[pos] = time;
 }

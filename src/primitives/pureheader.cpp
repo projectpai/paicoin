@@ -25,5 +25,6 @@ uint256 CPureBlockHeader::GetHash() const
 
 bool CPureBlockHeader::SupportsAuxpow() const
 {
-    return nTime > Params().GetConsensus().nAuxpowActivationTime;
+    uint32_t nActivationTime = GetActivationTime(Consensus::DEPLOYMENT_AUXPOW);
+    return nActivationTime > 0 && nTime > nActivationTime;
 }

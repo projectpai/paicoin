@@ -998,12 +998,11 @@ void AuxMiningCheck()
     throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD,
                        "Namecoin is downloading blocks...");
 
-  /* This should never fail, since the chain is already
-     past the point of merge-mining start.  Check nevertheless.  */
+  // check if the chain is past the point of merged mining activation
   {
     LOCK(cs_main);
-    if (chainActive.Tip() && chainActive.Tip()->nTime < Params().GetConsensus().nAuxpowActivationTime)
-      throw std::runtime_error("mining auxblock method is not yet available");
+    if (GetActivationTime(Consensus::DEPLOYMENT_AUXPOW) == 0)
+        throw std::runtime_error("mining auxblock method is not yet available");
   }
 }
 

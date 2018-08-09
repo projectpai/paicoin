@@ -158,11 +158,12 @@ CAuxPow::CheckMerkleBranch (uint256 hash,
 void
 CAuxPow::initAuxPow (CBlockHeader& header)
 {
-  assert (header.nTime >= Params().GetConsensus().nAuxpowActivationTime);
+  uint32_t nAuxpowActivationTime = GetActivationTime(Consensus::DEPLOYMENT_AUXPOW);
+  assert (nAuxpowActivationTime > 0 && header.nTime > nAuxpowActivationTime);
 
   CBlock parent;
   parent.nVersion = 1;
-  parent.nTime = Params().GetConsensus().nAuxpowActivationTime + 1;
+  parent.nTime = nAuxpowActivationTime + 1;
 
   // build a classic auxpow object
   if (gArgs.GetBoolArg("-classicauxpow", false))

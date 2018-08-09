@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_CASE (auxpow_pow)
   const arith_uint256 target = (~arith_uint256(0) >> 1);
   CBlockHeader block;
   block.nBits = target.GetCompact ();
-  block.nTime = params.nAuxpowActivationTime + 1;
+  block.nTime = GetActivationTime(Consensus::DEPLOYMENT_AUXPOW) + 1;
   mineBlock (block, false);
   BOOST_CHECK (!CheckProofOfWork (block, params));
   mineBlock (block, true);

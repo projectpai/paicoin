@@ -37,6 +37,11 @@ struct ChainTxData {
     double dTxRate;
 };
 
+extern uint32_t nVersionBitActivationTime[Consensus::MAX_VERSION_BITS_DEPLOYMENTS];
+void ClearVersionBitActivationTimes();
+uint32_t GetActivationTime(Consensus::DeploymentPos pos);
+void SetActivationTime(Consensus::DeploymentPos pos, uint32_t time);
+
 /**
  * CChainParams defines various tweakable parameters of a given instance of the
  * PAIcoin system. There are three: the main network on which people trade goods

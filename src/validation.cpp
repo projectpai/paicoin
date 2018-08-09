@@ -2068,6 +2068,18 @@ void static UpdateTip(CBlockIndex *pindexNew, const CChainParams& chainParams) {
     std::vector<std::string> warningMessages;
     if (!IsInitialBlockDownload())
     {
+        // query and cache activation times for version bits;
+        // having activation time cached allows to easily determine expected block format based on block time
+        const Consensus::Params& consensus = chainParams.GetConsensus();
+        for (int j=0; j<(int)Consensus::MAX_VERSION_BITS_DEPLOYMENTS; ++j) {
+            Consensus::DeploymentPos pos = (Consensus::DeploymentPos) j;
+            ThresholdState state = VersionBitsState(chainActive.Tip(), consensus, pos, versionbitscache);
+            if (state == THRESHOLD_ACTIVE && GetActivationTime(pos) == 0)
+                SetActivationTime(pos, chainActive.Tip()->GetBlockTime());
+            if (state != THRESHOLD_ACTIVE && GetActivationTime(pos) != 0)
+                SetActivationTime(pos, 0);
+        }
+
         int nUpgraded = 0;
         const CBlockIndex* pindex = chainActive.Tip();
         for (int bit = 0; bit < VERSIONBITS_NUM_BITS; bit++) {
@@ -3964,6 +3976,7 @@ void UnloadBlockIndex()
     setDirtyBlockIndex.clear();
     setDirtyFileInfo.clear();
     versionbitscache.Clear();
+    ClearVersionBitActivationTimes();
     for (int b = 0; b < VERSIONBITS_NUM_BITS; b++) {
         warningcache[b].clear();
     }
