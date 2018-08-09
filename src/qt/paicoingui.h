@@ -230,6 +230,8 @@ public Q_SLOTS:
     */
     void setEncryptionStatus(int status);
 
+    void encryptWallet();
+
     /** Set the hd-enabled status as shown in the UI.
      @param[in] status            current hd enabled status
      @see WalletModel::EncryptionStatus

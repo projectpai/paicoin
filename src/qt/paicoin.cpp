@@ -554,7 +554,6 @@ void PAIcoinApplication::initializeResult(bool success)
             window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
             window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
 
-
             connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
                              paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
         }
@@ -583,20 +582,25 @@ void PAIcoinApplication::initializeResult(bool success)
         QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
 
         if (walletModel->isWalletEnabled()) {
-            if (walletModel->getEncryptionStatus() == WalletModel::EncryptionStatus::Locked)
+            if (walletModel->getEncryptionStatus() == WalletModel::Unencrypted)
+                window->encryptWallet();
+            else
             {
-                WalletModel::UnlockContext ctx(walletModel->requestUnlock());
-                if (ctx.isValid())
+                if (walletModel->getEncryptionStatus() == WalletModel::EncryptionStatus::Locked)
                 {
-                    walletModel->decryptPaperKey();
-                    walletModel->decryptPinCode();
+                    WalletModel::UnlockContext ctx(walletModel->requestUnlock());
+                    if (ctx.isValid())
+                    {
+                        walletModel->decryptPaperKey();
+                        walletModel->decryptPinCode();
 
-                    walletModel->refreshInvestorKey();
+                        walletModel->refreshInvestorKey();
 
+                        window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
+                    }
+                } else {
                     window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
                 }
-            } else {
-                window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
             }
         }
 #endif
@@ -671,8 +675,13 @@ void PAIcoinApplication::completeNewWalletInitialization()
 
     enableWalletDisplay();
 
-    Q_EMIT requestedInitFinalize();
-    Q_EMIT completeUiWalletInitialization();
+    if (walletModel->getEncryptionStatus() == WalletModel::Unencrypted)
+        window->encryptWallet();
+    else
+    {
+        Q_EMIT requestedInitFinalize();
+        Q_EMIT completeUiWalletInitialization();
+    }
 }
 
 void PAIcoinApplication::enableWalletDisplay()

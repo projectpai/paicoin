@@ -1458,6 +1458,12 @@ void PAIcoinGUI::setEncryptionStatus(int status)
         break;
     }
 }
+
+void PAIcoinGUI::encryptWallet()
+{
+    if (walletFrame)
+        walletFrame->encryptWallet(true);
+}
 #endif // ENABLE_WALLET
 
 void PAIcoinGUI::showNormalIfMinimized(bool fToggleHidden)
