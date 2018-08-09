@@ -1215,7 +1215,7 @@ public:
     bool CreateInvestorUnlockTransaction(CWalletTx& tx, const CPubKey& pubKey);
 
     /* Returns true if this an the unlock transaction (all inputs are from the holding period multisig addresses) */
-    bool IsUnlockTransaction(const CWalletTx* tx);
+    bool IsUnlockTransaction(const CWalletTx* tx) const;
 
     /* reset the investor's data (public key, multisig address, redeem script, balance) */
     void WipeInvestorData();
