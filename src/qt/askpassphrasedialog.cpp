@@ -47,6 +47,9 @@ AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
             ui->passLabel1->hide();
             ui->passEdit1->hide();
             setWindowTitle(tr("Encrypt wallet"));
+
+            ui->buttonBox->button(QDialogButtonBox::Cancel)->setHidden(true);
+            setWindowFlags((windowFlags() | Qt::CustomizeWindowHint) & (~Qt::WindowCloseButtonHint));
             break;
         case Unlock: // Ask passphrase
             ui->warningLabel->setText(tr("This operation needs your wallet passphrase to unlock the wallet."));
@@ -110,12 +113,12 @@ void AskPassphraseDialog::accept()
             // Cannot encrypt with empty passphrase
             break;
         }
-        QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm wallet encryption"),
-                 tr("Warning: If you encrypt your wallet and lose your passphrase, you will <b>LOSE ALL OF YOUR PAICOINS</b>!") + "<br><br>" + tr("Are you sure you wish to encrypt your wallet?"),
-                 QMessageBox::Yes|QMessageBox::Cancel,
-                 QMessageBox::Cancel);
-        if(retval == QMessageBox::Yes)
-        {
+        //QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm wallet encryption"),
+        //         tr("Warning: If you encrypt your wallet and lose your passphrase, you will <b>LOSE ALL OF YOUR PAICOINS</b>!") + "<br><br>" + tr("Are you sure you wish to encrypt your wallet?"),
+        //         QMessageBox::Yes|QMessageBox::Cancel,
+        //         QMessageBox::Cancel);
+        //if(retval == QMessageBox::Yes)
+        //{
             if(newpass1 == newpass2)
             {
                 if(model->setWalletEncrypted(true, newpass1))
@@ -145,11 +148,11 @@ void AskPassphraseDialog::accept()
                 QMessageBox::critical(this, tr("Wallet encryption failed"),
                                      tr("The supplied passphrases do not match."));
             }
-        }
-        else
-        {
-            QDialog::reject(); // Cancelled
-        }
+        //}
+        //else
+        //{
+        //    QDialog::reject(); // Cancelled
+        //}
         } break;
     case Unlock:
         if(!model->setWalletLocked(false, oldpass))
