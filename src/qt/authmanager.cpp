@@ -37,7 +37,7 @@ bool AuthManager::Check(const std::string& pin)
     bool fMatch = storedPin.compare(pin) == 0;
     if (!fMatch)
     {
-        ConfirmationDialog confirmationDialog(tr("Wrong PIN!"));
+        ConfirmationDialog confirmationDialog(tr("Invalid PIN, please try again"));
         confirmationDialog.exec();
 
         if (SettingsHelper::IncrementAuthFailCount() >= 3)
