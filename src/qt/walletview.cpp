@@ -105,7 +105,7 @@ void WalletView::setPAIcoinGUI(PAIcoinGUI *gui)
         // Pass through transaction notifications
         connect(this, SIGNAL(incomingTransaction(QString,int,CAmount,QString,QString,QString)), gui, SLOT(incomingTransaction(QString,int,CAmount,QString,QString,QString)));
 
-        // Connect HD enabled state signal 
+        // Connect HD enabled state signal
         connect(this, SIGNAL(hdEnabledStatusChanged(int)), gui, SLOT(setHDStatus(int)));
     }
 }
@@ -300,6 +300,22 @@ void WalletView::viewInvestorKey()
     ViewInvestorKeyDialog dlg(investorKey, this);
     dlg.setModel(walletModel);
     dlg.exec();
+}
+
+void WalletView::reviewPaperKey()
+{
+    SecureString secPaperKey = walletModel->generateNewPaperKey();//getCurrentPaperKey();
+    std::string paperKey(secPaperKey.begin(), secPaperKey.end());
+
+    QString message;
+    std::stringstream stream(paperKey);
+    std::string word;
+    for (int i = 1; std::getline(stream, word, ' '); ++i ) {
+        message += word.c_str();
+        message += (i % 3 == 0) ? '\n' : '\t';
+    }
+
+    QMessageBox::information(this,tr("Review Paper Key"), message);
 }
 
 void WalletView::usedSendingAddresses()

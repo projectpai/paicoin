@@ -133,6 +133,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     openAction(0),
     showHelpMessageAction(0),
     viewInvestorKeyAction(0),
+    reviewPaperKeyAction(0),
     trayIcon(0),
     trayIconMenu(0),
     notificator(0),
@@ -451,6 +452,9 @@ void PAIcoinGUI::createActions()
     viewInvestorKeyAction = new QAction(tr("&View Investor Key"), this);
     viewInvestorKeyAction->setStatusTip(tr("View Investor Key"));
 
+    reviewPaperKeyAction = new QAction(tr("&Review Paper Key"), this);
+    reviewPaperKeyAction->setStatusTip(tr("Review Paper Key"));
+
     openRPCConsoleAction = new QAction(platformStyle->TextColorIcon(":/icons/debugwindow"), tr("&Debug window"), this);
     openRPCConsoleAction->setStatusTip(tr("Open debugging and diagnostic console"));
     // initially disable the debug window menu item
@@ -492,6 +496,7 @@ void PAIcoinGUI::createActions()
         connect(usedReceivingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedReceivingAddresses()));
         connect(openAction, SIGNAL(triggered()), this, SLOT(openClicked()));
         connect(viewInvestorKeyAction, SIGNAL(triggered()), walletFrame, SLOT(viewInvestorKey()));
+        connect(reviewPaperKeyAction, SIGNAL(triggered()), walletFrame, SLOT(reviewPaperKey()));
     }
 #endif // ENABLE_WALLET
 
@@ -534,6 +539,7 @@ void PAIcoinGUI::createMenuBar()
         settings->addAction(changePassphraseAction);
 #endif // ENABLE_ENCRYPT_WALLET
         settings->addAction(viewInvestorKeyAction);
+        settings->addAction(reviewPaperKeyAction);
         settings->addSeparator();
     }
     settings->addAction(optionsAction);
@@ -597,13 +603,13 @@ void PAIcoinGUI::setClientModel(ClientModel *_clientModel)
         }
 #endif // ENABLE_WALLET
         unitDisplayControl->setOptionsModel(_clientModel->getOptionsModel());
-        
+
         OptionsModel* optionsModel = _clientModel->getOptionsModel();
         if(optionsModel)
         {
             // be aware of the tray icon disable state change reported by the OptionsModel object.
             connect(optionsModel,SIGNAL(hideTrayIconChanged(bool)),this,SLOT(setTrayIconVisible(bool)));
-        
+
             // initialize the disable state of the tray icon with the current value in the model.
             setTrayIconVisible(optionsModel->getHideTrayIcon());
         }
@@ -1436,7 +1442,7 @@ void PAIcoinGUI::setHDStatus(int hdEnabled)
     labelWalletHDStatusIcon->setPixmap(platformStyle->SingleColorIcon(hdEnabled ? ":/icons/hd_enabled" : ":/icons/hd_disabled").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
     labelWalletHDStatusIcon->setToolTip(hdEnabled ? tr("HD key generation is <b>enabled</b>") : tr("HD key generation is <b>disabled</b>"));
 
-    // eventually disable the QLabel to set its opacity to 50% 
+    // eventually disable the QLabel to set its opacity to 50%
     labelWalletHDStatusIcon->setEnabled(hdEnabled);
 }
 

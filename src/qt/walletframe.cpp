@@ -185,6 +185,13 @@ void WalletFrame::viewInvestorKey()
         walletView->viewInvestorKey();
 }
 
+void WalletFrame::reviewPaperKey()
+{
+    WalletView *walletView = currentWalletView();
+    if (walletView)
+        walletView->reviewPaperKey();
+}
+
 void WalletFrame::usedSendingAddresses()
 {
     WalletView *walletView = currentWalletView();

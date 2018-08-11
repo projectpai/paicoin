@@ -147,6 +147,7 @@ private:
     QAction *openAction;
     QAction *showHelpMessageAction;
     QAction *viewInvestorKeyAction;
+    QAction *reviewPaperKeyAction;
 
     QSystemTrayIcon *trayIcon;
     QMenu *trayIconMenu;
@@ -330,7 +331,7 @@ private Q_SLOTS:
 
     /** Show progress dialog e.g. for verifychain */
     void showProgress(const QString &title, int nProgress);
-    
+
     /** When hideTrayIcon setting is changed in OptionsModel hide or show the icon accordingly. */
     void setTrayIconVisible(bool);
 
