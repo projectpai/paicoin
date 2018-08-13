@@ -1,7 +1,8 @@
 #include "authmanager.h"
 #include "settingshelper.h"
 
-#include <qtimer.h>
+#include <QTimer>
+#include <confirmationdialog.h>
 
 AuthManager& AuthManager::getInstance()
 {
@@ -36,6 +37,9 @@ bool AuthManager::Check(const std::string& pin)
     bool fMatch = storedPin.compare(pin) == 0;
     if (!fMatch)
     {
+        ConfirmationDialog confirmationDialog(tr("Invalid PIN, please try again"));
+        confirmationDialog.exec();
+
         if (SettingsHelper::IncrementAuthFailCount() >= 3)
         {
             // TODO: Perform back-off action (i.e. disable wallet temporary)
