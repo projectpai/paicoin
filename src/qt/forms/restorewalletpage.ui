@@ -342,6 +342,9 @@ border:1px solid #dedede;</string>
        </item>
        <item alignment="Qt::AlignHCenter">
         <widget class="QPushButton" name="pushButtonRestoreWallet">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="minimumSize">
           <size>
            <width>270</width>

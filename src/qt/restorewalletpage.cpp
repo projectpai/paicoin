@@ -70,6 +70,9 @@ void RestoreWalletPage::clear()
     ui->lineEdit11->setStyleSheet("color:black;");
     ui->lineEdit12->clear();
     ui->lineEdit12->setStyleSheet("color:black;");
+
+    validLineSet.clear();
+    ui->pushButtonRestoreWallet->setEnabled(false);
 }
 
 bool RestoreWalletPage::eventFilter(QObject *object, QEvent *event)
@@ -82,20 +85,28 @@ bool RestoreWalletPage::eventFilter(QObject *object, QEvent *event)
             if (currentLineEdit->text().isEmpty())
             {
                 currentLineEdit->setStyleSheet("color:black;selection-background-color: darkgray;");
+                validLineSet.erase(currentLineEdit);
             }
             else
             {
                 if (b39.WordIsValid(currentLineEdit->text().toStdString().c_str()))
                 {
                     currentLineEdit->setStyleSheet("color:black;");
+                    validLineSet.insert(currentLineEdit);
                 }
                 else
                 {
                     currentLineEdit->setStyleSheet("color:red;");
+                    validLineSet.erase(currentLineEdit);
                 }
             }
         }
     }
+
+    ui->pushButtonRestoreWallet->setEnabled(false);
+    if (validLineSet.size() == 12 ) // only if all 12 lineEdits are valid we enable the button
+        ui->pushButtonRestoreWallet->setEnabled(true);
+
     return false;
 }
 

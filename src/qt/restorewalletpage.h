@@ -4,6 +4,8 @@
 #include "wallet/bip39mnemonic.h"
 
 #include <QWidget>
+#include <QtWidgets/QLineEdit>
+#include <set>
 
 namespace Ui {
 class RestoreWalletPage;
@@ -33,6 +35,7 @@ private:
     Ui::RestoreWalletPage *ui;
     QStringList paperKeys;
     BIP39Mnemonic b39;
+    std::set<QLineEdit*> validLineSet;
 };
 
 #endif // RESTOREWALLETPAGE_H
