@@ -5592,11 +5592,11 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <source>Error</source>
         <translation>Error</translation>
     </message>
-</context>
     <name>AuthManager</name>
     <message>
         <location filename="../authmanager.cpp" line="40"/>
         <source>Invalid PIN, please try again</source>
         <translation type="unfinished"></translation>
     </message>
+</context>
 </TS>
