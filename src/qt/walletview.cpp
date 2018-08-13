@@ -304,7 +304,7 @@ void WalletView::viewInvestorKey()
 
 void WalletView::reviewPaperKey()
 {
-    SecureString secPaperKey = walletModel->generateNewPaperKey();//getCurrentPaperKey();
+    SecureString secPaperKey = walletModel->getCurrentPaperKey();
     std::string paperKey(secPaperKey.begin(), secPaperKey.end());
 
     QString message;
