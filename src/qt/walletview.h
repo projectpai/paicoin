@@ -102,6 +102,8 @@ public Q_SLOTS:
 
     /** Show investor key */
     void viewInvestorKey();
+    /** Show paper key */
+    void reviewPaperKey();
 
     /** Show used sending addresses */
     void usedSendingAddresses();

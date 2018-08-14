@@ -1466,6 +1466,16 @@ If you do not update the application, your investment will remain in holding.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../paicoingui.cpp" line="455"/>
+        <source>&amp;Review Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../paicoingui.cpp" line="456"/>
+        <source>Review Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location line="+7"/>
         <source>&amp;Sending addresses...</source>
         <translation type="unfinished"></translation>
@@ -4314,6 +4324,11 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+0"/>
         <source>The wallet data was successfully saved to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../walletview.cpp" line="318"/>
+        <source>Review Paper Key</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
