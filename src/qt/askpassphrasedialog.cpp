@@ -223,6 +223,7 @@ void AskPassphraseDialog::textChanged()
 bool AskPassphraseDialog::event(QEvent *event)
 {
     // Detect Caps Lock key press.
+    // Don't not close on Esc.
     if (event->type() == QEvent::KeyPress) {
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
         if (ke->key() == Qt::Key_CapsLock) {
@@ -232,6 +233,9 @@ bool AskPassphraseDialog::event(QEvent *event)
             ui->capsLabel->setText(tr("Warning: The Caps Lock key is on!"));
         } else {
             ui->capsLabel->clear();
+        }
+        if (ke->key() == Qt::Key_Escape) {
+            return true;
         }
     }
     return QWidget::event(event);
