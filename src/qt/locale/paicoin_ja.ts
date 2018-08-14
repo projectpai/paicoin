@@ -1,4 +1,6 @@
-<TS language="ja" version="2.1">
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="ja">
 <context>
     <name>AddressBookPage</name>
     <message>
@@ -221,6 +223,13 @@
     </message>
 </context>
 <context>
+    <name>AuthManager</name>
+    <message>
+        <source>Invalid PIN, please try again</source>
+        <translation>PINが無効です。もう一度入力してください</translation>
+    </message>
+</context>
+<context>
     <name>BanTableModel</name>
     <message>
         <source>IP/Netmask</source>
@@ -229,327 +238,6 @@
     <message>
         <source>Banned Until</source>
         <translation>以下の時間までbanする:</translation>
-    </message>
-</context>
-<context>
-    <name>PAIcoinGUI</name>
-    <message>
-        <source>Sign &amp;message...</source>
-        <translation>メッセージの署名... (&amp;m)</translation>
-    </message>
-    <message>
-        <source>Synchronizing with network...</source>
-        <translation>ネットワークに同期中……</translation>
-    </message>
-    <message>
-        <source>&amp;Overview</source>
-        <translation>概要(&amp;O)</translation>
-    </message>
-    <message>
-        <source>Node</source>
-        <translation>ノード</translation>
-    </message>
-    <message>
-        <source>Show general overview of wallet</source>
-        <translation>ウォレットの概要を見る</translation>
-    </message>
-    <message>
-        <source>&amp;Transactions</source>
-        <translation>取引(&amp;T)</translation>
-    </message>
-    <message>
-        <source>Browse transaction history</source>
-        <translation>取引履歴を閲覧</translation>
-    </message>
-    <message>
-        <source>E&amp;xit</source>
-        <translation>終了(&amp;E)</translation>
-    </message>
-    <message>
-        <source>Quit application</source>
-        <translation>アプリケーションを終了</translation>
-    </message>
-    <message>
-        <source>&amp;About %1</source>
-        <translation>%1 について (&amp;A)</translation>
-    </message>
-    <message>
-        <source>Show information about %1</source>
-        <translation>%1 の情報を表示</translation>
-    </message>
-    <message>
-        <source>About &amp;Qt</source>
-        <translation>Qt について(&amp;Q)</translation>
-    </message>
-    <message>
-        <source>Show information about Qt</source>
-        <translation>Qt の情報を表示</translation>
-    </message>
-    <message>
-        <source>&amp;Options...</source>
-        <translation>オプション... (&amp;O)</translation>
-    </message>
-    <message>
-        <source>Modify configuration options for %1</source>
-        <translation>%1 の設定を変更する</translation>
-    </message>
-    <message>
-        <source>&amp;Encrypt Wallet...</source>
-        <translation>ウォレットの暗号化... (&amp;E)</translation>
-    </message>
-    <message>
-        <source>&amp;Backup Wallet...</source>
-        <translation>ウォレットのバックアップ... (&amp;B)</translation>
-    </message>
-    <message>
-        <source>&amp;Change Passphrase...</source>
-        <translation>パスフレーズの変更... (&amp;C)</translation>
-    </message>
-    <message>
-        <source>&amp;Sending addresses...</source>
-        <translation>送金先アドレス一覧 (&amp;S)...</translation>
-    </message>
-    <message>
-        <source>&amp;Receiving addresses...</source>
-        <translation>受け取り用アドレス一覧 (&amp;R)...</translation>
-    </message>
-    <message>
-        <source>Open &amp;URI...</source>
-        <translation>URI を開く (&amp;U)...</translation>
-    </message>
-    <message>
-        <source>Click to disable network activity.</source>
-        <translation>クリックするとネットワーク活動を無効化します。</translation>
-    </message>
-    <message>
-        <source>Network activity disabled.</source>
-        <translation>ネットワーク活動は無効化されました。</translation>
-    </message>
-    <message>
-        <source>Click to enable network activity again.</source>
-        <translation>クリックするとネットワーク活動を再び有効化します。</translation>
-    </message>
-    <message>
-        <source>Syncing Headers (%1%)...</source>
-        <translation>未知。ヘッダを同期しています (%1%)...</translation>
-    </message>
-    <message>
-        <source>Reindexing blocks on disk...</source>
-        <translation>ディスク上のブロックのインデックスを再作成中...</translation>
-    </message>
-    <message>
-        <source>Send coins to a PAI Coin address</source>
-        <translation>PAI Coin アドレスにコインを送る</translation>
-    </message>
-    <message>
-        <source>Backup wallet to another location</source>
-        <translation>ウォレットを他の場所にバックアップ</translation>
-    </message>
-    <message>
-        <source>Change the passphrase used for wallet encryption</source>
-        <translation>ウォレット暗号化用パスフレーズの変更</translation>
-    </message>
-    <message>
-        <source>&amp;Debug window</source>
-        <translation>デバッグ ウインドウ (&amp;D)</translation>
-    </message>
-    <message>
-        <source>Open debugging and diagnostic console</source>
-        <translation>デバッグと診断コンソールを開く</translation>
-    </message>
-    <message>
-        <source>&amp;Verify message...</source>
-        <translation>メッセージの検証... (&amp;V)</translation>
-    </message>
-    <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>ウォレット</translation>
-    </message>
-    <message>
-        <source>&amp;Send</source>
-        <translation>送金 (&amp;S)</translation>
-    </message>
-    <message>
-        <source>&amp;Receive</source>
-        <translation>入金 (&amp;R)</translation>
-    </message>
-    <message>
-        <source>&amp;Show / Hide</source>
-        <translation>見る/隠す (&amp;S)</translation>
-    </message>
-    <message>
-        <source>Show or hide the main Window</source>
-        <translation>メイン ウインドウを表示または非表示</translation>
-    </message>
-    <message>
-        <source>Encrypt the private keys that belong to your wallet</source>
-        <translation>あなたのウォレットの秘密鍵を暗号化します</translation>
-    </message>
-    <message>
-        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
-        <translation>あなたが所有していることを証明するために、あなたの PAI Coin アドレスでメッセージに署名してください</translation>
-    </message>
-    <message>
-        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
-        <translation>指定された PAI Coin アドレスで署名されたことを確認するためにメッセージを検証します</translation>
-    </message>
-    <message>
-        <source>&amp;File</source>
-        <translation>ファイル(&amp;F)</translation>
-    </message>
-    <message>
-        <source>&amp;Settings</source>
-        <translation>設定(&amp;S)</translation>
-    </message>
-    <message>
-        <source>&amp;Help</source>
-        <translation>ヘルプ(&amp;H)</translation>
-    </message>
-    <message>
-        <source>Tabs toolbar</source>
-        <translation>タブツールバー</translation>
-    </message>
-    <message>
-        <source>Request payments (generates QR codes and paicoin: URIs)</source>
-        <translation>支払いを要求する (QRコードとpaicoin:ではじまるURIを生成する)</translation>
-    </message>
-    <message>
-        <source>Show the list of used sending addresses and labels</source>
-        <translation>使用済みの送金用アドレスとラベルの一覧を表示する</translation>
-    </message>
-    <message>
-        <source>Show the list of used receiving addresses and labels</source>
-        <translation>支払いを受け取るアドレスとラベルのリストを表示する</translation>
-    </message>
-    <message>
-        <source>Open a paicoin: URI or payment request</source>
-        <translation>paicoin: URIまたは支払いリクエストを開く</translation>
-    </message>
-    <message>
-        <source>&amp;Command-line options</source>
-        <translation>コマンドラインオプション (&amp;C)</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active connection(s) to PAI Coin network</source>
-        <translation><numerusform>%n の PAI Coin ネットワークへのアクティブな接続</numerusform></translation>
-    </message>
-    <message>
-        <source>Indexing blocks on disk...</source>
-        <translation>ディスク上のブロックのインデックスを作成しています...</translation>
-    </message>
-    <message>
-        <source>Processing blocks on disk...</source>
-        <translation>ディスク上のブロックを処理しています...</translation>
-    </message>
-    <message numerus="yes">
-        <source>Processed %n block(s) of transaction history.</source>
-        <translation><numerusform>トランザクション履歴の %n ブロックを処理しました。</numerusform></translation>
-    </message>
-    <message>
-        <source>%1 behind</source>
-        <translation>%1 遅延</translation>
-    </message>
-    <message>
-        <source>Last received block was generated %1 ago.</source>
-        <translation>最後に受信されたブロックは %1 前に生成されました。</translation>
-    </message>
-    <message>
-        <source>Transactions after this will not yet be visible.</source>
-        <translation>この後の取引はまだ表示されません。</translation>
-    </message>
-    <message>
-        <source>Error</source>
-        <translation>エラー</translation>
-    </message>
-    <message>
-        <source>Warning</source>
-        <translation>警告</translation>
-    </message>
-    <message>
-        <source>Information</source>
-        <translation>情報</translation>
-    </message>
-    <message>
-        <source>Up to date</source>
-        <translation>バージョンは最新です</translation>
-    </message>
-    <message>
-        <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
-        <translation>有効な PAI Coin のコマンドライン オプションを見るために %1 のヘルプメッセージを表示します。</translation>
-    </message>
-    <message>
-        <source>%1 client</source>
-        <translation>%1 クライアント</translation>
-    </message>
-    <message>
-        <source>Connecting to peers...</source>
-        <translation>ピアに接続しています...</translation>
-    </message>
-    <message>
-        <source>Catching up...</source>
-        <translation>追跡中...</translation>
-    </message>
-    <message>
-        <source>Date: %1
-</source>
-        <translation>日付: %1
-</translation>
-    </message>
-    <message>
-        <source>Amount: %1
-</source>
-        <translation>総額: %1
-</translation>
-    </message>
-    <message>
-        <source>Type: %1
-</source>
-        <translation>タイプ: %1
-</translation>
-    </message>
-    <message>
-        <source>Label: %1
-</source>
-        <translation>ラベル: %1
-</translation>
-    </message>
-    <message>
-        <source>Address: %1
-</source>
-        <translation>アドレス: %1
-</translation>
-    </message>
-    <message>
-        <source>Sent transaction</source>
-        <translation>送金取引</translation>
-    </message>
-    <message>
-        <source>Incoming transaction</source>
-        <translation>着金取引</translation>
-    </message>
-    <message>
-        <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
-        <translation>HD鍵生成は&lt;b&gt;有効化&lt;/b&gt;されています</translation>
-    </message>
-    <message>
-        <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
-        <translation>HD鍵生成は&lt;b&gt;無効化&lt;/b&gt;されています</translation>
-    </message>
-    <message>
-        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
-        <translation>ウォレットは&lt;b&gt;暗号化されて、アンロックされています&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
-        <translation>ウォレットは&lt;b&gt;暗号化されて、ロックされています&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
-        <translation>致命的なエラーが発生しました。PAI Coin は安全に継続することができず終了するでしょう。</translation>
     </message>
 </context>
 <context>
@@ -704,6 +392,13 @@
     </message>
 </context>
 <context>
+    <name>ConfirmationDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>EditAddressDialog</name>
     <message>
         <source>Edit Address</source>
@@ -742,12 +437,12 @@
         <translation>送信アドレスを編集</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid PAI Coin address.</source>
-        <translation>入力されたアドレス "%1" は無効な PAI Coin アドレスです。</translation>
+        <source>The entered address &quot;%1&quot; is not a valid PAI Coin address.</source>
+        <translation>入力されたアドレス &quot;%1&quot; は無効な PAI Coin アドレスです。</translation>
     </message>
     <message>
-        <source>The entered address "%1" is already in the address book.</source>
-        <translation>入力されたアドレス "%1" は既にアドレス帳にあります。</translation>
+        <source>The entered address &quot;%1&quot; is already in the address book.</source>
+        <translation>入力されたアドレス &quot;%1&quot; は既にアドレス帳にあります。</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>
@@ -779,6 +474,33 @@
     <message>
         <source>Cannot create data directory here.</source>
         <translation>ここにデータ ディレクトリを作成することはできません。</translation>
+    </message>
+</context>
+<context>
+    <name>FundsInHoldingDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Funds in Holding</source>
+        <translation>保留資金</translation>
+    </message>
+    <message>
+        <source>Your initial PAI Coin investment is currently in the holding period and is unavailable for transactions. You will receive a notification once the holding period is complete.
+
+You may still send and receive any PAI Coin in your &quot;Available Funds&quot;</source>
+        <translation>&quot;あなたの最初のPAIコイン投資は現在保留期間にあり、取引では利用できません。保留期間が終了すると通知が届きます。
+
+ただし、あなたの &quot;&quot;利用可能な資金&quot;&quot;に入っているPAIコインは、送金したり受け取ったりすることができます。&quot;</translation>
+    </message>
+    <message>
+        <source>Okay</source>
+        <translation>はい</translation>
+    </message>
+    <message>
+        <source>Don&apos;t show this again</source>
+        <translation>これをもう一度表示しない</translation>
     </message>
 </context>
 <context>
@@ -816,8 +538,8 @@
         <translation>起動時にデータ ディレクトリを選ぶ (初期値: %u)</translation>
     </message>
     <message>
-        <source>Set language, for example "de_DE" (default: system locale)</source>
-        <translation>言語設定 例: "de_DE" (初期値: システムの言語)</translation>
+        <source>Set language, for example &quot;de_DE&quot; (default: system locale)</source>
+        <translation>言語設定 例: &quot;de_DE&quot; (初期値: システムの言語)</translation>
     </message>
     <message>
         <source>Start minimized</source>
@@ -837,6 +559,40 @@
     </message>
 </context>
 <context>
+    <name>HoldingPeriodCompleteDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Holding Period Complete</source>
+        <translation>保留期間が完了しました</translation>
+    </message>
+    <message>
+        <source>Okay</source>
+        <translation>はい</translation>
+    </message>
+    <message>
+        <source>Go to Lanier.ai</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation type="unfinished">今はしない</translation>
+    </message>
+    <message>
+        <source>Please update PAI Coin wallet to unlock your investment.
+You may update by downloading the latest version from Lanier.ai
+
+If you do not update the application, your investment will remain in holding.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Congratulations! Your initial PAI Coin investment is now available for transactions.</source>
+        <translation>おめでとうございます！ あなたの初期PAIコイン投資は、取引利用可能になりました。</translation>
+    </message>
+</context>
+<context>
     <name>Intro</name>
     <message>
         <source>Welcome</source>
@@ -852,7 +608,7 @@
     </message>
     <message>
         <source>%1 will download and store a copy of the PAI Coin block chain. At least %2GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>%1 は、ビットコインのブロックチェーンのコピーを、ダウンロードして保存します。少なくとも %2 ギガバイトのデータが、このディレクトリに保存されます。そしてそれは時間と共に増加します。またウォレットもこのディレクトリに保存されます。</translation>
+        <translation type="vanished">%1 は、ビットコインのブロックチェーンのコピーを、ダウンロードして保存します。少なくとも %2 ギガバイトのデータが、このディレクトリに保存されます。そしてそれは時間と共に増加します。またウォレットもこのディレクトリに保存されます。</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
@@ -863,8 +619,8 @@
         <translation>任意のデータ ディレクトリを使用:</translation>
     </message>
     <message>
-        <source>Error: Specified data directory "%1" cannot be created.</source>
-        <translation>エラー: 指定のデータディレクトリ "%1" を作成できません。</translation>
+        <source>Error: Specified data directory &quot;%1&quot; cannot be created.</source>
+        <translation>エラー: 指定のデータディレクトリ &quot;%1&quot; を作成できません。</translation>
     </message>
     <message>
         <source>Error</source>
@@ -872,11 +628,43 @@
     </message>
     <message numerus="yes">
         <source>%n GB of free space available</source>
-        <translation><numerusform>%n GBの空き容量が利用可能</numerusform></translation>
+        <translation>
+            <numerusform>%n GBの空き容量が利用可能</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>(of %n GB needed)</source>
-        <translation><numerusform>(%n GB必要)</numerusform></translation>
+        <translation>
+            <numerusform>(%n GB必要)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %2 initially launched.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>If you have chosen to limit block chain storage (pruning), the historical data must still be downloaded and processed, but will be deleted afterward to keep your disk usage low.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PAIcoin</source>
+        <translation type="unfinished">PAIcoin</translation>
+    </message>
+    <message>
+        <source>The blockchain data will be stored in this directory, and it will grow over time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Approximately %1 GB of data will be stored in this directory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 will download and store a copy of the PAI Coin blockchain.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The wallet will also be stored in this directory.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -886,7 +674,7 @@
         <translation>フォーム</translation>
     </message>
     <message>
-        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the PAI Coin network, as detailed below.</source>
+        <source>Recent transactions may not yet be visible, and therefore your wallet&apos;s balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the PAI Coin network, as detailed below.</source>
         <translation>確認できない最近のトランザクションがあるかもしれません。これによりウォレットの残高は不正確なものである可能性があります。この情報はウォレットが一度ビットコインネットワークへの同期が完了すると正確なものとなります。詳細は下記を参照してください。</translation>
     </message>
     <message>
@@ -985,11 +773,11 @@
     </message>
     <message>
         <source>Accept connections from outside</source>
-        <translation>外部からの接続を許可する</translation>
+        <translation type="vanished">外部からの接続を許可する</translation>
     </message>
     <message>
         <source>Allow incoming connections</source>
-        <translation>外部からの接続を許可する</translation>
+        <translation type="vanished">外部からの接続を許可する</translation>
     </message>
     <message>
         <source>IP address of the proxy (e.g. IPv4: 127.0.0.1 / IPv6: ::1)</source>
@@ -1005,7 +793,7 @@
     </message>
     <message>
         <source>Third party transaction URLs</source>
-        <translation>サードパーティのトランザクションURL</translation>
+        <translation type="vanished">サードパーティのトランザクションURL</translation>
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
@@ -1081,7 +869,7 @@
     </message>
     <message>
         <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>このネットワークタイプ経由で、与えられたデフォルトのSOCKS5プロキシを使用してピアに到達した場合に表示する。</translation>
+        <translation type="vanished">このネットワークタイプ経由で、与えられたデフォルトのSOCKS5プロキシを使用してピアに到達した場合に表示する。</translation>
     </message>
     <message>
         <source>IPv4</source>
@@ -1101,7 +889,7 @@
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
-        <translation>Tor秘匿サービス経由でピアに到達するため、独立なSOCKS5プロキシを利用する:</translation>
+        <translation type="vanished">Tor秘匿サービス経由でピアに到達するため、独立なSOCKS5プロキシを利用する:</translation>
     </message>
     <message>
         <source>&amp;Window</source>
@@ -1109,11 +897,11 @@
     </message>
     <message>
         <source>&amp;Hide the icon from the system tray.</source>
-        <translation>システムトレイのアイコンを隠す (&amp;H)</translation>
+        <translation type="vanished">システムトレイのアイコンを隠す (&amp;H)</translation>
     </message>
     <message>
         <source>Hide tray icon</source>
-        <translation>トレイアイコンを隠す</translation>
+        <translation type="vanished">トレイアイコンを隠す</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1187,6 +975,58 @@
         <source>The supplied proxy address is invalid.</source>
         <translation>プロキシアドレスが無効です。</translation>
     </message>
+    <message>
+        <source>Accept connections from outside.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow incomin&amp;g connections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the icon from the system tray.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Hide tray icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Third party transaction URLs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the %1 configuration file from the working directory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Configuration File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Configuration options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The configuration file is used to specify advanced user options which override GUI settings. Additionally, any command-line options will override this configuration file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation type="unfinished">エラー</translation>
+    </message>
+    <message>
+        <source>The configuration file could not be opened.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>OverviewPage</name>
@@ -1204,7 +1044,7 @@
     </message>
     <message>
         <source>Available:</source>
-        <translation>利用可能:</translation>
+        <translation type="vanished">利用可能:</translation>
     </message>
     <message>
         <source>Your current spendable balance</source>
@@ -1262,6 +1102,460 @@
         <source>Current total balance in watch-only addresses</source>
         <translation>監視限定アドレス内の現在の全残高</translation>
     </message>
+    <message>
+        <source>Available Funds:</source>
+        <translation>利用可能な資金:</translation>
+    </message>
+    <message>
+        <source>Days left in holding:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Funds in Holding:</source>
+        <translation>保留資金:</translation>
+    </message>
+</context>
+<context>
+    <name>PAIcoinGUI</name>
+    <message>
+        <source>Sign &amp;message...</source>
+        <translation>メッセージの署名... (&amp;m)</translation>
+    </message>
+    <message>
+        <source>Synchronizing with network...</source>
+        <translation>ネットワークに同期中……</translation>
+    </message>
+    <message>
+        <source>&amp;Overview</source>
+        <translation>概要(&amp;O)</translation>
+    </message>
+    <message>
+        <source>Node</source>
+        <translation>ノード</translation>
+    </message>
+    <message>
+        <source>Show general overview of wallet</source>
+        <translation>ウォレットの概要を見る</translation>
+    </message>
+    <message>
+        <source>&amp;Transactions</source>
+        <translation>取引(&amp;T)</translation>
+    </message>
+    <message>
+        <source>Browse transaction history</source>
+        <translation>取引履歴を閲覧</translation>
+    </message>
+    <message>
+        <source>E&amp;xit</source>
+        <translation>終了(&amp;E)</translation>
+    </message>
+    <message>
+        <source>Quit application</source>
+        <translation>アプリケーションを終了</translation>
+    </message>
+    <message>
+        <source>&amp;About %1</source>
+        <translation>%1 について (&amp;A)</translation>
+    </message>
+    <message>
+        <source>Show information about %1</source>
+        <translation>%1 の情報を表示</translation>
+    </message>
+    <message>
+        <source>About &amp;Qt</source>
+        <translation>Qt について(&amp;Q)</translation>
+    </message>
+    <message>
+        <source>Show information about Qt</source>
+        <translation>Qt の情報を表示</translation>
+    </message>
+    <message>
+        <source>&amp;Options...</source>
+        <translation>オプション... (&amp;O)</translation>
+    </message>
+    <message>
+        <source>Modify configuration options for %1</source>
+        <translation>%1 の設定を変更する</translation>
+    </message>
+    <message>
+        <source>&amp;Encrypt Wallet...</source>
+        <translation>ウォレットの暗号化... (&amp;E)</translation>
+    </message>
+    <message>
+        <source>&amp;Backup Wallet...</source>
+        <translation>ウォレットのバックアップ... (&amp;B)</translation>
+    </message>
+    <message>
+        <source>&amp;Change Passphrase...</source>
+        <translation>パスフレーズの変更... (&amp;C)</translation>
+    </message>
+    <message>
+        <source>&amp;Sending addresses...</source>
+        <translation>送金先アドレス一覧 (&amp;S)...</translation>
+    </message>
+    <message>
+        <source>&amp;Receiving addresses...</source>
+        <translation>受け取り用アドレス一覧 (&amp;R)...</translation>
+    </message>
+    <message>
+        <source>Open &amp;URI...</source>
+        <translation>URI を開く (&amp;U)...</translation>
+    </message>
+    <message>
+        <source>Click to disable network activity.</source>
+        <translation>クリックするとネットワーク活動を無効化します。</translation>
+    </message>
+    <message>
+        <source>Network activity disabled.</source>
+        <translation>ネットワーク活動は無効化されました。</translation>
+    </message>
+    <message>
+        <source>Click to enable network activity again.</source>
+        <translation>クリックするとネットワーク活動を再び有効化します。</translation>
+    </message>
+    <message>
+        <source>Syncing Headers (%1%)...</source>
+        <translation>未知。ヘッダを同期しています (%1%)...</translation>
+    </message>
+    <message>
+        <source>Reindexing blocks on disk...</source>
+        <translation>ディスク上のブロックのインデックスを再作成中...</translation>
+    </message>
+    <message>
+        <source>Send coins to a PAI Coin address</source>
+        <translation>PAI Coin アドレスにコインを送る</translation>
+    </message>
+    <message>
+        <source>Backup wallet to another location</source>
+        <translation>ウォレットを他の場所にバックアップ</translation>
+    </message>
+    <message>
+        <source>Change the passphrase used for wallet encryption</source>
+        <translation>ウォレット暗号化用パスフレーズの変更</translation>
+    </message>
+    <message>
+        <source>&amp;Debug window</source>
+        <translation>デバッグ ウインドウ (&amp;D)</translation>
+    </message>
+    <message>
+        <source>Open debugging and diagnostic console</source>
+        <translation>デバッグと診断コンソールを開く</translation>
+    </message>
+    <message>
+        <source>&amp;Verify message...</source>
+        <translation>メッセージの検証... (&amp;V)</translation>
+    </message>
+    <message>
+        <source>PAIcoin</source>
+        <translation>PAIcoin</translation>
+    </message>
+    <message>
+        <source>Wallet</source>
+        <translation type="vanished">ウォレット</translation>
+    </message>
+    <message>
+        <source>&amp;Send</source>
+        <translation>送金 (&amp;S)</translation>
+    </message>
+    <message>
+        <source>&amp;Receive</source>
+        <translation>入金 (&amp;R)</translation>
+    </message>
+    <message>
+        <source>&amp;Show / Hide</source>
+        <translation>見る/隠す (&amp;S)</translation>
+    </message>
+    <message>
+        <source>Show or hide the main Window</source>
+        <translation>メイン ウインドウを表示または非表示</translation>
+    </message>
+    <message>
+        <source>Encrypt the private keys that belong to your wallet</source>
+        <translation>あなたのウォレットの秘密鍵を暗号化します</translation>
+    </message>
+    <message>
+        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
+        <translation>あなたが所有していることを証明するために、あなたの PAI Coin アドレスでメッセージに署名してください</translation>
+    </message>
+    <message>
+        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
+        <translation>指定された PAI Coin アドレスで署名されたことを確認するためにメッセージを検証します</translation>
+    </message>
+    <message>
+        <source>&amp;File</source>
+        <translation>ファイル(&amp;F)</translation>
+    </message>
+    <message>
+        <source>&amp;Settings</source>
+        <translation>設定(&amp;S)</translation>
+    </message>
+    <message>
+        <source>&amp;Help</source>
+        <translation>ヘルプ(&amp;H)</translation>
+    </message>
+    <message>
+        <source>Tabs toolbar</source>
+        <translation>タブツールバー</translation>
+    </message>
+    <message>
+        <source>Request payments (generates QR codes and paicoin: URIs)</source>
+        <translation type="vanished">支払いを要求する (QRコードとpaicoin:ではじまるURIを生成する)</translation>
+    </message>
+    <message>
+        <source>Show the list of used sending addresses and labels</source>
+        <translation>使用済みの送金用アドレスとラベルの一覧を表示する</translation>
+    </message>
+    <message>
+        <source>Show the list of used receiving addresses and labels</source>
+        <translation>支払いを受け取るアドレスとラベルのリストを表示する</translation>
+    </message>
+    <message>
+        <source>Open a paicoin: URI or payment request</source>
+        <translation type="vanished">paicoin: URIまたは支払いリクエストを開く</translation>
+    </message>
+    <message>
+        <source>&amp;Command-line options</source>
+        <translation>コマンドラインオプション (&amp;C)</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n active connection(s) to PAI Coin network</source>
+        <translation>
+            <numerusform>%n の PAI Coin ネットワークへのアクティブな接続</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Indexing blocks on disk...</source>
+        <translation>ディスク上のブロックのインデックスを作成しています...</translation>
+    </message>
+    <message>
+        <source>Processing blocks on disk...</source>
+        <translation>ディスク上のブロックを処理しています...</translation>
+    </message>
+    <message numerus="yes">
+        <source>Processed %n block(s) of transaction history.</source>
+        <translation>
+            <numerusform>トランザクション履歴の %n ブロックを処理しました。</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 behind</source>
+        <translation>%1 遅延</translation>
+    </message>
+    <message>
+        <source>Last received block was generated %1 ago.</source>
+        <translation>最後に受信されたブロックは %1 前に生成されました。</translation>
+    </message>
+    <message>
+        <source>Transactions after this will not yet be visible.</source>
+        <translation>この後の取引はまだ表示されません。</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>エラー</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <source>Information</source>
+        <translation>情報</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>バージョンは最新です</translation>
+    </message>
+    <message>
+        <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
+        <translation>有効な PAI Coin のコマンドライン オプションを見るために %1 のヘルプメッセージを表示します。</translation>
+    </message>
+    <message>
+        <source>%1 client</source>
+        <translation>%1 クライアント</translation>
+    </message>
+    <message>
+        <source>Connecting to peers...</source>
+        <translation>ピアに接続しています...</translation>
+    </message>
+    <message>
+        <source>Catching up...</source>
+        <translation>追跡中...</translation>
+    </message>
+    <message>
+        <source>Date: %1
+</source>
+        <translation>日付: %1
+</translation>
+    </message>
+    <message>
+        <source>Amount: %1
+</source>
+        <translation>総額: %1
+</translation>
+    </message>
+    <message>
+        <source>Type: %1
+</source>
+        <translation>タイプ: %1
+</translation>
+    </message>
+    <message>
+        <source>Label: %1
+</source>
+        <translation>ラベル: %1
+</translation>
+    </message>
+    <message>
+        <source>Address: %1
+</source>
+        <translation>アドレス: %1
+</translation>
+    </message>
+    <message>
+        <source>Sent transaction</source>
+        <translation>送金取引</translation>
+    </message>
+    <message>
+        <source>Incoming transaction</source>
+        <translation>着金取引</translation>
+    </message>
+    <message>
+        <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
+        <translation>HD鍵生成は&lt;b&gt;有効化&lt;/b&gt;されています</translation>
+    </message>
+    <message>
+        <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
+        <translation>HD鍵生成は&lt;b&gt;無効化&lt;/b&gt;されています</translation>
+    </message>
+    <message>
+        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
+        <translation>ウォレットは&lt;b&gt;暗号化されて、アンロックされています&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
+        <translation>ウォレットは&lt;b&gt;暗号化されて、ロックされています&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
+        <translation>致命的なエラーが発生しました。PAI Coin は安全に継続することができず終了するでしょう。</translation>
+    </message>
+    <message>
+        <source>Request payments (generates QR codes and paicoin:// URIs)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a paicoin:// URI or payment request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PIN Set</source>
+        <translation>PINコードが準備されました。</translation>
+    </message>
+    <message>
+        <source>Paper Key Complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wallet Restored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Review Paper Key</source>
+        <translation type="unfinished">復元フレーズを確認する</translation>
+    </message>
+    <message>
+        <source>Review Paper Key</source>
+        <translation type="unfinished">復元フレーズを確認する</translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyCompletionPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">フォーム</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>To make sure everything was written down correctly, please enter the following words from your paper key.</source>
+        <translation>すべてが正しく書き留められていることを確認するため、書き留めた復元フレーズを見て下記の単語を入力してください。</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>送信</translation>
+    </message>
+    <message>
+        <source>Word #%1</source>
+        <translation>単語#%1</translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyIntroPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">フォーム</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your paper key is the only way to restore your PAI Coin Wallet if your device is lost, stolen, broken, or updated.
+
+We will show you a list of words to write down on a piece of paper and keep safe.</source>
+        <translation>復元フレーズは、あなたが携帯電話を紛失したり、盗まれたり、壊れたり、アップグレードした場合に、ご自身のPAI Upを復元できる唯一の方法です。
+
+単語の一覧を表示しますので、紙に書き留めて安全な場所に保管してください。</translation>
+    </message>
+    <message>
+        <source>Write down paper key</source>
+        <translation>復元フレーズを書き留めてください</translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyWritedownPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">フォーム</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write down each word in order and store it in a safe place</source>
+        <translation>各単語を順番通りに書き留めて、安全な場所に保管しておいてください。</translation>
+    </message>
+    <message>
+        <source>Word</source>
+        <translation>単語</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>前へ</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>次へ</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1の%2</translation>
+    </message>
 </context>
 <context>
     <name>PaymentServer</name>
@@ -1271,7 +1565,7 @@
     </message>
     <message>
         <source>Cannot start paicoin: click-to-pay handler</source>
-        <translation>PAI Coin を起動できません: click-to-pay handler</translation>
+        <translation type="vanished">PAI Coin を起動できません: click-to-pay handler</translation>
     </message>
     <message>
         <source>URI handling</source>
@@ -1302,7 +1596,7 @@
         <translation>支払い要求は拒否されました</translation>
     </message>
     <message>
-        <source>Payment request network doesn't match client network.</source>
+        <source>Payment request network doesn&apos;t match client network.</source>
         <translation>支払いリクエストのネットワークは現在のクライアントのネットワークに一致しません。</translation>
     </message>
     <message>
@@ -1352,6 +1646,10 @@
     <message>
         <source>Payment acknowledged</source>
         <translation>支払いは確認しました</translation>
+    </message>
+    <message>
+        <source>Cannot start paicoin:// click-to-pay handler</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1413,23 +1711,33 @@
     </message>
     <message numerus="yes">
         <source>%n second(s)</source>
-        <translation><numerusform>%n 秒</numerusform></translation>
+        <translation>
+            <numerusform>%n 秒</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n minute(s)</source>
-        <translation><numerusform>%n 分</numerusform></translation>
+        <translation>
+            <numerusform>%n 分</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n hour(s)</source>
-        <translation><numerusform>%n 時間</numerusform></translation>
+        <translation>
+            <numerusform>%n 時間</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n day(s)</source>
-        <translation><numerusform>%n 日</numerusform></translation>
+        <translation>
+            <numerusform>%n 日</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n week(s)</source>
-        <translation><numerusform>%n 週間</numerusform></translation>
+        <translation>
+            <numerusform>%n 週間</numerusform>
+        </translation>
     </message>
     <message>
         <source>%1 and %2</source>
@@ -1437,18 +1745,24 @@
     </message>
     <message numerus="yes">
         <source>%n year(s)</source>
-        <translation><numerusform>%n 年</numerusform></translation>
+        <translation>
+            <numerusform>%n 年</numerusform>
+        </translation>
     </message>
     <message>
-        <source>%1 didn't yet exit safely...</source>
+        <source>%1 didn&apos;t yet exit safely...</source>
         <translation>%1 はまだ安全に終了していません...</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation type="unfinished">未確認</translation>
     </message>
 </context>
 <context>
     <name>QObject::QObject</name>
     <message>
-        <source>Error: Specified data directory "%1" does not exist.</source>
-        <translation>エラー: 指定のデータ ディレクトリ "%1" は存在しません。</translation>
+        <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
+        <translation>エラー: 指定のデータ ディレクトリ &quot;%1&quot; は存在しません。</translation>
     </message>
     <message>
         <source>Error: Cannot parse configuration file: %1. Only use key=value syntax.</source>
@@ -1662,7 +1976,7 @@
     </message>
     <message>
         <source>&amp;Clear</source>
-        <translation>クリア(&amp;C)</translation>
+        <translation type="vanished">クリア(&amp;C)</translation>
     </message>
     <message>
         <source>Totals</source>
@@ -1718,7 +2032,7 @@
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>上下の矢印で履歴をたどれます。 &lt;b&gt;Ctrl-L&lt;/b&gt; でスクリーンを消去できます。</translation>
+        <translation type="vanished">上下の矢印で履歴をたどれます。 &lt;b&gt;Ctrl-L&lt;/b&gt; でスクリーンを消去できます。</translation>
     </message>
     <message>
         <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
@@ -1726,7 +2040,7 @@
     </message>
     <message>
         <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
-        <translation>警告: 詐欺師が活動しており、ユーザに対してここにコマンドを入力させることでウォレットの中身を盗もうとしています。コマンドの結果を完全に理解していない限り、このコンソールは利用しないでください。</translation>
+        <translation type="vanished">警告: 詐欺師が活動しており、ユーザに対してここにコマンドを入力させることでウォレットの中身を盗もうとしています。コマンドの結果を完全に理解していない限り、このコンソールは利用しないでください。</translation>
     </message>
     <message>
         <source>Network activity disabled</source>
@@ -1779,6 +2093,18 @@
     <message>
         <source>Unknown</source>
         <translation>未知</translation>
+    </message>
+    <message>
+        <source>&amp;Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1955,6 +2281,29 @@
     </message>
 </context>
 <context>
+    <name>RestoreWalletPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">フォーム</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the Paper Key of the wallet you want to restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore Wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word #%1</source>
+        <translation>単語#%1</translation>
+    </message>
+</context>
+<context>
     <name>SendCoinsDialog</name>
     <message>
         <source>Send Coins</source>
@@ -2025,7 +2374,7 @@
         <translation>1キロバイトあたり手数料</translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 satoshis and the transaction is only 250 bytes, then "per kilobyte" only pays 250 satoshis in fee, while "total at least" pays 1000 satoshis. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <source>If the custom fee is set to 1000 satoshis and the transaction is only 250 bytes, then &quot;per kilobyte&quot; only pays 250 satoshis in fee, while &quot;total at least&quot; pays 1000 satoshis. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>カスタム手数料が1000satoshiに設定されている場合、トランザクションサイズが250バイトとすると、「1キロバイトあたり手数料」では250satoshiの手数料のみを支払いますが、「最小手数料」では1000satoshiを支払います。1キロバイトを超えるトランザクションの場合には、どちらの方法を選択したとしても1キロバイトあたりで支払われます。</translation>
     </message>
     <message>
@@ -2034,7 +2383,7 @@
     </message>
     <message>
         <source>total at least</source>
-        <translation>最小手数料</translation>
+        <translation type="vanished">最小手数料</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for paicoin transactions than the network can process.</source>
@@ -2058,11 +2407,11 @@
     </message>
     <message>
         <source>normal</source>
-        <translation>普通</translation>
+        <translation type="vanished">普通</translation>
     </message>
     <message>
         <source>fast</source>
-        <translation>高速</translation>
+        <translation type="vanished">高速</translation>
     </message>
     <message>
         <source>Send to multiple recipients at once</source>
@@ -2142,7 +2491,7 @@
     </message>
     <message>
         <source>Total Amount %1</source>
-        <translation>合計：　%1</translation>
+        <translation>合計：&#x3000;%1</translation>
     </message>
     <message>
         <source>or</source>
@@ -2190,7 +2539,9 @@
     </message>
     <message numerus="yes">
         <source>%n block(s)</source>
-        <translation><numerusform>%n ブロック</numerusform></translation>
+        <translation type="vanished">
+            <numerusform>%n ブロック</numerusform>
+        </translation>
     </message>
     <message>
         <source>Pay only the required fee of %1</source>
@@ -2198,7 +2549,9 @@
     </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
-        <translation><numerusform>%n ブロック以内に検証が開始されると予想されます。</numerusform></translation>
+        <translation>
+            <numerusform>%n ブロック以内に検証が開始されると予想されます。</numerusform>
+        </translation>
     </message>
     <message>
         <source>Warning: Invalid PAI Coin address</source>
@@ -2219,6 +2572,34 @@
     <message>
         <source>(no label)</source>
         <translation>（ラベル無し）</translation>
+    </message>
+    <message>
+        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until you have validated the complete chain.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warning: Fee estimation is currently not possible.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Request Replace-By-Fee</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Indicates that the sender may wish to replace this transaction with a new one paying higher fees (prior to being confirmed).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 blocks)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This transaction signals replaceability (optin-RBF).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create transaction.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2289,7 +2670,7 @@
     </message>
     <message>
         <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
-        <translation>paicoin: URIに添付されていたメッセージです。これは参照用としてトランザクションとともに保存されます。注意：このメッセージはPAIcoinネットワークを通して送信されるわけではありません。</translation>
+        <translation type="vanished">paicoin: URIに添付されていたメッセージです。これは参照用としてトランザクションとともに保存されます。注意：このメッセージはPAIcoinネットワークを通して送信されるわけではありません。</translation>
     </message>
     <message>
         <source>Pay To:</source>
@@ -2303,12 +2684,47 @@
         <source>Enter a label for this address to add it to your address book</source>
         <translation>アドレス帳に追加するには、このアドレスのラベルを入力します</translation>
     </message>
+    <message>
+        <source>A message that was attached to the paicoin:// URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SendConfirmationDialog</name>
     <message>
         <source>Yes</source>
         <translation>はい</translation>
+    </message>
+</context>
+<context>
+    <name>SetPinPage</name>
+    <message>
+        <source>Form</source>
+        <translation>フォーム</translation>
+    </message>
+    <message>
+        <source>Set PIN</source>
+        <translation>PINコードの設定</translation>
+    </message>
+    <message>
+        <source>Your PIN will be used to unlock your PAI Coin Wallet and send money. Use only numbers to create your PIN.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remember this PIN. If you forget it, you won&apos;t be able to access your PAIcoin</source>
+        <translation>このPINコードを覚えておいてください。忘れた場合、ご自身のPAIコインへアクセスができなくなります。</translation>
+    </message>
+    <message>
+        <source>Re-Enter PIN</source>
+        <translation>PINコードを再入力してください</translation>
+    </message>
+    <message>
+        <source>PIN Required</source>
+        <translation>PINコードが必要です</translation>
+    </message>
+    <message>
+        <source>Please enter your PIN to continue</source>
+        <translation>続けるにはPINコードを入力してください。</translation>
     </message>
 </context>
 <context>
@@ -2389,7 +2805,7 @@
         <translation>メッセージの検証 (&amp;V)</translation>
     </message>
     <message>
-        <source>Enter the receiver's address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack. Note that this only proves the signing party receives with the address, it cannot prove sendership of any transaction!</source>
+        <source>Enter the receiver&apos;s address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack. Note that this only proves the signing party receives with the address, it cannot prove sendership of any transaction!</source>
         <translation>受取人のアドレスとメッセージ（改行やスペース、タブなども完全に一致するよう注意してください）および署名を以下に入力し、メッセージの署名を検証してください。中間者攻撃により騙されるのを防ぐため、署名対象のメッセージに書かれていること以上の意味を署名から読み取ろうとしないよう注意してください。これは署名作成者がこのアドレスで受け取ったことを証明するだけであり、トランザクションの送信権限を証明するものではないことに注意してください！</translation>
     </message>
     <message>
@@ -2409,8 +2825,8 @@
         <translation>入力項目の内容をすべて消去します</translation>
     </message>
     <message>
-        <source>Click "Sign Message" to generate signature</source>
-        <translation>署名を作成するには"メッセージの署名"をクリック</translation>
+        <source>Click &quot;Sign Message&quot; to generate signature</source>
+        <translation>署名を作成するには&quot;メッセージの署名&quot;をクリック</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
@@ -2479,7 +2895,9 @@
     <name>TransactionDesc</name>
     <message numerus="yes">
         <source>Open for %n more block(s)</source>
-        <translation><numerusform>%n 以上のブロックを開く</numerusform></translation>
+        <translation>
+            <numerusform>%n 以上のブロックを開く</numerusform>
+        </translation>
     </message>
     <message>
         <source>Open until %1</source>
@@ -2527,7 +2945,9 @@
     </message>
     <message numerus="yes">
         <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>%n ノードにブロードキャスト</numerusform></translation>
+        <translation>
+            <numerusform>%n ノードにブロードキャスト</numerusform>
+        </translation>
     </message>
     <message>
         <source>Date</source>
@@ -2571,7 +2991,9 @@
     </message>
     <message numerus="yes">
         <source>matures in %n more block(s)</source>
-        <translation><numerusform>あと %n ブロックで成熟します</numerusform></translation>
+        <translation>
+            <numerusform>あと %n ブロックで成熟します</numerusform>
+        </translation>
     </message>
     <message>
         <source>not accepted</source>
@@ -2622,8 +3044,8 @@
         <translation>商人</translation>
     </message>
     <message>
-        <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
-        <translation>生成されたコインは使う前に%1のブロックを完成させる必要があります。あなたが生成した時、このブロックはブロック チェーンに追加されるネットワークにブロードキャストされました。チェーンに追加されるのが失敗した場合、状態が"不承認"に変更されて使えなくなるでしょう。これは、別のノードがあなたの数秒前にブロックを生成する場合に時々起こるかもしれません。</translation>
+        <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to &quot;not accepted&quot; and it won&apos;t be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
+        <translation>生成されたコインは使う前に%1のブロックを完成させる必要があります。あなたが生成した時、このブロックはブロック チェーンに追加されるネットワークにブロードキャストされました。チェーンに追加されるのが失敗した場合、状態が&quot;不承認&quot;に変更されて使えなくなるでしょう。これは、別のノードがあなたの数秒前にブロックを生成する場合に時々起こるかもしれません。</translation>
     </message>
     <message>
         <source>Debug information</source>
@@ -2677,7 +3099,9 @@
     </message>
     <message numerus="yes">
         <source>Open for %n more block(s)</source>
-        <translation><numerusform>%n 以上のブロックを開く</numerusform></translation>
+        <translation>
+            <numerusform>%n 以上のブロックを開く</numerusform>
+        </translation>
     </message>
     <message>
         <source>Open until %1</source>
@@ -2774,6 +3198,10 @@
     <message>
         <source>Amount removed from or added to balance.</source>
         <translation>残高に追加または削除された総額。</translation>
+    </message>
+    <message>
+        <source>Locked</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2930,12 +3358,54 @@
         <source>to</source>
         <translation>から</translation>
     </message>
+    <message>
+        <source>Increase transaction fee</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation>金額を表示する際の単位。クリックすることで他の単位を選択します。</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateAvailableDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update Available</source>
+        <translation>アップデートが利用可能です</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;An update for PAI Up is now available. Please update your application to access the latest features and security improvements.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>PAI Upのアップデートが利用可能になりました。 最新の機能とセキュリティー強化を手に入れたい場合はアプリケーションを更新してください。</translation>
+    </message>
+    <message>
+        <source>Update Now</source>
+        <translation>今すぐアップデート</translation>
+    </message>
+    <message>
+        <source>Remind me later</source>
+        <translation>後で通知</translation>
+    </message>
+</context>
+<context>
+    <name>ViewInvestorKeyDialog</name>
+    <message>
+        <source>View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Investor key copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy Investor Key</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2950,6 +3420,61 @@
     <message>
         <source>Send Coins</source>
         <translation>コインを送る</translation>
+    </message>
+    <message>
+        <source>Fee bump error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Increasing transaction fee failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Do you want to increase the fee?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Current fee:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Increase:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New fee:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirm fee bump</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can&apos;t sign transaction.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not commit transaction</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>WalletSelectionPage</name>
+    <message>
+        <source>Form</source>
+        <translation>フォーム</translation>
+    </message>
+    <message>
+        <source>Send and receive PAI Coin</source>
+        <translation>PAIコインを送金・受領</translation>
+    </message>
+    <message>
+        <source>Create New Wallet</source>
+        <translation>新規ウォレットを作成</translation>
+    </message>
+    <message>
+        <source>Restore Wallet</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2986,6 +3511,37 @@
         <source>The wallet data was successfully saved to %1.</source>
         <translation>ウォレット データは正常に%1に保存されました。</translation>
     </message>
+    <message>
+        <source>Review Paper Key</source>
+        <translation>復元フレーズを確認する</translation>
+    </message>
+</context>
+<context>
+    <name>WelcomePage</name>
+    <message>
+        <source>Form</source>
+        <translation>フォーム</translation>
+    </message>
+    <message>
+        <source>Welcome to PAI Up</source>
+        <translation>PAI Upへようこそ</translation>
+    </message>
+    <message>
+        <source>Send and receive PAI Coin</source>
+        <translation>PAIコインを送金・受領</translation>
+    </message>
+    <message>
+        <source>Easy Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Advanced Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  By using this application I agree to the &lt;a href=&quot;https://paiup.com/terms-of-service.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://paiup.com/privacy-policy.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>paicoin-core</name>
@@ -3011,11 +3567,11 @@
     </message>
     <message>
         <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>外部からの接続を許可 (初期値: -proxy または -connect/-noconnect を使用していない場合は1)</translation>
+        <translation type="vanished">外部からの接続を許可 (初期値: -proxy または -connect/-noconnect を使用していない場合は1)</translation>
     </message>
     <message>
         <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>指定されたノードにのみ接続を行う; -noconnect または -connect=0 だけを指定すると自動接続を無効化します</translation>
+        <translation type="vanished">指定されたノードにのみ接続を行う; -noconnect または -connect=0 だけを指定すると自動接続を無効化します</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
@@ -3059,7 +3615,7 @@
     </message>
     <message>
         <source>PAI Coin Core</source>
-        <translation>PAI Coin のコア</translation>
+        <translation type="vanished">PAI Coin のコア</translation>
     </message>
     <message>
         <source>The %s developers</source>
@@ -3086,8 +3642,8 @@
         <translation>ウォレットの全トランザクションを削除し、これらを-rescanオプションを用いることで起動時にブロックチェインのデータのみからリカバリします。</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>%s の読み込みエラー: 非HDウォレットが既に存在するため、HDウォレットを有効化できません</translation>
+        <source>Error loading %s: You can&apos;t enable HD on a already existing non-HD wallet</source>
+        <translation type="vanished">%s の読み込みエラー: 非HDウォレットが既に存在するため、HDウォレットを有効化できません</translation>
     </message>
     <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
@@ -3114,7 +3670,7 @@
         <translation>ひとつのウォレットトランザクションまたは生トランザクションで使用する合計手数料の最大値 (%s 単位)。低すぎる値を指定すると巨大なトランザクションの作成ができなくなります (規定値: %s)</translation>
     </message>
     <message>
-        <source>Please check that your computer's date and time are correct! If your clock is wrong, %s will not work properly.</source>
+        <source>Please check that your computer&apos;s date and time are correct! If your clock is wrong, %s will not work properly.</source>
         <translation>あなたのPCの日付と時刻が正しいことを確認して下さい！ もしあなたの時計が正しくなければ %s が正確に動作しません。</translation>
     </message>
     <message>
@@ -3134,7 +3690,7 @@
         <translation>スクリプト検証スレッドを設定 (%uから%dの間, 0 = 自動, &lt;0 = たくさんのコアを自由にしておく, 初期値: %d)</translation>
     </message>
     <message>
-        <source>The block database contains a block which appears to be from the future. This may be due to your computer's date and time being set incorrectly. Only rebuild the block database if you are sure that your computer's date and time are correct</source>
+        <source>The block database contains a block which appears to be from the future. This may be due to your computer&apos;s date and time being set incorrectly. Only rebuild the block database if you are sure that your computer&apos;s date and time are correct</source>
         <translation>ブロックのデータベースに未来の時刻のブロックが含まれています。これはおそらくお使いのコンピュータに設定されている日時が間違っていることを示しています。お使いのコンピュータの日時が本当に正しい場合にのみ、ブロックのデータベースの再構築を行ってください。</translation>
     </message>
     <message>
@@ -3167,7 +3723,7 @@
     </message>
     <message>
         <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>-txindex を変更するには -reindex-chainstate を使用してデータベースを再構築する必要があります</translation>
+        <translation type="vanished">-txindex を変更するには -reindex-chainstate を使用してデータベースを再構築する必要があります</translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
@@ -3194,8 +3750,8 @@
         <translation>ブロック作成オプション:</translation>
     </message>
     <message>
-        <source>Cannot resolve -%s address: '%s'</source>
-        <translation>-%s アドレス '%s' を解決できません</translation>
+        <source>Cannot resolve -%s address: &apos;%s&apos;</source>
+        <translation>-%s アドレス &apos;%s&apos; を解決できません</translation>
     </message>
     <message>
         <source>Chain selection options:</source>
@@ -3211,7 +3767,7 @@
     </message>
     <message>
         <source>Copyright (C) %i-%i</source>
-        <translation>Copyright (C) %i-%i</translation>
+        <translation type="vanished">Copyright (C) %i-%i</translation>
     </message>
     <message>
         <source>Corrupted block database detected</source>
@@ -3271,8 +3827,8 @@
         <translation>%s の読み込みに失敗しました: ウォレットの読み込みにはより新しいバージョンの %s が必要です</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>%s の読み込みエラー: HDウォレットが既に存在するため、HDウォレットを無効化できません</translation>
+        <source>Error loading %s: You can&apos;t disable HD on a already existing HD wallet</source>
+        <translation type="vanished">%s の読み込みエラー: HDウォレットが既に存在するため、HDウォレットを無効化できません</translation>
     </message>
     <message>
         <source>Error loading block database</source>
@@ -3303,16 +3859,16 @@
         <translation>初期化時の健全性チェックに失敗しました。%s を終了します。</translation>
     </message>
     <message>
-        <source>Invalid -onion address: '%s'</source>
-        <translation>無効な -onion アドレス：'%s'</translation>
+        <source>Invalid -onion address: &apos;%s&apos;</source>
+        <translation type="vanished">無効な -onion アドレス：&apos;%s&apos;</translation>
     </message>
     <message>
-        <source>Invalid amount for -%s=&lt;amount&gt;: '%s'</source>
-        <translation>-%s=&lt;数量&gt; に対する不正な額: '%s'</translation>
+        <source>Invalid amount for -%s=&lt;amount&gt;: &apos;%s&apos;</source>
+        <translation>-%s=&lt;数量&gt; に対する不正な額: &apos;%s&apos;</translation>
     </message>
     <message>
-        <source>Invalid amount for -fallbackfee=&lt;amount&gt;: '%s'</source>
-        <translation>不正な額 -fallbackfee=&lt;amount&gt;: '%s'</translation>
+        <source>Invalid amount for -fallbackfee=&lt;amount&gt;: &apos;%s&apos;</source>
+        <translation>不正な額 -fallbackfee=&lt;amount&gt;: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
@@ -3372,7 +3928,7 @@
     </message>
     <message>
         <source>Specify wallet file (within data directory)</source>
-        <translation>ウォレットのファイルを指定　(データ・ディレクトリの中に)</translation>
+        <translation>ウォレットのファイルを指定&#x3000;(データ・ディレクトリの中に)</translation>
     </message>
     <message>
         <source>The source code is available from %s.</source>
@@ -3412,7 +3968,7 @@
     </message>
     <message>
         <source>Verifying wallet...</source>
-        <translation>ウォレットの検証中...</translation>
+        <translation type="vanished">ウォレットの検証中...</translation>
     </message>
     <message>
         <source>Wallet %s resides outside data directory %s</source>
@@ -3440,7 +3996,7 @@
     </message>
     <message>
         <source>Bind to given address to listen for JSON-RPC connections. Use [host]:port notation for IPv6. This option can be specified multiple times (default: bind to all interfaces)</source>
-        <translation>指定されたアドレスに対して JSON-RPC 接続をリッスンしするようバインドします。IPv6の場合には [host]:port 表記を使用してください。このオプションは複数回指定することが可能です (初期値: すべてのインターフェースに対してバインドする)</translation>
+        <translation type="vanished">指定されたアドレスに対して JSON-RPC 接続をリッスンしするようバインドします。IPv6の場合には [host]:port 表記を使用してください。このオプションは複数回指定することが可能です (初期値: すべてのインターフェースに対してバインドする)</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
@@ -3467,8 +4023,8 @@
         <translation>paytxfee が設定されていなかった場合、平均して n ブロック以内にトランザクションが検証され始めるのに十分な手数料を含める (初期値: %u)</translation>
     </message>
     <message>
-        <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
-        <translation>-maxtxfee=&lt;amount&gt; の数量の指定が不正です: '%s' (トランザクションが詰まってしまうのを防ぐため、少なくとも %s の最小中継手数料を指定しなければいけません)</translation>
+        <source>Invalid amount for -maxtxfee=&lt;amount&gt;: &apos;%s&apos; (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
+        <translation>-maxtxfee=&lt;amount&gt; の数量の指定が不正です: &apos;%s&apos; (トランザクションが詰まってしまうのを防ぐため、少なくとも %s の最小中継手数料を指定しなければいけません)</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
@@ -3480,7 +4036,7 @@
     </message>
     <message>
         <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>最優先/最低手数料の最大サイズをバイトで指定 (初期値: %d)</translation>
+        <translation type="vanished">最優先/最低手数料の最大サイズをバイトで指定 (初期値: %d)</translation>
     </message>
     <message>
         <source>The transaction amount is too small to send after the fee has been deducted</source>
@@ -3488,7 +4044,7 @@
     </message>
     <message>
         <source>Use hierarchical deterministic key generation (HD) after BIP32. Only has effect during wallet creation/first start</source>
-        <translation>BIP32 に従った階層的決定性鍵生成方式 (HD) を利用します。ウォレットの生成時ないし最初に起動した時にのみ有効です。</translation>
+        <translation type="vanished">BIP32 に従った階層的決定性鍵生成方式 (HD) を利用します。ウォレットの生成時ないし最初に起動した時にのみ有効です。</translation>
     </message>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
@@ -3527,20 +4083,20 @@
         <translation>情報</translation>
     </message>
     <message>
-        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
-        <translation>-paytxfee=&lt;amount&gt; に対する無効な数量です: '%s' (少なくとも %s でなければいけません)</translation>
+        <source>Invalid amount for -paytxfee=&lt;amount&gt;: &apos;%s&apos; (must be at least %s)</source>
+        <translation>-paytxfee=&lt;amount&gt; に対する無効な数量です: &apos;%s&apos; (少なくとも %s でなければいけません)</translation>
     </message>
     <message>
-        <source>Invalid netmask specified in -whitelist: '%s'</source>
-        <translation>-whitelist に対する無効なネットマスクです: '%s'</translation>
+        <source>Invalid netmask specified in -whitelist: &apos;%s&apos;</source>
+        <translation>-whitelist に対する無効なネットマスクです: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
         <translation>最大で &lt;n&gt; 個の孤立したトランザクションをメモリの中に保持する (初期値: %u)</translation>
     </message>
     <message>
-        <source>Need to specify a port with -whitebind: '%s'</source>
-        <translation>-whitebind を用いてポートを指定する必要があります: '%s'</translation>
+        <source>Need to specify a port with -whitebind: &apos;%s&apos;</source>
+        <translation>-whitebind を用いてポートを指定する必要があります: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Node relay options:</source>
@@ -3564,7 +4120,7 @@
     </message>
     <message>
         <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>可能な場合には手数料ゼロのトランザクションとしてトランザクションを送信する (初期値: %u)</translation>
+        <translation type="vanished">可能な場合には手数料ゼロのトランザクションとしてトランザクションを送信する (初期値: %u)</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>
@@ -3652,7 +4208,7 @@
     </message>
     <message>
         <source>Loading addresses...</source>
-        <translation>アドレスを読み込んでいます...</translation>
+        <translation type="vanished">アドレスを読み込んでいます...</translation>
     </message>
     <message>
         <source>(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)</source>
@@ -3696,7 +4252,7 @@
     </message>
     <message>
         <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>保有するピアアドレスが少ない場合、DNS ルックアップによりピアアドレスを問い合わせる (-connect/-noconnect を使っていない場合の初期値: 1)</translation>
+        <translation type="vanished">保有するピアアドレスが少ない場合、DNS ルックアップによりピアアドレスを問い合わせる (-connect/-noconnect を使っていない場合の初期値: 1)</translation>
     </message>
     <message>
         <source>Sets the serialization of raw transaction or block hex returned in non-verbose mode, non-segwit(0) or segwit(1) (default: %d)</source>
@@ -3723,7 +4279,7 @@
         <translation>送信転送量を与えられた目標値以下に維持するようにする (24時間あたり何MiBかで指定)。0 の場合は無制限 (初期値: %d)</translation>
     </message>
     <message>
-        <source>Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported.</source>
+        <source>Unsupported argument -socks found. Setting SOCKS version isn&apos;t possible anymore, only SOCKS5 proxies are supported.</source>
         <translation>サポートされていない引数 -socks が見つかりました。SOCKSバージョンの設定はできないようになりました。SOCKS5プロキシのみがサポートされています。</translation>
     </message>
     <message>
@@ -3735,7 +4291,7 @@
         <translation>Tor 秘匿サービスを通し、別々の SOCKS5 プロキシを用いることでピアに到達する (初期値: %s)</translation>
     </message>
     <message>
-        <source>Warning: Unknown block versions being mined! It's possible unknown rules are in effect</source>
+        <source>Warning: Unknown block versions being mined! It&apos;s possible unknown rules are in effect</source>
         <translation>警告: 未知のバージョンのブロックが採掘されました。未知のルールが導入された可能性があります</translation>
     </message>
     <message>
@@ -3767,8 +4323,8 @@
         <translation>デバッグ出力にIPアドレスを含める (初期値: %u)</translation>
     </message>
     <message>
-        <source>Invalid -proxy address: '%s'</source>
-        <translation>無効な -proxy アドレス: '%s'</translation>
+        <source>Invalid -proxy address: &apos;%s&apos;</source>
+        <translation type="vanished">無効な -proxy アドレス: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Keypool ran out, please call keypoolrefill first</source>
@@ -3875,8 +4431,8 @@
         <translation>トランザクションは最低ひとつの受取先が必要です</translation>
     </message>
     <message>
-        <source>Unknown network specified in -onlynet: '%s'</source>
-        <translation>-onlynet で指定された '%s' は未知のネットワークです</translation>
+        <source>Unknown network specified in -onlynet: &apos;%s&apos;</source>
+        <translation>-onlynet で指定された &apos;%s&apos; は未知のネットワークです</translation>
     </message>
     <message>
         <source>Insufficient funds</source>
@@ -3900,7 +4456,7 @@
     </message>
     <message>
         <source>Cannot write default address</source>
-        <translation>初期値のアドレスを書き込むことができません</translation>
+        <translation type="vanished">初期値のアドレスを書き込むことができません</translation>
     </message>
     <message>
         <source>Rescanning...</source>
@@ -3913,6 +4469,142 @@
     <message>
         <source>Error</source>
         <translation>エラー</translation>
+    </message>
+    <message>
+        <source>PAI Up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bind to given address to listen for JSON-RPC connections. This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot provide specific connections and have addrman find outgoing connections at the same.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect only to the specified node(s); -connect=0 disables automatic connections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can&apos;t enable HD on an already existing non-HD wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet parameter must only specify a filename (not a path).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect used)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fee rate (in %s/kB) that indicates your tolerance for discarding change by adding it to the fee (default: %s). Note: An output is discarded if it is dust at this rate, but we will always discard up to the dust relay fee and a discard fee above that is limited by the fee estimate for the longest target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is the transaction fee you may discard if change is smaller than dust at this level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whether to save the mempool on shutdown and load on restart (default: %u)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%d of last 100 blocks have unexpected version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copyright (C)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can&apos;t disable HD on an already existing HD wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet filename must be a regular file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Invalid characters in -wallet filename.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error upgrading chainstate database</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid -onion address or hostname: &apos;%s&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid -proxy address or hostname: &apos;%s&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid amount for -discardfee=&lt;amount&gt;: &apos;%s&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lainer AI Labs LLC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading P2P addresses...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replaying blocks...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transaction fee and change calculation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to generate initial keys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unsupported logging category %s=%s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Upgrading UTXO database</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Verifying wallet(s)...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -txindex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bitcoin Core</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error creating %s: You can&apos;t create non-HD wallets with this version.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

@@ -1,4 +1,6 @@
-<TS language="ko_KR" version="2.1">
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="ko_KR">
 <context>
     <name>AddressBookPage</name>
     <message>
@@ -67,7 +69,7 @@
     </message>
     <message>
         <source>These are your PAI Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>비트코인을 받을 수 있는 계좌 주소입니다. 매 거래마다 새로운 주소 사용을 권장합니다. </translation>
+        <translation>비트코인을 받을 수 있는 계좌 주소입니다. 매 거래마다 새로운 주소 사용을 권장합니다.</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
@@ -221,6 +223,13 @@
     </message>
 </context>
 <context>
+    <name>AuthManager</name>
+    <message>
+        <source>Invalid PIN, please try again</source>
+        <translation>잘못된 PIN코드, 다시 시도해 주세요</translation>
+    </message>
+</context>
+<context>
     <name>BanTableModel</name>
     <message>
         <source>IP/Netmask</source>
@@ -229,327 +238,6 @@
     <message>
         <source>Banned Until</source>
         <translation>다음과 같은 상황이 될 때까지 계정 정지됩니다.</translation>
-    </message>
-</context>
-<context>
-    <name>PAIcoinGUI</name>
-    <message>
-        <source>Sign &amp;message...</source>
-        <translation>메시지 서명(&amp;M)...</translation>
-    </message>
-    <message>
-        <source>Synchronizing with network...</source>
-        <translation>네트워크와 동기화중...</translation>
-    </message>
-    <message>
-        <source>&amp;Overview</source>
-        <translation>개요(&amp;O)</translation>
-    </message>
-    <message>
-        <source>Node</source>
-        <translation>노드</translation>
-    </message>
-    <message>
-        <source>Show general overview of wallet</source>
-        <translation>지갑의 일반적 개요를 보여줍니다.</translation>
-    </message>
-    <message>
-        <source>&amp;Transactions</source>
-        <translation>거래(&amp;T)</translation>
-    </message>
-    <message>
-        <source>Browse transaction history</source>
-        <translation>거래내역을 검색합니다.</translation>
-    </message>
-    <message>
-        <source>E&amp;xit</source>
-        <translation>나가기(&amp;X)</translation>
-    </message>
-    <message>
-        <source>Quit application</source>
-        <translation>어플리케이션 종료</translation>
-    </message>
-    <message>
-        <source>&amp;About %1</source>
-        <translation>%1 정보(&amp;A)</translation>
-    </message>
-    <message>
-        <source>Show information about %1</source>
-        <translation>%1 정보를 표시합니다</translation>
-    </message>
-    <message>
-        <source>About &amp;Qt</source>
-        <translation>&amp;Qt 정보</translation>
-    </message>
-    <message>
-        <source>Show information about Qt</source>
-        <translation>Qt 정보를 표시합니다</translation>
-    </message>
-    <message>
-        <source>&amp;Options...</source>
-        <translation>옵션(&amp;O)</translation>
-    </message>
-    <message>
-        <source>Modify configuration options for %1</source>
-        <translation>%1 설정 옵션 수정</translation>
-    </message>
-    <message>
-        <source>&amp;Encrypt Wallet...</source>
-        <translation>지갑 암호화(&amp;E)...</translation>
-    </message>
-    <message>
-        <source>&amp;Backup Wallet...</source>
-        <translation>지갑 백업(&amp;B)...</translation>
-    </message>
-    <message>
-        <source>&amp;Change Passphrase...</source>
-        <translation>암호문 변경(&amp;C)...</translation>
-    </message>
-    <message>
-        <source>&amp;Sending addresses...</source>
-        <translation>보내는 주소(&amp;S)</translation>
-    </message>
-    <message>
-        <source>&amp;Receiving addresses...</source>
-        <translation>받는 주소(&amp;R)</translation>
-    </message>
-    <message>
-        <source>Open &amp;URI...</source>
-        <translation>&amp;URI 열기...</translation>
-    </message>
-    <message>
-        <source>Click to disable network activity.</source>
-        <translation>네트워크 활동을 중지하려면 클릭.</translation>
-    </message>
-    <message>
-        <source>Network activity disabled.</source>
-        <translation>네트워크 활동이 정지됨.</translation>
-    </message>
-    <message>
-        <source>Click to enable network activity again.</source>
-        <translation>네트워크 활동을 다시 시작하려면 클릭.</translation>
-    </message>
-    <message>
-        <source>Syncing Headers (%1%)...</source>
-        <translation>헤더 동기화중 (%1%)...</translation>
-    </message>
-    <message>
-        <source>Reindexing blocks on disk...</source>
-        <translation>디스크에서 블록 다시 색인중...</translation>
-    </message>
-    <message>
-        <source>Send coins to a PAI Coin address</source>
-        <translation>비트코인 주소로 코인 전송</translation>
-    </message>
-    <message>
-        <source>Backup wallet to another location</source>
-        <translation>지갑을 다른장소에 백업</translation>
-    </message>
-    <message>
-        <source>Change the passphrase used for wallet encryption</source>
-        <translation>지갑 암호화에 사용되는 암호를 변경합니다</translation>
-    </message>
-    <message>
-        <source>&amp;Debug window</source>
-        <translation>디버그 창(&amp;D)</translation>
-    </message>
-    <message>
-        <source>Open debugging and diagnostic console</source>
-        <translation>디버깅 및 진단 콘솔을 엽니다</translation>
-    </message>
-    <message>
-        <source>&amp;Verify message...</source>
-        <translation>메시지 확인(&amp;V)...</translation>
-    </message>
-    <message>
-        <source>PAIcoin</source>
-        <translation>비트코인</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>지갑</translation>
-    </message>
-    <message>
-        <source>&amp;Send</source>
-        <translation>보내기(&amp;S)</translation>
-    </message>
-    <message>
-        <source>&amp;Receive</source>
-        <translation>받기(&amp;R)</translation>
-    </message>
-    <message>
-        <source>&amp;Show / Hide</source>
-        <translation>보이기/숨기기(&amp;S)</translation>
-    </message>
-    <message>
-        <source>Show or hide the main Window</source>
-        <translation>메인창 보이기 또는 숨기기</translation>
-    </message>
-    <message>
-        <source>Encrypt the private keys that belong to your wallet</source>
-        <translation>지갑에 포함된 개인키 암호화하기</translation>
-    </message>
-    <message>
-        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
-        <translation>지갑 주소가 본인 소유인지 증명하기 위해 비트코인 주소에 서명할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
-        <translation>비트코인 주소의 전자 서명 확인을 위해 첨부된 메시지가 있을 경우 이를 검증할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>&amp;File</source>
-        <translation>파일(&amp;F)</translation>
-    </message>
-    <message>
-        <source>&amp;Settings</source>
-        <translation>설정(&amp;S)</translation>
-    </message>
-    <message>
-        <source>&amp;Help</source>
-        <translation>도움말(&amp;H)</translation>
-    </message>
-    <message>
-        <source>Tabs toolbar</source>
-        <translation>툴바 색인표</translation>
-    </message>
-    <message>
-        <source>Request payments (generates QR codes and paicoin: URIs)</source>
-        <translation>지불 요청하기 (QR코드와 비트코인이 생성됩니다: URIs)</translation>
-    </message>
-    <message>
-        <source>Show the list of used sending addresses and labels</source>
-        <translation>한번 이상 사용된 보내는 주소와 주소 제목의 목록을 보여줍니다.</translation>
-    </message>
-    <message>
-        <source>Show the list of used receiving addresses and labels</source>
-        <translation>한번 이상 사용된 받는 주소와 주소 제목의 목록을 보여줍니다.</translation>
-    </message>
-    <message>
-        <source>Open a paicoin: URI or payment request</source>
-        <translation>paicoin: URI 또는 지불요청 열기</translation>
-    </message>
-    <message>
-        <source>&amp;Command-line options</source>
-        <translation>명령줄 옵션(&amp;C)</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active connection(s) to PAI Coin network</source>
-        <translation><numerusform>비트코인 네트워크에 %n개의 연결이 활성화되어 있습니다.</numerusform></translation>
-    </message>
-    <message>
-        <source>Indexing blocks on disk...</source>
-        <translation>디스크에서 블록 색인중...</translation>
-    </message>
-    <message>
-        <source>Processing blocks on disk...</source>
-        <translation>디스크에서 블록 처리중...</translation>
-    </message>
-    <message numerus="yes">
-        <source>Processed %n block(s) of transaction history.</source>
-        <translation><numerusform>%n 블록 만큼의 거래 기록이 처리됨.</numerusform></translation>
-    </message>
-    <message>
-        <source>%1 behind</source>
-        <translation>%1 뒤에</translation>
-    </message>
-    <message>
-        <source>Last received block was generated %1 ago.</source>
-        <translation>최근에 받은 블록은 %1 전에 생성되었습니다.</translation>
-    </message>
-    <message>
-        <source>Transactions after this will not yet be visible.</source>
-        <translation>이 후의 거래들은 아직 보이지 않을 것입니다.</translation>
-    </message>
-    <message>
-        <source>Error</source>
-        <translation>오류</translation>
-    </message>
-    <message>
-        <source>Warning</source>
-        <translation>경고</translation>
-    </message>
-    <message>
-        <source>Information</source>
-        <translation>정보</translation>
-    </message>
-    <message>
-        <source>Up to date</source>
-        <translation>현재까지</translation>
-    </message>
-    <message>
-        <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
-        <translation>사용할 수 있는 비트코인 명령줄 옵션 목록을 가져오기 위해 %1 도움말 메시지를 표시합니다.</translation>
-    </message>
-    <message>
-        <source>%1 client</source>
-        <translation>%1 클라이언트</translation>
-    </message>
-    <message>
-        <source>Connecting to peers...</source>
-        <translation>피어에 연결중...</translation>
-    </message>
-    <message>
-        <source>Catching up...</source>
-        <translation>블록 따라잡기...</translation>
-    </message>
-    <message>
-        <source>Date: %1
-</source>
-        <translation>날짜: %1
-</translation>
-    </message>
-    <message>
-        <source>Amount: %1
-</source>
-        <translation>금액: %1
-</translation>
-    </message>
-    <message>
-        <source>Type: %1
-</source>
-        <translation>종류: %1
-</translation>
-    </message>
-    <message>
-        <source>Label: %1
-</source>
-        <translation>라벨: %1
-</translation>
-    </message>
-    <message>
-        <source>Address: %1
-</source>
-        <translation>주소: %1
-</translation>
-    </message>
-    <message>
-        <source>Sent transaction</source>
-        <translation>거래 보내기</translation>
-    </message>
-    <message>
-        <source>Incoming transaction</source>
-        <translation>들어오고 있는 거래</translation>
-    </message>
-    <message>
-        <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
-        <translation>HD 키 생성이 &lt;b&gt;활성화되었습니다&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
-        <translation>HD 키 생성이 &lt;b&gt;비활성화되었습니다&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
-        <translation>지갑이 &lt;b&gt;암호화&lt;/b&gt; 되었고 현재 &lt;b&gt;잠금해제&lt;/b&gt; 되었습니다</translation>
-    </message>
-    <message>
-        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
-        <translation>지갑이 &lt;b&gt;암호화&lt;/b&gt; 되었고 현재 &lt;b&gt;잠겨져&lt;/b&gt; 있습니다</translation>
-    </message>
-    <message>
-        <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
-        <translation>치명적인 오류가 발생했습니다. 비트코인을 더이상 안전하게 진행할 수 없어 곧 종료합니다.</translation>
     </message>
 </context>
 <context>
@@ -704,6 +392,13 @@
     </message>
 </context>
 <context>
+    <name>ConfirmationDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>EditAddressDialog</name>
     <message>
         <source>Edit Address</source>
@@ -742,12 +437,12 @@
         <translation>보내는 주소 편집</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid PAI Coin address.</source>
-        <translation>입력한 "%1" 주소는 올바른 비트코인 주소가 아닙니다.</translation>
+        <source>The entered address &quot;%1&quot; is not a valid PAI Coin address.</source>
+        <translation>입력한 &quot;%1&quot; 주소는 올바른 비트코인 주소가 아닙니다.</translation>
     </message>
     <message>
-        <source>The entered address "%1" is already in the address book.</source>
-        <translation>입력된 주소는"%1" 이미 주소록에 있습니다.</translation>
+        <source>The entered address &quot;%1&quot; is already in the address book.</source>
+        <translation>입력된 주소는&quot;%1&quot; 이미 주소록에 있습니다.</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>
@@ -779,6 +474,35 @@
     <message>
         <source>Cannot create data directory here.</source>
         <translation>데이터 폴더를 여기 생성할 수 없습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>FundsInHoldingDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Funds in Holding</source>
+        <translation>보류 자금</translation>
+    </message>
+    <message>
+        <source>Your initial PAI Coin investment is currently in the holding period and is unavailable for transactions. You will receive a notification once the holding period is complete.
+
+You may still send and receive any PAI Coin in your &quot;Available Funds&quot;</source>
+        <translation>&quot;초기 PAI코인 투자는 현재 보류 기간에 
+있으며 거래에 사용할 수 없습니다. 보류 기간이 
+완료되면 알림을 받게됩니다.
+
+&quot;&quot;사용 가능한 자금&quot;&quot;에 PAI코인을 송금하고 수령 할 수 있습니다.&quot;</translation>
+    </message>
+    <message>
+        <source>Okay</source>
+        <translation>오케이</translation>
+    </message>
+    <message>
+        <source>Don&apos;t show this again</source>
+        <translation>다시 보여주지 마세요.</translation>
     </message>
 </context>
 <context>
@@ -816,8 +540,8 @@
         <translation>실행시 데이터 폴더 선택하기 (기본값: %u)</translation>
     </message>
     <message>
-        <source>Set language, for example "de_DE" (default: system locale)</source>
-        <translation>"ko_KR"와 같이 언어를 설정하십시오 (기본값: 시스템 로캘)</translation>
+        <source>Set language, for example &quot;de_DE&quot; (default: system locale)</source>
+        <translation>&quot;ko_KR&quot;와 같이 언어를 설정하십시오 (기본값: 시스템 로캘)</translation>
     </message>
     <message>
         <source>Start minimized</source>
@@ -837,6 +561,40 @@
     </message>
 </context>
 <context>
+    <name>HoldingPeriodCompleteDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Holding Period Complete</source>
+        <translation>보류 기간 완료</translation>
+    </message>
+    <message>
+        <source>Okay</source>
+        <translation>오케이</translation>
+    </message>
+    <message>
+        <source>Go to Lanier.ai</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>지금 하지 않음</translation>
+    </message>
+    <message>
+        <source>Please update PAI Coin wallet to unlock your investment.
+You may update by downloading the latest version from Lanier.ai
+
+If you do not update the application, your investment will remain in holding.</source>
+        <translation>투자 잠금을 해제하려면 PAI UP 을 업데이트 해주세요. 앱을 업데이트 하지 않을 경우 당신의 투자는 보류 될 것입니다.</translation>
+    </message>
+    <message>
+        <source>Congratulations! Your initial PAI Coin investment is now available for transactions.</source>
+        <translation>축하합니다! 초기 PAI코인의 투자가 현재 가능합니다.</translation>
+    </message>
+</context>
+<context>
     <name>Intro</name>
     <message>
         <source>Welcome</source>
@@ -848,11 +606,12 @@
     </message>
     <message>
         <source>As this is the first time the program is launched, you can choose where %1 will store its data.</source>
-        <translation>프로그램이 처음으로 실행되고 있습니다. %1가 어디에 데이터를 저장할지 선택할 수 있습니다. </translation>
+        <translatorcomment>String update needed</translatorcomment>
+        <translation type="unfinished">프로그램이 처음으로 실행되고 있습니다. %1가 어디에 데이터를 저장할지 선택할 수 있습니다.</translation>
     </message>
     <message>
         <source>%1 will download and store a copy of the PAI Coin block chain. At least %2GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>%1가 블록체인의 복사본을 다운로드 저장합니다. 적어도 %2GB의 데이터가 이 폴더에 저장되며 시간이 경과할수록 점차 증가합니다. 그리고 지갑 또한 이 폴더에 저장됩니다. </translation>
+        <translation type="vanished">%1가 블록체인의 복사본을 다운로드 저장합니다. 적어도 %2GB의 데이터가 이 폴더에 저장되며 시간이 경과할수록 점차 증가합니다. 그리고 지갑 또한 이 폴더에 저장됩니다. </translation>
     </message>
     <message>
         <source>Use the default data directory</source>
@@ -863,8 +622,8 @@
         <translation>커스텀 데이터 폴더 사용:</translation>
     </message>
     <message>
-        <source>Error: Specified data directory "%1" cannot be created.</source>
-        <translation>오류: "%1" 지정한 데이터 디렉토리를 생성할 수 없습니다.</translation>
+        <source>Error: Specified data directory &quot;%1&quot; cannot be created.</source>
+        <translation>오류: &quot;%1&quot; 지정한 데이터 디렉토리를 생성할 수 없습니다.</translation>
     </message>
     <message>
         <source>Error</source>
@@ -872,11 +631,43 @@
     </message>
     <message numerus="yes">
         <source>%n GB of free space available</source>
-        <translation><numerusform>%n GB 사용가능</numerusform></translation>
+        <translation>
+            <numerusform>%n GB 사용가능</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>(of %n GB needed)</source>
-        <translation><numerusform>(%n GB가 필요)</numerusform></translation>
+        <translation>
+            <numerusform>(%n GB가 필요)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %2 initially launched.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>If you have chosen to limit block chain storage (pruning), the historical data must still be downloaded and processed, but will be deleted afterward to keep your disk usage low.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PAIcoin</source>
+        <translation type="unfinished">비트코인</translation>
+    </message>
+    <message>
+        <source>The blockchain data will be stored in this directory, and it will grow over time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Approximately %1 GB of data will be stored in this directory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 will download and store a copy of the PAI Coin blockchain.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The wallet will also be stored in this directory.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -886,7 +677,7 @@
         <translation>유형</translation>
     </message>
     <message>
-        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the PAI Coin network, as detailed below.</source>
+        <source>Recent transactions may not yet be visible, and therefore your wallet&apos;s balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the PAI Coin network, as detailed below.</source>
         <translation>최근 거래는 아직 보이지 않을 것입니다, 그러므로 당신의 지갑의 잔액이 틀릴 수도 있습니다. 이 정보는 비트코인 네트워크와 완전한 동기화가 완료되면 아래의 설명과 같이 정확해집니다.</translation>
     </message>
     <message>
@@ -985,11 +776,11 @@
     </message>
     <message>
         <source>Accept connections from outside</source>
-        <translation>외부로부터의 연결을 승인합니다.</translation>
+        <translation type="vanished">외부로부터의 연결을 승인합니다.</translation>
     </message>
     <message>
         <source>Allow incoming connections</source>
-        <translation>연결 요청을 허용합니다.</translation>
+        <translation type="vanished">연결 요청을 허용합니다.</translation>
     </message>
     <message>
         <source>IP address of the proxy (e.g. IPv4: 127.0.0.1 / IPv6: ::1)</source>
@@ -1005,7 +796,7 @@
     </message>
     <message>
         <source>Third party transaction URLs</source>
-        <translation>제 3자 거래 URLs</translation>
+        <translation type="vanished">제 3자 거래 URLs</translation>
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
@@ -1081,7 +872,7 @@
     </message>
     <message>
         <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>이 SOCK5 프록시를 통과해 피어와 접속한 네트워크 유형이 표시됩니다.</translation>
+        <translation type="vanished">이 SOCK5 프록시를 통과해 피어와 접속한 네트워크 유형이 표시됩니다.</translation>
     </message>
     <message>
         <source>IPv4</source>
@@ -1101,7 +892,7 @@
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
-        <translation>Tor 서비스를 이용하여 피어에게 연결하기 위해 분리된 SOCKS5 프록시 사용</translation>
+        <translation type="vanished">Tor 서비스를 이용하여 피어에게 연결하기 위해 분리된 SOCKS5 프록시 사용</translation>
     </message>
     <message>
         <source>&amp;Window</source>
@@ -1109,11 +900,11 @@
     </message>
     <message>
         <source>&amp;Hide the icon from the system tray.</source>
-        <translation>시스템 트레이 로 부터 아이콘 숨기기(&amp;H)</translation>
+        <translation type="vanished">시스템 트레이 로 부터 아이콘 숨기기(&amp;H)</translation>
     </message>
     <message>
         <source>Hide tray icon</source>
-        <translation>트레이 아이콘 숨기기</translation>
+        <translation type="vanished">트레이 아이콘 숨기기</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1187,6 +978,58 @@
         <source>The supplied proxy address is invalid.</source>
         <translation>지정한 프록시 주소가 잘못되었습니다.</translation>
     </message>
+    <message>
+        <source>Accept connections from outside.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow incomin&amp;g connections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the icon from the system tray.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Hide tray icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Third party transaction URLs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the %1 configuration file from the working directory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Configuration File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Configuration options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The configuration file is used to specify advanced user options which override GUI settings. Additionally, any command-line options will override this configuration file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation type="unfinished">오류</translation>
+    </message>
+    <message>
+        <source>The configuration file could not be opened.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>OverviewPage</name>
@@ -1204,7 +1047,7 @@
     </message>
     <message>
         <source>Available:</source>
-        <translation>사용 가능</translation>
+        <translation type="vanished">사용 가능</translation>
     </message>
     <message>
         <source>Your current spendable balance</source>
@@ -1212,7 +1055,7 @@
     </message>
     <message>
         <source>Pending:</source>
-        <translation>미확정</translation>
+        <translation>미확정:</translation>
     </message>
     <message>
         <source>Total of transactions that have yet to be confirmed, and do not yet count toward the spendable balance</source>
@@ -1262,6 +1105,460 @@
         <source>Current total balance in watch-only addresses</source>
         <translation>조회전용 주소의 현재 잔액</translation>
     </message>
+    <message>
+        <source>Available Funds:</source>
+        <translation>사용 가능한 자금:</translation>
+    </message>
+    <message>
+        <source>Days left in holding:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Funds in Holding:</source>
+        <translation>보류 자금:</translation>
+    </message>
+</context>
+<context>
+    <name>PAIcoinGUI</name>
+    <message>
+        <source>Sign &amp;message...</source>
+        <translation>메시지 서명(&amp;M)...</translation>
+    </message>
+    <message>
+        <source>Synchronizing with network...</source>
+        <translation>네트워크와 동기화중...</translation>
+    </message>
+    <message>
+        <source>&amp;Overview</source>
+        <translation>개요(&amp;O)</translation>
+    </message>
+    <message>
+        <source>Node</source>
+        <translation>노드</translation>
+    </message>
+    <message>
+        <source>Show general overview of wallet</source>
+        <translation>지갑의 일반적 개요를 보여줍니다.</translation>
+    </message>
+    <message>
+        <source>&amp;Transactions</source>
+        <translation>거래(&amp;T)</translation>
+    </message>
+    <message>
+        <source>Browse transaction history</source>
+        <translation>거래내역을 검색합니다.</translation>
+    </message>
+    <message>
+        <source>E&amp;xit</source>
+        <translation>나가기(&amp;X)</translation>
+    </message>
+    <message>
+        <source>Quit application</source>
+        <translation>어플리케이션 종료</translation>
+    </message>
+    <message>
+        <source>&amp;About %1</source>
+        <translation>%1 정보(&amp;A)</translation>
+    </message>
+    <message>
+        <source>Show information about %1</source>
+        <translation>%1 정보를 표시합니다</translation>
+    </message>
+    <message>
+        <source>About &amp;Qt</source>
+        <translation>&amp;Qt 정보</translation>
+    </message>
+    <message>
+        <source>Show information about Qt</source>
+        <translation>Qt 정보를 표시합니다</translation>
+    </message>
+    <message>
+        <source>&amp;Options...</source>
+        <translation>옵션(&amp;O)</translation>
+    </message>
+    <message>
+        <source>Modify configuration options for %1</source>
+        <translation>%1 설정 옵션 수정</translation>
+    </message>
+    <message>
+        <source>&amp;Encrypt Wallet...</source>
+        <translation>지갑 암호화(&amp;E)...</translation>
+    </message>
+    <message>
+        <source>&amp;Backup Wallet...</source>
+        <translation>지갑 백업(&amp;B)...</translation>
+    </message>
+    <message>
+        <source>&amp;Change Passphrase...</source>
+        <translation>암호문 변경(&amp;C)...</translation>
+    </message>
+    <message>
+        <source>&amp;Sending addresses...</source>
+        <translation>보내는 주소(&amp;S)</translation>
+    </message>
+    <message>
+        <source>&amp;Receiving addresses...</source>
+        <translation>받는 주소(&amp;R)</translation>
+    </message>
+    <message>
+        <source>Open &amp;URI...</source>
+        <translation>&amp;URI 열기...</translation>
+    </message>
+    <message>
+        <source>Click to disable network activity.</source>
+        <translation>네트워크 활동을 중지하려면 클릭.</translation>
+    </message>
+    <message>
+        <source>Network activity disabled.</source>
+        <translation>네트워크 활동이 정지됨.</translation>
+    </message>
+    <message>
+        <source>Click to enable network activity again.</source>
+        <translation>네트워크 활동을 다시 시작하려면 클릭.</translation>
+    </message>
+    <message>
+        <source>Syncing Headers (%1%)...</source>
+        <translation>헤더 동기화중 (%1%)...</translation>
+    </message>
+    <message>
+        <source>Reindexing blocks on disk...</source>
+        <translation>디스크에서 블록 다시 색인중...</translation>
+    </message>
+    <message>
+        <source>Send coins to a PAI Coin address</source>
+        <translation>비트코인 주소로 코인 전송</translation>
+    </message>
+    <message>
+        <source>Backup wallet to another location</source>
+        <translation>지갑을 다른장소에 백업</translation>
+    </message>
+    <message>
+        <source>Change the passphrase used for wallet encryption</source>
+        <translation>지갑 암호화에 사용되는 암호를 변경합니다</translation>
+    </message>
+    <message>
+        <source>&amp;Debug window</source>
+        <translation>디버그 창(&amp;D)</translation>
+    </message>
+    <message>
+        <source>Open debugging and diagnostic console</source>
+        <translation>디버깅 및 진단 콘솔을 엽니다</translation>
+    </message>
+    <message>
+        <source>&amp;Verify message...</source>
+        <translation>메시지 확인(&amp;V)...</translation>
+    </message>
+    <message>
+        <source>PAIcoin</source>
+        <translation>비트코인</translation>
+    </message>
+    <message>
+        <source>Wallet</source>
+        <translation type="vanished">지갑</translation>
+    </message>
+    <message>
+        <source>&amp;Send</source>
+        <translation>보내기(&amp;S)</translation>
+    </message>
+    <message>
+        <source>&amp;Receive</source>
+        <translation>받기(&amp;R)</translation>
+    </message>
+    <message>
+        <source>&amp;Show / Hide</source>
+        <translation>보이기/숨기기(&amp;S)</translation>
+    </message>
+    <message>
+        <source>Show or hide the main Window</source>
+        <translation>메인창 보이기 또는 숨기기</translation>
+    </message>
+    <message>
+        <source>Encrypt the private keys that belong to your wallet</source>
+        <translation>지갑에 포함된 개인키 암호화하기</translation>
+    </message>
+    <message>
+        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
+        <translation>지갑 주소가 본인 소유인지 증명하기 위해 비트코인 주소에 서명할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
+        <translation>비트코인 주소의 전자 서명 확인을 위해 첨부된 메시지가 있을 경우 이를 검증할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>&amp;File</source>
+        <translation>파일(&amp;F)</translation>
+    </message>
+    <message>
+        <source>&amp;Settings</source>
+        <translation>설정(&amp;S)</translation>
+    </message>
+    <message>
+        <source>&amp;Help</source>
+        <translation>도움말(&amp;H)</translation>
+    </message>
+    <message>
+        <source>Tabs toolbar</source>
+        <translation>툴바 색인표</translation>
+    </message>
+    <message>
+        <source>Request payments (generates QR codes and paicoin: URIs)</source>
+        <translation type="vanished">지불 요청하기 (QR코드와 비트코인이 생성됩니다: URIs)</translation>
+    </message>
+    <message>
+        <source>Show the list of used sending addresses and labels</source>
+        <translation>한번 이상 사용된 보내는 주소와 주소 제목의 목록을 보여줍니다.</translation>
+    </message>
+    <message>
+        <source>Show the list of used receiving addresses and labels</source>
+        <translation>한번 이상 사용된 받는 주소와 주소 제목의 목록을 보여줍니다.</translation>
+    </message>
+    <message>
+        <source>Open a paicoin: URI or payment request</source>
+        <translation type="vanished">paicoin: URI 또는 지불요청 열기</translation>
+    </message>
+    <message>
+        <source>&amp;Command-line options</source>
+        <translation>명령줄 옵션(&amp;C)</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n active connection(s) to PAI Coin network</source>
+        <translation>
+            <numerusform>비트코인 네트워크에 %n개의 연결이 활성화되어 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Indexing blocks on disk...</source>
+        <translation>디스크에서 블록 색인중...</translation>
+    </message>
+    <message>
+        <source>Processing blocks on disk...</source>
+        <translation>디스크에서 블록 처리중...</translation>
+    </message>
+    <message numerus="yes">
+        <source>Processed %n block(s) of transaction history.</source>
+        <translation>
+            <numerusform>%n 블록 만큼의 거래 기록이 처리됨.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 behind</source>
+        <translation>%1 뒤에</translation>
+    </message>
+    <message>
+        <source>Last received block was generated %1 ago.</source>
+        <translation>최근에 받은 블록은 %1 전에 생성되었습니다.</translation>
+    </message>
+    <message>
+        <source>Transactions after this will not yet be visible.</source>
+        <translation>이 후의 거래들은 아직 보이지 않을 것입니다.</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>오류</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation>경고</translation>
+    </message>
+    <message>
+        <source>Information</source>
+        <translation>정보</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>현재까지</translation>
+    </message>
+    <message>
+        <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
+        <translation>사용할 수 있는 비트코인 명령줄 옵션 목록을 가져오기 위해 %1 도움말 메시지를 표시합니다.</translation>
+    </message>
+    <message>
+        <source>%1 client</source>
+        <translation>%1 클라이언트</translation>
+    </message>
+    <message>
+        <source>Connecting to peers...</source>
+        <translation>피어에 연결중...</translation>
+    </message>
+    <message>
+        <source>Catching up...</source>
+        <translation>블록 따라잡기...</translation>
+    </message>
+    <message>
+        <source>Date: %1
+</source>
+        <translation>날짜: %1
+</translation>
+    </message>
+    <message>
+        <source>Amount: %1
+</source>
+        <translation>금액: %1
+</translation>
+    </message>
+    <message>
+        <source>Type: %1
+</source>
+        <translation>종류: %1
+</translation>
+    </message>
+    <message>
+        <source>Label: %1
+</source>
+        <translation>라벨: %1
+</translation>
+    </message>
+    <message>
+        <source>Address: %1
+</source>
+        <translation>주소: %1
+</translation>
+    </message>
+    <message>
+        <source>Sent transaction</source>
+        <translation>거래 보내기</translation>
+    </message>
+    <message>
+        <source>Incoming transaction</source>
+        <translation>들어오고 있는 거래</translation>
+    </message>
+    <message>
+        <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
+        <translation>HD 키 생성이 &lt;b&gt;활성화되었습니다&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
+        <translation>HD 키 생성이 &lt;b&gt;비활성화되었습니다&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
+        <translation>지갑이 &lt;b&gt;암호화&lt;/b&gt; 되었고 현재 &lt;b&gt;잠금해제&lt;/b&gt; 되었습니다</translation>
+    </message>
+    <message>
+        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
+        <translation>지갑이 &lt;b&gt;암호화&lt;/b&gt; 되었고 현재 &lt;b&gt;잠겨져&lt;/b&gt; 있습니다</translation>
+    </message>
+    <message>
+        <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
+        <translation>치명적인 오류가 발생했습니다. 비트코인을 더이상 안전하게 진행할 수 없어 곧 종료합니다.</translation>
+    </message>
+    <message>
+        <source>Request payments (generates QR codes and paicoin:// URIs)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a paicoin:// URI or payment request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PIN Set</source>
+        <translation>PIN 준비</translation>
+    </message>
+    <message>
+        <source>Paper Key Complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wallet Restored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Review Paper Key</source>
+        <translation type="unfinished">종이 키 확인하기</translation>
+    </message>
+    <message>
+        <source>Review Paper Key</source>
+        <translation type="unfinished">종이 키 확인하기</translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyCompletionPage</name>
+    <message>
+        <source>Form</source>
+        <translation>유형</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>To make sure everything was written down correctly, please enter the following words from your paper key.</source>
+        <translation>모든 것이 정확하게 적혀 있는지 확인하기 위해, 귀하의 종이 키로부터 다음의 단어들을 입력해 주세요.</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>전송</translation>
+    </message>
+    <message>
+        <source>Word #%1</source>
+        <translation>단어 #%1</translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyIntroPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">유형</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your paper key is the only way to restore your PAI Coin Wallet if your device is lost, stolen, broken, or updated.
+
+We will show you a list of words to write down on a piece of paper and keep safe.</source>
+        <translation>종이 키는 핸드폰을 분실하거나, 도난당하거나, 망가지거나, 업그레이드한 경우 PAI Up을 다시 살릴 수 있는 유일한 방법입니다.
+
+저희가 제시하는 단어 목록을 잘 적어서 안전하게 보관해 주세요.</translation>
+    </message>
+    <message>
+        <source>Write down paper key</source>
+        <translation>종이 키 작성하기</translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyWritedownPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">유형</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write down each word in order and store it in a safe place</source>
+        <translation>각 단어를 순서대로 적어 놓고, 안전한 곳에 보관하세요.</translation>
+    </message>
+    <message>
+        <source>Word</source>
+        <translation>단어</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>이전</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>다음</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1의%2</translation>
+    </message>
 </context>
 <context>
     <name>PaymentServer</name>
@@ -1271,7 +1568,7 @@
     </message>
     <message>
         <source>Cannot start paicoin: click-to-pay handler</source>
-        <translation>비트코인을 시작할 수 없습니다: 지급제어기를 클릭하세요</translation>
+        <translation type="vanished">비트코인을 시작할 수 없습니다: 지급제어기를 클릭하세요</translation>
     </message>
     <message>
         <source>URI handling</source>
@@ -1302,7 +1599,7 @@
         <translation>지불 요청이 거부됨</translation>
     </message>
     <message>
-        <source>Payment request network doesn't match client network.</source>
+        <source>Payment request network doesn&apos;t match client network.</source>
         <translation>지급 요청 네트워크가 클라이언트 네트워크와 일치되지 않습니다.</translation>
     </message>
     <message>
@@ -1352,6 +1649,10 @@
     <message>
         <source>Payment acknowledged</source>
         <translation>지불이 승인됨</translation>
+    </message>
+    <message>
+        <source>Cannot start paicoin:// click-to-pay handler</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1413,23 +1714,33 @@
     </message>
     <message numerus="yes">
         <source>%n second(s)</source>
-        <translation><numerusform>%n 초</numerusform></translation>
+        <translation>
+            <numerusform>%n 초</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n minute(s)</source>
-        <translation><numerusform>%n 분</numerusform></translation>
+        <translation>
+            <numerusform>%n 분</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n hour(s)</source>
-        <translation><numerusform>%n 시간</numerusform></translation>
+        <translation>
+            <numerusform>%n 시간</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n day(s)</source>
-        <translation><numerusform>&amp;n 일</numerusform></translation>
+        <translation>
+            <numerusform>%n 일</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n week(s)</source>
-        <translation><numerusform>%n 주</numerusform></translation>
+        <translation>
+            <numerusform>%n 주</numerusform>
+        </translation>
     </message>
     <message>
         <source>%1 and %2</source>
@@ -1437,18 +1748,24 @@
     </message>
     <message numerus="yes">
         <source>%n year(s)</source>
-        <translation><numerusform>%n 년</numerusform></translation>
+        <translation>
+            <numerusform>%n 년</numerusform>
+        </translation>
     </message>
     <message>
-        <source>%1 didn't yet exit safely...</source>
+        <source>%1 didn&apos;t yet exit safely...</source>
         <translation>%1가 아직 안전하게 종료되지 않았습니다...</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>알수없음</translation>
     </message>
 </context>
 <context>
     <name>QObject::QObject</name>
     <message>
-        <source>Error: Specified data directory "%1" does not exist.</source>
-        <translation>에러: 지정한 데이터 폴더 "%1"은 존재하지 않습니다.</translation>
+        <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
+        <translation>에러: 지정한 데이터 폴더 &quot;%1&quot;은 존재하지 않습니다.</translation>
     </message>
     <message>
         <source>Error: Cannot parse configuration file: %1. Only use key=value syntax.</source>
@@ -1662,7 +1979,7 @@
     </message>
     <message>
         <source>&amp;Clear</source>
-        <translation>지우기(&amp;C)</translation>
+        <translation type="vanished">지우기(&amp;C)</translation>
     </message>
     <message>
         <source>Totals</source>
@@ -1718,7 +2035,7 @@
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>기록을 찾아보려면 위 아래 화살표 키를, 화면을 지우려면 &lt;b&gt;Ctrl-L&lt;/b&gt;키를 사용하십시오.</translation>
+        <translation type="vanished">기록을 찾아보려면 위 아래 화살표 키를, 화면을 지우려면 &lt;b&gt;Ctrl-L&lt;/b&gt;키를 사용하십시오.</translation>
     </message>
     <message>
         <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
@@ -1726,7 +2043,7 @@
     </message>
     <message>
         <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
-        <translation>경고 : 사기꾼이 사용자에게 여기에 명령을 입력하게 하여 지갑 내용을 훔칠수 있다는 사실을 알려드립니다. 명령어를 완전히 이해하지 못한다면 콘솔을 사용하지 마십시오.</translation>
+        <translation type="vanished">경고 : 사기꾼이 사용자에게 여기에 명령을 입력하게 하여 지갑 내용을 훔칠수 있다는 사실을 알려드립니다. 명령어를 완전히 이해하지 못한다면 콘솔을 사용하지 마십시오.</translation>
     </message>
     <message>
         <source>Network activity disabled</source>
@@ -1779,6 +2096,18 @@
     <message>
         <source>Unknown</source>
         <translation>알수없음</translation>
+    </message>
+    <message>
+        <source>&amp;Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1955,6 +2284,29 @@
     </message>
 </context>
 <context>
+    <name>RestoreWalletPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">유형</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the Paper Key of the wallet you want to restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore Wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word #%1</source>
+        <translation type="unfinished">단어 #%1</translation>
+    </message>
+</context>
+<context>
     <name>SendCoinsDialog</name>
     <message>
         <source>Send Coins</source>
@@ -2025,8 +2377,8 @@
         <translation>킬로바이트 당</translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 satoshis and the transaction is only 250 bytes, then "per kilobyte" only pays 250 satoshis in fee, while "total at least" pays 1000 satoshis. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>사용자 정의 수수료가 1000사토시로 지정된 경우 거래의 크기가 250바이트 일 경우 1킬로바이트당 250사토시만 지불되지만 "최소 수수료"에선 1000사토시가 지불됩니다. 1킬로바이트가 넘는 거래인 경우 어떠한 경우에든 1킬로바이트 기준으로 지불됩니다.</translation>
+        <source>If the custom fee is set to 1000 satoshis and the transaction is only 250 bytes, then &quot;per kilobyte&quot; only pays 250 satoshis in fee, while &quot;total at least&quot; pays 1000 satoshis. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <translation>사용자 정의 수수료가 1000사토시로 지정된 경우 거래의 크기가 250바이트 일 경우 1킬로바이트당 250사토시만 지불되지만 &quot;최소 수수료&quot;에선 1000사토시가 지불됩니다. 1킬로바이트가 넘는 거래인 경우 어떠한 경우에든 1킬로바이트 기준으로 지불됩니다.</translation>
     </message>
     <message>
         <source>Hide</source>
@@ -2034,7 +2386,7 @@
     </message>
     <message>
         <source>total at least</source>
-        <translation>최소 수수료</translation>
+        <translation type="vanished">최소 수수료</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for paicoin transactions than the network can process.</source>
@@ -2058,11 +2410,11 @@
     </message>
     <message>
         <source>normal</source>
-        <translation>일반</translation>
+        <translation type="vanished">일반</translation>
     </message>
     <message>
         <source>fast</source>
-        <translation>빠름</translation>
+        <translation type="vanished">빠름</translation>
     </message>
     <message>
         <source>Send to multiple recipients at once</source>
@@ -2190,7 +2542,9 @@
     </message>
     <message numerus="yes">
         <source>%n block(s)</source>
-        <translation><numerusform>%n 블록</numerusform></translation>
+        <translation type="vanished">
+            <numerusform>%n 블록</numerusform>
+        </translation>
     </message>
     <message>
         <source>Pay only the required fee of %1</source>
@@ -2198,7 +2552,9 @@
     </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
-        <translation><numerusform>%n 블록 안에 승인이 시작될 것으로 추정됩니다.</numerusform></translation>
+        <translation>
+            <numerusform>%n 블록 안에 승인이 시작될 것으로 추정됩니다.</numerusform>
+        </translation>
     </message>
     <message>
         <source>Warning: Invalid PAI Coin address</source>
@@ -2219,6 +2575,34 @@
     <message>
         <source>(no label)</source>
         <translation>(라벨 없음)</translation>
+    </message>
+    <message>
+        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until you have validated the complete chain.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warning: Fee estimation is currently not possible.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Request Replace-By-Fee</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Indicates that the sender may wish to replace this transaction with a new one paying higher fees (prior to being confirmed).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 blocks)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This transaction signals replaceability (optin-RBF).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create transaction.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2289,7 +2673,7 @@
     </message>
     <message>
         <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
-        <translation>비트코인에 첨부된 메시지: 참고용으로 거래와 함께 저장될 URI. 메모: 이 메시지는 비트코인 네트워크로 전송되지 않습니다.</translation>
+        <translation type="vanished">비트코인에 첨부된 메시지: 참고용으로 거래와 함께 저장될 URI. 메모: 이 메시지는 비트코인 네트워크로 전송되지 않습니다.</translation>
     </message>
     <message>
         <source>Pay To:</source>
@@ -2303,12 +2687,47 @@
         <source>Enter a label for this address to add it to your address book</source>
         <translation>주소록에 추가하려면 라벨을 입력하세요</translation>
     </message>
+    <message>
+        <source>A message that was attached to the paicoin:// URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SendConfirmationDialog</name>
     <message>
         <source>Yes</source>
         <translation>예</translation>
+    </message>
+</context>
+<context>
+    <name>SetPinPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">유형</translation>
+    </message>
+    <message>
+        <source>Set PIN</source>
+        <translation>PIN 설정</translation>
+    </message>
+    <message>
+        <source>Your PIN will be used to unlock your PAI Coin Wallet and send money. Use only numbers to create your PIN.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remember this PIN. If you forget it, you won&apos;t be able to access your PAIcoin</source>
+        <translation>이 PIN 코드를 기억하세요. PIN 코드를 잊어버리면 자신의 PAI Coin을 사용할 수 없게 됩니다.</translation>
+    </message>
+    <message>
+        <source>Re-Enter PIN</source>
+        <translation>PIN 코드를 다시 입력</translation>
+    </message>
+    <message>
+        <source>PIN Required</source>
+        <translation>PIN 코드 입력 필수</translation>
+    </message>
+    <message>
+        <source>Please enter your PIN to continue</source>
+        <translation>계속하려면 PIN 코드를 입력해 주세요</translation>
     </message>
 </context>
 <context>
@@ -2389,7 +2808,7 @@
         <translation>메시지 검증(&amp;V)</translation>
     </message>
     <message>
-        <source>Enter the receiver's address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack. Note that this only proves the signing party receives with the address, it cannot prove sendership of any transaction!</source>
+        <source>Enter the receiver&apos;s address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack. Note that this only proves the signing party receives with the address, it cannot prove sendership of any transaction!</source>
         <translation>메시지를 검증하기 위해 아래 칸에 각각 지갑 주소와 메시지, 전자서명을 입력하세요. (메시지 원본의 띄어쓰기, 들여쓰기, 행 나눔 등이 정확하게 입력되어야 하므로 원본을 복사해서 입력하세요) 이 기능은 메시지 검증이 주 목적이며, 네트워크 침입자에 의해 변조되지 않도록 전자서명 해독에 불필요한 시간을 소모하지 마세요. </translation>
     </message>
     <message>
@@ -2409,8 +2828,8 @@
         <translation>모든 검증 메시지 필드 재설정</translation>
     </message>
     <message>
-        <source>Click "Sign Message" to generate signature</source>
-        <translation>서명을 만들려면 "메시지 서명"을 누르십시오</translation>
+        <source>Click &quot;Sign Message&quot; to generate signature</source>
+        <translation>서명을 만들려면 &quot;메시지 서명&quot;을 누르십시오</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
@@ -2479,7 +2898,9 @@
     <name>TransactionDesc</name>
     <message numerus="yes">
         <source>Open for %n more block(s)</source>
-        <translation><numerusform>%n개의 더 많은 블록 열기</numerusform></translation>
+        <translation>
+            <numerusform>%n개의 더 많은 블록 열기</numerusform>
+        </translation>
     </message>
     <message>
         <source>Open until %1</source>
@@ -2527,7 +2948,9 @@
     </message>
     <message numerus="yes">
         <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>, %n개 노드를 통해 전파</numerusform></translation>
+        <translation>
+            <numerusform>, %n개 노드를 통해 전파</numerusform>
+        </translation>
     </message>
     <message>
         <source>Date</source>
@@ -2571,7 +2994,9 @@
     </message>
     <message numerus="yes">
         <source>matures in %n more block(s)</source>
-        <translation><numerusform>%n개의 더 많은 블록을 숙성</numerusform></translation>
+        <translation>
+            <numerusform>%n개의 더 많은 블록을 숙성</numerusform>
+        </translation>
     </message>
     <message>
         <source>not accepted</source>
@@ -2622,8 +3047,8 @@
         <translation>상인</translation>
     </message>
     <message>
-        <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
-        <translation>신규 채굴된 코인이 사용되기 위해서는 %1 개의 블록이 경과되어야 합니다. 블록을 생성할 때 블록체인에 추가되도록 네트워크에 전파되는 과정을 거치는데, 블록체인에 포함되지 못하고 실패한다면 해당 블록의 상태는 '미승인'으로 표현되고 비트코인 또한 사용될 수 없습니다. 이 현상은 다른 노드가 비슷한 시간대에 동시에 블록을 생성할 때 종종 발생할 수 있습니다. </translation>
+        <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to &quot;not accepted&quot; and it won&apos;t be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
+        <translation>신규 채굴된 코인이 사용되기 위해서는 %1 개의 블록이 경과되어야 합니다. 블록을 생성할 때 블록체인에 추가되도록 네트워크에 전파되는 과정을 거치는데, 블록체인에 포함되지 못하고 실패한다면 해당 블록의 상태는 &apos;미승인&apos;으로 표현되고 비트코인 또한 사용될 수 없습니다. 이 현상은 다른 노드가 비슷한 시간대에 동시에 블록을 생성할 때 종종 발생할 수 있습니다. </translation>
     </message>
     <message>
         <source>Debug information</source>
@@ -2677,7 +3102,9 @@
     </message>
     <message numerus="yes">
         <source>Open for %n more block(s)</source>
-        <translation><numerusform>%n개의 더 많은 블록 열기</numerusform></translation>
+        <translation>
+            <numerusform>%n개의 더 많은 블록 열기</numerusform>
+        </translation>
     </message>
     <message>
         <source>Open until %1</source>
@@ -2774,6 +3201,10 @@
     <message>
         <source>Amount removed from or added to balance.</source>
         <translation>변경된 잔고.</translation>
+    </message>
+    <message>
+        <source>Locked</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2930,12 +3361,54 @@
         <source>to</source>
         <translation>상대방</translation>
     </message>
+    <message>
+        <source>Increase transaction fee</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation>거래액을 표시하는 단위. 클릭해서 다른 단위를 선택할 수 있습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateAvailableDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update Available</source>
+        <translation>사용 가능한 업데이트</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;An update for PAI Up is now available. Please update your application to access the latest features and security improvements.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>PAI Up을 업데이트 할 수 있습니다. 최신기능 및 보안향상 기능을 받으려면 애플리케이션을 업데이트 하십시오.</translation>
+    </message>
+    <message>
+        <source>Update Now</source>
+        <translation>지금 업데이트</translation>
+    </message>
+    <message>
+        <source>Remind me later</source>
+        <translation type="unfinished">나중에 다시 알려주세요</translation>
+    </message>
+</context>
+<context>
+    <name>ViewInvestorKeyDialog</name>
+    <message>
+        <source>View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Investor key copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy Investor Key</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2950,6 +3423,61 @@
     <message>
         <source>Send Coins</source>
         <translation>코인 보내기</translation>
+    </message>
+    <message>
+        <source>Fee bump error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Increasing transaction fee failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Do you want to increase the fee?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Current fee:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Increase:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New fee:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirm fee bump</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can&apos;t sign transaction.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not commit transaction</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>WalletSelectionPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">유형</translation>
+    </message>
+    <message>
+        <source>Send and receive PAI Coin</source>
+        <translation>PAI코인을 송금, 수령</translation>
+    </message>
+    <message>
+        <source>Create New Wallet</source>
+        <translation>새 월렛 만들기</translation>
+    </message>
+    <message>
+        <source>Restore Wallet</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2986,6 +3514,37 @@
         <source>The wallet data was successfully saved to %1.</source>
         <translation>지갑 정보가 %1에 성공적으로 저장되었습니다.</translation>
     </message>
+    <message>
+        <source>Review Paper Key</source>
+        <translation>종이 키 확인하기</translation>
+    </message>
+</context>
+<context>
+    <name>WelcomePage</name>
+    <message>
+        <source>Form</source>
+        <translation>유형</translation>
+    </message>
+    <message>
+        <source>Welcome to PAI Up</source>
+        <translation>PAI Up에 환영합니다</translation>
+    </message>
+    <message>
+        <source>Send and receive PAI Coin</source>
+        <translation>PAI코인을 송금, 수령</translation>
+    </message>
+    <message>
+        <source>Easy Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Advanced Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  By using this application I agree to the &lt;a href=&quot;https://paiup.com/terms-of-service.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://paiup.com/privacy-policy.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>paicoin-core</name>
@@ -3011,11 +3570,11 @@
     </message>
     <message>
         <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>외부 접속을 승인합니다 (기본값 : -proxy 또는 -connect / -noconnect가 없는 경우 1)</translation>
+        <translation type="vanished">외부 접속을 승인합니다 (기본값 : -proxy 또는 -connect / -noconnect가 없는 경우 1)</translation>
     </message>
     <message>
         <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>지정된 노드에만 연결; 자동 연결을 사용하지 않으려면 -noconnect 또는 -connect=0 을 단독으로 사용하십시오.</translation>
+        <translation type="vanished">지정된 노드에만 연결; 자동 연결을 사용하지 않으려면 -noconnect 또는 -connect=0 을 단독으로 사용하십시오.</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
@@ -3059,7 +3618,7 @@
     </message>
     <message>
         <source>PAI Coin Core</source>
-        <translation>비트코인 코어</translation>
+        <translation type="vanished">비트코인 코어</translation>
     </message>
     <message>
         <source>The %s developers</source>
@@ -3086,8 +3645,8 @@
         <translation>시작시 모든 지갑 거래를 삭제하고 -rescan을 통하여 블록체인만 복구합니다.</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>%s 불러오기 오류: 비-HD 지갑이 존재하는 상태에서 HD 지갑을 활성화 할 수 없습니다</translation>
+        <source>Error loading %s: You can&apos;t enable HD on a already existing non-HD wallet</source>
+        <translation type="vanished">%s 불러오기 오류: 비-HD 지갑이 존재하는 상태에서 HD 지갑을 활성화 할 수 없습니다</translation>
     </message>
     <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
@@ -3110,7 +3669,7 @@
         <translation>허용 된 최대 중간 피어 시간 오프셋 조정. 시간에 대한 지역적 전망치는 전방 또는 후방의 피어에 의해 영향을 받을 수 있습니다. (기본값: %u 초)</translation>
     </message>
     <message>
-        <source>Please check that your computer's date and time are correct! If your clock is wrong, %s will not work properly.</source>
+        <source>Please check that your computer&apos;s date and time are correct! If your clock is wrong, %s will not work properly.</source>
         <translation>컴퓨터의 날짜와 시간이 올바른지 확인하십시오! 시간이 잘못되면 %s은 제대로 동작하지 않습니다.</translation>
     </message>
     <message>
@@ -3126,7 +3685,7 @@
         <translation>스크립트 인증 스레드의 갯수 설정 (%u-%d, 0 = 자동, &lt;0 = 지정된 코어 개수만큼 사용 안함, 기본값: %d)</translation>
     </message>
     <message>
-        <source>The block database contains a block which appears to be from the future. This may be due to your computer's date and time being set incorrectly. Only rebuild the block database if you are sure that your computer's date and time are correct</source>
+        <source>The block database contains a block which appears to be from the future. This may be due to your computer&apos;s date and time being set incorrectly. Only rebuild the block database if you are sure that your computer&apos;s date and time are correct</source>
         <translation>블록 데이터베이스에 미래의 블록이 포함되어 있습니다. 이것은 사용자의 컴퓨터의 날짜와 시간이 올바르게 설정되어 있지 않을때 나타날 수 있습니다. 만약 사용자의 컴퓨터의 날짜와 시간이 올바르다고 확신할 때에만 블록 데이터 베이스의 재구성을 하십시오</translation>
     </message>
     <message>
@@ -3159,7 +3718,7 @@
     </message>
     <message>
         <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>-txindex를 바꾸기 위해서는 -reindex-chainstate 를 사용해서 데이터베이스를 재구성해야 합니다. </translation>
+        <translation type="vanished">-txindex를 바꾸기 위해서는 -reindex-chainstate 를 사용해서 데이터베이스를 재구성해야 합니다. </translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
@@ -3186,8 +3745,8 @@
         <translation>블록 생성 옵션:</translation>
     </message>
     <message>
-        <source>Cannot resolve -%s address: '%s'</source>
-        <translation>%s 주소를 확인할 수 없습니다: '%s'</translation>
+        <source>Cannot resolve -%s address: &apos;%s&apos;</source>
+        <translation>%s 주소를 확인할 수 없습니다: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Chain selection options:</source>
@@ -3203,7 +3762,7 @@
     </message>
     <message>
         <source>Copyright (C) %i-%i</source>
-        <translation>Copyright (C) %i-%i</translation>
+        <translation type="vanished">Copyright (C) %i-%i</translation>
     </message>
     <message>
         <source>Corrupted block database detected</source>
@@ -3262,8 +3821,8 @@
         <translation>%s 불러오기 에러: 지갑은 새 버전의 %s이 필요합니다</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>%s 불러오기 오류: 이미 HD 지갑이 존재하는 상태에서 HD 지갑을 비활성화 할 수 없습니다</translation>
+        <source>Error loading %s: You can&apos;t disable HD on a already existing HD wallet</source>
+        <translation type="vanished">%s 불러오기 오류: 이미 HD 지갑이 존재하는 상태에서 HD 지갑을 비활성화 할 수 없습니다</translation>
     </message>
     <message>
         <source>Error loading block database</source>
@@ -3294,16 +3853,16 @@
         <translation>무결성 확인 초기화가 실패했습니다. %s가 종료됩니다.</translation>
     </message>
     <message>
-        <source>Invalid -onion address: '%s'</source>
-        <translation>잘못된 -onion 주소입니다: '%s'</translation>
+        <source>Invalid -onion address: &apos;%s&apos;</source>
+        <translation type="vanished">잘못된 -onion 주소입니다: &apos;%s&apos;</translation>
     </message>
     <message>
-        <source>Invalid amount for -%s=&lt;amount&gt;: '%s'</source>
-        <translation>유효하지 않은 금액 -%s=&lt;amount&gt;: '%s'</translation>
+        <source>Invalid amount for -%s=&lt;amount&gt;: &apos;%s&apos;</source>
+        <translation>유효하지 않은 금액 -%s=&lt;amount&gt;: &apos;%s&apos;</translation>
     </message>
     <message>
-        <source>Invalid amount for -fallbackfee=&lt;amount&gt;: '%s'</source>
-        <translation>유효하지 않은 금액 -fallbackfee=&lt;amount&gt;: '%s'</translation>
+        <source>Invalid amount for -fallbackfee=&lt;amount&gt;: &apos;%s&apos;</source>
+        <translation>유효하지 않은 금액 -fallbackfee=&lt;amount&gt;: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
@@ -3403,7 +3962,7 @@
     </message>
     <message>
         <source>Verifying wallet...</source>
-        <translation>지갑 검증중...</translation>
+        <translation type="vanished">지갑 검증중...</translation>
     </message>
     <message>
         <source>Wallet %s resides outside data directory %s</source>
@@ -3431,7 +3990,7 @@
     </message>
     <message>
         <source>Bind to given address to listen for JSON-RPC connections. Use [host]:port notation for IPv6. This option can be specified multiple times (default: bind to all interfaces)</source>
-        <translation>선택된 주소로 고정하여 JSON-RPC 연결을 리슨(Listen)합니다. IPv6 프로토콜인 경우 [host]:port 방식의 명령어 표기법을 사용합니다. 이 옵션은 복수로 지정 할수 있습니다. (기본값: 모든 인터페이스에 고정)</translation>
+        <translation type="vanished">선택된 주소로 고정하여 JSON-RPC 연결을 리슨(Listen)합니다. IPv6 프로토콜인 경우 [host]:port 방식의 명령어 표기법을 사용합니다. 이 옵션은 복수로 지정 할수 있습니다. (기본값: 모든 인터페이스에 고정)</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
@@ -3458,8 +4017,8 @@
         <translation>paytxfee가 설정되어 있지 않다면 평균 n 블록안에 승인이 이루어지도록 충분한 수수료가 포함됩니다 (기본값: %u)</translation>
     </message>
     <message>
-        <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
-        <translation>유효하지 않은 금액 -maxtxfee=&lt;amount&gt;: '%s' (거래가 막히는 상황을 방지하게 위해 적어도 %s 의 중계 수수료를 지정해야 합니다)</translation>
+        <source>Invalid amount for -maxtxfee=&lt;amount&gt;: &apos;%s&apos; (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
+        <translation>유효하지 않은 금액 -maxtxfee=&lt;amount&gt;: &apos;%s&apos; (거래가 막히는 상황을 방지하게 위해 적어도 %s 의 중계 수수료를 지정해야 합니다)</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
@@ -3471,7 +4030,7 @@
     </message>
     <message>
         <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>최대 크기를 최우선으로 설정 / 바이트당 최소 수수료로 거래(기본값: %d)</translation>
+        <translation type="vanished">최대 크기를 최우선으로 설정 / 바이트당 최소 수수료로 거래(기본값: %d)</translation>
     </message>
     <message>
         <source>The transaction amount is too small to send after the fee has been deducted</source>
@@ -3479,7 +4038,7 @@
     </message>
     <message>
         <source>Use hierarchical deterministic key generation (HD) after BIP32. Only has effect during wallet creation/first start</source>
-        <translation>BIP32 이후에는 계층적 결정성 키 생성 (HD)을 사용하십시오. 지갑 생성/처음 시작 시에만 효과가 있습니다.</translation>
+        <translation type="vanished">BIP32 이후에는 계층적 결정성 키 생성 (HD)을 사용하십시오. 지갑 생성/처음 시작 시에만 효과가 있습니다.</translation>
     </message>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
@@ -3518,20 +4077,20 @@
         <translation>정보</translation>
     </message>
     <message>
-        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
-        <translation>유효하지 않은 금액 -paytxfee=&lt;amount&gt;: "%s" (최소 %s 이상이어야 됨)</translation>
+        <source>Invalid amount for -paytxfee=&lt;amount&gt;: &apos;%s&apos; (must be at least %s)</source>
+        <translation>유효하지 않은 금액 -paytxfee=&lt;amount&gt;: &quot;%s&quot; (최소 %s 이상이어야 됨)</translation>
     </message>
     <message>
-        <source>Invalid netmask specified in -whitelist: '%s'</source>
-        <translation>유효하지 않은 넷마스크가 -whitelist: '%s" 를 통해 지정됨</translation>
+        <source>Invalid netmask specified in -whitelist: &apos;%s&apos;</source>
+        <translation>유효하지 않은 넷마스크가 -whitelist: &apos;%s&quot; 를 통해 지정됨</translation>
     </message>
     <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
         <translation>최대 &lt;n&gt;개의 연결할 수 없는 거래를 메모리에 저장 (기본값: %u)</translation>
     </message>
     <message>
-        <source>Need to specify a port with -whitebind: '%s'</source>
-        <translation>-whitebind를 이용하여 포트를 지정해야 합니다: '%s"</translation>
+        <source>Need to specify a port with -whitebind: &apos;%s&apos;</source>
+        <translation>-whitebind를 이용하여 포트를 지정해야 합니다: &apos;%s&quot;</translation>
     </message>
     <message>
         <source>Node relay options:</source>
@@ -3555,7 +4114,7 @@
     </message>
     <message>
         <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>가능한 경우 수수료 없이 거래 보내기 (기본값: %u)</translation>
+        <translation type="vanished">가능한 경우 수수료 없이 거래 보내기 (기본값: %u)</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>
@@ -3639,7 +4198,7 @@
     </message>
     <message>
         <source>Loading addresses...</source>
-        <translation>주소를 불러오는 중...</translation>
+        <translation type="vanished">주소를 불러오는 중...</translation>
     </message>
     <message>
         <source>(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)</source>
@@ -3683,7 +4242,7 @@
     </message>
     <message>
         <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>보유한 피어 주소가 적은 경우 DNS 조회를 통해 피어 주소를 요청합니다. (-connect / -noconnect가 아니라면 기본값은 1)</translation>
+        <translation type="vanished">보유한 피어 주소가 적은 경우 DNS 조회를 통해 피어 주소를 요청합니다. (-connect / -noconnect가 아니라면 기본값은 1)</translation>
     </message>
     <message>
         <source>Sets the serialization of raw transaction or block hex returned in non-verbose mode, non-segwit(0) or segwit(1) (default: %d)</source>
@@ -3710,7 +4269,7 @@
         <translation>아웃바운드 트래픽을 설정된 목표치 이하로 유지하기 (24시간당 MiB기준), 0 = 무제한 (기본값: %d)</translation>
     </message>
     <message>
-        <source>Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported.</source>
+        <source>Unsupported argument -socks found. Setting SOCKS version isn&apos;t possible anymore, only SOCKS5 proxies are supported.</source>
         <translation>지원하지 않는 인수 -socks를 찾았습니다. 설정된 SOCKS의 버전은 더이상 사용할 수 없으며, SOCK5 프록시만을 지원합니다.</translation>
     </message>
     <message>
@@ -3722,7 +4281,7 @@
         <translation>Tor 서비스를 이용하여 피어에게 연결하기 위해 분리된 SOCKS5 프록시를 사용 (기본값: %s)</translation>
     </message>
     <message>
-        <source>Warning: Unknown block versions being mined! It's possible unknown rules are in effect</source>
+        <source>Warning: Unknown block versions being mined! It&apos;s possible unknown rules are in effect</source>
         <translation>경고: 알려지지 않은 버전의 블록이 채굴되었습니다. 알려지지 않은 규칙이 적용되었을 가능성이 있습니다.</translation>
     </message>
     <message>
@@ -3754,8 +4313,8 @@
         <translation>디버그 출력에 IP주소 포함하기 (기본값: %u)</translation>
     </message>
     <message>
-        <source>Invalid -proxy address: '%s'</source>
-        <translation>잘못된 -proxy 주소입니다: '%s'</translation>
+        <source>Invalid -proxy address: &apos;%s&apos;</source>
+        <translation type="vanished">잘못된 -proxy 주소입니다: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Keypool ran out, please call keypoolrefill first</source>
@@ -3862,8 +4421,8 @@
         <translation>거래에는 최소한 한명의 수령인이 있어야 합니다.</translation>
     </message>
     <message>
-        <source>Unknown network specified in -onlynet: '%s'</source>
-        <translation>-onlynet에 지정한 네트워크를 알 수 없습니다: '%s'</translation>
+        <source>Unknown network specified in -onlynet: &apos;%s&apos;</source>
+        <translation>-onlynet에 지정한 네트워크를 알 수 없습니다: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Insufficient funds</source>
@@ -3887,7 +4446,7 @@
     </message>
     <message>
         <source>Cannot write default address</source>
-        <translation>기본 계좌에 기록할 수 없습니다</translation>
+        <translation type="vanished">기본 계좌에 기록할 수 없습니다</translation>
     </message>
     <message>
         <source>Rescanning...</source>
@@ -3900,6 +4459,154 @@
     <message>
         <source>Error</source>
         <translation>오류</translation>
+    </message>
+    <message>
+        <source>PAI Up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bind to given address to listen for JSON-RPC connections. This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot provide specific connections and have addrman find outgoing connections at the same.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect only to the specified node(s); -connect=0 disables automatic connections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can&apos;t enable HD on an already existing non-HD wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet parameter must only specify a filename (not a path).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximum total fees (in %s) to use in a single wallet transaction or raw transaction; setting this too low may abort large transactions (default: %s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect used)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;%u = automatically prune block files to stay under the specified target size in MiB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fee rate (in %s/kB) that indicates your tolerance for discarding change by adding it to the fee (default: %s). Note: An output is discarded if it is dust at this rate, but we will always discard up to the dust relay fee and a discard fee above that is limited by the fee estimate for the longest target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is the transaction fee you may discard if change is smaller than dust at this level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whether to save the mempool on shutdown and load on restart (default: %u)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%d of last 100 blocks have unexpected version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copyright (C)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can&apos;t disable HD on an already existing HD wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet filename must be a regular file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Invalid characters in -wallet filename.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error upgrading chainstate database</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid -onion address or hostname: &apos;%s&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid -proxy address or hostname: &apos;%s&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid amount for -discardfee=&lt;amount&gt;: &apos;%s&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lainer AI Labs LLC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading P2P addresses...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replaying blocks...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transaction fee and change calculation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to bind to %s on this computer (bind returned error %s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to generate initial keys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unsupported logging category %s=%s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Upgrading UTXO database</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Verifying wallet(s)...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -txindex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bitcoin Core</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error creating %s: You can&apos;t create non-HD wallets with this version.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>
