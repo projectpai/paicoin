@@ -202,6 +202,12 @@ bool CCoinsViewCache::BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlockIn
 }
 
 bool CCoinsViewCache::Flush() {
+    if (cacheCoins.size() == 0 && hashBlock.IsNull())
+    {
+        cachedCoinsUsage = 0;
+        return true;
+    }
+
     bool fOk = base->BatchWrite(cacheCoins, hashBlock);
     cacheCoins.clear();
     cachedCoinsUsage = 0;
