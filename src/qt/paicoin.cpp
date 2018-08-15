@@ -586,6 +586,8 @@ void PAIcoinApplication::initializeResult(bool success)
                 window->encryptWallet();
             else
             {
+                window->setHiddenTopWidget(true);
+
                 if (walletModel->getEncryptionStatus() == WalletModel::EncryptionStatus::Locked)
                 {
                     WalletModel::UnlockContext ctx(walletModel->requestUnlock());
@@ -595,6 +597,8 @@ void PAIcoinApplication::initializeResult(bool success)
                         walletModel->decryptPinCode();
 
                         walletModel->refreshInvestorKey();
+
+                        window->setHiddenTopWidget(false);
 
                         window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
                     }

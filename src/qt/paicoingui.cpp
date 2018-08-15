@@ -784,6 +784,11 @@ void PAIcoinGUI::setPinCode(const std::string &pin)
     }
 }
 
+void PAIcoinGUI::setHiddenTopWidget(const bool hidden)
+{
+    mainStackedWidget->widget(mainStackedWidget->currentIndex())->setHidden(hidden);
+}
+
 void PAIcoinGUI::pickDataDirectory()
 {
     /// Ask user for data directory

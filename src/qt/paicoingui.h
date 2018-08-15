@@ -255,6 +255,9 @@ public Q_SLOTS:
     void interruptForPinRequest(bool newPin = false);
     /** Continue from last state before PIN entry was requested */
     void continueFromPinRequest();
+
+    /** Show / hide top widget */
+    void setHiddenTopWidget(const bool hidden);
 #endif // ENABLE_WALLET
 
 private Q_SLOTS:
