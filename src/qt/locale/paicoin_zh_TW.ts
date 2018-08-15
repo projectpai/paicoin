@@ -1,4 +1,6 @@
-<TS language="zh_TW" version="2.1">
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="zh_TW">
 <context>
     <name>AddressBookPage</name>
     <message>
@@ -221,6 +223,13 @@
     </message>
 </context>
 <context>
+    <name>AuthManager</name>
+    <message>
+        <source>Invalid PIN, please try again</source>
+        <translation>PIN碼無效，請重試</translation>
+    </message>
+</context>
+<context>
     <name>BanTableModel</name>
     <message>
         <source>IP/Netmask</source>
@@ -229,327 +238,6 @@
     <message>
         <source>Banned Until</source>
         <translation>禁止期限</translation>
-    </message>
-</context>
-<context>
-    <name>PAIcoinGUI</name>
-    <message>
-        <source>Sign &amp;message...</source>
-        <translation>簽署訊息...</translation>
-    </message>
-    <message>
-        <source>Synchronizing with network...</source>
-        <translation>正在跟網路進行同步...</translation>
-    </message>
-    <message>
-        <source>&amp;Overview</source>
-        <translation>總覽</translation>
-    </message>
-    <message>
-        <source>Node</source>
-        <translation>節點</translation>
-    </message>
-    <message>
-        <source>Show general overview of wallet</source>
-        <translation>顯示錢包一般總覽</translation>
-    </message>
-    <message>
-        <source>&amp;Transactions</source>
-        <translation>交易</translation>
-    </message>
-    <message>
-        <source>Browse transaction history</source>
-        <translation>瀏覽交易紀錄</translation>
-    </message>
-    <message>
-        <source>E&amp;xit</source>
-        <translation>結束</translation>
-    </message>
-    <message>
-        <source>Quit application</source>
-        <translation>結束應用程式</translation>
-    </message>
-    <message>
-        <source>&amp;About %1</source>
-        <translation>關於%1</translation>
-    </message>
-    <message>
-        <source>Show information about %1</source>
-        <translation>顯示 %1 的相關資訊</translation>
-    </message>
-    <message>
-        <source>About &amp;Qt</source>
-        <translation>關於 &amp;Qt</translation>
-    </message>
-    <message>
-        <source>Show information about Qt</source>
-        <translation>顯示 Qt 相關資訊</translation>
-    </message>
-    <message>
-        <source>&amp;Options...</source>
-        <translation>選項...</translation>
-    </message>
-    <message>
-        <source>Modify configuration options for %1</source>
-        <translation>修改 %1 的設定選項</translation>
-    </message>
-    <message>
-        <source>&amp;Encrypt Wallet...</source>
-        <translation>加密錢包...</translation>
-    </message>
-    <message>
-        <source>&amp;Backup Wallet...</source>
-        <translation>備份錢包...</translation>
-    </message>
-    <message>
-        <source>&amp;Change Passphrase...</source>
-        <translation>改變密碼...</translation>
-    </message>
-    <message>
-        <source>&amp;Sending addresses...</source>
-        <translation>付款位址...</translation>
-    </message>
-    <message>
-        <source>&amp;Receiving addresses...</source>
-        <translation>收款位址...</translation>
-    </message>
-    <message>
-        <source>Open &amp;URI...</source>
-        <translation>開啓 URI...</translation>
-    </message>
-    <message>
-        <source>Click to disable network activity.</source>
-        <translation>按一下就會不使用網路。</translation>
-    </message>
-    <message>
-        <source>Network activity disabled.</source>
-        <translation>網路活動關閉了。</translation>
-    </message>
-    <message>
-        <source>Click to enable network activity again.</source>
-        <translation>按一下就又會使用網路。</translation>
-    </message>
-    <message>
-        <source>Syncing Headers (%1%)...</source>
-        <translation>正在同步前導資料(%1%)中...</translation>
-    </message>
-    <message>
-        <source>Reindexing blocks on disk...</source>
-        <translation>正在為磁碟裡的區塊重建索引...</translation>
-    </message>
-    <message>
-        <source>Send coins to a PAI Coin address</source>
-        <translation>付錢給一個 PAI Coin 位址</translation>
-    </message>
-    <message>
-        <source>Backup wallet to another location</source>
-        <translation>把錢包備份到其它地方</translation>
-    </message>
-    <message>
-        <source>Change the passphrase used for wallet encryption</source>
-        <translation>改變錢包加密用的密碼</translation>
-    </message>
-    <message>
-        <source>&amp;Debug window</source>
-        <translation>除錯視窗</translation>
-    </message>
-    <message>
-        <source>Open debugging and diagnostic console</source>
-        <translation>開啓除錯和診斷主控台</translation>
-    </message>
-    <message>
-        <source>&amp;Verify message...</source>
-        <translation>驗證訊息...</translation>
-    </message>
-    <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
-    </message>
-    <message>
-        <source>Wallet</source>
-        <translation>錢包</translation>
-    </message>
-    <message>
-        <source>&amp;Send</source>
-        <translation>付款</translation>
-    </message>
-    <message>
-        <source>&amp;Receive</source>
-        <translation>收款</translation>
-    </message>
-    <message>
-        <source>&amp;Show / Hide</source>
-        <translation>顯示或隱藏</translation>
-    </message>
-    <message>
-        <source>Show or hide the main Window</source>
-        <translation>顯示或隱藏主視窗</translation>
-    </message>
-    <message>
-        <source>Encrypt the private keys that belong to your wallet</source>
-        <translation>把錢包中的密鑰加密</translation>
-    </message>
-    <message>
-        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
-        <translation>用 PAI Coin 位址簽署訊息來證明位址是你的</translation>
-    </message>
-    <message>
-        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
-        <translation>驗證訊息是用來確定訊息是用指定的 PAI Coin 位址簽署的</translation>
-    </message>
-    <message>
-        <source>&amp;File</source>
-        <translation>檔案</translation>
-    </message>
-    <message>
-        <source>&amp;Settings</source>
-        <translation>設定</translation>
-    </message>
-    <message>
-        <source>&amp;Help</source>
-        <translation>說明</translation>
-    </message>
-    <message>
-        <source>Tabs toolbar</source>
-        <translation>分頁工具列</translation>
-    </message>
-    <message>
-        <source>Request payments (generates QR codes and paicoin: URIs)</source>
-        <translation>要求付款(產生 QR Code 和 paicoin 付款協議的資源識別碼: URI)</translation>
-    </message>
-    <message>
-        <source>Show the list of used sending addresses and labels</source>
-        <translation>顯示已使用過的付款位址和標記的清單</translation>
-    </message>
-    <message>
-        <source>Show the list of used receiving addresses and labels</source>
-        <translation>顯示已使用過的收款位址和標記的清單</translation>
-    </message>
-    <message>
-        <source>Open a paicoin: URI or payment request</source>
-        <translation>開啓 paicoin 協議的資源識別碼(URI)或付款要求</translation>
-    </message>
-    <message>
-        <source>&amp;Command-line options</source>
-        <translation>命令列選項</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active connection(s) to PAI Coin network</source>
-        <translation><numerusform>%n 個運作中的 PAI Coin 網路連線</numerusform></translation>
-    </message>
-    <message>
-        <source>Indexing blocks on disk...</source>
-        <translation>正在為磁碟裡的區塊建立索引...</translation>
-    </message>
-    <message>
-        <source>Processing blocks on disk...</source>
-        <translation>正在處理磁碟裡的區塊資料...</translation>
-    </message>
-    <message numerus="yes">
-        <source>Processed %n block(s) of transaction history.</source>
-        <translation><numerusform>已經處理了 %n 個區塊的交易紀錄。</numerusform></translation>
-    </message>
-    <message>
-        <source>%1 behind</source>
-        <translation>落後 %1</translation>
-    </message>
-    <message>
-        <source>Last received block was generated %1 ago.</source>
-        <translation>最近收到的區塊是在 %1 以前生出來的。</translation>
-    </message>
-    <message>
-        <source>Transactions after this will not yet be visible.</source>
-        <translation>暫時會看不到在這之後的交易。</translation>
-    </message>
-    <message>
-        <source>Error</source>
-        <translation>錯誤</translation>
-    </message>
-    <message>
-        <source>Warning</source>
-        <translation>警告</translation>
-    </message>
-    <message>
-        <source>Information</source>
-        <translation>資訊</translation>
-    </message>
-    <message>
-        <source>Up to date</source>
-        <translation>最新狀態</translation>
-    </message>
-    <message>
-        <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
-        <translation>顯示 %1 的說明訊息，來取得可用命令列選項的列表</translation>
-    </message>
-    <message>
-        <source>%1 client</source>
-        <translation>%1 客戶端軟體</translation>
-    </message>
-    <message>
-        <source>Connecting to peers...</source>
-        <translation>正在跟其他節點連線中...</translation>
-    </message>
-    <message>
-        <source>Catching up...</source>
-        <translation>正在趕進度...</translation>
-    </message>
-    <message>
-        <source>Date: %1
-</source>
-        <translation>日期: %1
-</translation>
-    </message>
-    <message>
-        <source>Amount: %1
-</source>
-        <translation>金額: %1
-</translation>
-    </message>
-    <message>
-        <source>Type: %1
-</source>
-        <translation>種類: %1
-</translation>
-    </message>
-    <message>
-        <source>Label: %1
-</source>
-        <translation>標記: %1
-</translation>
-    </message>
-    <message>
-        <source>Address: %1
-</source>
-        <translation>位址: %1
-</translation>
-    </message>
-    <message>
-        <source>Sent transaction</source>
-        <translation>付款交易</translation>
-    </message>
-    <message>
-        <source>Incoming transaction</source>
-        <translation>收款交易</translation>
-    </message>
-    <message>
-        <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
-        <translation>產生 HD 金鑰&lt;b&gt;已經啟用&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
-        <translation>產生 HD 金鑰&lt;b&gt;已經停用&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
-        <translation>錢包&lt;b&gt;已加密&lt;/b&gt;並且&lt;b&gt;解鎖中&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
-        <translation>錢包&lt;b&gt;已加密&lt;/b&gt;並且&lt;b&gt;上鎖中&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
-        <translation>發生了致命的錯誤。PAI Coin 軟體沒辦法再繼續安全執行，只好結束。</translation>
     </message>
 </context>
 <context>
@@ -704,6 +392,13 @@
     </message>
 </context>
 <context>
+    <name>ConfirmationDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>EditAddressDialog</name>
     <message>
         <source>Edit Address</source>
@@ -742,11 +437,11 @@
         <translation>編輯付款位址</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid PAI Coin address.</source>
+        <source>The entered address &quot;%1&quot; is not a valid PAI Coin address.</source>
         <translation>輸入的位址 %1 並不是有效的 PAI Coin 位址。</translation>
     </message>
     <message>
-        <source>The entered address "%1" is already in the address book.</source>
+        <source>The entered address &quot;%1&quot; is already in the address book.</source>
         <translation>輸入的位址 %1 在位址簿中已經有了。</translation>
     </message>
     <message>
@@ -779,6 +474,32 @@
     <message>
         <source>Cannot create data directory here.</source>
         <translation>沒辦法在這裡造出資料目錄。</translation>
+    </message>
+</context>
+<context>
+    <name>FundsInHoldingDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Funds in Holding</source>
+        <translation>鎖定期資金</translation>
+    </message>
+    <message>
+        <source>Your initial PAI Coin investment is currently in the holding period and is unavailable for transactions. You will receive a notification once the holding period is complete.
+
+You may still send and receive any PAI Coin in your &quot;Available Funds&quot;</source>
+        <translation>&quot;您的初始PAI幣資金當前處於鎖定期內，無法進行交易。一旦鎖定期結束，您將得到通知。
+您仍然可以在“可用資金”中發送和接收任何PAI幣。&quot;</translation>
+    </message>
+    <message>
+        <source>Okay</source>
+        <translation>好的</translation>
+    </message>
+    <message>
+        <source>Don&apos;t show this again</source>
+        <translation>不再顯示</translation>
     </message>
 </context>
 <context>
@@ -816,7 +537,7 @@
         <translation>啓動時選擇資料目錄(預設值: %u)</translation>
     </message>
     <message>
-        <source>Set language, for example "de_DE" (default: system locale)</source>
+        <source>Set language, for example &quot;de_DE&quot; (default: system locale)</source>
         <translation>設定語言，比如說 de_DE (預設值: 系統語系)</translation>
     </message>
     <message>
@@ -837,6 +558,40 @@
     </message>
 </context>
 <context>
+    <name>HoldingPeriodCompleteDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Holding Period Complete</source>
+        <translation>鎖定期完成</translation>
+    </message>
+    <message>
+        <source>Okay</source>
+        <translation>好的</translation>
+    </message>
+    <message>
+        <source>Go to Lanier.ai</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>不是現在</translation>
+    </message>
+    <message>
+        <source>Please update PAI Coin wallet to unlock your investment.
+You may update by downloading the latest version from Lanier.ai
+
+If you do not update the application, your investment will remain in holding.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Congratulations! Your initial PAI Coin investment is now available for transactions.</source>
+        <translation>恭喜！您的初始PAI幣資金現在可用於交易了。</translation>
+    </message>
+</context>
+<context>
     <name>Intro</name>
     <message>
         <source>Welcome</source>
@@ -848,11 +603,11 @@
     </message>
     <message>
         <source>As this is the first time the program is launched, you can choose where %1 will store its data.</source>
-        <translation>因為這是程式第一次啓動，你可以選擇 %1 儲存資料的地方。</translation>
+        <translation type="unfinished">因為這是程式第一次啓動，你可以選擇 %1 儲存資料的地方。</translation>
     </message>
     <message>
         <source>%1 will download and store a copy of the PAI Coin block chain. At least %2GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>%1 會下載並儲存一份 PAI Coin 區塊鏈的拷貝。至少有 %2GB 的資料會儲存到這個目錄中，並且還會持續增長。另外錢包資料也會儲存在這個目錄。</translation>
+        <translation type="vanished">%1 會下載並儲存一份 PAI Coin 區塊鏈的拷貝。至少有 %2GB 的資料會儲存到這個目錄中，並且還會持續增長。另外錢包資料也會儲存在這個目錄。</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
@@ -863,7 +618,7 @@
         <translation>使用自訂的資料目錄:</translation>
     </message>
     <message>
-        <source>Error: Specified data directory "%1" cannot be created.</source>
+        <source>Error: Specified data directory &quot;%1&quot; cannot be created.</source>
         <translation>錯誤: 無法新增指定的資料目錄: %1</translation>
     </message>
     <message>
@@ -872,11 +627,43 @@
     </message>
     <message numerus="yes">
         <source>%n GB of free space available</source>
-        <translation><numerusform>可用空間尚存 %n GB</numerusform></translation>
+        <translation>
+            <numerusform>可用空間尚存 %n GB</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>(of %n GB needed)</source>
-        <translation><numerusform>(需要 %n GB)</numerusform></translation>
+        <translation>
+            <numerusform>(需要 %n GB)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %2 initially launched.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>If you have chosen to limit block chain storage (pruning), the historical data must still be downloaded and processed, but will be deleted afterward to keep your disk usage low.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PAIcoin</source>
+        <translation type="unfinished">PAIcoin</translation>
+    </message>
+    <message>
+        <source>The blockchain data will be stored in this directory, and it will grow over time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Approximately %1 GB of data will be stored in this directory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 will download and store a copy of the PAI Coin blockchain.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The wallet will also be stored in this directory.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -886,7 +673,7 @@
         <translation>表單</translation>
     </message>
     <message>
-        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the PAI Coin network, as detailed below.</source>
+        <source>Recent transactions may not yet be visible, and therefore your wallet&apos;s balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the PAI Coin network, as detailed below.</source>
         <translation>最近的交易可能還看不到，因此錢包餘額可能不正確。在錢包軟體完成跟 paicoin 網路的同步後，這裡的資訊就會正確。詳情請見下面。</translation>
     </message>
     <message>
@@ -985,11 +772,11 @@
     </message>
     <message>
         <source>Accept connections from outside</source>
-        <translation>接受外來連線</translation>
+        <translation type="vanished">接受外來連線</translation>
     </message>
     <message>
         <source>Allow incoming connections</source>
-        <translation>接受外來連線</translation>
+        <translation type="vanished">接受外來連線</translation>
     </message>
     <message>
         <source>IP address of the proxy (e.g. IPv4: 127.0.0.1 / IPv6: ::1)</source>
@@ -1005,7 +792,7 @@
     </message>
     <message>
         <source>Third party transaction URLs</source>
-        <translation>交易的第三方網址連結</translation>
+        <translation type="vanished">交易的第三方網址連結</translation>
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
@@ -1081,7 +868,7 @@
     </message>
     <message>
         <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>如果對這種網路類型，有指定用來跟其他節點聯絡的 SOCKS5 代理伺服器的話，就會顯示在這裡。</translation>
+        <translation type="vanished">如果對這種網路類型，有指定用來跟其他節點聯絡的 SOCKS5 代理伺服器的話，就會顯示在這裡。</translation>
     </message>
     <message>
         <source>IPv4</source>
@@ -1101,7 +888,7 @@
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
-        <translation>用另外的 SOCKS5 代理伺服器，來透過 Tor 隱藏服務跟其他節點聯絡:</translation>
+        <translation type="vanished">用另外的 SOCKS5 代理伺服器，來透過 Tor 隱藏服務跟其他節點聯絡:</translation>
     </message>
     <message>
         <source>&amp;Window</source>
@@ -1109,11 +896,11 @@
     </message>
     <message>
         <source>&amp;Hide the icon from the system tray.</source>
-        <translation>不在通知區顯示圖示。</translation>
+        <translation type="vanished">不在通知區顯示圖示。</translation>
     </message>
     <message>
         <source>Hide tray icon</source>
-        <translation>不顯示通知區圖示</translation>
+        <translation type="vanished">不顯示通知區圖示</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1187,6 +974,58 @@
         <source>The supplied proxy address is invalid.</source>
         <translation>提供的代理伺服器位址無效。</translation>
     </message>
+    <message>
+        <source>Accept connections from outside.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow incomin&amp;g connections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the icon from the system tray.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Hide tray icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Third party transaction URLs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the %1 configuration file from the working directory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Configuration File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Configuration options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The configuration file is used to specify advanced user options which override GUI settings. Additionally, any command-line options will override this configuration file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation type="unfinished">錯誤</translation>
+    </message>
+    <message>
+        <source>The configuration file could not be opened.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>OverviewPage</name>
@@ -1204,7 +1043,7 @@
     </message>
     <message>
         <source>Available:</source>
-        <translation>可用金額:</translation>
+        <translation type="vanished">可用金額:</translation>
     </message>
     <message>
         <source>Your current spendable balance</source>
@@ -1262,6 +1101,460 @@
         <source>Current total balance in watch-only addresses</source>
         <translation>所有只能看位址的目前全部餘額</translation>
     </message>
+    <message>
+        <source>Available Funds:</source>
+        <translation>可用餘額:</translation>
+    </message>
+    <message>
+        <source>Days left in holding:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Funds in Holding:</source>
+        <translation>鎖定期資金:</translation>
+    </message>
+</context>
+<context>
+    <name>PAIcoinGUI</name>
+    <message>
+        <source>Sign &amp;message...</source>
+        <translation>簽署訊息...</translation>
+    </message>
+    <message>
+        <source>Synchronizing with network...</source>
+        <translation>正在跟網路進行同步...</translation>
+    </message>
+    <message>
+        <source>&amp;Overview</source>
+        <translation>總覽</translation>
+    </message>
+    <message>
+        <source>Node</source>
+        <translation>節點</translation>
+    </message>
+    <message>
+        <source>Show general overview of wallet</source>
+        <translation>顯示錢包一般總覽</translation>
+    </message>
+    <message>
+        <source>&amp;Transactions</source>
+        <translation>交易</translation>
+    </message>
+    <message>
+        <source>Browse transaction history</source>
+        <translation>瀏覽交易紀錄</translation>
+    </message>
+    <message>
+        <source>E&amp;xit</source>
+        <translation>結束</translation>
+    </message>
+    <message>
+        <source>Quit application</source>
+        <translation>結束應用程式</translation>
+    </message>
+    <message>
+        <source>&amp;About %1</source>
+        <translation>關於%1</translation>
+    </message>
+    <message>
+        <source>Show information about %1</source>
+        <translation>顯示 %1 的相關資訊</translation>
+    </message>
+    <message>
+        <source>About &amp;Qt</source>
+        <translation>關於 &amp;Qt</translation>
+    </message>
+    <message>
+        <source>Show information about Qt</source>
+        <translation>顯示 Qt 相關資訊</translation>
+    </message>
+    <message>
+        <source>&amp;Options...</source>
+        <translation>選項...</translation>
+    </message>
+    <message>
+        <source>Modify configuration options for %1</source>
+        <translation>修改 %1 的設定選項</translation>
+    </message>
+    <message>
+        <source>&amp;Encrypt Wallet...</source>
+        <translation>加密錢包...</translation>
+    </message>
+    <message>
+        <source>&amp;Backup Wallet...</source>
+        <translation>備份錢包...</translation>
+    </message>
+    <message>
+        <source>&amp;Change Passphrase...</source>
+        <translation>改變密碼...</translation>
+    </message>
+    <message>
+        <source>&amp;Sending addresses...</source>
+        <translation>付款位址...</translation>
+    </message>
+    <message>
+        <source>&amp;Receiving addresses...</source>
+        <translation>收款位址...</translation>
+    </message>
+    <message>
+        <source>Open &amp;URI...</source>
+        <translation>開啓 URI...</translation>
+    </message>
+    <message>
+        <source>Click to disable network activity.</source>
+        <translation>按一下就會不使用網路。</translation>
+    </message>
+    <message>
+        <source>Network activity disabled.</source>
+        <translation>網路活動關閉了。</translation>
+    </message>
+    <message>
+        <source>Click to enable network activity again.</source>
+        <translation>按一下就又會使用網路。</translation>
+    </message>
+    <message>
+        <source>Syncing Headers (%1%)...</source>
+        <translation>正在同步前導資料(%1%)中...</translation>
+    </message>
+    <message>
+        <source>Reindexing blocks on disk...</source>
+        <translation>正在為磁碟裡的區塊重建索引...</translation>
+    </message>
+    <message>
+        <source>Send coins to a PAI Coin address</source>
+        <translation>付錢給一個 PAI Coin 位址</translation>
+    </message>
+    <message>
+        <source>Backup wallet to another location</source>
+        <translation>把錢包備份到其它地方</translation>
+    </message>
+    <message>
+        <source>Change the passphrase used for wallet encryption</source>
+        <translation>改變錢包加密用的密碼</translation>
+    </message>
+    <message>
+        <source>&amp;Debug window</source>
+        <translation>除錯視窗</translation>
+    </message>
+    <message>
+        <source>Open debugging and diagnostic console</source>
+        <translation>開啓除錯和診斷主控台</translation>
+    </message>
+    <message>
+        <source>&amp;Verify message...</source>
+        <translation>驗證訊息...</translation>
+    </message>
+    <message>
+        <source>PAIcoin</source>
+        <translation>PAIcoin</translation>
+    </message>
+    <message>
+        <source>Wallet</source>
+        <translation type="vanished">錢包</translation>
+    </message>
+    <message>
+        <source>&amp;Send</source>
+        <translation>付款</translation>
+    </message>
+    <message>
+        <source>&amp;Receive</source>
+        <translation>收款</translation>
+    </message>
+    <message>
+        <source>&amp;Show / Hide</source>
+        <translation>顯示或隱藏</translation>
+    </message>
+    <message>
+        <source>Show or hide the main Window</source>
+        <translation>顯示或隱藏主視窗</translation>
+    </message>
+    <message>
+        <source>Encrypt the private keys that belong to your wallet</source>
+        <translation>把錢包中的密鑰加密</translation>
+    </message>
+    <message>
+        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
+        <translation>用 PAI Coin 位址簽署訊息來證明位址是你的</translation>
+    </message>
+    <message>
+        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
+        <translation>驗證訊息是用來確定訊息是用指定的 PAI Coin 位址簽署的</translation>
+    </message>
+    <message>
+        <source>&amp;File</source>
+        <translation>檔案</translation>
+    </message>
+    <message>
+        <source>&amp;Settings</source>
+        <translation>設定</translation>
+    </message>
+    <message>
+        <source>&amp;Help</source>
+        <translation>說明</translation>
+    </message>
+    <message>
+        <source>Tabs toolbar</source>
+        <translation>分頁工具列</translation>
+    </message>
+    <message>
+        <source>Request payments (generates QR codes and paicoin: URIs)</source>
+        <translation type="vanished">要求付款(產生 QR Code 和 paicoin 付款協議的資源識別碼: URI)</translation>
+    </message>
+    <message>
+        <source>Show the list of used sending addresses and labels</source>
+        <translation>顯示已使用過的付款位址和標記的清單</translation>
+    </message>
+    <message>
+        <source>Show the list of used receiving addresses and labels</source>
+        <translation>顯示已使用過的收款位址和標記的清單</translation>
+    </message>
+    <message>
+        <source>Open a paicoin: URI or payment request</source>
+        <translation type="vanished">開啓 paicoin 協議的資源識別碼(URI)或付款要求</translation>
+    </message>
+    <message>
+        <source>&amp;Command-line options</source>
+        <translation>命令列選項</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n active connection(s) to PAI Coin network</source>
+        <translation>
+            <numerusform>%n 個運作中的 PAI Coin 網路連線</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Indexing blocks on disk...</source>
+        <translation>正在為磁碟裡的區塊建立索引...</translation>
+    </message>
+    <message>
+        <source>Processing blocks on disk...</source>
+        <translation>正在處理磁碟裡的區塊資料...</translation>
+    </message>
+    <message numerus="yes">
+        <source>Processed %n block(s) of transaction history.</source>
+        <translation>
+            <numerusform>已經處理了 %n 個區塊的交易紀錄。</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 behind</source>
+        <translation>落後 %1</translation>
+    </message>
+    <message>
+        <source>Last received block was generated %1 ago.</source>
+        <translation>最近收到的區塊是在 %1 以前生出來的。</translation>
+    </message>
+    <message>
+        <source>Transactions after this will not yet be visible.</source>
+        <translation>暫時會看不到在這之後的交易。</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>錯誤</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <source>Information</source>
+        <translation>資訊</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>最新狀態</translation>
+    </message>
+    <message>
+        <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
+        <translation>顯示 %1 的說明訊息，來取得可用命令列選項的列表</translation>
+    </message>
+    <message>
+        <source>%1 client</source>
+        <translation>%1 客戶端軟體</translation>
+    </message>
+    <message>
+        <source>Connecting to peers...</source>
+        <translation>正在跟其他節點連線中...</translation>
+    </message>
+    <message>
+        <source>Catching up...</source>
+        <translation>正在趕進度...</translation>
+    </message>
+    <message>
+        <source>Date: %1
+</source>
+        <translation>日期: %1
+</translation>
+    </message>
+    <message>
+        <source>Amount: %1
+</source>
+        <translation>金額: %1
+</translation>
+    </message>
+    <message>
+        <source>Type: %1
+</source>
+        <translation>種類: %1
+</translation>
+    </message>
+    <message>
+        <source>Label: %1
+</source>
+        <translation>標記: %1
+</translation>
+    </message>
+    <message>
+        <source>Address: %1
+</source>
+        <translation>位址: %1
+</translation>
+    </message>
+    <message>
+        <source>Sent transaction</source>
+        <translation>付款交易</translation>
+    </message>
+    <message>
+        <source>Incoming transaction</source>
+        <translation>收款交易</translation>
+    </message>
+    <message>
+        <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
+        <translation>產生 HD 金鑰&lt;b&gt;已經啟用&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
+        <translation>產生 HD 金鑰&lt;b&gt;已經停用&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
+        <translation>錢包&lt;b&gt;已加密&lt;/b&gt;並且&lt;b&gt;解鎖中&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
+        <translation>錢包&lt;b&gt;已加密&lt;/b&gt;並且&lt;b&gt;上鎖中&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
+        <translation>發生了致命的錯誤。PAI Coin 軟體沒辦法再繼續安全執行，只好結束。</translation>
+    </message>
+    <message>
+        <source>Request payments (generates QR codes and paicoin:// URIs)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a paicoin:// URI or payment request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PIN Set</source>
+        <translation>PIN碼已設置</translation>
+    </message>
+    <message>
+        <source>Paper Key Complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wallet Restored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Review Paper Key</source>
+        <translation type="unfinished">查看密鑰</translation>
+    </message>
+    <message>
+        <source>Review Paper Key</source>
+        <translation type="unfinished">查看密鑰</translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyCompletionPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">表單</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>To make sure everything was written down correctly, please enter the following words from your paper key.</source>
+        <translation>確保您正確記錄下所有的助記詞，請根據您的助記詞輸入以下詞語</translation>
+    </message>
+    <message>
+        <source>Submit</source>
+        <translation>提交</translation>
+    </message>
+    <message>
+        <source>Word #%1</source>
+        <translation>詞語 #%1</translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyIntroPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">表單</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your paper key is the only way to restore your PAI Coin Wallet if your device is lost, stolen, broken, or updated.
+
+We will show you a list of words to write down on a piece of paper and keep safe.</source>
+        <translation>如果您的手機丟失、被盜、損壞或升級，助記詞是恢復您PAI Up的唯一方法。
+
+我們將給您一系列詞語，您需將詞語寫在紙上並妥善保管。</translation>
+    </message>
+    <message>
+        <source>Write down paper key</source>
+        <translation>寫下助記詞</translation>
+    </message>
+</context>
+<context>
+    <name>PaperKeyWritedownPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">表單</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write down each word in order and store it in a safe place</source>
+        <translation>按順序記錄每個詞並妥善保管</translation>
+    </message>
+    <message>
+        <source>Word</source>
+        <translation>詞語</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>上一步</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>下一步</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 / %2</translation>
+    </message>
 </context>
 <context>
     <name>PaymentServer</name>
@@ -1271,7 +1564,7 @@
     </message>
     <message>
         <source>Cannot start paicoin: click-to-pay handler</source>
-        <translation>沒辦法啟動 paicoin 協議的「按就付」處理器</translation>
+        <translation type="vanished">沒辦法啟動 paicoin 協議的「按就付」處理器</translation>
     </message>
     <message>
         <source>URI handling</source>
@@ -1302,7 +1595,7 @@
         <translation>付款的要求被拒絕了</translation>
     </message>
     <message>
-        <source>Payment request network doesn't match client network.</source>
+        <source>Payment request network doesn&apos;t match client network.</source>
         <translation>付款要求的網路類型跟客戶端不符。</translation>
     </message>
     <message>
@@ -1352,6 +1645,10 @@
     <message>
         <source>Payment acknowledged</source>
         <translation>付款已確認</translation>
+    </message>
+    <message>
+        <source>Cannot start paicoin:// click-to-pay handler</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1413,23 +1710,33 @@
     </message>
     <message numerus="yes">
         <source>%n second(s)</source>
-        <translation><numerusform>%n 秒鐘</numerusform></translation>
+        <translation>
+            <numerusform>%n 秒鐘</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n minute(s)</source>
-        <translation><numerusform>%n 分鐘</numerusform></translation>
+        <translation>
+            <numerusform>%n 分鐘</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n hour(s)</source>
-        <translation><numerusform>%n 小時</numerusform></translation>
+        <translation>
+            <numerusform>%n 小時</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n day(s)</source>
-        <translation><numerusform>%n 天</numerusform></translation>
+        <translation>
+            <numerusform>%n 天</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n week(s)</source>
-        <translation><numerusform>%n 星期</numerusform></translation>
+        <translation>
+            <numerusform>%n 星期</numerusform>
+        </translation>
     </message>
     <message>
         <source>%1 and %2</source>
@@ -1437,18 +1744,24 @@
     </message>
     <message numerus="yes">
         <source>%n year(s)</source>
-        <translation><numerusform>%n 年</numerusform></translation>
+        <translation>
+            <numerusform>%n 年</numerusform>
+        </translation>
     </message>
     <message>
-        <source>%1 didn't yet exit safely...</source>
+        <source>%1 didn&apos;t yet exit safely...</source>
         <translation>%1 還沒有安全地結束...</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation type="unfinished">未知</translation>
     </message>
 </context>
 <context>
     <name>QObject::QObject</name>
     <message>
-        <source>Error: Specified data directory "%1" does not exist.</source>
-        <translation>錯誤: 不存在指定的資料目錄 "%1" 。</translation>
+        <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
+        <translation>錯誤: 不存在指定的資料目錄 &quot;%1&quot; 。</translation>
     </message>
     <message>
         <source>Error: Cannot parse configuration file: %1. Only use key=value syntax.</source>
@@ -1662,7 +1975,7 @@
     </message>
     <message>
         <source>&amp;Clear</source>
-        <translation>清掉</translation>
+        <translation type="vanished">清掉</translation>
     </message>
     <message>
         <source>Totals</source>
@@ -1718,7 +2031,7 @@
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>請用上下游標鍵來瀏覽先前指令的紀錄，並用 &lt;b&gt;Ctrl-L&lt;/b&gt; 來清畫面。</translation>
+        <translation type="vanished">請用上下游標鍵來瀏覽先前指令的紀錄，並用 &lt;b&gt;Ctrl-L&lt;/b&gt; 來清畫面。</translation>
     </message>
     <message>
         <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
@@ -1726,7 +2039,7 @@
     </message>
     <message>
         <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
-        <translation>警告:  已知有詐騙集團會叫人在這個畫面輸入指令，以偷取他們錢包的內容物。請不要在沒有充分理解指令可能造成後果的情況下使用主控台。</translation>
+        <translation type="vanished">警告:  已知有詐騙集團會叫人在這個畫面輸入指令，以偷取他們錢包的內容物。請不要在沒有充分理解指令可能造成後果的情況下使用主控台。</translation>
     </message>
     <message>
         <source>Network activity disabled</source>
@@ -1779,6 +2092,18 @@
     <message>
         <source>Unknown</source>
         <translation>不明</translation>
+    </message>
+    <message>
+        <source>&amp;Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1955,6 +2280,29 @@
     </message>
 </context>
 <context>
+    <name>RestoreWalletPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">表單</translation>
+    </message>
+    <message>
+        <source>Paper Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the Paper Key of the wallet you want to restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore Wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word #%1</source>
+        <translation type="unfinished">詞語 #%1</translation>
+    </message>
+</context>
+<context>
     <name>SendCoinsDialog</name>
     <message>
         <source>Send Coins</source>
@@ -2025,7 +2373,7 @@
         <translation>每千位元組</translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 satoshis and the transaction is only 250 bytes, then "per kilobyte" only pays 250 satoshis in fee, while "total at least" pays 1000 satoshis. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <source>If the custom fee is set to 1000 satoshis and the transaction is only 250 bytes, then &quot;per kilobyte&quot; only pays 250 satoshis in fee, while &quot;total at least&quot; pays 1000 satoshis. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>如果自訂手續費設定為 1000 satoshi, 而交易資料大小只有 250 個位元組的話，那麽選擇「每千位元組」就只會付 250 satoshi 的手續費，換做選「總共至少」就會付 1000 satoshi. 但是如果交易資料大小超過一千個位元組，那麽兩者都是每千位元組的費用。</translation>
     </message>
     <message>
@@ -2034,7 +2382,7 @@
     </message>
     <message>
         <source>total at least</source>
-        <translation>總共最少</translation>
+        <translation type="vanished">總共最少</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for paicoin transactions than the network can process.</source>
@@ -2058,11 +2406,11 @@
     </message>
     <message>
         <source>normal</source>
-        <translation>正常</translation>
+        <translation type="vanished">正常</translation>
     </message>
     <message>
         <source>fast</source>
-        <translation>快速</translation>
+        <translation type="vanished">快速</translation>
     </message>
     <message>
         <source>Send to multiple recipients at once</source>
@@ -2190,7 +2538,9 @@
     </message>
     <message numerus="yes">
         <source>%n block(s)</source>
-        <translation><numerusform>%n 個區塊</numerusform></translation>
+        <translation type="vanished">
+            <numerusform>%n 個區塊</numerusform>
+        </translation>
     </message>
     <message>
         <source>Pay only the required fee of %1</source>
@@ -2215,6 +2565,40 @@
     <message>
         <source>(no label)</source>
         <translation>(無標記)</translation>
+    </message>
+    <message>
+        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until you have validated the complete chain.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warning: Fee estimation is currently not possible.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Request Replace-By-Fee</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Indicates that the sender may wish to replace this transaction with a new one paying higher fees (prior to being confirmed).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 blocks)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This transaction signals replaceability (optin-RBF).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Estimated to begin confirmation within %n block(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Could not create transaction.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2285,7 +2669,7 @@
     </message>
     <message>
         <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
-        <translation>附加在 PAI Coin 付款協議的資源識別碼(URI)中的訊息，會和交易內容一起存起來，給你自己做參考。注意: 這個訊息不會送到 PAI Coin 網路上。</translation>
+        <translation type="vanished">附加在 PAI Coin 付款協議的資源識別碼(URI)中的訊息，會和交易內容一起存起來，給你自己做參考。注意: 這個訊息不會送到 PAI Coin 網路上。</translation>
     </message>
     <message>
         <source>Pay To:</source>
@@ -2299,12 +2683,47 @@
         <source>Enter a label for this address to add it to your address book</source>
         <translation>請輸入這個位址的標記來把它加進位址簿中</translation>
     </message>
+    <message>
+        <source>A message that was attached to the paicoin:// URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SendConfirmationDialog</name>
     <message>
         <source>Yes</source>
         <translation>是</translation>
+    </message>
+</context>
+<context>
+    <name>SetPinPage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">表單</translation>
+    </message>
+    <message>
+        <source>Set PIN</source>
+        <translation>設置PIN碼</translation>
+    </message>
+    <message>
+        <source>Your PIN will be used to unlock your PAI Coin Wallet and send money. Use only numbers to create your PIN.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remember this PIN. If you forget it, you won&apos;t be able to access your PAIcoin</source>
+        <translation>請牢記此PIN碼。若您忘記，您將無法使用您的PAI幣。</translation>
+    </message>
+    <message>
+        <source>Re-Enter PIN</source>
+        <translation>重新輸入PIN碼</translation>
+    </message>
+    <message>
+        <source>PIN Required</source>
+        <translation>PIN碼為必填項</translation>
+    </message>
+    <message>
+        <source>Please enter your PIN to continue</source>
+        <translation>請輸入您的PIN碼來繼續操作。</translation>
     </message>
 </context>
 <context>
@@ -2385,7 +2804,7 @@
         <translation>驗證訊息</translation>
     </message>
     <message>
-        <source>Enter the receiver's address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack. Note that this only proves the signing party receives with the address, it cannot prove sendership of any transaction!</source>
+        <source>Enter the receiver&apos;s address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack. Note that this only proves the signing party receives with the address, it cannot prove sendership of any transaction!</source>
         <translation>請在下面輸入收款人的位址，訊息(請確定完整複製了所包含的換行，空格，跳位符號等等)，以及簽章，來驗證這個訊息。請小心，除了訊息內容以外，不要對簽章本身過度解讀，以避免被用「中間人攻擊法」詐騙。請注意，通過驗證的簽章只能證明簽章人確實可以從該位址收款，不能證明任何交易中的付款人身份！</translation>
     </message>
     <message>
@@ -2405,7 +2824,7 @@
         <translation>重設所有訊息驗證欄位</translation>
     </message>
     <message>
-        <source>Click "Sign Message" to generate signature</source>
+        <source>Click &quot;Sign Message&quot; to generate signature</source>
         <translation>請按一下「簽署訊息」來產生簽章</translation>
     </message>
     <message>
@@ -2475,7 +2894,9 @@
     <name>TransactionDesc</name>
     <message numerus="yes">
         <source>Open for %n more block(s)</source>
-        <translation><numerusform>到下 %n 個區塊生出來前可修改</numerusform></translation>
+        <translation>
+            <numerusform>到下 %n 個區塊生出來前可修改</numerusform>
+        </translation>
     </message>
     <message>
         <source>Open until %1</source>
@@ -2523,7 +2944,9 @@
     </message>
     <message numerus="yes">
         <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>，已公告給 %n 個節點</numerusform></translation>
+        <translation>
+            <numerusform>，已公告給 %n 個節點</numerusform>
+        </translation>
     </message>
     <message>
         <source>Date</source>
@@ -2567,7 +2990,9 @@
     </message>
     <message numerus="yes">
         <source>matures in %n more block(s)</source>
-        <translation><numerusform>再等 %n 個區塊生出來後成熟</numerusform></translation>
+        <translation>
+            <numerusform>再等 %n 個區塊生出來後成熟</numerusform>
+        </translation>
     </message>
     <message>
         <source>not accepted</source>
@@ -2618,7 +3043,7 @@
         <translation>商家</translation>
     </message>
     <message>
-        <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
+        <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to &quot;not accepted&quot; and it won&apos;t be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
         <translation>生產出來的錢要再等 %1 個區塊生出來後才成熟可以用。當區塊生產出來時會公布到網路上，來被加進區塊鏈。如果加失敗了，狀態就會變成「不被接受」，而且不能夠花。如果在你生產出區塊的幾秒鐘內，也有其他節點生產出來的話，就有可能會發生這種情形。</translation>
     </message>
     <message>
@@ -2673,7 +3098,9 @@
     </message>
     <message numerus="yes">
         <source>Open for %n more block(s)</source>
-        <translation><numerusform>到下 %n 個區塊生出來前可修改</numerusform></translation>
+        <translation>
+            <numerusform>到下 %n 個區塊生出來前可修改</numerusform>
+        </translation>
     </message>
     <message>
         <source>Open until %1</source>
@@ -2770,6 +3197,10 @@
     <message>
         <source>Amount removed from or added to balance.</source>
         <translation>要減掉或加進餘額的金額。</translation>
+    </message>
+    <message>
+        <source>Locked</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2926,12 +3357,54 @@
         <source>to</source>
         <translation>到</translation>
     </message>
+    <message>
+        <source>Increase transaction fee</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation>金額顯示單位。可以點選其他單位。</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateAvailableDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update Available</source>
+        <translation>可更新</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;An update for PAI Up is now available. Please update your application to access the latest features and security improvements.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>PAI Up現在可以更新了。請更新您的app來獲取最新功能和提升安全性能。</translation>
+    </message>
+    <message>
+        <source>Update Now</source>
+        <translation>現在更新</translation>
+    </message>
+    <message>
+        <source>Remind me later</source>
+        <translation>稍後提醒</translation>
+    </message>
+</context>
+<context>
+    <name>ViewInvestorKeyDialog</name>
+    <message>
+        <source>View Investor Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Investor key copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy Investor Key</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2946,6 +3419,61 @@
     <message>
         <source>Send Coins</source>
         <translation>付款</translation>
+    </message>
+    <message>
+        <source>Fee bump error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Increasing transaction fee failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Do you want to increase the fee?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Current fee:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Increase:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New fee:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirm fee bump</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can&apos;t sign transaction.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not commit transaction</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>WalletSelectionPage</name>
+    <message>
+        <source>Form</source>
+        <translation>表單</translation>
+    </message>
+    <message>
+        <source>Send and receive PAI Coin</source>
+        <translation>安全的發送和接收PAI幣</translation>
+    </message>
+    <message>
+        <source>Create New Wallet</source>
+        <translation>创建新钱包</translation>
+    </message>
+    <message>
+        <source>Restore Wallet</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2982,6 +3510,37 @@
         <source>The wallet data was successfully saved to %1.</source>
         <translation>錢包的資料已經成功儲存到 %1 了。</translation>
     </message>
+    <message>
+        <source>Review Paper Key</source>
+        <translation>查看密鑰</translation>
+    </message>
+</context>
+<context>
+    <name>WelcomePage</name>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished">表單</translation>
+    </message>
+    <message>
+        <source>Welcome to PAI Up</source>
+        <translation>歡迎使用PAI Up</translation>
+    </message>
+    <message>
+        <source>Send and receive PAI Coin</source>
+        <translation>安全的發送和接收PAI幣</translation>
+    </message>
+    <message>
+        <source>Easy Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Advanced Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  By using this application I agree to the &lt;a href=&quot;https://paiup.com/terms-of-service.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://paiup.com/privacy-policy.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>paicoin-core</name>
@@ -3008,11 +3567,11 @@
     </message>
     <message>
         <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>是否接受外來連線(預設值: 當沒有 -proxy 或 -connect/-noconnect 時為 1)</translation>
+        <translation type="vanished">是否接受外來連線(預設值: 當沒有 -proxy 或 -connect/-noconnect 時為 1)</translation>
     </message>
     <message>
         <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>只連線到指定的節點。用 -noconnect 或是 -connect=0 可以關閉自動連線。</translation>
+        <translation type="vanished">只連線到指定的節點。用 -noconnect 或是 -connect=0 可以關閉自動連線。</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
@@ -3056,7 +3615,7 @@
     </message>
     <message>
         <source>PAI Coin Core</source>
-        <translation>PAI Coin Core</translation>
+        <translation type="vanished">PAI Coin Core</translation>
     </message>
     <message>
         <source>The %s developers</source>
@@ -3083,8 +3642,8 @@
         <translation>清掉錢包裡的所有交易，並且在下次啟動時，使用 -rescan 來從區塊鏈中復原回來。</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>載入 %s 發生錯誤：不能對已存在的非 HD 錢包啟用 HD 功能。</translation>
+        <source>Error loading %s: You can&apos;t enable HD on a already existing non-HD wallet</source>
+        <translation type="vanished">載入 %s 發生錯誤：不能對已存在的非 HD 錢包啟用 HD 功能。</translation>
     </message>
     <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
@@ -3111,7 +3670,7 @@
         <translation>允許一次錢包交易或未加工交易付出的最高總手續費(單位是 %s)；設定太低的話，可能會無法進行資料量大的交易(預設值: %s)</translation>
     </message>
     <message>
-        <source>Please check that your computer's date and time are correct! If your clock is wrong, %s will not work properly.</source>
+        <source>Please check that your computer&apos;s date and time are correct! If your clock is wrong, %s will not work properly.</source>
         <translation>請檢查電腦日期和時間是否正確！%s 沒辦法在時鐘不準的情況下正常運作。</translation>
     </message>
     <message>
@@ -3131,7 +3690,7 @@
         <translation>設定指令碼驗證的執行緒數目 (%u 到 %d，0 表示程式自動決定，小於 0 表示保留處理器核心不用的數目，預設值: %d)</translation>
     </message>
     <message>
-        <source>The block database contains a block which appears to be from the future. This may be due to your computer's date and time being set incorrectly. Only rebuild the block database if you are sure that your computer's date and time are correct</source>
+        <source>The block database contains a block which appears to be from the future. This may be due to your computer&apos;s date and time being set incorrectly. Only rebuild the block database if you are sure that your computer&apos;s date and time are correct</source>
         <translation>區塊資料庫中有來自未來的區塊。可能是你電腦的日期時間不對。如果確定電腦日期時間沒錯的話，就重建區塊資料庫看看。</translation>
     </message>
     <message>
@@ -3164,7 +3723,7 @@
     </message>
     <message>
         <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>改變 -txindex 參數後，必須要用 -reindex-chainstate 參數來重建資料庫</translation>
+        <translation type="vanished">改變 -txindex 參數後，必須要用 -reindex-chainstate 參數來重建資料庫</translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
@@ -3191,8 +3750,8 @@
         <translation>區塊製造選項:</translation>
     </message>
     <message>
-        <source>Cannot resolve -%s address: '%s'</source>
-        <translation>沒辦法解析 -%s 參數指定的位址: '%s'</translation>
+        <source>Cannot resolve -%s address: &apos;%s&apos;</source>
+        <translation>沒辦法解析 -%s 參數指定的位址: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Chain selection options:</source>
@@ -3208,7 +3767,7 @@
     </message>
     <message>
         <source>Copyright (C) %i-%i</source>
-        <translation>版權所有 (C) %i-%i</translation>
+        <translation type="vanished">版權所有 (C) %i-%i</translation>
     </message>
     <message>
         <source>Corrupted block database detected</source>
@@ -3267,8 +3826,8 @@
         <translation>載入檔案 %s 時發生錯誤: 這個錢包需要新版的 %s</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>載入 %s 發生錯誤：不能對已存在的 HD 錢包停用 HD 功能。</translation>
+        <source>Error loading %s: You can&apos;t disable HD on a already existing HD wallet</source>
+        <translation type="vanished">載入 %s 發生錯誤：不能對已存在的 HD 錢包停用 HD 功能。</translation>
     </message>
     <message>
         <source>Error loading block database</source>
@@ -3299,16 +3858,16 @@
         <translation>初始化時的基本檢查失敗了。%s 就要關閉了。</translation>
     </message>
     <message>
-        <source>Invalid -onion address: '%s'</source>
-        <translation>無效的 -onion 位址: '%s'</translation>
+        <source>Invalid -onion address: &apos;%s&apos;</source>
+        <translation type="vanished">無效的 -onion 位址: &apos;%s&apos;</translation>
     </message>
     <message>
-        <source>Invalid amount for -%s=&lt;amount&gt;: '%s'</source>
-        <translation>參數 -%s=&lt;金額&gt; 指定的金額無效: '%s'</translation>
+        <source>Invalid amount for -%s=&lt;amount&gt;: &apos;%s&apos;</source>
+        <translation>參數 -%s=&lt;金額&gt; 指定的金額無效: &apos;%s&apos;</translation>
     </message>
     <message>
-        <source>Invalid amount for -fallbackfee=&lt;amount&gt;: '%s'</source>
-        <translation>設定 -fallbackfee=&lt;金額&gt; 的金額無效: '%s'</translation>
+        <source>Invalid amount for -fallbackfee=&lt;amount&gt;: &apos;%s&apos;</source>
+        <translation>設定 -fallbackfee=&lt;金額&gt; 的金額無效: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
@@ -3408,7 +3967,7 @@
     </message>
     <message>
         <source>Verifying wallet...</source>
-        <translation>正在驗證錢包資料...</translation>
+        <translation type="vanished">正在驗證錢包資料...</translation>
     </message>
     <message>
         <source>Wallet %s resides outside data directory %s</source>
@@ -3436,7 +3995,7 @@
     </message>
     <message>
         <source>Bind to given address to listen for JSON-RPC connections. Use [host]:port notation for IPv6. This option can be specified multiple times (default: bind to all interfaces)</source>
-        <translation>和指定的位址繫結以聽候 JSON-RPC 連線。IPv6 請用 [主機]:通訊埠 這種格式。這個選項可以設定多次。(預設值: 跟所有網路界面上的位址繫結)</translation>
+        <translation type="vanished">和指定的位址繫結以聽候 JSON-RPC 連線。IPv6 請用 [主機]:通訊埠 這種格式。這個選項可以設定多次。(預設值: 跟所有網路界面上的位址繫結)</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
@@ -3463,8 +4022,8 @@
         <translation>當沒有設定 paytxfee 時，自動包含可以讓交易能在平均 n 個區塊內開始確認的手續費(預設值: %u)</translation>
     </message>
     <message>
-        <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
-        <translation>-maxtxfee=&lt;amount&gt;: '%s' 的金額無效 (必須大於最低轉發手續費 %s 以避免交易無法確認)</translation>
+        <source>Invalid amount for -maxtxfee=&lt;amount&gt;: &apos;%s&apos; (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
+        <translation>-maxtxfee=&lt;amount&gt;: &apos;%s&apos; 的金額無效 (必須大於最低轉發手續費 %s 以避免交易無法確認)</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
@@ -3476,7 +4035,7 @@
     </message>
     <message>
         <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>設定高優先度或低手續費的交易資料大小上限成多少位元組(預設值: %d)</translation>
+        <translation type="vanished">設定高優先度或低手續費的交易資料大小上限成多少位元組(預設值: %d)</translation>
     </message>
     <message>
         <source>The transaction amount is too small to send after the fee has been deducted</source>
@@ -3484,7 +4043,7 @@
     </message>
     <message>
         <source>Use hierarchical deterministic key generation (HD) after BIP32. Only has effect during wallet creation/first start</source>
-        <translation>在 BIP32 開始作用後，啟用階層式可預期性密鑰產生方式(HD)。只有在產生新錢包或第一次啟動時才有作用。</translation>
+        <translation type="vanished">在 BIP32 開始作用後，啟用階層式可預期性密鑰產生方式(HD)。只有在產生新錢包或第一次啟動時才有作用。</translation>
     </message>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
@@ -3523,20 +4082,20 @@
         <translation>資訊</translation>
     </message>
     <message>
-        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
-        <translation>設定 -paytxfee=&lt;金額&gt; 的金額無效: '%s' (至少要有 %s)</translation>
+        <source>Invalid amount for -paytxfee=&lt;amount&gt;: &apos;%s&apos; (must be at least %s)</source>
+        <translation>設定 -paytxfee=&lt;金額&gt; 的金額無效: &apos;%s&apos; (至少要有 %s)</translation>
     </message>
     <message>
-        <source>Invalid netmask specified in -whitelist: '%s'</source>
-        <translation>指定在 -whitelist 的網段無效: '%s'</translation>
+        <source>Invalid netmask specified in -whitelist: &apos;%s&apos;</source>
+        <translation>指定在 -whitelist 的網段無效: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
         <translation>保持最多 &lt;n&gt; 無法連結的交易在記憶體 (預設: %u)</translation>
     </message>
     <message>
-        <source>Need to specify a port with -whitebind: '%s'</source>
-        <translation>指定 -whitebind 時必須包含通訊埠: '%s'</translation>
+        <source>Need to specify a port with -whitebind: &apos;%s&apos;</source>
+        <translation>指定 -whitebind 時必須包含通訊埠: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Node relay options:</source>
@@ -3560,7 +4119,7 @@
     </message>
     <message>
         <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>盡可能送出不用付手續費的交易(預設值: %u)</translation>
+        <translation type="vanished">盡可能送出不用付手續費的交易(預設值: %u)</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>
@@ -3648,7 +4207,7 @@
     </message>
     <message>
         <source>Loading addresses...</source>
-        <translation>正在載入位址資料...</translation>
+        <translation type="vanished">正在載入位址資料...</translation>
     </message>
     <message>
         <source>(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)</source>
@@ -3692,7 +4251,7 @@
     </message>
     <message>
         <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>是否允許在節點位址數目不足時，使用域名查詢來搜尋節點 (預設值: 當沒用 -connect/-noconnect 時為 1)</translation>
+        <translation type="vanished">是否允許在節點位址數目不足時，使用域名查詢來搜尋節點 (預設值: 當沒用 -connect/-noconnect 時為 1)</translation>
     </message>
     <message>
         <source>Sets the serialization of raw transaction or block hex returned in non-verbose mode, non-segwit(0) or segwit(1) (default: %d)</source>
@@ -3719,7 +4278,7 @@
         <translation>試著保持輸出流量在目標值以下，單位是每 24 小時的百萬位元組(MiB)數，0 表示沒有限制(預設值: %d)</translation>
     </message>
     <message>
-        <source>Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported.</source>
+        <source>Unsupported argument -socks found. Setting SOCKS version isn&apos;t possible anymore, only SOCKS5 proxies are supported.</source>
         <translation>找到不再支援的 -socks 參數。現在只支援 SOCKS5 協定的代理伺服器，因此不可以指定 SOCKS 協定版本了。</translation>
     </message>
     <message>
@@ -3731,7 +4290,7 @@
         <translation>使用另外的 SOCK5 代理伺服器，來透過 Tor 隱藏服務跟其他節點聯絡(預設值: %s)</translation>
     </message>
     <message>
-        <source>Warning: Unknown block versions being mined! It's possible unknown rules are in effect</source>
+        <source>Warning: Unknown block versions being mined! It&apos;s possible unknown rules are in effect</source>
         <translation>警告: 有礦工正在開採不明版本的區塊！這表示有不明的交易規則正在作用中</translation>
     </message>
     <message>
@@ -3763,8 +4322,8 @@
         <translation>在除錯輸出內容中包含網際網路位址(預設值: %u)</translation>
     </message>
     <message>
-        <source>Invalid -proxy address: '%s'</source>
-        <translation>無效的 -proxy 位址: '%s'</translation>
+        <source>Invalid -proxy address: &apos;%s&apos;</source>
+        <translation type="vanished">無效的 -proxy 位址: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Keypool ran out, please call keypoolrefill first</source>
@@ -3871,8 +4430,8 @@
         <translation>交易必須至少要有一個收款人</translation>
     </message>
     <message>
-        <source>Unknown network specified in -onlynet: '%s'</source>
-        <translation>在 -onlynet 指定了不明的網路別: '%s'</translation>
+        <source>Unknown network specified in -onlynet: &apos;%s&apos;</source>
+        <translation>在 -onlynet 指定了不明的網路別: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Insufficient funds</source>
@@ -3896,7 +4455,7 @@
     </message>
     <message>
         <source>Cannot write default address</source>
-        <translation>沒辦法把預設位址寫進去</translation>
+        <translation type="vanished">沒辦法把預設位址寫進去</translation>
     </message>
     <message>
         <source>Rescanning...</source>
@@ -3909,6 +4468,142 @@
     <message>
         <source>Error</source>
         <translation>錯誤</translation>
+    </message>
+    <message>
+        <source>PAI Up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bind to given address to listen for JSON-RPC connections. This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot provide specific connections and have addrman find outgoing connections at the same.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect only to the specified node(s); -connect=0 disables automatic connections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can&apos;t enable HD on an already existing non-HD wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet parameter must only specify a filename (not a path).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect used)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fee rate (in %s/kB) that indicates your tolerance for discarding change by adding it to the fee (default: %s). Note: An output is discarded if it is dust at this rate, but we will always discard up to the dust relay fee and a discard fee above that is limited by the fee estimate for the longest target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is the transaction fee you may discard if change is smaller than dust at this level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whether to save the mempool on shutdown and load on restart (default: %u)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%d of last 100 blocks have unexpected version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copyright (C)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can&apos;t disable HD on an already existing HD wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. -wallet filename must be a regular file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Invalid characters in -wallet filename.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error upgrading chainstate database</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid -onion address or hostname: &apos;%s&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid -proxy address or hostname: &apos;%s&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid amount for -discardfee=&lt;amount&gt;: &apos;%s&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lainer AI Labs LLC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading P2P addresses...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replaying blocks...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transaction fee and change calculation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to generate initial keys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unsupported logging category %s=%s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Upgrading UTXO database</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Verifying wallet(s)...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -txindex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bitcoin Core</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error creating %s: You can&apos;t create non-HD wallets with this version.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

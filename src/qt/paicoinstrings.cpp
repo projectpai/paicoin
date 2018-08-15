@@ -215,9 +215,6 @@ QT_TRANSLATE_NOOP("paicoin-core", ""
 QT_TRANSLATE_NOOP("paicoin-core", ""
 "Use UPnP to map the listening port (default: 1 when listening and no -proxy)"),
 QT_TRANSLATE_NOOP("paicoin-core", ""
-"Use hierarchical deterministic key generation (HD) after BIP32. Only has "
-"effect during wallet creation/first start"),
-QT_TRANSLATE_NOOP("paicoin-core", ""
 "Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: "
 "%s)"),
 QT_TRANSLATE_NOOP("paicoin-core", ""
@@ -253,14 +250,11 @@ QT_TRANSLATE_NOOP("paicoin-core", ""
 QT_TRANSLATE_NOOP("paicoin-core", ""
 "You need to rebuild the database using -reindex to go back to unpruned "
 "mode.  This will redownload the entire blockchain"),
-QT_TRANSLATE_NOOP("paicoin-core", ""
-"You need to rebuild the database using -reindex-chainstate to change -txindex"),
 QT_TRANSLATE_NOOP("paicoin-core", "%d of last 100 blocks have unexpected version"),
 QT_TRANSLATE_NOOP("paicoin-core", "%s corrupt, salvage failed"),
 QT_TRANSLATE_NOOP("paicoin-core", "%s is set very high!"),
 QT_TRANSLATE_NOOP("paicoin-core", "(default: %s)"),
 QT_TRANSLATE_NOOP("paicoin-core", "(default: %u)"),
-QT_TRANSLATE_NOOP("paicoin-core", "(press q to shutdown and continue later)"),
 QT_TRANSLATE_NOOP("paicoin-core", "-maxmempool must be at least %d MB"),
 QT_TRANSLATE_NOOP("paicoin-core", "<category> can be:"),
 QT_TRANSLATE_NOOP("paicoin-core", "Accept command line and JSON-RPC commands"),
@@ -272,17 +266,16 @@ QT_TRANSLATE_NOOP("paicoin-core", "Always query for peer addresses via DNS looku
 QT_TRANSLATE_NOOP("paicoin-core", "Append comment to the user agent string"),
 QT_TRANSLATE_NOOP("paicoin-core", "Attempt to recover private keys from a corrupt wallet on startup"),
 QT_TRANSLATE_NOOP("paicoin-core", "Automatically create Tor hidden service (default: %d)"),
+QT_TRANSLATE_NOOP("paicoin-core", "Bitcoin Core"),
 QT_TRANSLATE_NOOP("paicoin-core", "Block creation options:"),
 QT_TRANSLATE_NOOP("paicoin-core", "Cannot downgrade wallet"),
 QT_TRANSLATE_NOOP("paicoin-core", "Cannot resolve -%s address: '%s'"),
-QT_TRANSLATE_NOOP("paicoin-core", "Cannot write default address"),
 QT_TRANSLATE_NOOP("paicoin-core", "Chain selection options:"),
 QT_TRANSLATE_NOOP("paicoin-core", "Change index out of range"),
 QT_TRANSLATE_NOOP("paicoin-core", "Connect through SOCKS5 proxy"),
 QT_TRANSLATE_NOOP("paicoin-core", "Connect to a node to retrieve peer addresses, and disconnect"),
 QT_TRANSLATE_NOOP("paicoin-core", "Connection options:"),
 QT_TRANSLATE_NOOP("paicoin-core", "Copyright (C)"),
-QT_TRANSLATE_NOOP("paicoin-core", "Copyright (C) %i-%i"),
 QT_TRANSLATE_NOOP("paicoin-core", "Corrupted block database detected"),
 QT_TRANSLATE_NOOP("paicoin-core", "Debugging/Testing options:"),
 QT_TRANSLATE_NOOP("paicoin-core", "Do not load the wallet and disable wallet RPC calls"),
@@ -293,6 +286,7 @@ QT_TRANSLATE_NOOP("paicoin-core", "Enable publish hash transaction in <address>"
 QT_TRANSLATE_NOOP("paicoin-core", "Enable publish raw block in <address>"),
 QT_TRANSLATE_NOOP("paicoin-core", "Enable publish raw transaction in <address>"),
 QT_TRANSLATE_NOOP("paicoin-core", "Enable transaction replacement in the memory pool (default: %u)"),
+QT_TRANSLATE_NOOP("paicoin-core", "Error creating %s: You can't create non-HD wallets with this version."),
 QT_TRANSLATE_NOOP("paicoin-core", "Error initializing block database"),
 QT_TRANSLATE_NOOP("paicoin-core", "Error initializing wallet database environment %s!"),
 QT_TRANSLATE_NOOP("paicoin-core", "Error loading %s"),
