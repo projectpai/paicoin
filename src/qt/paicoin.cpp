@@ -598,12 +598,16 @@ void PAIcoinApplication::initializeResult(bool success)
 
                         walletModel->refreshInvestorKey();
 
-                        window->setHiddenTopWidget(false);
-
                         window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
+
+                        window->setHiddenTopWidget(false);
+                    } else {
+                        quit(); // Exit main loop
                     }
                 } else {
                     window->interruptForPinRequest(AuthManager::getInstance().ShouldSet());
+
+                    window->setHiddenTopWidget(false);
                 }
             }
         }
