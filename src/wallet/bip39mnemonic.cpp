@@ -121,13 +121,11 @@ int BIP39Mnemonic::PhraseIsValid(const char *phrase)
 
 void BIP39Mnemonic::DeriveKey(void *key64, const char *phrase, const char *passphrase)
 {
-    SecureString salt(strlen("mnemonic") + (passphrase ? strlen(passphrase) : 0) + 1, '\0');
-
     assert(key64 != NULL);
     assert(phrase != NULL);
 
     if (phrase) {
-        salt = "mnemonic";
+        SecureString salt = "mnemonic";
         if (passphrase) salt += passphrase;
         PBKDF2(key64, phrase, strlen(phrase), salt.c_str(), salt.size());
     }
@@ -182,7 +180,7 @@ void BIP39Mnemonic::PBKDF2(void *dk, const void *pw, size_t pwLen, const void *s
 
         // U1 = hmac_hash(pw, salt || be32(i))
         CHMAC_SHA512 hmacSha512s((const unsigned char*)pw, pwLen);
-        hmacSha512s.Write(s.data(), sizeof(s));
+        hmacSha512s.Write(s.data(), s.size());
         hmacSha512s.Finalize((unsigned char*)U.data());
         memcpy(T.data(), U.data(), U.size());
 
