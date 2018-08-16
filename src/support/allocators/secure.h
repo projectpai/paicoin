@@ -55,4 +55,8 @@ struct secure_allocator : public std::allocator<T> {
 // This is exactly like std::string, but with a custom allocator.
 typedef std::basic_string<char, std::char_traits<char>, secure_allocator<char> > SecureString;
 
+// This is exactly like std::vector<T>, but with a secure allocator.
+template <typename T>
+using SecureVector = std::vector<T, secure_allocator<T>>;
+
 #endif // PAICOIN_SUPPORT_ALLOCATORS_SECURE_H
