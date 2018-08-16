@@ -53,7 +53,7 @@ dnl CAUTION: Do not use this inside of a conditional.
 AC_DEFUN([PAICOIN_QT_INIT],[
   dnl enable qt support
   AC_ARG_WITH([gui],
-    [AS_HELP_STRING([--with-gui@<:@=no|qt4|qt5|auto@:>@],
+    [AS_HELP_STRING([--with-gui@<:@=no|qt5|auto@:>@],
     [build paiup GUI (default=no)])],
     [
      paiup_want_version=$withval
@@ -100,12 +100,11 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
   fi
 
   dnl This is ugly and complicated. Yuck. Works as follows:
-  dnl We can't discern whether Qt4 builds are static or not. For Qt5, we can
-  dnl check a header to find out. When Qt is built statically, some plugins must
-  dnl be linked into the final binary as well. These plugins have changed between
-  dnl Qt4 and Qt5. With Qt5, languages moved into core and the WindowsIntegration
-  dnl plugin was added. Since we can't tell if Qt4 is static or not, it is
-  dnl assumed for windows builds.
+  dnl For Qt5, we can check a header to find out whether Qt is build
+  dnl statically. When Qt is built statically, some plugins must be linked into
+  dnl the final binary as well.
+  dnl With Qt5, languages moved into core and the WindowsIntegration plugin was
+  dnl added.
   dnl _PAICOIN_QT_CHECK_STATIC_PLUGINS does a quick link-check and appends the
   dnl results to QT_LIBS.
   PAICOIN_QT_CHECK([
@@ -113,47 +112,40 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
   TEMP_CXXFLAGS=$CXXFLAGS
   CPPFLAGS="$QT_INCLUDES $CPPFLAGS"
   CXXFLAGS="$PIC_FLAGS $CXXFLAGS"
-  if test x$paiup_got_major_vers = x5; then
-    _PAICOIN_QT_IS_STATIC
-    if test x$paicoin_cv_static_qt = xyes; then
-      _PAICOIN_QT_FIND_STATIC_PLUGINS
-      AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol if qt plugins are static])
-      AC_CACHE_CHECK(for Qt < 5.4, paicoin_cv_need_acc_widget,[AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-          [[#include <QtCore>]],[[
-          #if QT_VERSION >= 0x050400
-          choke;
+  _PAICOIN_QT_IS_STATIC
+  if test x$paicoin_cv_static_qt = xyes; then
+    _PAICOIN_QT_FIND_STATIC_PLUGINS
+    AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol if qt plugins are static])
+    AC_CACHE_CHECK(for Qt < 5.4, paicoin_cv_need_acc_widget,[
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+          #include <QtCore/qconfig.h>
+          #ifndef QT_VERSION
+          #  include <QtCore/qglobal.h>
           #endif
-          ]])],
-        [paicoin_cv_need_acc_widget=yes],
-        [paicoin_cv_need_acc_widget=no])
-      ])
-      if test "x$paicoin_cv_need_acc_widget" = "xyes"; then
-        _PAICOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(AccessibleFactory)], [-lqtaccessiblewidgets])
-      fi
-      _PAICOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QMinimalIntegrationPlugin)],[-lqminimal])
-      AC_DEFINE(QT_QPA_PLATFORM_MINIMAL, 1, [Define this symbol if the minimal qt platform exists])
-      if test x$TARGET_OS = xwindows; then
-        _PAICOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)],[-lqwindows])
-        AC_DEFINE(QT_QPA_PLATFORM_WINDOWS, 1, [Define this symbol if the qt platform is windows])
-      elif test x$TARGET_OS = xlinux; then
-        _PAICOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QXcbIntegrationPlugin)],[-lqxcb -lxcb-static])
-        AC_DEFINE(QT_QPA_PLATFORM_XCB, 1, [Define this symbol if the qt platform is xcb])
-      elif test x$TARGET_OS = xdarwin; then
-        AX_CHECK_LINK_FLAG([[-framework IOKit]],[QT_LIBS="$QT_LIBS -framework IOKit"],[AC_MSG_ERROR(could not iokit framework)])
-        _PAICOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QCocoaIntegrationPlugin)],[-lqcocoa])
-        AC_DEFINE(QT_QPA_PLATFORM_COCOA, 1, [Define this symbol if the qt platform is cocoa])
-      fi
+        ]],
+        [[
+          #if QT_VERSION >= 0x050400
+          choke
+          #endif
+        ]])],
+      [paicoin_cv_need_acc_widget=yes],
+      [paicoin_cv_need_acc_widget=no])
+    ])
+    if test "x$paicoin_cv_need_acc_widget" = "xyes"; then
+      _PAICOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(AccessibleFactory)], [-lqtaccessiblewidgets])
     fi
-  else
+    _PAICOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QMinimalIntegrationPlugin)],[-lqminimal])
+    AC_DEFINE(QT_QPA_PLATFORM_MINIMAL, 1, [Define this symbol if the minimal qt platform exists])
     if test x$TARGET_OS = xwindows; then
-      AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol if qt plugins are static])
-      _PAICOIN_QT_CHECK_STATIC_PLUGINS([
-         Q_IMPORT_PLUGIN(qcncodecs)
-         Q_IMPORT_PLUGIN(qjpcodecs)
-         Q_IMPORT_PLUGIN(qtwcodecs)
-         Q_IMPORT_PLUGIN(qkrcodecs)
-         Q_IMPORT_PLUGIN(AccessibleFactory)],
-         [-lqcncodecs -lqjpcodecs -lqtwcodecs -lqkrcodecs -lqtaccessiblewidgets])
+      _PAICOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)],[-lqwindows])
+      AC_DEFINE(QT_QPA_PLATFORM_WINDOWS, 1, [Define this symbol if the qt platform is windows])
+    elif test x$TARGET_OS = xlinux; then
+      _PAICOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QXcbIntegrationPlugin)],[-lqxcb -lxcb-static])
+      AC_DEFINE(QT_QPA_PLATFORM_XCB, 1, [Define this symbol if the qt platform is xcb])
+    elif test x$TARGET_OS = xdarwin; then
+      AX_CHECK_LINK_FLAG([[-framework IOKit]],[QT_LIBS="$QT_LIBS -framework IOKit"],[AC_MSG_ERROR(could not iokit framework)])
+      _PAICOIN_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QCocoaIntegrationPlugin)],[-lqcocoa])
+      AC_DEFINE(QT_QPA_PLATFORM_COCOA, 1, [Define this symbol if the qt platform is cocoa])
     fi
   fi
   CPPFLAGS=$TEMP_CPPFLAGS
@@ -161,9 +153,7 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
   ])
 
   if test x$use_pkgconfig$qt_bin_path = xyes; then
-    if test x$paiup_got_major_vers = x5; then
-      qt_bin_path="`$PKG_CONFIG --variable=host_bins Qt5Core 2>/dev/null`"
-    fi
+    qt_bin_path="`$PKG_CONFIG --variable=host_bins Qt5Core 2>/dev/null`"
   fi
 
   if test x$use_hardening != xno; then
@@ -173,11 +163,16 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
     TEMP_CXXFLAGS=$CXXFLAGS
     CPPFLAGS="$QT_INCLUDES $CPPFLAGS"
     CXXFLAGS="$PIE_FLAGS $CXXFLAGS"
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <QtCore/qconfig.h>]],
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+        #include <QtCore/qconfig.h>
+        #ifndef QT_VERSION
+        #  include <QtCore/qglobal.h>
+        #endif
+      ]],
       [[
-          #if defined(QT_REDUCE_RELOCATIONS)
-              choke;
-          #endif
+        #if defined(QT_REDUCE_RELOCATIONS)
+        choke
+        #endif
       ]])],
       [ AC_MSG_RESULT(yes); QT_PIE_FLAGS=$PIE_FLAGS ],
       [ AC_MSG_RESULT(no); QT_PIE_FLAGS=$PIC_FLAGS]
@@ -190,11 +185,16 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
     AC_MSG_CHECKING(whether -fPIC is needed with this Qt config)
     TEMP_CPPFLAGS=$CPPFLAGS
     CPPFLAGS="$QT_INCLUDES $CPPFLAGS"
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <QtCore/qconfig.h>]],
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+        #include <QtCore/qconfig.h>
+        #ifndef QT_VERSION
+        #  include <QtCore/qglobal.h>
+        #endif
+      ]],
       [[
-          #if defined(QT_REDUCE_RELOCATIONS)
-              choke;
-          #endif
+        #if defined(QT_REDUCE_RELOCATIONS)
+        choke
+        #endif
       ]])],
       [ AC_MSG_RESULT(no)],
       [ AC_MSG_RESULT(yes); QT_PIE_FLAGS=$PIC_FLAGS]
@@ -203,11 +203,11 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
     ])
   fi
 
-  PAICOIN_QT_PATH_PROGS([MOC], [moc-qt${paiup_got_major_vers} moc${paiup_got_major_vers} moc], $qt_bin_path)
-  PAICOIN_QT_PATH_PROGS([UIC], [uic-qt${paiup_got_major_vers} uic${paiup_got_major_vers} uic], $qt_bin_path)
-  PAICOIN_QT_PATH_PROGS([RCC], [rcc-qt${paiup_got_major_vers} rcc${paiup_got_major_vers} rcc], $qt_bin_path)
-  PAICOIN_QT_PATH_PROGS([LRELEASE], [lrelease-qt${paiup_got_major_vers} lrelease${paiup_got_major_vers} lrelease], $qt_bin_path)
-  PAICOIN_QT_PATH_PROGS([LUPDATE], [lupdate-qt${paiup_got_major_vers} lupdate${paiup_got_major_vers} lupdate],$qt_bin_path, yes)
+  PAICOIN_QT_PATH_PROGS([MOC], [moc-qt5 moc5 moc], $qt_bin_path)
+  PAICOIN_QT_PATH_PROGS([UIC], [uic-qt5 uic5 uic], $qt_bin_path)
+  PAICOIN_QT_PATH_PROGS([RCC], [rcc-qt5 rcc5 rcc], $qt_bin_path)
+  PAICOIN_QT_PATH_PROGS([LRELEASE], [lrelease-qt5 lrelease5 lrelease], $qt_bin_path)
+  PAICOIN_QT_PATH_PROGS([LUPDATE], [lupdate-qt5 lupdate5 lupdate],$qt_bin_path, yes)
 
   MOC_DEFS='-DHAVE_CONFIG_H -I$(srcdir)'
   case $host in
@@ -246,7 +246,7 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
   ],[
     paicoin_enable_qt=no
   ])
-  AC_MSG_RESULT([$paicoin_enable_qt (Qt${paiup_got_major_vers})])
+  AC_MSG_RESULT([$paicoin_enable_qt (Qt5)])
 
   AC_SUBST(QT_PIE_FLAGS)
   AC_SUBST(QT_INCLUDES)
@@ -256,7 +256,7 @@ AC_DEFUN([PAICOIN_QT_CONFIGURE],[
   AC_SUBST(QT_DBUS_LIBS)
   AC_SUBST(QT_TEST_INCLUDES)
   AC_SUBST(QT_TEST_LIBS)
-  AC_SUBST(QT_SELECT, qt${paiup_got_major_vers})
+  AC_SUBST(QT_SELECT, qt5)
   AC_SUBST(MOC_DEFS)
 ])
 
@@ -269,39 +269,63 @@ dnl Requires: INCLUDES must be populated as necessary.
 dnl Output: paicoin_cv_qt5=yes|no
 AC_DEFUN([_PAICOIN_QT_CHECK_QT5],[
   AC_CACHE_CHECK(for Qt 5, paicoin_cv_qt5,[
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-    [[#include <QtCore>]],
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+      #include <QtCore/qconfig.h>
+      #ifndef QT_VERSION
+      #  include <QtCore/qglobal.h>
+      #endif
+    ]],
     [[
-      #if QT_VERSION < 0x050000
-      choke me
-      #else
-      return 0;
+      #if QT_VERSION < 0x050000 || QT_VERSION_MAJOR < 5
+      choke
       #endif
     ]])],
     [paicoin_cv_qt5=yes],
     [paicoin_cv_qt5=no])
 ])])
 
+dnl Internal. Check if the included version of Qt is greater than Qt58.
+dnl Requires: INCLUDES must be populated as necessary.
+dnl Output: paicoin_cv_qt5=yes|no
+AC_DEFUN([_PAICOIN_QT_CHECK_QT58],[
+  AC_CACHE_CHECK(for > Qt 5.7, paicoin_cv_qt58,[
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+      #include <QtCore/qconfig.h>
+      #ifndef QT_VERSION
+      #  include <QtCore/qglobal.h>
+      #endif
+    ]],
+    [[
+      #if QT_VERSION_MINOR < 8
+      choke
+      #endif
+    ]])],
+    [paicoin_cv_qt58=yes],
+    [paicoin_cv_qt58=no])
+])])
+
 dnl Internal. Check if the linked version of Qt was built as static libs.
-dnl Requires: Qt5. This check cannot determine if Qt4 is static.
+dnl Requires: Qt5.
 dnl Requires: INCLUDES and LIBS must be populated as necessary.
 dnl Output: paicoin_cv_static_qt=yes|no
 dnl Output: Defines QT_STATICPLUGIN if plugins are static.
 AC_DEFUN([_PAICOIN_QT_IS_STATIC],[
   AC_CACHE_CHECK(for static Qt, paicoin_cv_static_qt,[
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-    [[#include <QtCore>]],
-    [[
-      #if defined(QT_STATIC)
-      return 0;
-      #else
-      choke me
-      #endif
-    ]])],
-    [paicoin_cv_static_qt=yes],
-    [paicoin_cv_static_qt=no])
-  ])
-  if test xpaicoin_cv_static_qt = xyes; then
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+        #include <QtCore/qconfig.h>
+        #ifndef QT_VERSION OR QT_VERSION_STR
+        #  include <QtCore/qglobal.h>
+        #endif
+      ]],
+      [[
+        #if !defined(QT_STATIC)
+        choke
+        #endif
+      ]])],
+      [paicoin_cv_static_qt=yes],
+      [paicoin_cv_static_qt=no])
+    ])
+  if test "x$paicoin_cv_static_qt" = xyes; then
     AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol for static Qt plugins])
   fi
 ])
@@ -326,52 +350,71 @@ AC_DEFUN([_PAICOIN_QT_CHECK_STATIC_PLUGINS],[
 ])
 
 dnl Internal. Find paths necessary for linking qt static plugins
-dnl Inputs: paiup_got_major_vers. 4 or 5.
 dnl Inputs: qt_plugin_path. optional.
 dnl Outputs: QT_LIBS is appended
 AC_DEFUN([_PAICOIN_QT_FIND_STATIC_PLUGINS],[
-  if test x$paiup_got_major_vers = x5; then
-      if test x$qt_plugin_path != x; then
-        QT_LIBS="$QT_LIBS -L$qt_plugin_path/platforms"
-        if test -d "$qt_plugin_path/accessible"; then
-          QT_LIBS="$QT_LIBS -L$qt_plugin_path/accessible"
-        fi
+    if test "x$qt_plugin_path" != x; then
+      QT_LIBS="$QT_LIBS -L$qt_plugin_path/platforms"
+      if test -d "$qt_plugin_path/accessible"; then
+        QT_LIBS="$QT_LIBS -L$qt_plugin_path/accessible"
       fi
-     if test x$use_pkgconfig = xyes; then
+     if test "x$use_pkgconfig" = xyes; then
      : dnl
      m4_ifdef([PKG_CHECK_MODULES],[
-       PKG_CHECK_MODULES([QTPLATFORM], [Qt5PlatformSupport], [QT_LIBS="$QTPLATFORM_LIBS $QT_LIBS"])
-       if test x$TARGET_OS = xlinux; then
+       if test x$paicoin_cv_qt58 = xno; then
+         PKG_CHECK_MODULES([QTPLATFORM], [Qt5PlatformSupport], [QT_LIBS="$QTPLATFORM_LIBS $QT_LIBS"])
+       else
+         PKG_CHECK_MODULES([QTFONTDATABASE], [Qt5FontDatabaseSupport], [QT_LIBS="-lQt5FontDatabaseSupport $QT_LIBS"])
+         PKG_CHECK_MODULES([QTEVENTDISPATCHER], [Qt5EventDispatcherSupport], [QT_LIBS="-lQt5EventDispatcherSupport $QT_LIBS"])
+         PKG_CHECK_MODULES([QTTHEME], [Qt5ThemeSupport], [QT_LIBS="-lQt5ThemeSupport $QT_LIBS"])
+         PKG_CHECK_MODULES([QTDEVICEDISCOVERY], [Qt5DeviceDiscoverySupport], [QT_LIBS="-lQt5DeviceDiscoverySupport $QT_LIBS"])
+         PKG_CHECK_MODULES([QTACCESSIBILITY], [Qt5AccessibilitySupport], [QT_LIBS="-lQt5AccessibilitySupport $QT_LIBS"])
+         PKG_CHECK_MODULES([QTFB], [Qt5FbSupport], [QT_LIBS="-lQt5FbSupport $QT_LIBS"])
+                fi
+       if test "x$TARGET_OS" = xlinux; then
          PKG_CHECK_MODULES([X11XCB], [x11-xcb], [QT_LIBS="$X11XCB_LIBS $QT_LIBS"])
          if ${PKG_CONFIG} --exists "Qt5Core >= 5.5" 2>/dev/null; then
            PKG_CHECK_MODULES([QTXCBQPA], [Qt5XcbQpa], [QT_LIBS="$QTXCBQPA_LIBS $QT_LIBS"])
          fi
-       elif test x$TARGET_OS = xdarwin; then
-         PKG_CHECK_MODULES([QTPRINT], [Qt5PrintSupport], [QT_LIBS="$QTPRINT_LIBS $QT_LIBS"])
+       elif test "x$TARGET_OS" = xdarwin; then
+         PKG_CHECK_MODULES([QTCLIPBOARD], [Qt5ClipboardSupport], [QT_LIBS="-lQt5ClipboardSupport $QT_LIBS"])
+         PKG_CHECK_MODULES([QTGRAPHICS], [Qt5GraphicsSupport], [QT_LIBS="-lQt5GraphicsSupport $QT_LIBS"])
+         PKG_CHECK_MODULES([QTCGL], [Qt5CglSupport], [QT_LIBS="-lQt5CglSupport $QT_LIBS"])
        fi
      ])
      else
-       if test x$TARGET_OS = xwindows; then
-         AC_CACHE_CHECK(for Qt >= 5.6, paicoin_cv_need_platformsupport,[AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-             [[#include <QtCore>]],[[
-             #if QT_VERSION < 0x050600
-             choke;
-             #endif
+       if test "x$TARGET_OS" = xwindows; then
+         AC_CACHE_CHECK(for Qt >= 5.6, paicoin_cv_need_platformsupport,[
+           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+               #include <QtCore/qconfig.h>
+               #ifndef QT_VERSION
+               #  include <QtCore/qglobal.h>
+               #endif
+             ]],
+             [[
+               #if QT_VERSION < 0x050600 || QT_VERSION_MINOR < 6
+               choke
+               #endif
              ]])],
            [paicoin_cv_need_platformsupport=yes],
            [paicoin_cv_need_platformsupport=no])
          ])
-         if test x$paicoin_cv_need_platformsupport = xyes; then
-           PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}PlatformSupport],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXPlatformSupport not found)))
+         if test "x$paicoin_cv_need_platformsupport" = xyes; then
+           if test x$paicoin_cv_qt58 = xno; then
+             PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}PlatformSupport],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXPlatformSupport not found)))
+           else
+             PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}FontDatabaseSupport],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXFontDatabaseSupport not found)))
+             PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}EventDispatcherSupport],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXEventDispatcherSupport not found)))
+             PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}ThemeSupport],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXThemeSupport not found)))
+             PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}FbSupport],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXFbSupport not found)))
+             PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}DeviceDiscoverySupport],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXDeviceDiscoverySupport not found)))
+             PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}AccessibilitySupport],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXAccessibilitySupport not found)))
+             QT_LIBS="$QT_LIBS -lversion -ldwmapi -luxtheme"
+           fi
          fi
        fi
      fi
-  else
-    if test x$qt_plugin_path != x; then
-      QT_LIBS="$QT_LIBS -L$qt_plugin_path/accessible"
-      QT_LIBS="$QT_LIBS -L$qt_plugin_path/codecs"
-    fi
-  fi
+   fi
 ])
 
 dnl Internal. Find Qt libraries using pkg-config.
@@ -380,46 +423,22 @@ dnl         first.
 dnl Inputs: $1: If paiup_want_version is "auto", check for this version
 dnl         first.
 dnl Outputs: All necessary QT_* variables are set.
-dnl Outputs: paiup_got_major_vers is set to "4" or "5".
 dnl Outputs: have_qt_test and have_qt_dbus are set (if applicable) to yes|no.
 AC_DEFUN([_PAICOIN_QT_FIND_LIBS_WITH_PKGCONFIG],[
   m4_ifdef([PKG_CHECK_MODULES],[
-  auto_priority_version=$1
-  if test x$auto_priority_version = x; then
-    auto_priority_version=qt5
-  fi
-    if test x$paiup_want_version = xqt5 ||  ( test x$paiup_want_version = xauto && test x$auto_priority_version = xqt5 ); then
-      QT_LIB_PREFIX=Qt5
-      paiup_got_major_vers=5
-    else
-      QT_LIB_PREFIX=Qt
-      paiup_got_major_vers=4
-    fi
+    QT_LIB_PREFIX=Qt5
     qt5_modules="Qt5Core Qt5Gui Qt5Network Qt5Widgets"
-    qt4_modules="QtCore QtGui QtNetwork"
     PAICOIN_QT_CHECK([
-      if test x$paiup_want_version = xqt5 || ( test x$paiup_want_version = xauto && test x$auto_priority_version = xqt5 ); then
-        PKG_CHECK_MODULES([QT5], [$qt5_modules], [QT_INCLUDES="$QT5_CFLAGS"; QT_LIBS="$QT5_LIBS" have_qt=yes],[have_qt=no])
-      elif test x$paiup_want_version = xqt4 || ( test x$paiup_want_version = xauto && test x$auto_priority_version = xqt4 ); then
-        PKG_CHECK_MODULES([QT4], [$qt4_modules], [QT_INCLUDES="$QT4_CFLAGS"; QT_LIBS="$QT4_LIBS" ; have_qt=yes], [have_qt=no])
-      fi
+      PKG_CHECK_MODULES([QT5], [$qt5_modules], [QT_INCLUDES="$QT5_CFLAGS"; QT_LIBS="$QT5_LIBS" have_qt=yes],[have_qt=no])
 
-      dnl qt version is set to 'auto' and the preferred version wasn't found. Now try the other.
-      if test x$have_qt = xno && test x$paiup_want_version = xauto; then
-        if test x$auto_priority_version = xqt5; then
-          PKG_CHECK_MODULES([QT4], [$qt4_modules], [QT_INCLUDES="$QT4_CFLAGS"; QT_LIBS="$QT4_LIBS" ; have_qt=yes; QT_LIB_PREFIX=Qt; paiup_got_major_vers=4], [have_qt=no])
-        else
-          PKG_CHECK_MODULES([QT5], [$qt5_modules], [QT_INCLUDES="$QT5_CFLAGS"; QT_LIBS="$QT5_LIBS" ; have_qt=yes; QT_LIB_PREFIX=Qt5; paiup_got_major_vers=5], [have_qt=no])
-        fi
-      fi
-      if test x$have_qt != xyes; then
+      if test "x$have_qt" != xyes; then
         have_qt=no
         PAICOIN_QT_FAIL([Qt dependencies not found])
       fi
     ])
     PAICOIN_QT_CHECK([
       PKG_CHECK_MODULES([QT_TEST], [${QT_LIB_PREFIX}Test], [QT_TEST_INCLUDES="$QT_TEST_CFLAGS"; have_qt_test=yes], [have_qt_test=no])
-      if test x$use_dbus != xno; then
+      if test "x$use_dbus" != xno; then
         PKG_CHECK_MODULES([QT_DBUS], [${QT_LIB_PREFIX}DBus], [QT_DBUS_INCLUDES="$QT_DBUS_CFLAGS"; have_qt_dbus=yes], [have_qt_dbus=no])
       fi
     ])
@@ -432,7 +451,6 @@ dnl from the discovered headers.
 dnl Inputs: paiup_want_version (from --with-gui=). The version to use.
 dnl         If "auto", the version will be discovered by _PAICOIN_QT_CHECK_QT5.
 dnl Outputs: All necessary QT_* variables are set.
-dnl Outputs: paiup_got_major_vers is set to "4" or "5".
 dnl Outputs: have_qt_test and have_qt_dbus are set (if applicable) to yes|no.
 AC_DEFUN([_PAICOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
   TEMP_CPPFLAGS="$CPPFLAGS"
@@ -440,7 +458,7 @@ AC_DEFUN([_PAICOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
   CXXFLAGS="$PIC_FLAGS $CXXFLAGS"
   TEMP_LIBS="$LIBS"
   PAICOIN_QT_CHECK([
-    if test x$qt_include_path != x; then
+    if test "x$qt_include_path" != x; then
       QT_INCLUDES="-I$qt_include_path -I$qt_include_path/QtCore -I$qt_include_path/QtGui -I$qt_include_path/QtWidgets -I$qt_include_path/QtNetwork -I$qt_include_path/QtTest -I$qt_include_path/QtDBus"
       CPPFLAGS="$QT_INCLUDES $CPPFLAGS"
     fi
@@ -451,54 +469,52 @@ AC_DEFUN([_PAICOIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
   PAICOIN_QT_CHECK([AC_CHECK_HEADER([QLocalSocket],, PAICOIN_QT_FAIL(QtNetwork headers missing))])
 
   PAICOIN_QT_CHECK([
-    if test x$paiup_want_version = xauto; then
+    if test "x$paiup_want_version" = xauto; then
       _PAICOIN_QT_CHECK_QT5
+      _PAICOIN_QT_CHECK_QT58
     fi
-    if test x$paicoin_cv_qt5 = xyes || test x$paiup_want_version = xqt5; then
-      QT_LIB_PREFIX=Qt5
-      paiup_got_major_vers=5
-    else
-      QT_LIB_PREFIX=Qt
-      paiup_got_major_vers=4
-    fi
+    QT_LIB_PREFIX=Qt5
   ])
 
   PAICOIN_QT_CHECK([
     LIBS=
-    if test x$qt_lib_path != x; then
+    if test "x$qt_lib_path" != x; then
       LIBS="$LIBS -L$qt_lib_path"
     fi
 
-    if test x$TARGET_OS = xwindows; then
+    if test "x$TARGET_OS" = xwindows; then
       AC_CHECK_LIB([imm32],      [main],, PAICOIN_QT_FAIL(libimm32 not found))
     fi
   ])
 
   PAICOIN_QT_CHECK(AC_CHECK_LIB([z] ,[main],,AC_MSG_WARN([zlib not found. Assuming qt has it built-in])))
-  PAICOIN_QT_CHECK(AC_SEARCH_LIBS([png_error] ,[qtpng png],,AC_MSG_WARN([libpng not found. Assuming qt has it built-in])))
   PAICOIN_QT_CHECK(AC_SEARCH_LIBS([jpeg_create_decompress] ,[qtjpeg jpeg],,AC_MSG_WARN([libjpeg not found. Assuming qt has it built-in])))
-  PAICOIN_QT_CHECK(AC_SEARCH_LIBS([pcre16_exec], [qtpcre pcre16],,AC_MSG_WARN([libpcre16 not found. Assuming qt has it built-in])))
-  PAICOIN_QT_CHECK(AC_SEARCH_LIBS([hb_ot_tags_from_script] ,[qtharfbuzzng harfbuzz],,AC_MSG_WARN([libharfbuzz not found. Assuming qt has it built-in or support is disabled])))
-  PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Core]   ,[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXCore not found)))
-  PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Gui]    ,[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXGui not found)))
-  PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Network],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXNetwork not found)))
-  if test x$paiup_got_major_vers = x5; then
-    PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Widgets],[main],,PAICOIN_QT_FAIL(lib$QT_LIB_PREFIXWidgets not found)))
+  if test x$paicoin_cv_qt58 = xno; then
+    PAICOIN_QT_CHECK(AC_SEARCH_LIBS([png_error] ,[qtpng png],,AC_MSG_WARN([libpng not found. Assuming qt has it built-in])))
+    PAICOIN_QT_CHECK(AC_SEARCH_LIBS([pcre16_exec], [qtpcre pcre16],,AC_MSG_WARN([libpcre16 not found. Assuming qt has it built-in])))
+  else
+    PAICOIN_QT_CHECK(AC_SEARCH_LIBS([png_error] ,[qtlibpng png],,AC_MSG_WARN([libpng not found. Assuming qt has it built-in])))
+    PAICOIN_QT_CHECK(AC_SEARCH_LIBS([pcre2_match_16], [qtpcre2 libqtpcre2],,AC_MSG_WARN([libqtpcre2 not found. Assuming qt has it built-in])))
   fi
+  PAICOIN_QT_CHECK(AC_SEARCH_LIBS([hb_ot_tags_from_script] ,[qtharfbuzzng qtharfbuzz harfbuzz],,AC_MSG_WARN([libharfbuzz not found. Assuming qt has it built-in or support is disabled])))
+  PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Core]   ,[main],,PAICOIN_QT_FAIL(lib${QT_LIB_PREFIX}Core not found)))
+  PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Gui]    ,[main],,PAICOIN_QT_FAIL(lib${QT_LIB_PREFIX}Gui not found)))
+  PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Network],[main],,PAICOIN_QT_FAIL(lib${QT_LIB_PREFIX}Network not found)))
+  PAICOIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Widgets],[main],,PAICOIN_QT_FAIL(lib${QT_LIB_PREFIX}Widgets not found)))
   QT_LIBS="$LIBS"
   LIBS="$TEMP_LIBS"
 
   PAICOIN_QT_CHECK([
     LIBS=
-    if test x$qt_lib_path != x; then
+    if test "x$qt_lib_path" != x; then
       LIBS="-L$qt_lib_path"
     fi
     AC_CHECK_LIB([${QT_LIB_PREFIX}Test],      [main],, have_qt_test=no)
     AC_CHECK_HEADER([QTest],, have_qt_test=no)
     QT_TEST_LIBS="$LIBS"
-    if test x$use_dbus != xno; then
+    if test "x$use_dbus" != xno; then
       LIBS=
-      if test x$qt_lib_path != x; then
+      if test "x$qt_lib_path" != x; then
         LIBS="-L$qt_lib_path"
       fi
       AC_CHECK_LIB([${QT_LIB_PREFIX}DBus],      [main],, have_qt_dbus=no)

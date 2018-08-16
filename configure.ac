@@ -1339,7 +1339,6 @@ echo "  with encrypt wallet = $enable_encrypt_wallet"
 echo "  lite variant        = $variant_lite"
 echo "  with gui / qt       = $paicoin_enable_qt"
 if test x$paicoin_enable_qt != xno; then
-    echo "    qt version    = $paiup_got_major_vers"
     echo "    with qr       = $use_qr"
 fi
 echo "  with zmq            = $use_zmq"
