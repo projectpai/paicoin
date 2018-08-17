@@ -554,7 +554,7 @@ void PAIcoinApplication::initializeResult(bool success)
             window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
             window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
 
-			connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
+      connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
                              paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
         }
 #endif
@@ -677,7 +677,9 @@ void PAIcoinApplication::completeNewWalletInitialization()
 void PAIcoinApplication::enableWalletDisplay()
 {
     walletModel = new WalletModel(platformStyle, vpwallets[0], optionsModel);
-    walletModel->usePaperKey(SecureString(walletPhrase.begin(), walletPhrase.end()));
+    bool bSuccess = walletModel->usePaperKey(SecureString(walletPhrase.begin(), walletPhrase.end()));
+    assert(bSuccess || !"unable to use the provided paper key!");
+
     walletModel->connectAuthenticator();
 
     window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);

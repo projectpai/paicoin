@@ -320,7 +320,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
         connect(walletSelectionPage, SIGNAL(goToCreateNewWallet()), this, SLOT(processCreateWalletRequest()));
 
         connect(restoreWalletPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoWalletSelectionPage()));
-        connect(restoreWalletPage, SIGNAL(restoreWallet(QStringList)), this, SLOT(restoreWallet(QStringList)));
+        connect(restoreWalletPage, SIGNAL(restoreWallet(std::string)), this, SLOT(restoreWallet(std::string)));
 
         connect(paperKeyIntroPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoWalletSelectionPage()));
         connect(paperKeyIntroPage, SIGNAL(writeDownsClicked()), this, SLOT(interruptForPinRequest()));
@@ -922,18 +922,9 @@ void PAIcoinGUI::createNewWallet()
     Q_EMIT createNewWalletRequest();
 }
 
-void PAIcoinGUI::restoreWallet(QStringList paperKeys)
+void PAIcoinGUI::restoreWallet(std::string phrase)
 {
-    QString phrase;
-    int wordCount = 0;
-    for (int i = 0; i < paperKeys.size(); ++i)
-    {
-        phrase += paperKeys.at(i);
-        if (++wordCount < paperKeys.size())
-            phrase += ' ';
-    }
-
-    Q_EMIT restoreWalletRequest(phrase.toStdString().c_str());
+    Q_EMIT restoreWalletRequest(phrase.c_str());
 }
 
 void PAIcoinGUI::gotoRestoreWalletPage()

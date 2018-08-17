@@ -1,7 +1,6 @@
 #include "restorewalletpage.h"
 #include "ui_restorewalletpage.h"
-
-#include <typeinfo>
+#include <QMessageBox>
 
 RestoreWalletPage::RestoreWalletPage(QWidget *parent) :
     QWidget(parent),
@@ -112,6 +111,7 @@ bool RestoreWalletPage::eventFilter(QObject *object, QEvent *event)
 
 void RestoreWalletPage::onRestoreWalletClicked()
 {
+    QStringList paperKeys;
     paperKeys.clear();
     paperKeys << ui->lineEdit01->text() << ui->lineEdit02->text() << ui->lineEdit03->text()
               << ui->lineEdit04->text() << ui->lineEdit05->text() << ui->lineEdit06->text()
@@ -128,8 +128,19 @@ void RestoreWalletPage::onRestoreWalletClicked()
         }
     }
 
-    if (nonEmptyStrings)
-        Q_EMIT restoreWallet(paperKeys);
+    if (!nonEmptyStrings)
+      return;
+
+    std::string phrase = paperKeys.join(' ').toStdString();
+    if (!b39.PhraseIsValid(phrase.c_str()))
+    {
+        QMessageBox::warning(this
+                             , tr("Warning")
+                             , tr("The Paper Key you entered is invalid. Please double-check each word and try again."));
+        return;
+    }
+
+    Q_EMIT restoreWallet(phrase);
 }
 
 void RestoreWalletPage::onBackClicked()
