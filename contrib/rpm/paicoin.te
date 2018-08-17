@@ -1,0 +1,81 @@
+policy_module(paicoin, 1.100.1)
+
+########################################
+#
+# Declarations
+#
+
+type paicoin_t;
+type paicoin_exec_t;
+init_daemon_domain(paicoin_t, paicoin_exec_t)
+
+permissive paicoin_t;
+
+type paicoin_initrc_exec_t;
+init_script_file(paicoin_initrc_exec_t)
+
+type paicoin_conf_t;
+files_type(paicoin_conf_t)
+
+type paicoin_var_lib_t;
+files_type(paicoin_var_lib_t)
+
+type paicoin_var_run_t;
+files_type(paicoin_var_run_t)
+
+type paicoin_port_t;
+corenet_port(paicoin_port_t)
+
+########################################
+#
+# paicoin local policy
+#
+allow paicoin_t self:process { fork };
+
+allow paicoin_t self:fifo_file rw_fifo_file_perms;
+allow paicoin_t self:unix_stream_socket create_stream_socket_perms;
+
+manage_dirs_pattern(paicoin_t, paicoin_conf_t, paicoin_conf_t)
+manage_files_pattern(paicoin_t, paicoin_conf_t, paicoin_conf_t)
+
+manage_dirs_pattern(paicoin_t, paicoin_var_lib_t, paicoin_var_lib_t)
+manage_files_pattern(paicoin_t, paicoin_var_lib_t, paicoin_var_lib_t)
+files_var_lib_filetrans(paicoin_t, paicoin_var_lib_t, { dir file })
+
+manage_dirs_pattern(paicoin_t, paicoin_var_run_t, paicoin_var_run_t)
+manage_files_pattern(paicoin_t, paicoin_var_run_t, paicoin_var_run_t)
+
+sysnet_dns_name_resolve(paicoin_t)
+corenet_all_recvfrom_unlabeled(paicoin_t)
+
+allow paicoin_t self:tcp_socket create_stream_socket_perms;
+corenet_tcp_sendrecv_generic_if(paicoin_t)
+corenet_tcp_sendrecv_generic_node(paicoin_t)
+corenet_tcp_sendrecv_all_ports(paicoin_t)
+corenet_tcp_bind_generic_node(paicoin_t)
+
+gen_require(`
+    type paicoin_port_t;
+')
+allow paicoin_t paicoin_port_t:tcp_socket name_bind;
+
+gen_require(`
+    type paicoin_port_t;
+')
+allow paicoin_t paicoin_port_t:tcp_socket name_connect;
+
+domain_use_interactive_fds(paicoin_t)
+
+files_read_etc_files(paicoin_t)
+
+miscfiles_read_localization(paicoin_t)
+
+sysnet_dns_name_resolve(paicoin_t)
+
+allow paicoin_t paicoin_exec_t:file execute_no_trans;
+allow paicoin_t self:process setsched;
+corecmd_exec_ls(paicoin_t)
+corenet_tcp_connect_http_port(paicoin_t)
+dev_read_urand(paicoin_t)
+fs_getattr_xattr_fs(paicoin_t)
+kernel_read_system_state(paicoin_t)
