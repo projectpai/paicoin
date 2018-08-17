@@ -12,6 +12,7 @@
 #include "../crypto/common.h"
 #include "../crypto/sha256.h"
 #include "../crypto/hmac_sha512.h"
+#include "../util.h"
 
 #define be32(x) ((((x) & 0xff) << 24) | (((x) & 0xff00) << 8) | (((x) & 0xff0000) >> 8) | (((x) & 0xff000000) >> 24))
 
@@ -180,14 +181,14 @@ void BIP39Mnemonic::PBKDF2(void *dk, const void *pw, size_t pwLen, const void *s
 
         // U1 = hmac_hash(pw, salt || be32(i))
         CHMAC_SHA512 hmacSha512s((const unsigned char*)pw, pwLen);
-        hmacSha512s.Write(s.data(), s.size());
+        hmacSha512s.Write(s.data(), sizeInBytes(s));
         hmacSha512s.Finalize((unsigned char*)U.data());
-        memcpy(T.data(), U.data(), U.size());
+        memcpy(T.data(), U.data(), sizeInBytes(U));
 
         for (unsigned r = 1; r < rounds; r++) {
             // Urounds = hmac_hash(pw, Urounds-1)
             CHMAC_SHA512 hmacSha512u((const unsigned char*)pw, pwLen);
-            hmacSha512u.Write((const unsigned char*)U.data(), U.size());
+            hmacSha512u.Write((const unsigned char*)U.data(), sizeInBytes(U));
             hmacSha512u.Finalize((unsigned char*)U.data());
             for (j = 0; j < hashLen/sizeof(uint32_t); j++) T[j] ^= U[j]; // Ti = U1 ^ U2 ^ ... ^ Urounds
         }
