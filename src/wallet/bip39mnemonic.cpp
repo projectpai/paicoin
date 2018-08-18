@@ -6,14 +6,19 @@
 #include "bip39mnemonic.h"
 #include <assert.h>
 #include <string.h>
+#include <vector>
+#include "../support/allocators/secure.h"
 #include "../support/cleanse.h"
 #include "../crypto/common.h"
 #include "../crypto/sha256.h"
 #include "../crypto/hmac_sha512.h"
+#include "../util.h"
 
 #define be32(x) ((((x) & 0xff) << 24) | (((x) & 0xff00) << 8) | (((x) & 0xff0000) >> 8) | (((x) & 0xff000000) >> 24))
 
 using namespace std;
+
+using SecureByteVector = SecureVector<uint8_t>;
 
 BIP39Mnemonic::BIP39Mnemonic()
 {
@@ -27,7 +32,7 @@ BIP39Mnemonic::~BIP39Mnemonic()
 size_t BIP39Mnemonic::Encode(char *phrase, size_t phraseLen, const uint8_t *data, size_t dataLen)
 {
     uint32_t x;
-    uint8_t buf[dataLen + 32];
+    SecureByteVector buf(dataLen + 32);
     const char *word;
     size_t i, len = 0;
 
@@ -36,7 +41,7 @@ size_t BIP39Mnemonic::Encode(char *phrase, size_t phraseLen, const uint8_t *data
     assert(dataLen > 0 && (dataLen % 4) == 0);
     if (! data || (dataLen % 4) != 0) return 0; // data length must be a multiple of 32 bits
 
-    memcpy(buf, data, dataLen);
+    memcpy(buf.data(), data, dataLen);
 
     // append SHA256 checksum
     CSHA256 sha256;
@@ -54,7 +59,6 @@ size_t BIP39Mnemonic::Encode(char *phrase, size_t phraseLen, const uint8_t *data
 
     memory_cleanse(&word, strlen(word));
     memory_cleanse(&x, sizeof(x));
-    memory_cleanse(buf, sizeof(buf));
     return (! phrase || len + 1 <= phraseLen) ? len + 1 : 0;
 }
 
@@ -83,7 +87,7 @@ size_t BIP39Mnemonic::Decode(uint8_t *data, size_t dataLen, const char *phrase)
     }
 
     if ((count % 3) == 0 && (! word || *word == '\0')) { // check that phrase has correct number of words
-        uint8_t buf[(count*11 + 7)/8];
+        SecureByteVector buf((count*11 + 7)/8);
 
         for (i = 0; i < (count*11 + 7)/8; i++) {
             x = idx[i*8/11];
@@ -93,15 +97,13 @@ size_t BIP39Mnemonic::Decode(uint8_t *data, size_t dataLen, const char *phrase)
         }
 
         CSHA256 sha256;
-        sha256.Write((const uint8_t *)buf, count*4/3);
+        sha256.Write((const uint8_t *)buf.data(), count*4/3);
         sha256.Finalize(hash);
 
         if (b >> (8 - count/3) == (hash[0] >> (8 - count/3))) { // verify checksum
             r = count*4/3;
-            if (data && r <= dataLen) memcpy(data, buf, r);
+            if (data && r <= dataLen) memcpy(data, buf.data(), r);
         }
-
-        memory_cleanse(buf, sizeof(buf));
     }
 
     memory_cleanse(&b, sizeof(b));
@@ -120,16 +122,13 @@ int BIP39Mnemonic::PhraseIsValid(const char *phrase)
 
 void BIP39Mnemonic::DeriveKey(void *key64, const char *phrase, const char *passphrase)
 {
-    char salt[strlen("mnemonic") + (passphrase ? strlen(passphrase) : 0) + 1];
-
     assert(key64 != NULL);
     assert(phrase != NULL);
 
     if (phrase) {
-        strcpy(salt, "mnemonic");
-        if (passphrase) strcpy(salt + strlen("mnemonic"), passphrase);
-        PBKDF2(key64, phrase, strlen(phrase), salt, strlen(salt));
-        memory_cleanse(salt, sizeof(salt));
+        SecureString salt = "mnemonic";
+        if (passphrase) salt += passphrase;
+        PBKDF2(key64, phrase, strlen(phrase), salt.c_str(), salt.size());
     }
 }
 
@@ -162,8 +161,11 @@ void BIP39Mnemonic::PBKDF2(void *dk, const void *pw, size_t pwLen, const void *s
     // ...
     // Urounds = hmac_hash(pw, Urounds-1)
 
-    uint8_t s[saltLen + sizeof(uint32_t)];
-    uint32_t i, j, U[hashLen/sizeof(uint32_t)], T[hashLen/sizeof(uint32_t)];
+    using SecureUInt32Vector = SecureVector<uint32_t>;
+
+    SecureByteVector s(saltLen + sizeof(uint32_t));
+    uint32_t i, j;
+    SecureUInt32Vector U(hashLen/sizeof(uint32_t)), T(hashLen/sizeof(uint32_t));
 
     assert(dk != NULL || dkLen == 0);
     assert(hashLen > 0 && (hashLen % 4) == 0);
@@ -171,31 +173,27 @@ void BIP39Mnemonic::PBKDF2(void *dk, const void *pw, size_t pwLen, const void *s
     assert(salt != NULL || saltLen == 0);
     assert(rounds > 0);
 
-    memcpy(s, salt, saltLen);
+    memcpy(s.data(), salt, saltLen);
 
     for (i = 0; i < (dkLen + hashLen - 1)/hashLen; i++) {
         j = be32(i + 1);
-        memcpy(s + saltLen, &j, sizeof(j));
+        memcpy(s.data() + saltLen, &j, sizeof(j));
 
         // U1 = hmac_hash(pw, salt || be32(i))
         CHMAC_SHA512 hmacSha512s((const unsigned char*)pw, pwLen);
-        hmacSha512s.Write(s, sizeof(s));
-        hmacSha512s.Finalize((unsigned char*)U);
-        memcpy(T, U, sizeof(U));
+        hmacSha512s.Write(s.data(), sizeInBytes(s));
+        hmacSha512s.Finalize((unsigned char*)U.data());
+        memcpy(T.data(), U.data(), sizeInBytes(U));
 
         for (unsigned r = 1; r < rounds; r++) {
             // Urounds = hmac_hash(pw, Urounds-1)
             CHMAC_SHA512 hmacSha512u((const unsigned char*)pw, pwLen);
-            hmacSha512u.Write((const unsigned char*)U, sizeof(U));
-            hmacSha512u.Finalize((unsigned char*)U);
+            hmacSha512u.Write((const unsigned char*)U.data(), sizeInBytes(U));
+            hmacSha512u.Finalize((unsigned char*)U.data());
             for (j = 0; j < hashLen/sizeof(uint32_t); j++) T[j] ^= U[j]; // Ti = U1 ^ U2 ^ ... ^ Urounds
         }
 
         // dk = T1 || T2 || ... || Tdklen/hlen
-        memcpy((uint8_t *)dk + i*hashLen, T, (i*hashLen + hashLen <= dkLen) ? hashLen : dkLen % hashLen);
+        memcpy((uint8_t *)dk + i*hashLen, T.data(), (i*hashLen + hashLen <= dkLen) ? hashLen : dkLen % hashLen);
     }
-
-    memory_cleanse(s, sizeof(s));
-    memory_cleanse(U, sizeof(U));
-    memory_cleanse(T, sizeof(T));
 }

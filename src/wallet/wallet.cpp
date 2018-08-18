@@ -1633,7 +1633,7 @@ bool CWallet::IsHDEnabled() const
 
 SecureString CWallet::GeneratePaperKey()
 {
-    const static size_t bufferSize = 128 / 8;
+    constexpr static size_t bufferSize = 128 / 8;
     unsigned char buffer[bufferSize] = {0};
 
     GetStrongRandBytes(buffer, bufferSize);
@@ -1642,14 +1642,12 @@ SecureString CWallet::GeneratePaperKey()
 
     size_t phraseLen = b39.Encode(NULL, 0, buffer, bufferSize);
 
-    char phrase[phraseLen];
-    memset(phrase, 0, phraseLen);
-    phraseLen = b39.Encode(phrase, phraseLen, buffer, bufferSize);
+    SecureVector<char> phrase(phraseLen, 0);
+    phraseLen = b39.Encode(phrase.data(), phraseLen, buffer, bufferSize);
 
-    SecureString phraseString(phrase);
+    SecureString phraseString(phrase.data());
 
     memory_cleanse(buffer, bufferSize);
-    memory_cleanse(phrase, phraseLen);
 
     return phraseString;
 }
