@@ -2858,6 +2858,16 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <source>Word #%1</source>
         <translation>Word #%1</translation>
     </message>
+    <message>
+        <location filename="../restorewalletpage.cpp" line="138"/>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../restorewalletpage.cpp" line="139"/>
+        <source>The Paper Key you entered is invalid. Please double-check each word and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SendCoinsDialog</name>

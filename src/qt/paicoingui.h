@@ -270,7 +270,7 @@ private Q_SLOTS:
     /** Switch to new wallet action flow */
     void createNewWallet();
     /** Restore wallet based on provided paper keys */
-    void restoreWallet(QStringList paperKeys);
+    void restoreWallet(std::string phrase);
     /** Switch to restore wallet page */
     void gotoRestoreWalletPage();
     /** Set create wallet state and navigate to PIN setup */

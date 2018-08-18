@@ -22,7 +22,7 @@ public:
 
 Q_SIGNALS:
     void backToPreviousPage();
-    void restoreWallet(QStringList paperKeys);
+    void restoreWallet(std::string phrase);
 
 protected:
     bool eventFilter(QObject *object, QEvent *event);
@@ -33,7 +33,6 @@ private Q_SLOTS:
 
 private:
     Ui::RestoreWalletPage *ui;
-    QStringList paperKeys;
     BIP39Mnemonic b39;
     std::set<QLineEdit*> validLineSet;
 };
