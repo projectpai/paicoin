@@ -311,8 +311,9 @@ void WalletView::reviewPaperKey()
     std::stringstream stream(paperKey);
     std::string word;
     for (int i = 1; std::getline(stream, word, ' '); ++i ) {
-        message += word.c_str();
-        message += (i % 3 == 0) ? '\n' : '\t';
+        message += QString("%1) %2%3").arg( QString::number(i)
+                                          , word.c_str()
+                                          ,(i % 3 == 0)? QString('\n') : QString("\t\t"));
     }
 
     QMessageBox::information(this,tr("Review Paper Key"), message);
