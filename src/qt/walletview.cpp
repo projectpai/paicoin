@@ -307,14 +307,19 @@ void WalletView::reviewPaperKey()
     SecureString secPaperKey = walletModel->getCurrentPaperKey();
     std::string paperKey(secPaperKey.begin(), secPaperKey.end());
 
-    QString message;
+    QString message = "<style>" \
+                        "table { width: 100%; }"  \
+                        "td { padding-right: 20px; }"  \
+                      "</style>" \
+                      "<table><tr>";
+
     std::stringstream stream(paperKey);
     std::string word;
     for (int i = 1; std::getline(stream, word, ' '); ++i ) {
-        message += QString("%1) %2%3").arg( QString::number(i)
-                                          , word.c_str()
-                                          ,(i % 3 == 0)? QString('\n') : QString("\t\t"));
+        message += QString("<td>%1) %2</td>").arg( QString::number(i), word.c_str());
+        message += (i % 3 == 0) ? "</tr><tr>" : "";
     }
+    message += "</tr></table>";
 
     QMessageBox::information(this,tr("Review Paper Key"), message);
 }
