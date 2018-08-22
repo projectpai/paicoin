@@ -1,5 +1,6 @@
 #include "restorewalletpage.h"
 #include "ui_restorewalletpage.h"
+#include <typeinfo>
 #include <QMessageBox>
 
 RestoreWalletPage::RestoreWalletPage(QWidget *parent) :
