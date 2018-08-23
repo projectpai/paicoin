@@ -60,49 +60,6 @@
 #   include "arith_uint256.h"
 #endif // MINE_FOR_THE_GENESIS_BLOCK
 
-/**
- * To initialize the block chain by mining a new genesis block uncomment the following define.
- * WARNING: this should only be done once and prior to release in production!
- */
-//#define MINE_FOR_THE_GENESIS_BLOCK
-
-#define GENESIS_BLOCK_TIMESTAMP_STRING  "09/06/2017 - Create your own avatar twin that talks like you"
-#define GENESIS_BLOCK_REWARD            1470000000
-
-#define MAINNET_CONSENSUS_POW_LIMIT      uint256S("0x0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff");
-#define MAINNET_GENESIS_BLOCK_POW_BITS   36 // 32
-#define MAINNET_GENESIS_BLOCK_NBITS      0x1c09fe61
-#define MAINNET_GENESIS_BLOCK_SIGNATURE  "95ba0161eb524f97d3847653057baaef7d7ba0ff"
-
-#define MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706776
-#define MAINNET_GENESIS_BLOCK_NONCE          460938808
-#define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343")
-#define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x585ac65f505138efceefb3255086b6d7f63c606219b01f115a2941bb93c8362b")
-
-#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
-#define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
-#define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
-#define TESTNET_GENESIS_BLOCK_SIGNATURE  "9a8abac6c3d97d37d627e6ebcaf68be72275168b"
-
-#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706516  
-#define TESTNET_GENESIS_BLOCK_NONCE          2253953817  
-#define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x0000000003976df1a1393912d10ea68fae1175ee2c7e6011a0dc4e05f18f8403")
-#define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19")
-
-#define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
-#define REGTEST_GENESIS_BLOCK_POW_BITS   1
-#define REGTEST_GENESIS_BLOCK_NBITS      0x207fffff
-#define REGTEST_GENESIS_BLOCK_SIGNATURE  "23103f0e2d2abbaad0d79b7a37759b1a382b7821"
-
-#define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509798928
-#define REGTEST_GENESIS_BLOCK_NONCE          1
-#define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x190a4f6022b980ee9719200b024c1b9df515baea3afbccf1adc93c70aa93941f")
-#define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0x4121f4f0d8528d506a3b373035250bf9889846fac61fd90787a3ecdebf22d87e")
-
-#ifdef MINE_FOR_THE_GENESIS_BLOCK
-#   include "arith_uint256.h"
-#endif // MINE_FOR_THE_GENESIS_BLOCK
-
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
     CMutableTransaction txNew;
