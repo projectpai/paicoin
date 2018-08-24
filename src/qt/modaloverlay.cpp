@@ -5,28 +5,28 @@
 #include "modaloverlay.h"
 #include "ui_modaloverlay.h"
 
+#include "authmanager.h"
 #include "guiutil.h"
-
 #include "chainparams.h"
 
 #include <QResizeEvent>
 #include <QPropertyAnimation>
 
 ModalOverlay::ModalOverlay(QWidget *parent) :
-QWidget(parent),
-ui(new Ui::ModalOverlay),
-bestHeaderHeight(0),
-bestHeaderDate(QDateTime()),
-layerIsVisible(false),
-userClosed(false)
+    QWidget(parent),
+    ui(new Ui::ModalOverlay),
+    bestHeaderHeight(0),
+    bestHeaderDate(QDateTime()),
+    layerIsVisible(false),
+    userClosed(false)
 {
     ui->setupUi(this);
     connect(ui->closeButton, SIGNAL(clicked()), this, SLOT(closeClicked()));
+    connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), this, SLOT(hide()));
     if (parent) {
         parent->installEventFilter(this);
         raise();
     }
-
     blockProcessTime.clear();
     setVisible(false);
 }
