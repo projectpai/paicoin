@@ -451,6 +451,9 @@ void PAIcoinApplication::createWindow(bool firstRun)
     connect(window, SIGNAL(shutdown()), this, SLOT(shutdownResult()));
 #endif // ENABLE_WALLET
     pollShutdownTimer->start(200);
+
+    // core signals should now be routed to the PAICoinGUI
+    GUIUtil::unsubscribeFromCoreSignals(this);
 }
 
 void PAIcoinApplication::createSplashScreen()
@@ -721,81 +724,16 @@ const QString& PAIcoinApplication::getName() const
 
 void PAIcoinApplication::message(const QString &title, const QString &message, unsigned int style, bool *ret)
 {
-    QString strTitle = tr("PAIcoin"); // default title
-    // Default to information icon
-    int nMBoxIcon = QMessageBox::Information;
-//    int nNotifyIcon = Notificator::Information;
+    QString            strTitle;
+    QMessageBox::Icon  nMBoxIcon;
+    Notificator::Class nNotifyIcon;
 
-    QString msgType;
-
-    // Prefer supplied title over style based title
-    if (!title.isEmpty()) {
-        msgType = title;
-    }
-    else {
-        switch (style) {
-        case CClientUIInterface::MSG_ERROR:
-            msgType = tr("Error");
-            break;
-        case CClientUIInterface::MSG_WARNING:
-            msgType = tr("Warning");
-            break;
-        case CClientUIInterface::MSG_INFORMATION:
-            msgType = tr("Information");
-            break;
-        default:
-            break;
-        }
-    }
-    // Append title to "PAI Coin - "
-    if (!msgType.isEmpty())
-        strTitle += " - " + msgType;
-
-    // Check for error/warning icon
-    if (style & CClientUIInterface::ICON_ERROR) {
-        nMBoxIcon = QMessageBox::Critical;
-//        nNotifyIcon = Notificator::Critical;
-    }
-    else if (style & CClientUIInterface::ICON_WARNING) {
-        nMBoxIcon = QMessageBox::Warning;
-//        nNotifyIcon = Notificator::Warning;
-    }
-
+    std::tie(strTitle,nMBoxIcon, nNotifyIcon) = GUIUtil::getMessageProperties(title,style);
     // Display message
     if (style & CClientUIInterface::MODAL) {
-        // Check for buttons, use OK as default, if none was supplied
-        QMessageBox::StandardButton buttons;
-        if (!(buttons = (QMessageBox::StandardButton)(style & CClientUIInterface::BTN_MASK)))
-            buttons = QMessageBox::Ok;
-
-//        showNormalIfMinimized();
-        QMessageBox mBox((QMessageBox::Icon)nMBoxIcon, strTitle, message, buttons, nullptr);
-        int r = mBox.exec();
-        if (ret != nullptr)
-            *ret = r == QMessageBox::Ok;
+        GUIUtil::showMessageBox(nMBoxIcon,strTitle,message,nullptr,style,ret);
     }
-//    else
-//        notificator->notify((Notificator::Class)nNotifyIcon, strTitle, message);
 }
-
-
-static bool ThreadSafeMessageBox(PAIcoinApplication *app, const std::string& message, const std::string& caption, unsigned int style)
-{
-    bool modal = (style & CClientUIInterface::MODAL);
-    // The SECURE flag has no effect in the Qt GUI.
-    // bool secure = (style & CClientUIInterface::SECURE);
-    style &= ~CClientUIInterface::SECURE;
-    bool ret = false;
-    // In case of modal message, use blocking connection to wait for user to click a button
-    QMetaObject::invokeMethod(app, "message",
-                               modal ? GUIUtil::blockingGUIThreadConnection() : Qt::QueuedConnection,
-                               Q_ARG(QString, QString::fromStdString(caption)),
-                               Q_ARG(QString, QString::fromStdString(message)),
-                               Q_ARG(unsigned int, style),
-                               Q_ARG(bool*, &ret));
-    return ret;
-}
-
 
 #ifndef PAICOIN_QT_TEST
 int main(int argc, char *argv[])
@@ -934,8 +872,7 @@ int main(int argc, char *argv[])
     int rv = EXIT_SUCCESS;
     try
     {
-        uiInterface.ThreadSafeMessageBox.connect(boost::bind(ThreadSafeMessageBox, &app, _1, _2, _3));
-        uiInterface.ThreadSafeQuestion.connect(boost::bind(ThreadSafeMessageBox, &app, _1, _3, _4));
+        GUIUtil::subscribeToCoreSignals(&app);
         QSettings settings;
         /* 1) Default data directory for operating system */
         QString dataDir = Intro::getDefaultDataDirectory();
