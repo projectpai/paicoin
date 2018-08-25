@@ -95,51 +95,54 @@ const QString PAIcoinGUI::DEFAULT_WALLET = "~Default";
 PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *_networkStyle, bool _firstRun, QWidget *parent) :
     QMainWindow(parent),
     enableWallet(false),
-    clientModel(0),
-    walletFrame(0),
+    clientModel(nullptr),
+    walletFrame(nullptr),
     mainStackedWidget(nullptr),
-    unitDisplayControl(0),
-    labelWalletEncryptionIcon(0),
-    labelWalletHDStatusIcon(0),
-    connectionsControl(0),
-    labelBlocksIcon(0),
-    progressBarLabel(0),
-    progressBar(0),
-    progressDialog(0),
-    tabGroup(0),
-    appMenuBar(0),
-    toolbar(0),
-    overviewAction(0),
-    historyAction(0),
-    quitAction(0),
-    sendCoinsAction(0),
-    sendCoinsMenuAction(0),
-    usedSendingAddressesAction(0),
-    usedReceivingAddressesAction(0),
-    signMessageAction(0),
-    verifyMessageAction(0),
-    aboutAction(0),
-    receiveCoinsAction(0),
-    receiveCoinsMenuAction(0),
-    optionsAction(0),
-    toggleHideAction(0),
+    unitDisplayControl(nullptr),
+    labelWalletEncryptionIcon(nullptr),
+    labelWalletHDStatusIcon(nullptr),
+    connectionsControl(nullptr),
+    labelBlocksIcon(nullptr),
+    progressBarLabel(nullptr),
+    progressBar(nullptr),
+    progressDialog(nullptr),
+    tabGroup(nullptr),
+    appMenuBar(nullptr),
+    toolbar(nullptr),
+    fileMenu(nullptr),
+    settingsMenu(nullptr),
+    helpMenu(nullptr),
+    overviewAction(nullptr),
+    historyAction(nullptr),
+    quitAction(nullptr),
+    sendCoinsAction(nullptr),
+    sendCoinsMenuAction(nullptr),
+    usedSendingAddressesAction(nullptr),
+    usedReceivingAddressesAction(nullptr),
+    signMessageAction(nullptr),
+    verifyMessageAction(nullptr),
+    aboutAction(nullptr),
+    receiveCoinsAction(nullptr),
+    receiveCoinsMenuAction(nullptr),
+    optionsAction(nullptr),
+    toggleHideAction(nullptr),
     #ifdef ENABLE_ENCRYPT_WALLET
-    encryptWalletAction(0),
-    changePassphraseAction(0),
+    encryptWalletAction(nullptr),
+    changePassphraseAction(nullptr),
     #endif
-    backupWalletAction(0),
-    aboutQtAction(0),
-    openRPCConsoleAction(0),
-    openAction(0),
-    showHelpMessageAction(0),
-    viewInvestorKeyAction(0),
-    reviewPaperKeyAction(0),
-    trayIcon(0),
-    trayIconMenu(0),
-    notificator(0),
-    rpcConsole(0),
-    helpMessageDialog(0),
-    modalOverlay(0),
+    backupWalletAction(nullptr),
+    aboutQtAction(nullptr),
+    openRPCConsoleAction(nullptr),
+    openAction(nullptr),
+    showHelpMessageAction(nullptr),
+    viewInvestorKeyAction(nullptr),
+    reviewPaperKeyAction(nullptr),
+    trayIcon(nullptr),
+    trayIconMenu(nullptr),
+    notificator(nullptr),
+    rpcConsole(nullptr),
+    helpMessageDialog(nullptr),
+    modalOverlay(nullptr),
     prevBlocks(0),
     spinnerFrame(0),
     firstRun(_firstRun),
@@ -517,42 +520,108 @@ void PAIcoinGUI::createMenuBar()
 #endif
 
     // Configure the menus
-    QMenu *file = appMenuBar->addMenu(tr("&File"));
+    fileMenu = appMenuBar->addMenu(tr("&File"));
     if(walletFrame)
     {
-        file->addAction(openAction);
-        file->addAction(backupWalletAction);
-        file->addAction(signMessageAction);
-        file->addAction(verifyMessageAction);
-        file->addSeparator();
-        file->addAction(usedSendingAddressesAction);
-        file->addAction(usedReceivingAddressesAction);
-        file->addSeparator();
+        fileMenu->addAction(openAction);
+        fileMenu->addAction(backupWalletAction);
+        fileMenu->addAction(signMessageAction);
+        fileMenu->addAction(verifyMessageAction);
+        fileMenu->addSeparator();
+        fileMenu->addAction(usedSendingAddressesAction);
+        fileMenu->addAction(usedReceivingAddressesAction);
+        fileMenu->addSeparator();
     }
-    file->addAction(quitAction);
+    fileMenu->addAction(quitAction);
 
-    QMenu *settings = appMenuBar->addMenu(tr("&Settings"));
+    settingsMenu = appMenuBar->addMenu(tr("&Settings"));
     if(walletFrame)
     {
 #ifdef ENABLE_ENCRYPT_WALLET
-        settings->addAction(encryptWalletAction);
-        settings->addAction(changePassphraseAction);
+        settingsMenu->addAction(encryptWalletAction);
+        settingsMenu->addAction(changePassphraseAction);
 #endif // ENABLE_ENCRYPT_WALLET
-        settings->addAction(viewInvestorKeyAction);
-        settings->addAction(reviewPaperKeyAction);
-        settings->addSeparator();
+        settingsMenu->addAction(viewInvestorKeyAction);
+        settingsMenu->addAction(reviewPaperKeyAction);
+        settingsMenu->addSeparator();
     }
-    settings->addAction(optionsAction);
+    settingsMenu->addAction(optionsAction);
 
-    QMenu *help = appMenuBar->addMenu(tr("&Help"));
+    helpMenu = appMenuBar->addMenu(tr("&Help"));
     if(walletFrame)
     {
-        help->addAction(openRPCConsoleAction);
+        helpMenu->addAction(openRPCConsoleAction);
     }
-    help->addAction(showHelpMessageAction);
-    help->addSeparator();
-    help->addAction(aboutAction);
-    help->addAction(aboutQtAction);
+    helpMenu->addAction(showHelpMessageAction);
+    helpMenu->addSeparator();
+    helpMenu->addAction(aboutAction);
+    helpMenu->addAction(aboutQtAction);
+}
+
+void PAIcoinGUI::updateMenuBar(bool locked)
+{
+    if (locked)
+    {
+        if (walletFrame)
+        {
+            // Remove sensitive items from File menu
+            fileMenu->removeAction(openAction);
+            fileMenu->removeAction(backupWalletAction);
+            fileMenu->removeAction(signMessageAction);
+            fileMenu->removeAction(verifyMessageAction);
+            fileMenu->removeAction(usedSendingAddressesAction);
+            fileMenu->removeAction(usedReceivingAddressesAction);
+
+            // Remove sensitive items from Help menu
+            helpMenu->removeAction(openRPCConsoleAction);
+        }
+
+        // Delete Settings menu (a workaround for Qt menu misbehaving on Unity and OSX environments)
+        delete settingsMenu;
+        settingsMenu = nullptr;
+
+        // Hide application menu from main window
+        appMenuBar->hide();
+    }
+    else
+    {
+        if(walletFrame)
+        {
+            // Re-create File menu organization
+            QAction* quitSeparator = fileMenu->insertSeparator(quitAction);
+            fileMenu->insertAction(quitSeparator, usedReceivingAddressesAction);
+            fileMenu->insertAction(usedReceivingAddressesAction, usedSendingAddressesAction);
+            QAction* sendingAddressesSeparator = fileMenu->insertSeparator(usedSendingAddressesAction);
+            fileMenu->insertAction(sendingAddressesSeparator, verifyMessageAction);
+            fileMenu->insertAction(verifyMessageAction, signMessageAction);
+            fileMenu->insertAction(signMessageAction, backupWalletAction);
+            fileMenu->insertAction(backupWalletAction, openAction);
+
+            // Re-create Help menu organization
+            helpMenu->insertAction(showHelpMessageAction, openRPCConsoleAction);
+        }
+
+        // Re-create Settings menu
+        if (settingsMenu == nullptr)
+        {
+            settingsMenu = new QMenu(tr("&Settings"));
+            appMenuBar->insertMenu(helpMenu->menuAction(), settingsMenu);
+        }
+        if(walletFrame)
+        {
+#ifdef ENABLE_ENCRYPT_WALLET
+            settingsMenu->addAction(encryptWalletAction);
+            settingsMenu->addAction(changePassphraseAction);
+#endif // ENABLE_ENCRYPT_WALLET
+            settingsMenu->addAction(viewInvestorKeyAction);
+            settingsMenu->addAction(reviewPaperKeyAction);
+            settingsMenu->addSeparator();
+        }
+        settingsMenu->addAction(optionsAction);
+
+        // Show application menu from main window
+        appMenuBar->show();
+    }
 }
 
 void PAIcoinGUI::createToolBars()
@@ -728,6 +797,42 @@ void PAIcoinGUI::createTrayIconMenu()
 #endif
 }
 
+void PAIcoinGUI::updateTrayIconMenu(bool locked)
+{
+    if (locked)
+    {
+        // Remove sensitive items from Tray menu
+        trayIconMenu->removeAction(sendCoinsMenuAction);
+        trayIconMenu->removeAction(receiveCoinsMenuAction);
+        trayIconMenu->removeAction(signMessageAction);
+        trayIconMenu->removeAction(verifyMessageAction);
+        trayIconMenu->removeAction(optionsAction);
+        trayIconMenu->removeAction(openRPCConsoleAction);
+    }
+    else
+    {
+        // Re-create tray menu
+#ifndef Q_OS_MAC
+        QAction* quitSeparator = trayIconMenu->insertSeparator(quitAction);
+        trayIconMenu->insertAction(quitSeparator, openRPCConsoleAction);
+#else
+        trayIconMenu->removeAction(toggleHideAction);
+        trayIconMenu->addAction(openRPCConsoleAction);
+#endif
+        trayIconMenu->insertAction(openRPCConsoleAction, optionsAction);
+        QAction* optionsSeparator = trayIconMenu->insertSeparator(optionsAction);
+        trayIconMenu->insertAction(optionsSeparator, verifyMessageAction);
+        trayIconMenu->insertAction(verifyMessageAction, signMessageAction);
+        QAction* signMessageSeparator = trayIconMenu->insertSeparator(signMessageAction);
+        trayIconMenu->insertAction(signMessageSeparator, receiveCoinsMenuAction);
+        trayIconMenu->insertAction(receiveCoinsMenuAction, sendCoinsMenuAction);
+        QAction* sendCoinsSeparator = trayIconMenu->insertSeparator(sendCoinsMenuAction);
+#ifdef Q_OS_MAC
+        trayIconMenu->insertAction(sendCoinsSeparator, toggleHideAction);
+#endif
+    }
+}
+
 #ifndef Q_OS_MAC
 void PAIcoinGUI::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 {
@@ -855,7 +960,8 @@ void PAIcoinGUI::interruptForPinRequest(bool newPin)
 
     if (previousState == PAIcoinGUIState::Init || previousState == PAIcoinGUIState::PaperKeyCompletion)
     {
-        appMenuBar->hide();
+        updateMenuBar(true);
+        updateTrayIconMenu(true);
         toolbar->hide();
         tabGroup->setVisible(false);
         progressBar->hide();
@@ -880,8 +986,8 @@ void PAIcoinGUI::continueFromPinRequest()
     case PAIcoinGUIState::Init:
     case PAIcoinGUIState::PaperKeyCompletion:
         mainStackedWidget->setCurrentWidget(walletFrame);
-
-        appMenuBar->show();
+        updateMenuBar();
+        updateTrayIconMenu();
         toolbar->show();
         tabGroup->setVisible(true);
         progressBar->show();

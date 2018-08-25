@@ -123,6 +123,9 @@ private:
     QActionGroup *tabGroup;
     QMenuBar *appMenuBar;
     QToolBar *toolbar;
+    QMenu *fileMenu;
+    QMenu *settingsMenu;
+    QMenu *helpMenu;
     QAction *overviewAction;
     QAction *historyAction;
     QAction *quitAction;
@@ -174,12 +177,16 @@ private:
     void createActions();
     /** Create the menu bar and sub-menus. */
     void createMenuBar();
+    /** Updates the menu bar based on locked state. */
+    void updateMenuBar(bool locked = false);
     /** Create the toolbars */
     void createToolBars();
     /** Create system tray icon and notification */
     void createTrayIcon(const NetworkStyle *networkStyle);
     /** Create system tray menu (or setup the dock menu) */
     void createTrayIconMenu();
+    /** Updates system tray menu based on locked state. */
+    void updateTrayIconMenu(bool locked = false);
 
     /** Enable or disable all wallet-related actions */
     void setWalletActionsEnabled(bool enabled);
