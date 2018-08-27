@@ -858,7 +858,7 @@ If you do not update the application, your investment will remain in holding.</t
     <message>
         <location line="+7"/>
         <location line="+26"/>
-        <location filename="../modaloverlay.cpp" line="+141"/>
+        <location filename="../modaloverlay.cpp" line="+140"/>
         <source>Unknown...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4251,6 +4251,21 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <source>Copy Investor Key</source>
         <translation>Copy Investor Key</translation>
     </message>
+    <message>
+        <location filename="../viewinvestorkeydialog.cpp" line="+13"/>
+        <source>Investor key:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Investor key copied!</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>WalletFrame</name>
@@ -4381,7 +4396,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+60"/>
+        <location line="+50"/>
         <source>Review Paper Key</source>
         <translation>Review Paper Key</translation>
     </message>

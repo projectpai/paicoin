@@ -290,17 +290,7 @@ void WalletView::unlockWallet()
 
 void WalletView::viewInvestorKey()
 {
-    QString investorKey;
-
-    CPubKey pubKey;
-    if (walletModel->getInvestorKey(pubKey)) {
-        investorKey = GUIUtil::formatPubKey(pubKey);
-    } else {
-        investorKey = "Unavailable";
-    }
-
-    ViewInvestorKeyDialog dlg(investorKey, this);
-    dlg.setModel(walletModel);
+    ViewInvestorKeyDialog dlg(walletModel, this);
     dlg.exec();
 }
 
