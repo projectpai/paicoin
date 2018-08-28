@@ -252,7 +252,7 @@ namespace GUIUtil
     typedef ClickableProgressBar ProgressBar;
 #endif
 
-///TODO add comment
+    /** Handler to bind with core signals and relay the arguments to the message method of the given qObject */
     bool ThreadSafeMessageBox(QObject *qObject, const std::string& message, const std::string& caption, unsigned int style);
     /** Connect core signals to passed object, PAICoinGUI or PAICoinApplication */
     void subscribeToCoreSignals(QObject *qObject);
