@@ -8,6 +8,7 @@
 #include "amount.h"
 #include "fs.h"
 #include "pubkey.h"
+#include "notificator.h"
 
 #include <QEvent>
 #include <QHeaderView>
@@ -223,11 +224,11 @@ namespace GUIUtil
     protected:
         void mouseReleaseEvent(QMouseEvent *event);
     };
-    
+
     class ClickableProgressBar : public QProgressBar
     {
         Q_OBJECT
-        
+
     Q_SIGNALS:
         /** Emitted when the progressbar is clicked. The relative mouse coordinates of the click are
          * passed to the signal.
@@ -250,6 +251,16 @@ namespace GUIUtil
 #else
     typedef ClickableProgressBar ProgressBar;
 #endif
+
+    /** Handler to bind with core signals and relay the arguments to the message method of the given qObject */
+    bool ThreadSafeMessageBox(QObject *qObject, const std::string& message, const std::string& caption, unsigned int style);
+    /** Connect core signals to passed object, PAICoinGUI or PAICoinApplication */
+    void subscribeToCoreSignals(QObject *qObject);
+    /** Disconnect core signals to passed object, PAICoinGUI or PAICoinApplication */
+    void unsubscribeFromCoreSignals(QObject *qObject);
+
+    std::tuple<QString, QMessageBox::Icon, Notificator::Class> getMessageProperties(const QString &title, unsigned int style);
+    void showMessageBox(QMessageBox::Icon msgBoxIcon,const QString& strTitle, const QString& message, QWidget *parent, unsigned int style, bool *ret);
 
 } // namespace GUIUtil
 

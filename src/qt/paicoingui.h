@@ -184,11 +184,6 @@ private:
     /** Enable or disable all wallet-related actions */
     void setWalletActionsEnabled(bool enabled);
 
-    /** Connect core signals to GUI client */
-    void subscribeToCoreSignals();
-    /** Disconnect core signals from GUI client */
-    void unsubscribeFromCoreSignals();
-
     /** Update UI with latest network info from model. */
     void updateNetworkState();
 

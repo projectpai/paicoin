@@ -305,7 +305,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     this->installEventFilter(this);
 
     // Subscribe to notifications from core
-    subscribeToCoreSignals();
+    GUIUtil::subscribeToCoreSignals(this);
 
     connect(connectionsControl, SIGNAL(clicked(QPoint)), this, SLOT(toggleNetworkActive()));
 
@@ -344,7 +344,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
 PAIcoinGUI::~PAIcoinGUI()
 {
     // Unsubscribe from notifications from core
-    unsubscribeFromCoreSignals();
+    GUIUtil::unsubscribeFromCoreSignals(this);
 
     GUIUtil::saveWindowGeometry("nWindow", this);
     if(trayIcon) // Hide tray icon, as deleting will let it linger until quit (on Ubuntu)
@@ -1188,61 +1188,18 @@ void PAIcoinGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVer
 
 void PAIcoinGUI::message(const QString &title, const QString &message, unsigned int style, bool *ret)
 {
-    QString strTitle = tr("PAIcoin"); // default title
-    // Default to information icon
-    int nMBoxIcon = QMessageBox::Information;
-    int nNotifyIcon = Notificator::Information;
+    QString            strTitle;
+    QMessageBox::Icon  nMBoxIcon;
+    Notificator::Class nNotifyIcon;
 
-    QString msgType;
-
-    // Prefer supplied title over style based title
-    if (!title.isEmpty()) {
-        msgType = title;
-    }
-    else {
-        switch (style) {
-        case CClientUIInterface::MSG_ERROR:
-            msgType = tr("Error");
-            break;
-        case CClientUIInterface::MSG_WARNING:
-            msgType = tr("Warning");
-            break;
-        case CClientUIInterface::MSG_INFORMATION:
-            msgType = tr("Information");
-            break;
-        default:
-            break;
-        }
-    }
-    // Append title to "PAI Coin - "
-    if (!msgType.isEmpty())
-        strTitle += " - " + msgType;
-
-    // Check for error/warning icon
-    if (style & CClientUIInterface::ICON_ERROR) {
-        nMBoxIcon = QMessageBox::Critical;
-        nNotifyIcon = Notificator::Critical;
-    }
-    else if (style & CClientUIInterface::ICON_WARNING) {
-        nMBoxIcon = QMessageBox::Warning;
-        nNotifyIcon = Notificator::Warning;
-    }
-
+    std::tie(strTitle,nMBoxIcon, nNotifyIcon) = GUIUtil::getMessageProperties(title,style);
     // Display message
     if (style & CClientUIInterface::MODAL) {
-        // Check for buttons, use OK as default, if none was supplied
-        QMessageBox::StandardButton buttons;
-        if (!(buttons = (QMessageBox::StandardButton)(style & CClientUIInterface::BTN_MASK)))
-            buttons = QMessageBox::Ok;
-
         showNormalIfMinimized();
-        QMessageBox mBox((QMessageBox::Icon)nMBoxIcon, strTitle, message, buttons, this);
-        int r = mBox.exec();
-        if (ret != nullptr)
-            *ret = r == QMessageBox::Ok;
+        GUIUtil::showMessageBox(nMBoxIcon,strTitle,message,this,style,ret);
     }
     else
-        notificator->notify((Notificator::Class)nNotifyIcon, strTitle, message);
+        notificator->notify(nNotifyIcon, strTitle, message);
 }
 
 void PAIcoinGUI::changeEvent(QEvent *e)
@@ -1545,37 +1502,6 @@ void PAIcoinGUI::showModalOverlay()
 {
     if (modalOverlay && (progressBar->isVisible() || modalOverlay->isLayerVisible()) && !SettingsHelper::IsAuthRequested())
         modalOverlay->toggleVisibility();
-}
-
-static bool ThreadSafeMessageBox(PAIcoinGUI *gui, const std::string& message, const std::string& caption, unsigned int style)
-{
-    bool modal = (style & CClientUIInterface::MODAL);
-    // The SECURE flag has no effect in the Qt GUI.
-    // bool secure = (style & CClientUIInterface::SECURE);
-    style &= ~CClientUIInterface::SECURE;
-    bool ret = false;
-    // In case of modal message, use blocking connection to wait for user to click a button
-    QMetaObject::invokeMethod(gui, "message",
-                               modal ? GUIUtil::blockingGUIThreadConnection() : Qt::QueuedConnection,
-                               Q_ARG(QString, QString::fromStdString(caption)),
-                               Q_ARG(QString, QString::fromStdString(message)),
-                               Q_ARG(unsigned int, style),
-                               Q_ARG(bool*, &ret));
-    return ret;
-}
-
-void PAIcoinGUI::subscribeToCoreSignals()
-{
-    // Connect signals to client
-    uiInterface.ThreadSafeMessageBox.connect(boost::bind(ThreadSafeMessageBox, this, _1, _2, _3));
-    uiInterface.ThreadSafeQuestion.connect(boost::bind(ThreadSafeMessageBox, this, _1, _3, _4));
-}
-
-void PAIcoinGUI::unsubscribeFromCoreSignals()
-{
-    // Disconnect signals from client
-    uiInterface.ThreadSafeMessageBox.disconnect(boost::bind(ThreadSafeMessageBox, this, _1, _2, _3));
-    uiInterface.ThreadSafeQuestion.disconnect(boost::bind(ThreadSafeMessageBox, this, _1, _3, _4));
 }
 
 void PAIcoinGUI::toggleNetworkActive()

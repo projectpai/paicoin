@@ -211,12 +211,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PAICOINS&lt;/b&gt;!</source>
+        <source>Are you sure you wish to encrypt your wallet?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+0"/>
-        <source>Are you sure you wish to encrypt your wallet?</source>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PAI COINS&lt;/b&gt;!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -227,7 +227,7 @@
     </message>
     <message>
         <location line="-56"/>
-        <source>%1 will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your paicoins from being stolen by malware infecting your computer.</source>
+        <source>%1 will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your PAI Coins from being stolen by malware infecting your computer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -847,7 +847,7 @@ If you do not update the application, your investment will remain in holding.</t
     </message>
     <message>
         <location line="+19"/>
-        <source>Attempting to spend paicoins that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
+        <source>Attempting to spend PAI Coins that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -858,7 +858,7 @@ If you do not update the application, your investment will remain in holding.</t
     <message>
         <location line="+7"/>
         <location line="+26"/>
-        <location filename="../modaloverlay.cpp" line="+141"/>
+        <location filename="../modaloverlay.cpp" line="+140"/>
         <source>Unknown...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1570,12 +1570,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>&amp;Verify message...</translation>
     </message>
     <message>
-        <location line="+742"/>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
-    </message>
-    <message>
-        <location line="-817"/>
+        <location line="-75"/>
         <source>&amp;Send</source>
         <translation>&amp;Send</translation>
     </message>
@@ -1686,22 +1681,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>Transactions after this will not yet be visible.</translation>
     </message>
     <message>
-        <location line="+27"/>
-        <source>Error</source>
-        <translation>Error</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Warning</source>
-        <translation>Warning</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Information</source>
-        <translation>Information</translation>
-    </message>
-    <message>
-        <location line="-77"/>
+        <location line="-44"/>
         <source>Up to date</source>
         <translation>Up to date</translation>
     </message>
@@ -1726,7 +1706,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>Catching up...</translation>
     </message>
     <message>
-        <location line="+148"/>
+        <location line="+105"/>
         <source>Date: %1
 </source>
         <translation>Date: %1
@@ -1796,7 +1776,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+699"/>
+        <location filename="../paicoin.cpp" line="+708"/>
         <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
         <translation>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</translation>
     </message>
@@ -2052,7 +2032,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>Amount</translation>
     </message>
     <message>
-        <location filename="../guiutil.cpp" line="+131"/>
+        <location filename="../guiutil.cpp" line="+132"/>
         <source>Enter a PAI Coin address (e.g. %1)</source>
         <translation>Enter a PAI Coin address (e.g. %1)</translation>
     </message>
@@ -2147,7 +2127,27 @@ We will show you a list of words to write down on a piece of paper and keep safe
         </translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+165"/>
+        <location line="+63"/>
+        <source>PAIcoin</source>
+        <translation type="unfinished">PAIcoin</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Error</source>
+        <translation type="unfinished">Error</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Warning</source>
+        <translation type="unfinished">Warning</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Information</source>
+        <translation type="unfinished">Information</translation>
+    </message>
+    <message>
+        <location filename="../paicoin.cpp" line="+179"/>
         <source>%1 didn&apos;t yet exit safely...</source>
         <translation>%1 didn&apos;t yet exit safely...</translation>
     </message>
@@ -2160,7 +2160,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>QObject::QObject</name>
     <message>
-        <location filename="../paicoingui.cpp" line="-645"/>
+        <location filename="../paicoingui.cpp" line="-602"/>
         <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2170,7 +2170,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="-77"/>
+        <location filename="../paicoin.cpp" line="-78"/>
         <source>Error: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3282,12 +3282,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1021"/>
-        <source>The fee will be deducted from the amount being sent. The recipient will receive less paicoins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+3"/>
+        <location line="-1018"/>
         <source>S&amp;ubtract fee from amount</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3317,7 +3312,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+495"/>
+        <location line="+25"/>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive less PAI Coins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+470"/>
         <location line="+529"/>
         <source>Pay To:</source>
         <translation type="unfinished"></translation>
@@ -3409,7 +3409,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <location line="+6"/>
-        <source>You can sign messages/agreements with your addresses to prove you can receive paicoins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <source>You can sign messages/agreements with your addresses to prove you can receive PAI Coins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4201,7 +4201,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+763"/>
+        <location filename="../paicoingui.cpp" line="+689"/>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation type="unfinished"></translation>
     </message>

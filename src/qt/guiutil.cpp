@@ -8,6 +8,7 @@
 #include "paicoinunits.h"
 #include "qvalidatedlineedit.h"
 #include "walletmodel.h"
+#include "ui_interface.h"
 
 #include "fs.h"
 #include "primitives/transaction.h"
@@ -414,12 +415,12 @@ bool openPAIcoinConf()
 
     /* Create the file */
     boost::filesystem::ofstream configFile(pathConfig, std::ios_base::app);
-    
+
     if (!configFile.good())
         return false;
-    
+
     configFile.close();
-    
+
     /* Open paicoin.conf with the associated application */
     return QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathConfig)));
 }
@@ -777,7 +778,7 @@ LSSharedFileListItemRef findStartupItemInList(LSSharedFileListRef list, CFURLRef
     if (listSnapshot == nullptr) {
         return nullptr;
     }
-    
+
     // loop through the list of startup items and try to find the paicoin app
     for(int i = 0; i < CFArrayGetCount(listSnapshot); i++) {
         LSSharedFileListItemRef item = (LSSharedFileListItemRef)CFArrayGetValueAtIndex(listSnapshot, i);
@@ -805,7 +806,7 @@ LSSharedFileListItemRef findStartupItemInList(LSSharedFileListRef list, CFURLRef
             CFRelease(currentItemURL);
         }
     }
-    
+
     CFRelease(listSnapshot);
     return nullptr;
 }
@@ -816,7 +817,7 @@ bool GetStartOnSystemStartup()
     if (paicoinAppUrl == nullptr) {
         return false;
     }
-    
+
     LSSharedFileListRef loginItems = LSSharedFileListCreate(nullptr, kLSSharedFileListSessionLoginItems, nullptr);
     LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, paicoinAppUrl);
 
@@ -830,7 +831,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
     if (paicoinAppUrl == nullptr) {
         return false;
     }
-    
+
     LSSharedFileListRef loginItems = LSSharedFileListCreate(nullptr, kLSSharedFileListSessionLoginItems, nullptr);
     LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, paicoinAppUrl);
 
@@ -842,7 +843,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
         // remove item
         LSSharedFileListItemRemove(loginItems, foundItem);
     }
-    
+
     CFRelease(paicoinAppUrl);
     return true;
 }
@@ -1021,10 +1022,98 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_EMIT clicked(event->pos());
 }
-    
+
 void ClickableProgressBar::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_EMIT clicked(event->pos());
+}
+
+bool ThreadSafeMessageBox(QObject *qObject, const std::string& message, const std::string& caption, unsigned int style)
+{
+    bool modal = (style & CClientUIInterface::MODAL);
+    // The SECURE flag has no effect in the Qt GUI.
+    // bool secure = (style & CClientUIInterface::SECURE);
+    style &= ~CClientUIInterface::SECURE;
+    bool ret = false;
+    // In case of modal message, use blocking connection to wait for user to click a button
+    QMetaObject::invokeMethod(qObject, "message",
+                  modal ? GUIUtil::blockingGUIThreadConnection() : Qt::QueuedConnection,
+                  Q_ARG(QString, QString::fromStdString(caption)),
+                  Q_ARG(QString, QString::fromStdString(message)),
+                  Q_ARG(unsigned int, style),
+                  Q_ARG(bool*, &ret));
+    return ret;
+}
+void subscribeToCoreSignals(QObject *qObject)
+{
+    // Connect signals to client
+    uiInterface.ThreadSafeMessageBox.connect(boost::bind(ThreadSafeMessageBox, qObject, _1, _2, _3));
+    uiInterface.ThreadSafeQuestion.connect(boost::bind(ThreadSafeMessageBox, qObject, _1, _3, _4));
+}
+
+void unsubscribeFromCoreSignals(QObject *qObject)
+{
+    // Disconnect signals from client
+    uiInterface.ThreadSafeMessageBox.disconnect(boost::bind(ThreadSafeMessageBox, qObject, _1, _2, _3));
+    uiInterface.ThreadSafeQuestion.disconnect(boost::bind(ThreadSafeMessageBox, qObject, _1, _3, _4));
+}
+
+std::tuple<QString, QMessageBox::Icon, Notificator::Class> getMessageProperties(const QString &title, unsigned int style)
+{
+    QString strTitle = QObject::tr("PAIcoin"); // default title
+    // Default to information icon
+    auto nMBoxIcon = QMessageBox::Information;
+    auto nNotifyIcon = Notificator::Information;
+
+    QString msgType;
+    // Prefer supplied title over style based title
+    if (!title.isEmpty()) {
+        msgType = title;
+    }
+    else {
+        switch (style) {
+        case CClientUIInterface::MSG_ERROR:
+            msgType = QObject::tr("Error");
+            break;
+        case CClientUIInterface::MSG_WARNING:
+            msgType = QObject::tr("Warning");
+            break;
+        case CClientUIInterface::MSG_INFORMATION:
+            msgType = QObject::tr("Information");
+            break;
+        default:
+            break;
+        }
+    }
+
+    // Append title to "PAI Coin - "
+    if (!msgType.isEmpty())
+        strTitle += " - " + msgType;
+
+    // Check for error/warning icon
+    if (style & CClientUIInterface::ICON_ERROR) {
+        nMBoxIcon = QMessageBox::Critical;
+        nNotifyIcon = Notificator::Critical;
+    }
+    else if (style & CClientUIInterface::ICON_WARNING) {
+        nMBoxIcon = QMessageBox::Warning;
+        nNotifyIcon = Notificator::Warning;
+    }
+
+    return std::make_tuple(strTitle, nMBoxIcon, nNotifyIcon);
+}
+
+void showMessageBox(QMessageBox::Icon msgBoxIcon,const QString& strTitle, const QString& message, QWidget *parent, unsigned int style, bool *ret)
+{
+    // Check for buttons, use OK as default, if none was supplied
+    QMessageBox::StandardButton buttons;
+    if (!(buttons = (QMessageBox::StandardButton)(style & CClientUIInterface::BTN_MASK)))
+        buttons = QMessageBox::Ok;
+
+    QMessageBox mBox(msgBoxIcon, strTitle, message, buttons, parent);
+    int r = mBox.exec();
+    if (ret != nullptr)
+        *ret = r == QMessageBox::Ok;
 }
 
 } // namespace GUIUtil

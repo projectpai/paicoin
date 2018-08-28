@@ -255,6 +255,7 @@ public Q_SLOTS:
     void shutdownResult();
     /// Handle runaway exceptions. Shows a message box with the problem and quits the program.
     void handleRunawayException(const QString &message);
+    void message(const QString &title, const QString &message, unsigned int style, bool *ret);
 
 Q_SIGNALS:
     void requestedInitialize();
@@ -450,6 +451,9 @@ void PAIcoinApplication::createWindow(bool firstRun)
     connect(window, SIGNAL(shutdown()), this, SLOT(shutdownResult()));
 #endif // ENABLE_WALLET
     pollShutdownTimer->start(200);
+
+    // core signals should now be routed to the PAICoinGUI
+    GUIUtil::unsubscribeFromCoreSignals(this);
 }
 
 void PAIcoinApplication::createSplashScreen()
@@ -507,12 +511,17 @@ void PAIcoinApplication::requestShutdown()
 
     qDebug() << __func__ << ": Requesting shutdown";
     startThread();
-    window->hide();
-    window->setClientModel(0);
-    pollShutdownTimer->stop();
+    if (window != nullptr)
+    {
+        window->hide();
+        window->setClientModel(0);
+    }
+    if (pollShutdownTimer != nullptr)
+        pollShutdownTimer->stop();
 
 #ifdef ENABLE_WALLET
-    window->removeAllWallets();
+    if (window != nullptr)
+        window->removeAllWallets();
     delete walletModel;
     walletModel = 0;
 #endif
@@ -713,6 +722,19 @@ const QString& PAIcoinApplication::getName() const
     return networkStyle->getAppName();
 }
 
+void PAIcoinApplication::message(const QString &title, const QString &message, unsigned int style, bool *ret)
+{
+    QString            strTitle;
+    QMessageBox::Icon  nMBoxIcon;
+    Notificator::Class nNotifyIcon;
+
+    std::tie(strTitle,nMBoxIcon, nNotifyIcon) = GUIUtil::getMessageProperties(title,style);
+    // Display message
+    if (style & CClientUIInterface::MODAL) {
+        GUIUtil::showMessageBox(nMBoxIcon,strTitle,message,nullptr,style,ret);
+    }
+}
+
 #ifndef PAICOIN_QT_TEST
 int main(int argc, char *argv[])
 {
@@ -850,6 +872,7 @@ int main(int argc, char *argv[])
     int rv = EXIT_SUCCESS;
     try
     {
+        GUIUtil::subscribeToCoreSignals(&app);
         QSettings settings;
         /* 1) Default data directory for operating system */
         QString dataDir = Intro::getDefaultDataDirectory();

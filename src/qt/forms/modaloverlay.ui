@@ -89,7 +89,7 @@ QLabel { color: rgb(40,40,40);  }</string>
                 <string/>
                </property>
                <property name="icon">
-                <iconset>
+                <iconset resource="../paicoin.qrc">
                  <normaloff>:/icons/warning</normaloff>
                  <disabledoff>:/icons/warning</disabledoff>:/icons/warning</iconset>
                </property>
@@ -149,7 +149,7 @@ QLabel { color: rgb(40,40,40);  }</string>
                 </font>
                </property>
                <property name="text">
-                <string>Attempting to spend paicoins that are affected by not-yet-displayed transactions will not be accepted by the network.</string>
+                <string>Attempting to spend PAI Coins that are affected by not-yet-displayed transactions will not be accepted by the network.</string>
                </property>
                <property name="textFormat">
                 <enum>Qt::RichText</enum>
@@ -371,6 +371,8 @@ QLabel { color: rgb(40,40,40);  }</string>
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../paicoin.qrc"/>
+ </resources>
  <connections/>
 </ui>
