@@ -990,9 +990,8 @@ void PAIcoinGUI::continueFromPinRequest()
         updateTrayIconMenu();
         toolbar->show();
         tabGroup->setVisible(true);
-        progressBar->show();
-        statusBar()->show();
-        modalOverlay->showHide();
+        if (walletFrame && walletFrame->isOutOfSync())
+            modalOverlay->showHide();
 
         connect(walletFrame, SIGNAL(requestedSyncWarningInfo()), this, SLOT(showModalOverlay()));
         connect(labelBlocksIcon, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
