@@ -19,7 +19,7 @@
 #include <QPushButton>
 
 AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
-    QDialog(parent),
+    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
     ui(new Ui::AskPassphraseDialog),
     mode(_mode),
     model(0),

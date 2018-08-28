@@ -21,7 +21,7 @@
 #include <QClipboard>
 
 SignVerifyMessageDialog::SignVerifyMessageDialog(const PlatformStyle *_platformStyle, QWidget *parent) :
-    QDialog(parent),
+    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
     ui(new Ui::SignVerifyMessageDialog),
     model(0),
     platformStyle(_platformStyle)

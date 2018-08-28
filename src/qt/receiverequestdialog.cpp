@@ -30,7 +30,7 @@
 #endif
 
 ReceiveRequestDialog::ReceiveRequestDialog(QWidget *parent) :
-    QDialog(parent),
+    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
     ui(new Ui::ReceiveRequestDialog),
     model(0)
 {

@@ -11,7 +11,7 @@
 #include <QUrl>
 
 OpenURIDialog::OpenURIDialog(QWidget *parent) :
-    QDialog(parent),
+    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
     ui(new Ui::OpenURIDialog)
 {
     ui->setupUi(this);

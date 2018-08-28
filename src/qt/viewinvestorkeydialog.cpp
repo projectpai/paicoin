@@ -6,7 +6,7 @@
 #define PUBKEY_SPLIT_INDEX 33
 
 ViewInvestorKeyDialog::ViewInvestorKeyDialog(QString investorKey, QWidget *parent) :
-    QDialog(parent),
+    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
     ui(new Ui::ViewInvestorKeyDialog)
 {
     ui->setupUi(this);

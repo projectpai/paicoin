@@ -12,7 +12,7 @@
 #include <QMessageBox>
 
 EditAddressDialog::EditAddressDialog(Mode _mode, QWidget *parent) :
-    QDialog(parent),
+    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
     ui(new Ui::EditAddressDialog),
     mapper(0),
     mode(_mode),

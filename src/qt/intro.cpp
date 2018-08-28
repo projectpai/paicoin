@@ -113,7 +113,7 @@ void FreespaceChecker::check()
 }
 
 Intro::Intro(QWidget *parent) :
-    QDialog(parent),
+    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
     ui(new Ui::Intro),
     thread(0),
     signalled(false)
