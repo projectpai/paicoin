@@ -6,6 +6,7 @@
 
 #include "addressbookpage.h"
 #include "askpassphrasedialog.h"
+#include "authmanager.h"
 #include "paicoingui.h"
 #include "clientmodel.h"
 #include "guiutil.h"
@@ -26,6 +27,7 @@
 #include <QActionGroup>
 #include <QFileDialog>
 #include <QHBoxLayout>
+#include <QDialog>
 #include <QProgressDialog>
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -321,7 +323,9 @@ void WalletView::reviewPaperKey()
     }
     message += "</tr></table>";
 
-    QMessageBox::information(this,tr("Review Paper Key"), message);
+    QMessageBox information(QMessageBox::Icon::Information, tr("Review Paper Key"), message, QMessageBox::Ok);
+    connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), &information, SLOT(reject()));
+    information.exec();
 }
 
 void WalletView::usedSendingAddresses()
