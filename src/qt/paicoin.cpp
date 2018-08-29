@@ -327,10 +327,10 @@ void PAIcoinCore::initialize()
         qDebug() << __func__ << ": Running initialization in thread";
         bool firstRun = false;
         bool rv = AppInitMain(threadGroup, scheduler, firstRun);
-        if (firstRun) {
-            Q_EMIT initializeFirstRun();
-        } else {
+        if (!rv || !firstRun) {
             Q_EMIT initializeResult(rv);
+        } else {
+            Q_EMIT initializeFirstRun();
         }
     } catch (const std::exception& e) {
         handleRunawayException(&e);
