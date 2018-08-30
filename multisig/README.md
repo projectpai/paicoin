@@ -230,4 +230,76 @@ The `"complete": true` output indicates the transaction is ready to be publicly 
 
 ### Send the raw transaction
 
-In progress.
+The hex string output of the final `signrawtransaction` command is used with `sendrawtransaction` to broadcast the transaction to the mempool for permanent inclusion in a block.
+
+```
+./paicoin-cli sendrawtransaction "020000000180c441d5fe90eeffee936d3b32bd326f6b306cab2302f23a912f675fb70c8e2201000000fd1c010048304502210094395ae0a1d5bac4d981b3b2dfd114db877d819a8eb7ef164994869251235864022073d4dc8d59846a75b9d8980a96e088d9eb054c14b29f2deb6d5ae9babe20695a01483045022100e7aa8115856e55d3feba9d61156477a740d57fa3ca55f1b8173313315c5ba15e02201c88d20e403921b575217eddcd2e814fe808a92ef839686cb8542156ca9aaf9e014c875241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752aeffffffff02005a6202000000001976a914901e49db87c87f8b522e86cad5b66781943ef72588ac98929800000000001976a91492eec985767887aa9e209191d2db18806465375b88ac00000000"
+```
+
+Upon success, this command produces the Transaction ID, or `txid`, as output.
+
+```
+ac27910180b6c5a324741ccf3e39eba8c993e5ecd12f36e0eedd683af0a49b16
+```
+
+### View the transaction on the PAI Blockchain
+
+If `paicoind` is run using the `-reindex -txindex` flags to maintain a full index of transactions, the CLI can be used to retrieve information about the transaction using its `txid` as follows, complete with its corresponding output.
+
+```
+paicoin-cli getrawtransaction ac27910180b6c5a324741ccf3e39eba8c993e5ecd12f36e0eedd683af0a49b16 1
+{
+  "txid": "ac27910180b6c5a324741ccf3e39eba8c993e5ecd12f36e0eedd683af0a49b16",
+  "hash": "ac27910180b6c5a324741ccf3e39eba8c993e5ecd12f36e0eedd683af0a49b16",
+  "version": 2,
+  "size": 405,
+  "vsize": 405,
+  "locktime": 0,
+  "vin": [
+    {
+      "txid": "228e0cb75f672f913af20223ab6c306b6f32bd323b6d93eeffee90fed541c480",
+      "vout": 1,
+      "scriptSig": {
+        "asm": "0 304502210094395ae0a1d5bac4d981b3b2dfd114db877d819a8eb7ef164994869251235864022073d4dc8d59846a75b9d8980a96e088d9eb054c14b29f2deb6d5ae9babe20695a[ALL] 3045022100e7aa8115856e55d3feba9d61156477a740d57fa3ca55f1b8173313315c5ba15e02201c88d20e403921b575217eddcd2e814fe808a92ef839686cb8542156ca9aaf9e[ALL] 5241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752ae",
+        "hex": "0048304502210094395ae0a1d5bac4d981b3b2dfd114db877d819a8eb7ef164994869251235864022073d4dc8d59846a75b9d8980a96e088d9eb054c14b29f2deb6d5ae9babe20695a01483045022100e7aa8115856e55d3feba9d61156477a740d57fa3ca55f1b8173313315c5ba15e02201c88d20e403921b575217eddcd2e814fe808a92ef839686cb8542156ca9aaf9e014c875241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752ae"
+      },
+      "sequence": 4294967295
+    }
+  ],
+  "vout": [
+    {
+      "value": 0.40000000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "OP_DUP OP_HASH160 901e49db87c87f8b522e86cad5b66781943ef725 OP_EQUALVERIFY OP_CHECKSIG",
+        "hex": "76a914901e49db87c87f8b522e86cad5b66781943ef72588ac",
+        "reqSigs": 1,
+        "type": "pubkeyhash",
+        "addresses": [
+          "Pm4ojBqHnAyKBxNDgWEcaXejE1xXS3r9iV"
+        ]
+      }
+    }, 
+    {
+      "value": 0.09999000,
+      "n": 1,
+      "scriptPubKey": {
+        "asm": "OP_DUP OP_HASH160 92eec985767887aa9e209191d2db18806465375b OP_EQUALVERIFY OP_CHECKSIG",
+        "hex": "76a91492eec985767887aa9e209191d2db18806465375b88ac",
+        "reqSigs": 1,
+        "type": "pubkeyhash",
+        "addresses": [
+          "PmKgrKASftviR88QVzb9kpVFys75yv84mK"
+        ]
+      }
+    }
+  ],
+  "hex": "020000000180c441d5fe90eeffee936d3b32bd326f6b306cab2302f23a912f675fb70c8e2201000000fd1c010048304502210094395ae0a1d5bac4d981b3b2dfd114db877d819a8eb7ef164994869251235864022073d4dc8d59846a75b9d8980a96e088d9eb054c14b29f2deb6d5ae9babe20695a01483045022100e7aa8115856e55d3feba9d61156477a740d57fa3ca55f1b8173313315c5ba15e02201c88d20e403921b575217eddcd2e814fe808a92ef839686cb8542156ca9aaf9e014c875241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752aeffffffff02005a6202000000001976a914901e49db87c87f8b522e86cad5b66781943ef72588ac98929800000000001976a91492eec985767887aa9e209191d2db18806465375b88ac00000000",
+  "blockhash": "000000000000004bb3a583176d4c699205119eda8195b6cb3ddf9a8b01a49897",
+  "confirmations": 1,
+  "time": 1535669109,
+  "blocktime": 1535669109
+}
+```
+
+Alternatively, an online block explorer, like https://paichain.info, can be used as well. See the transaction [here](https://paichain.info/ui/tx/ac27910180b6c5a324741ccf3e39eba8c993e5ecd12f36e0eedd683af0a49b16).
