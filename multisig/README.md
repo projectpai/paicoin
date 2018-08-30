@@ -161,8 +161,8 @@ This yields the following example output:
 ] 
 ```
 
-In this example, 0.4 PAI Coin will be sent to the destination address `PdVX7Grppi76QyTXGXYk4v2N7aip7ToKyL` while the "change"
-will be sent to `Ph6wqJEjn8fJheRWL2Mabw2of2ThJSgHRS`, which is an address the sender controls. *Note:* Specifying a proper
+In this example, 0.4 PAI Coin will be sent to the destination address `Pm4ojBqHnAyKBxNDgWEcaXejE1xXS3r9iV` while the "change"
+will be sent to `PmKgrKASftviR88QVzb9kpVFys75yv84mK`, which is an address the sender controls. *Note:* Specifying a proper
 change address is critical when creating a raw transaction. Without the change address, the difference between the value of
 the UTXO and the amount(s) sent to the recipient(s) will be forfeited as a mining fee. *When UTXOs are spent, they are always
 consumed in full.* 
@@ -170,15 +170,63 @@ consumed in full.*
 Given the txid and vout values above, together with the destination and change addresses, the `createrawtransaction` command
 can be used as follows:
 ```
-paicoin-cli createrawtransaction "[{\"txid\":\"228e0cb75f672f913af20223ab6c306b6f32bd323b6d93eeffee90fed541c480\",\"vout\":1}]" "{\"PdVX7Grppi76QyTXGXYk4v2N7aip7ToKyL\":0.4,\"Ph6wqJEjn8fJheRWL2Mabw2of2ThJSgHRS\":0.09999}"
+paicoin-cli createrawtransaction "[{\"txid\":\"228e0cb75f672f913af20223ab6c306b6f32bd323b6d93eeffee90fed541c480\",\"vout\":1}]" "{\"Pm4ojBqHnAyKBxNDgWEcaXejE1xXS3r9iV\":0.4,\"PmKgrKASftviR88QVzb9kpVFys75yv84mK\":0.09999}"
 ```
 
 Note that the sum of the outputs is 0.49999. The difference of 0.00001 is the mining fee, also known as a transaction fee. A non-zero
-transaction fee is required to relay the transaction. More information on how to properly calculate transaction fees will be provided.
+transaction fee is required to relay the transaction. More information on how to properly calculate transaction fees will be provided. Executing the `createrawtransaction` command above produces the following hex string, which will be used in the signing step.
+
+```
+020000000180c441d5fe90eeffee936d3b32bd326f6b306cab2302f23a912f675fb70c8e220100000000ffffffff02005a6202000000001976a914901e49db87c87f8b522e86cad5b66781943ef72588ac98929800000000001976a91492eec985767887aa9e209191d2db18806465375b88ac00000000
+```
 
 ### Sign the raw transaction M times
 
-In progress.
+Given the hex string identifier previously outputted from the `createrawtransaction` command, the transaction needs to be signed M times before it is valid to be broadcast. As mentioned, a secure solution may require each of the M signing actions occur on M separate devices. In this case, secure movement of the intermediate hex strings between signers is recommended, and can be accomplished via a single-use medium such as optical disk, or paper which is shredded after use.
+
+#### Sign transaction with first private key
+
+The private key corresponding to the first public key used to create the multisig address from which funds are being spent signs the transaction as follows. The values of `scriptPubKey` and `redeemScript` can be obtained from the output of the `paicoin-cli listunspent` command and the output of the `paicoin-cli createmultisig`, respectively. 
+
+```
+paicoin-cli signrawtransaction "020000000180c441d5fe90eeffee936d3b32bd326f6b306cab2302f23a912f675fb70c8e220100000000ffffffff02005a6202000000001976a914901e49db87c87f8b522e86cad5b66781943ef72588ac98929800000000001976a91492eec985767887aa9e209191d2db18806465375b88ac00000000" "[{\"txid\":\"228e0cb75f672f913af20223ab6c306b6f32bd323b6d93eeffee90fed541c480\",\"vout\":1,\"scriptPubKey\":\"a914257481de4b6a4f5030cff147f7480c716d3597ff87\",\"redeemScript\":\"5241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752ae\"}]" "[\"9JsEicNHdZkxYvna5Fo6VUHRe7k5239i2mC2rCTpm7aWbFp33ea\"]"
+```
+
+The final value in brackets is the first private key and is obtained from the `mainnet.privateAddress` field in the output key pair file of `generate-keys.py`.
+
+Execution of this command produces a new hex string identifier, which is then used as input to the second signing step. Note that the `"Operation not valid with the current stack size"` error appears because the transaction has as yet been signed an insufficient number of times to be valid.
+
+```
+{
+  "hex": "020000000180c441d5fe90eeffee936d3b32bd326f6b306cab2302f23a912f675fb70c8e2201000000d30048304502210094395ae0a1d5bac4d981b3b2dfd114db877d819a8eb7ef164994869251235864022073d4dc8d59846a75b9d8980a96e088d9eb054c14b29f2deb6d5ae9babe20695a014c875241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752aeffffffff02005a6202000000001976a914901e49db87c87f8b522e86cad5b66781943ef72588ac98929800000000001976a91492eec985767887aa9e209191d2db18806465375b88ac00000000",
+  "complete": false,
+  "errors": [
+    {
+      "txid": "228e0cb75f672f913af20223ab6c306b6f32bd323b6d93eeffee90fed541c480",
+      "vout": 1,
+      "witness": [
+      ],
+      "scriptSig": "0048304502210094395ae0a1d5bac4d981b3b2dfd114db877d819a8eb7ef164994869251235864022073d4dc8d59846a75b9d8980a96e088d9eb054c14b29f2deb6d5ae9babe20695a014c875241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752ae",
+      "sequence": 4294967295,
+      "error": "Operation not valid with the current stack size"
+    }
+  ]
+}
+```
+
+#### Sign transaction with second private key
+
+The private key corresponding to the second public key used to create the multisig address from which funds are being spent signs the transaction in the same way as the first, but this time using the (longer) hex string identifier outputted from the first signing step. The complete command, with private key redacted, and the corresponding output, is shown below.
+
+```
+paicoin-cli signrawtransaction "020000000180c441d5fe90eeffee936d3b32bd326f6b306cab2302f23a912f675fb70c8e2201000000d30048304502210094395ae0a1d5bac4d981b3b2dfd114db877d819a8eb7ef164994869251235864022073d4dc8d59846a75b9d8980a96e088d9eb054c14b29f2deb6d5ae9babe20695a014c875241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752aeffffffff02005a6202000000001976a914901e49db87c87f8b522e86cad5b66781943ef72588ac98929800000000001976a91492eec985767887aa9e209191d2db18806465375b88ac00000000" "[{\"txid\":\"228e0cb75f672f913af20223ab6c306b6f32bd323b6d93eeffee90fed541c480\",\"vout\":1,\"scriptPubKey\":\"a914257481de4b6a4f5030cff147f7480c716d3597ff87\",\"redeemScript\":\"5241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752ae\"}]" "[\"9K3UYBs5uqpfqHVUxQVLaFsPLwuh8aXZn2iaujStArSwSv81iMo\"]"
+{
+  "hex": "020000000180c441d5fe90eeffee936d3b32bd326f6b306cab2302f23a912f675fb70c8e2201000000fd1c010048304502210094395ae0a1d5bac4d981b3b2dfd114db877d819a8eb7ef164994869251235864022073d4dc8d59846a75b9d8980a96e088d9eb054c14b29f2deb6d5ae9babe20695a01483045022100e7aa8115856e55d3feba9d61156477a740d57fa3ca55f1b8173313315c5ba15e02201c88d20e403921b575217eddcd2e814fe808a92ef839686cb8542156ca9aaf9e014c875241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752aeffffffff02005a6202000000001976a914901e49db87c87f8b522e86cad5b66781943ef72588ac98929800000000001976a91492eec985767887aa9e209191d2db18806465375b88ac00000000",
+  "complete": true
+}
+```
+
+The `"complete": true` output indicates the transaction is ready to be publicly broadcast to the network.
 
 ### Send the raw transaction
 
