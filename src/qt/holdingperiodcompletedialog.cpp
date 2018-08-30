@@ -5,7 +5,7 @@
 #include <QUrl>
 
 HoldingPeriodCompleteDialog::HoldingPeriodCompleteDialog(bool needsUpdate, QWidget *parent) :
-    QDialog(parent),
+    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
     ui(new Ui::HoldingPeriodCompleteDialog),
     fNeedsUpdate(needsUpdate)
 {

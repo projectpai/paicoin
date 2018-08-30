@@ -2,7 +2,7 @@
 #include "ui_confirmationdialog.h"
 
 ConfirmationDialog::ConfirmationDialog(const QString &title, QWidget *parent) :
-    QDialog(parent),
+    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
     ui(new Ui::ConfirmationDialog)
 {
     ui->setupUi(this);
