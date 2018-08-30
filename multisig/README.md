@@ -186,7 +186,7 @@ Given the hex string identifier previously outputted from the `createrawtransact
 
 #### Sign transaction with first private key
 
-The private key corresponding to the first public key used to create the multisig address from which funds are being spent signs the transaction as follows. The values of `scriptPubKey` and `redeemScript` can be obtained from the output of the `paicoin-cli listunspent` command and the output of the `paicoin-cli createmultisig`, respectively. 
+The private key corresponding to the first public key used to create the multisig address from which funds are being spent signs the transaction as follows. The values of `scriptPubKey` and `redeemScript` can be obtained from the output of the `paicoin-cli listunspent` command and the output of the `paicoin-cli createmultisig` command, respectively. 
 
 ```
 paicoin-cli signrawtransaction "020000000180c441d5fe90eeffee936d3b32bd326f6b306cab2302f23a912f675fb70c8e220100000000ffffffff02005a6202000000001976a914901e49db87c87f8b522e86cad5b66781943ef72588ac98929800000000001976a91492eec985767887aa9e209191d2db18806465375b88ac00000000" "[{\"txid\":\"228e0cb75f672f913af20223ab6c306b6f32bd323b6d93eeffee90fed541c480\",\"vout\":1,\"scriptPubKey\":\"a914257481de4b6a4f5030cff147f7480c716d3597ff87\",\"redeemScript\":\"5241048cebeb3f66ed8d7d60f9f05bfaa867cf0f4a3974213a72f80f149d52877a1d5d7be4bb7a3c6dc1c9330ad6d930cca058201e6ba90a7777a465f50a58d38c07e14104cfa9429bc27d41a425ebf077a26807f540a40d07ebb3d6db48032e08112a28533712cb90d139334bbd6879b8f9f81dbefe16b2d6337c644ae77cd988120cda4752ae\"}]" "[\"9JsEicNHdZkxYvna5Fo6VUHRe7k5239i2mC2rCTpm7aWbFp33ea\"]"
@@ -194,7 +194,7 @@ paicoin-cli signrawtransaction "020000000180c441d5fe90eeffee936d3b32bd326f6b306c
 
 The final value in brackets is the first private key and is obtained from the `mainnet.privateAddress` field in the output key pair file of `generate-keys.py`.
 
-Execution of this command produces a new hex string identifier, which is then used as input to the second signing step. Note that the `"Operation not valid with the current stack size"` error appears because the transaction has as yet been signed an insufficient number of times to be valid.
+Execution of this command produces a new hex string identifier, which is then used as input to the second signing step. Note that the `"complete": false` and `"error": "Operation not valid with the current stack size"` messages appear because the transaction has, as yet, been signed an insufficient number of times to be valid.
 
 ```
 {
