@@ -124,7 +124,7 @@ Intro::Intro(QWidget *parent) :
 
     ui->lblExplanation1->setText(ui->lblExplanation1->text()
         .arg(tr(PACKAGE_NAME))
-        .arg(tr("PAIcoin"))
+        .arg(tr("PAI Coin"))
     );
 
     uint64_t pruneTarget = std::max<int64_t>(0, gArgs.GetArg("-prune", 0));

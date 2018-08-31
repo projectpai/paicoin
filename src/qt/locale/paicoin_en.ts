@@ -762,8 +762,8 @@ If you do not update the application, your investment will remain in holding.</t
     </message>
     <message>
         <location line="+157"/>
-        <source>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %2 initially launched.</source>
-        <translation>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %2 initially launched.</translation>
+        <source>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %1 initially launched.</source>
+        <translation>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %1 initially launched.</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -781,13 +781,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>Use a custom data directory:</translation>
     </message>
     <message>
-        <location filename="../intro.cpp" line="+17"/>
-        <source>PAIcoin</source>
-        <translatorcomment>Should be changed to PAI Coin</translatorcomment>
-        <translation type="unfinished">PAIcoin</translation>
-    </message>
-    <message>
-        <location line="+10"/>
+        <location filename="../intro.cpp" line="+27"/>
         <source>Approximately %1 GB of data will be stored in this directory.</source>
         <translation>Approximately %1 GB of data will be stored in this directory.</translation>
     </message>
@@ -797,7 +791,12 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>The blockchain data will be stored in this directory, and it will grow over time.</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="-5"/>
+        <source>PAI Coin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>%1 will download and store a copy of the PAI Coin blockchain.</source>
         <translation>%1 will download and store a copy of the PAI Coin blockchain.</translation>
     </message>
@@ -1370,17 +1369,17 @@ If you do not update the application, your investment will remain in holding.</t
 <context>
     <name>PAIcoinGUI</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+447"/>
+        <location filename="../paicoingui.cpp" line="+450"/>
         <source>Sign &amp;message...</source>
         <translation>Sign &amp;message...</translation>
     </message>
     <message>
-        <location line="+656"/>
+        <location line="+758"/>
         <source>Synchronizing with network...</source>
         <translation>Synchronizing with network...</translation>
     </message>
     <message>
-        <location line="-736"/>
+        <location line="-838"/>
         <source>&amp;Overview</source>
         <translation>&amp;Overview</translation>
     </message>
@@ -1505,7 +1504,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>Open a paicoin:// URI or payment request</translation>
     </message>
     <message>
-        <location line="+316"/>
+        <location line="+418"/>
         <source>PIN Set</source>
         <translation>PIN Set</translation>
     </message>
@@ -1540,7 +1539,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>Reindexing blocks on disk...</translation>
     </message>
     <message>
-        <location line="-739"/>
+        <location line="-841"/>
         <source>Send coins to a PAI Coin address</source>
         <translation>Send coins to a PAI Coin address</translation>
     </message>
@@ -1611,21 +1610,22 @@ If you do not update the application, your investment will remain in holding.</t
     </message>
     <message>
         <location line="+14"/>
+        <location line="+70"/>
         <source>&amp;Settings</source>
         <translation>&amp;Settings</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="-57"/>
         <source>&amp;Help</source>
         <translation>&amp;Help</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+81"/>
         <source>Tabs toolbar</source>
         <translation>Tabs toolbar</translation>
     </message>
     <message>
-        <location line="-98"/>
+        <location line="-164"/>
         <source>Show the list of used sending addresses and labels</source>
         <translation>Show the list of used sending addresses and labels</translation>
     </message>
@@ -1640,7 +1640,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>&amp;Command-line options</translation>
     </message>
     <message numerus="yes">
-        <location line="+564"/>
+        <location line="+666"/>
         <source>%n active connection(s) to PAI Coin network</source>
         <translation>
             <numerusform>%n active connection to PAI Coin network</numerusform>
@@ -1686,17 +1686,17 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>Up to date</translation>
     </message>
     <message>
-        <location line="-661"/>
+        <location line="-763"/>
         <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
         <translation>Show the %1 help message to get a list with possible PAI Coin command-line options</translation>
     </message>
     <message>
-        <location line="+213"/>
+        <location line="+279"/>
         <source>%1 client</source>
         <translation>%1 client</translation>
     </message>
     <message>
-        <location line="+434"/>
+        <location line="+470"/>
         <source>Connecting to peers...</source>
         <translation>Connecting to peers...</translation>
     </message>
@@ -2873,7 +2873,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>SendCoinsDialog</name>
     <message>
         <location filename="../forms/sendcoinsdialog.ui" line="+14"/>
-        <location filename="../sendcoinsdialog.cpp" line="+615"/>
+        <location filename="../sendcoinsdialog.cpp" line="+612"/>
         <source>Send Coins</source>
         <translation>Send Coins</translation>
     </message>
@@ -3059,7 +3059,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>S&amp;end</translation>
     </message>
     <message>
-        <location filename="../sendcoinsdialog.cpp" line="-522"/>
+        <location filename="../sendcoinsdialog.cpp" line="-519"/>
         <source>Copy quantity</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3117,7 +3117,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+12"/>
         <source>Total Amount %1</source>
         <translation type="unfinished"></translation>
     </message>
