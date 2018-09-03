@@ -171,7 +171,7 @@
     </message>
     <message>
         <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PAICOINS&lt;/b&gt;!</source>
-        <translation>警告: もしもあなたのウォレットを暗号化してパスフレーズを失ってしまったなら、&lt;b&gt;あなたの PAI Coin はすべて失われます&lt;/b&gt;!</translation>
+        <translation type="vanished">警告: もしもあなたのウォレットを暗号化してパスフレーズを失ってしまったなら、&lt;b&gt;あなたの PAI Coin はすべて失われます&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
@@ -183,7 +183,7 @@
     </message>
     <message>
         <source>%1 will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your paicoins from being stolen by malware infecting your computer.</source>
-        <translation>暗号化処理を完了させるため %1 をいますぐ終了します。ウォレットの暗号化では、コンピュータに感染したマルウェアなどによるビットコインの盗難から完全に守ることはできないことにご注意ください。</translation>
+        <translation type="vanished">暗号化処理を完了させるため %1 をいますぐ終了します。ウォレットの暗号化では、コンピュータに感染したマルウェアなどによるビットコインの盗難から完全に守ることはできないことにご注意ください。</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
@@ -220,6 +220,14 @@
     <message>
         <source>Warning: The Caps Lock key is on!</source>
         <translation>警告: Caps Lock キーがオンになっています!</translation>
+    </message>
+    <message>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PAI COINS&lt;/b&gt;!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your PAI Coins from being stolen by malware infecting your computer.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -562,7 +570,7 @@ You may still send and receive any PAI Coin in your &quot;Available Funds&quot;<
     <name>HoldingPeriodCompleteDialog</name>
     <message>
         <source>Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Holding Period Complete</source>
@@ -574,18 +582,21 @@ You may still send and receive any PAI Coin in your &quot;Available Funds&quot;<
     </message>
     <message>
         <source>Go to Lanier.ai</source>
-        <translation type="unfinished"></translation>
+        <translation>Lanier.aiへ</translation>
     </message>
     <message>
         <source>Not now</source>
-        <translation type="unfinished">今はしない</translation>
+        <translation>今はしない</translation>
     </message>
     <message>
         <source>Please update PAI Coin wallet to unlock your investment.
 You may update by downloading the latest version from Lanier.ai
 
 If you do not update the application, your investment will remain in holding.</source>
-        <translation type="unfinished"></translation>
+        <translation>投資資金にアクセスしたい場合はPAIコインウォレットを更新してください。
+Lanier.aiから最新バージョンをダウンロードしてアップデートすることができます
+
+アプリケーションを更新しないと、投資資金は保留されます。</translation>
     </message>
     <message>
         <source>Congratulations! Your initial PAI Coin investment is now available for transactions.</source>
@@ -604,7 +615,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>As this is the first time the program is launched, you can choose where %1 will store its data.</source>
-        <translation>これはプログラム最初の起動です。%1 がデータを保存する場所を選択して下さい。</translation>
+        <translation>プログラムが起動しますので、＜％1＞がデータを保存する場所を選択することができます。</translation>
     </message>
     <message>
         <source>%1 will download and store a copy of the PAI Coin block chain. At least %2GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
@@ -639,31 +650,35 @@ If you do not update the application, your investment will remain in holding.</s
         </translation>
     </message>
     <message>
-        <source>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %2 initially launched.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>If you have chosen to limit block chain storage (pruning), the historical data must still be downloaded and processed, but will be deleted afterward to keep your disk usage low.</source>
-        <translation type="unfinished"></translation>
+        <translation>ブロックチェーンストレージのプルーニングを併用される場合は、データ履歴はダウンロード・処理されて、ディスク使用を削減するため、その後削除されます。</translation>
     </message>
     <message>
         <source>PAIcoin</source>
-        <translation type="unfinished">PAIcoin</translation>
+        <translation type="obsolete">PAIcoin</translation>
     </message>
     <message>
         <source>The blockchain data will be stored in this directory, and it will grow over time.</source>
-        <translation type="unfinished"></translation>
+        <translation>ブロックチェーンのデータはこのディレクトリーに保存され、時間が経つと大きくなります。</translation>
     </message>
     <message>
         <source>Approximately %1 GB of data will be stored in this directory.</source>
-        <translation type="unfinished"></translation>
+        <translation>約％1GBのデータがこのディレクトリーに保存されます。</translation>
     </message>
     <message>
         <source>%1 will download and store a copy of the PAI Coin blockchain.</source>
-        <translation type="unfinished"></translation>
+        <translation>％1はPAIコインブロックチェーンのコピーをダウンロードして保存します。</translation>
     </message>
     <message>
         <source>The wallet will also be stored in this directory.</source>
+        <translation>ウォレットもこのディレクトリーに格納されます。</translation>
+    </message>
+    <message>
+        <source>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %1 initially launched.</source>
+        <translation>OKを選択すると、％2が起動したときに最も早いトランザクションから％2ブロックチェーンをダウンロードし始め、処理します。</translation>
+    </message>
+    <message>
+        <source>PAI Coin</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -679,7 +694,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Attempting to spend paicoins that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
-        <translation>まだ表示されていないトランザクションが影響するビットコインを使用しようとすると、ネットワークから認証がなされないでしょう。</translation>
+        <translation type="vanished">まだ表示されていないトランザクションが影響するビットコインを使用しようとすると、ネットワークから認証がなされないでしょう。</translation>
     </message>
     <message>
         <source>Number of blocks left</source>
@@ -716,6 +731,10 @@ If you do not update the application, your investment will remain in holding.</s
     <message>
         <source>Unknown. Syncing Headers (%1)...</source>
         <translation>未知。ヘッダを同期しています (%1)...</translation>
+    </message>
+    <message>
+        <source>Attempting to spend PAI Coins that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1108,11 +1127,11 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Days left in holding:</source>
-        <translation type="unfinished"></translation>
+        <translation>保留期間残り時間：</translation>
     </message>
     <message>
         <source>days</source>
-        <translation type="unfinished"></translation>
+        <translation>日：</translation>
     </message>
     <message>
         <source>Funds in Holding:</source>
@@ -1251,7 +1270,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <translation type="vanished">PAIcoin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -1355,15 +1374,15 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Error</source>
-        <translation>エラー</translation>
+        <translation type="vanished">エラー</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>警告</translation>
+        <translation type="vanished">警告</translation>
     </message>
     <message>
         <source>Information</source>
-        <translation>情報</translation>
+        <translation type="vanished">情報</translation>
     </message>
     <message>
         <source>Up to date</source>
@@ -1445,19 +1464,19 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Request payments (generates QR codes and paicoin:// URIs)</source>
-        <translation type="unfinished"></translation>
+        <translation>お支払いをリクエストする（QRコードとpaicoin：// URIを生成する）</translation>
     </message>
     <message>
         <source>&amp;View Investor Key</source>
-        <translation type="unfinished"></translation>
+        <translation>投資家キーを見る</translation>
     </message>
     <message>
         <source>View Investor Key</source>
-        <translation type="unfinished"></translation>
+        <translation>投資家キーを見る</translation>
     </message>
     <message>
         <source>Open a paicoin:// URI or payment request</source>
-        <translation type="unfinished"></translation>
+        <translation>PAIコインを開く:// URIとお支払いリクエスト</translation>
     </message>
     <message>
         <source>PIN Set</source>
@@ -1465,30 +1484,30 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Paper Key Complete</source>
-        <translation type="unfinished"></translation>
+        <translation>復元フレーズ完了</translation>
     </message>
     <message>
         <source>Wallet Restored</source>
-        <translation type="unfinished"></translation>
+        <translation>ウォレット復元</translation>
     </message>
     <message>
         <source>&amp;Review Paper Key</source>
-        <translation type="unfinished">復元フレーズを確認する</translation>
+        <translation type="unfinished">&amp;復元フレーズを確認する</translation>
     </message>
     <message>
         <source>Review Paper Key</source>
-        <translation type="unfinished">復元フレーズを確認する</translation>
+        <translation>復元フレーズを確認する</translation>
     </message>
 </context>
 <context>
     <name>PaperKeyCompletionPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">フォーム</translation>
+        <translation>フォーム</translation>
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>復元フレーズ</translation>
     </message>
     <message>
         <source>To make sure everything was written down correctly, please enter the following words from your paper key.</source>
@@ -1507,11 +1526,11 @@ If you do not update the application, your investment will remain in holding.</s
     <name>PaperKeyIntroPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">フォーム</translation>
+        <translation>フォーム</translation>
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>復元フレーズ</translation>
     </message>
     <message>
         <source>Your paper key is the only way to restore your PAI Coin Wallet if your device is lost, stolen, broken, or updated.
@@ -1530,11 +1549,11 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>PaperKeyWritedownPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">フォーム</translation>
+        <translation>フォーム</translation>
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>復元フレーズ</translation>
     </message>
     <message>
         <source>Write down each word in order and store it in a safe place</source>
@@ -1756,6 +1775,22 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <source>unknown</source>
         <translation type="unfinished">未確認</translation>
+    </message>
+    <message>
+        <source>PAIcoin</source>
+        <translation type="unfinished">PAIcoin</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation type="unfinished">エラー</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation type="unfinished">警告</translation>
+    </message>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished">情報</translation>
     </message>
 </context>
 <context>
@@ -2284,23 +2319,31 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>RestoreWalletPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">フォーム</translation>
+        <translation>フォーム</translation>
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>復元フレーズ</translation>
     </message>
     <message>
         <source>Enter the Paper Key of the wallet you want to restore</source>
-        <translation type="unfinished"></translation>
+        <translation>復元したいウォレットの復元フレーズを入力してください。</translation>
     </message>
     <message>
         <source>Restore Wallet</source>
-        <translation type="unfinished"></translation>
+        <translation>ウォレットを復元</translation>
     </message>
     <message>
         <source>Word #%1</source>
         <translation>単語#%1</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <source>The Paper Key you entered is invalid. Please double-check each word and try again.</source>
+        <translation>あなたが入力した復元フレーズは無効です。各単語を再確認の上、もう一度お試しください。</translation>
     </message>
 </context>
 <context>
@@ -2646,7 +2689,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>The fee will be deducted from the amount being sent. The recipient will receive less paicoins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
-        <translation>送金する金額から手数料が差し引かれます。受取人は数量フィールドで指定した量よりも少ないビットコインを受け取ります。受取人が複数いる場合には、手数料は均等割されます。</translation>
+        <translation type="vanished">送金する金額から手数料が差し引かれます。受取人は数量フィールドで指定した量よりも少ないビットコインを受け取ります。受取人が複数いる場合には、手数料は均等割されます。</translation>
     </message>
     <message>
         <source>S&amp;ubtract fee from amount</source>
@@ -2688,6 +2731,10 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <source>A message that was attached to the paicoin:// URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive less PAI Coins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SendConfirmationDialog</name>
@@ -2708,7 +2755,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Your PIN will be used to unlock your PAI Coin Wallet and send money. Use only numbers to create your PIN.</source>
-        <translation type="unfinished"></translation>
+        <translation>あなたのPINは、PAIコインウォレットのロックを解除したり、お金を送金するために使用されます。数字を使ってPINを作成してください。</translation>
     </message>
     <message>
         <source>Remember this PIN. If you forget it, you won&apos;t be able to access your PAIcoin</source>
@@ -2750,7 +2797,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>You can sign messages/agreements with your addresses to prove you can receive paicoins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
-        <translation>あなたの所有しているアドレスによりメッセージや合意書に署名をすることで、それらアドレスに対して送られたビットコインを受け取ることができることを証明できます。フィッシング攻撃により不正にあなたの識別情報を署名させられてしまうことを防ぐために、不明確なものやランダムなものに対して署名しないよう注意してください。合意することが可能な、よく詳細の記された文言にのみ署名するようにしてください。</translation>
+        <translation type="vanished">あなたの所有しているアドレスによりメッセージや合意書に署名をすることで、それらアドレスに対して送られたビットコインを受け取ることができることを証明できます。フィッシング攻撃により不正にあなたの識別情報を署名させられてしまうことを防ぐために、不明確なものやランダムなものに対して署名しないよう注意してください。合意することが可能な、よく詳細の記された文言にのみ署名するようにしてください。</translation>
     </message>
     <message>
         <source>The PAI Coin address to sign the message with</source>
@@ -2875,6 +2922,10 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <source>Message verified.</source>
         <translation>メッセージは検証されました。</translation>
+    </message>
+    <message>
+        <source>You can sign messages/agreements with your addresses to prove you can receive PAI Coins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3397,15 +3448,27 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>ViewInvestorKeyDialog</name>
     <message>
         <source>View Investor Key</source>
-        <translation type="unfinished"></translation>
+        <translation>投資家キーをみる</translation>
     </message>
     <message>
         <source>Investor key copied</source>
-        <translation type="unfinished"></translation>
+        <translation>投資家キーコピーされました</translation>
     </message>
     <message>
         <source>Copy Investor Key</source>
+        <translation>投資家キーをコピー</translation>
+    </message>
+    <message>
+        <source>Investor key:</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Investor key copied!</source>
+        <translation type="unfinished">投資家キーコピーされました</translation>
     </message>
 </context>
 <context>
@@ -3532,11 +3595,11 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Easy Setup</source>
-        <translation type="unfinished"></translation>
+        <translation>簡単セットアップ</translation>
     </message>
     <message>
         <source>Advanced Setup</source>
-        <translation type="unfinished"></translation>
+        <translation>高度セットアップ</translation>
     </message>
     <message>
         <source>  By using this application I agree to the &lt;a href=&quot;https://paiup.com/terms-of-service.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://paiup.com/privacy-policy.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</source>
@@ -4172,7 +4235,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Username for JSON-RPC connections</source>
-        <translation>JSON-RPC 接続のユーザー名</translation>
+        <translation type="unfinished">JSON-RPC 接続のユーザー名</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -4528,7 +4591,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Copyright (C)</source>
-        <translation type="unfinished"></translation>
+        <translation>著作権（C)</translation>
     </message>
     <message>
         <source>Error loading %s: You can&apos;t disable HD on an already existing HD wallet</source>

@@ -803,7 +803,7 @@ If you do not update the application, your investment will remain in holding.</t
     <message>
         <location line="+2"/>
         <source>The wallet will also be stored in this directory.</source>
-        <translation type="unfinished">The wallet will also be stored in this directory.</translation>
+        <translation>The wallet will also be stored in this directory.</translation>
     </message>
     <message>
         <location line="+75"/>
@@ -1476,12 +1476,12 @@ If you do not update the application, your investment will remain in holding.</t
     <message>
         <location line="+2"/>
         <source>&amp;Review Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Review Paper Key</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Review Paper Key</source>
-        <translation type="unfinished">Review Paper Key</translation>
+        <translation>Review Paper Key</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -2861,12 +2861,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+127"/>
         <source>Warning</source>
-        <translation type="unfinished">Warning</translation>
+        <translation>Warning</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The Paper Key you entered is invalid. Please double-check each word and try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>The Paper Key you entered is invalid. Please double-check each word and try again.</translation>
     </message>
 </context>
 <context>
@@ -5464,7 +5464,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+9"/>
         <source>Copyright (C)</source>
-        <translation type="unfinished">Copyright (C)</translation>
+        <translation>Copyright (C)</translation>
     </message>
     <message>
         <location line="+11"/>
