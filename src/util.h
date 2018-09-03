@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <cstddef>
 
 #include <boost/signals2/signal.hpp>
 
@@ -325,5 +326,14 @@ template <typename Callable> void TraceThread(const char* name,  Callable func)
 }
 
 std::string CopyrightHolders(const std::string& strPrefix);
+
+/**
+ * Returns the size of a container in bytes.
+ */
+template <typename C>
+std::size_t sizeInBytes(const C& c)
+{
+    return c.size() * sizeof(typename C::value_type);
+}
 
 #endif // PAICOIN_UTIL_H

@@ -159,6 +159,8 @@ PAICOIN_CORE_H = \
   validation.h \
   validationinterface.h \
   versionbits.h \
+  wallet/bip39mnemonic.h \
+  wallet/bip39words.h \
   wallet/coincontrol.h \
   wallet/crypter.h \
   wallet/db.h \
@@ -240,6 +242,8 @@ endif
 libpaicoin_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES)
 libpaicoin_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpaicoin_wallet_a_SOURCES = \
+  wallet/bip39mnemonic.cpp \
+  wallet/bip39words.cpp \
   wallet/crypter.cpp \
   wallet/db.cpp \
   wallet/feebumper.cpp \
