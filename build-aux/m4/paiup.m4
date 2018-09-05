@@ -54,7 +54,7 @@ AC_DEFUN([PAICOIN_QT_INIT],[
   dnl enable qt support
   AC_ARG_WITH([gui],
     [AS_HELP_STRING([--with-gui@<:@=no|qt5|auto@:>@],
-    [build paiup GUI (default=no)])],
+    [build paiup GUI (default=auto)])],
     [
      paiup_want_version=$withval
      if test x$paiup_want_version = xyes; then
@@ -62,7 +62,7 @@ AC_DEFUN([PAICOIN_QT_INIT],[
        paiup_want_version=auto
      fi
     ],
-    [paiup_want_version=no])
+    [paiup_want_version=auto])
 
   AC_ARG_WITH([qt-incdir],[AS_HELP_STRING([--with-qt-incdir=INC_DIR],[specify qt include path (overridden by pkgconfig)])], [qt_include_path=$withval], [])
   AC_ARG_WITH([qt-libdir],[AS_HELP_STRING([--with-qt-libdir=LIB_DIR],[specify qt lib path (overridden by pkgconfig)])], [qt_lib_path=$withval], [])
