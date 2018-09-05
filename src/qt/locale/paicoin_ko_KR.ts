@@ -564,7 +564,7 @@ You may still send and receive any PAI Coin in your &quot;Available Funds&quot;<
     <name>HoldingPeriodCompleteDialog</name>
     <message>
         <source>Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Holding Period Complete</source>
@@ -576,7 +576,7 @@ You may still send and receive any PAI Coin in your &quot;Available Funds&quot;<
     </message>
     <message>
         <source>Go to Lanier.ai</source>
-        <translation type="unfinished"></translation>
+        <translation>Lanier.ai로 가기</translation>
     </message>
     <message>
         <source>Not now</source>
@@ -587,7 +587,10 @@ You may still send and receive any PAI Coin in your &quot;Available Funds&quot;<
 You may update by downloading the latest version from Lanier.ai
 
 If you do not update the application, your investment will remain in holding.</source>
-        <translation>투자 잠금을 해제하려면 PAI UP 을 업데이트 해주세요. 앱을 업데이트 하지 않을 경우 당신의 투자는 보류 될 것입니다.</translation>
+        <translation>&quot;투자자금에 접속하시고 싶으시다면, PAI 코인 월렛을 업데이트 해주세요. 
+Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
+
+애플리케이션을 업데이트하지 않으시면, 투자자금은 보류됩니다.&quot;</translation>
     </message>
     <message>
         <source>Congratulations! Your initial PAI Coin investment is now available for transactions.</source>
@@ -606,8 +609,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>As this is the first time the program is launched, you can choose where %1 will store its data.</source>
-        <translatorcomment>String update needed</translatorcomment>
-        <translation type="unfinished">프로그램이 처음으로 실행되고 있습니다. %1가 어디에 데이터를 저장할지 선택할 수 있습니다.</translation>
+        <translation>프로그램을 처음 작동하는 것이므로, 어느 곳에 1%의 데이터를 보존할 지 선택하실 수 있습니다.</translation>
     </message>
     <message>
         <source>%1 will download and store a copy of the PAI Coin block chain. At least %2GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
@@ -647,7 +649,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>If you have chosen to limit block chain storage (pruning), the historical data must still be downloaded and processed, but will be deleted afterward to keep your disk usage low.</source>
-        <translation type="unfinished"></translation>
+        <translation>블록체인 저장 공간을 제한하기로 선택한 경우에는 실행 기록 데이터를 다운로드하여 처리해야하나, 나중에 디스크 사용을 낮추기 위해 삭제됩니다. </translation>
     </message>
     <message>
         <source>PAIcoin</source>
@@ -655,19 +657,19 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>The blockchain data will be stored in this directory, and it will grow over time.</source>
-        <translation type="unfinished"></translation>
+        <translation>블록체인의 데이터는 이 디렉토리에 저장되며, 시간이 지나면 더욱 커집니다.</translation>
     </message>
     <message>
         <source>Approximately %1 GB of data will be stored in this directory.</source>
-        <translation type="unfinished"></translation>
+        <translation>약 1%의 데이터가 이 디렉토리에 저장됩니다.</translation>
     </message>
     <message>
         <source>%1 will download and store a copy of the PAI Coin blockchain.</source>
-        <translation type="unfinished"></translation>
+        <translation>1%가 다운로드 되고, PAI코인 블록체인에 저장됩니다.</translation>
     </message>
     <message>
         <source>The wallet will also be stored in this directory.</source>
-        <translation type="unfinished"></translation>
+        <translation>월렛 또한, 이 디렉토리에 저장됩니다.</translation>
     </message>
 </context>
 <context>
@@ -1111,11 +1113,11 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Days left in holding:</source>
-        <translation type="unfinished"></translation>
+        <translation>보류기간까지 남은시간:</translation>
     </message>
     <message>
         <source>days</source>
-        <translation type="unfinished"></translation>
+        <translation>날:</translation>
     </message>
     <message>
         <source>Funds in Holding:</source>
@@ -1448,19 +1450,19 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Request payments (generates QR codes and paicoin:// URIs)</source>
-        <translation type="unfinished"></translation>
+        <translation>지불 요청(QR코드와 PAI 코인: // URI를 생성</translation>
     </message>
     <message>
         <source>&amp;View Investor Key</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;투자자키 보기</translation>
     </message>
     <message>
         <source>View Investor Key</source>
-        <translation type="unfinished"></translation>
+        <translation>투자자키 보기</translation>
     </message>
     <message>
         <source>Open a paicoin:// URI or payment request</source>
-        <translation type="unfinished"></translation>
+        <translation>PAI코인을 열기:// URI나 지불 요청</translation>
     </message>
     <message>
         <source>PIN Set</source>
@@ -1468,19 +1470,19 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Paper Key Complete</source>
-        <translation type="unfinished"></translation>
+        <translation>종이 키 완료</translation>
     </message>
     <message>
         <source>Wallet Restored</source>
-        <translation type="unfinished"></translation>
+        <translation>월렛 복구</translation>
     </message>
     <message>
         <source>&amp;Review Paper Key</source>
-        <translation type="unfinished">종이 키 확인하기</translation>
+        <translation>&amp;종이 키 확인하기</translation>
     </message>
     <message>
         <source>Review Paper Key</source>
-        <translation type="unfinished">종이 키 확인하기</translation>
+        <translation>종이 키 확인하기</translation>
     </message>
 </context>
 <context>
@@ -1491,7 +1493,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>종이 키 </translation>
     </message>
     <message>
         <source>To make sure everything was written down correctly, please enter the following words from your paper key.</source>
@@ -1510,11 +1512,11 @@ If you do not update the application, your investment will remain in holding.</s
     <name>PaperKeyIntroPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">유형</translation>
+        <translation>유형</translation>
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>종이 키 </translation>
     </message>
     <message>
         <source>Your paper key is the only way to restore your PAI Coin Wallet if your device is lost, stolen, broken, or updated.
@@ -1533,11 +1535,11 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>PaperKeyWritedownPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">유형</translation>
+        <translation>유형</translation>
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>종이 키 </translation>
     </message>
     <message>
         <source>Write down each word in order and store it in a safe place</source>
@@ -2287,23 +2289,23 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>RestoreWalletPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">유형</translation>
+        <translation>유형</translation>
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>종이 키 </translation>
     </message>
     <message>
         <source>Enter the Paper Key of the wallet you want to restore</source>
-        <translation type="unfinished"></translation>
+        <translation>복구하고 싶은 월렛의 종이 키를 입력해 주세요.</translation>
     </message>
     <message>
         <source>Restore Wallet</source>
-        <translation type="unfinished"></translation>
+        <translation>월렛을 복구</translation>
     </message>
     <message>
         <source>Word #%1</source>
-        <translation type="unfinished">단어 #%1</translation>
+        <translation>단어 #%1</translation>
     </message>
 </context>
 <context>
@@ -2703,7 +2705,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>SetPinPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">유형</translation>
+        <translation>유형</translation>
     </message>
     <message>
         <source>Set PIN</source>
@@ -2711,7 +2713,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Your PIN will be used to unlock your PAI Coin Wallet and send money. Use only numbers to create your PIN.</source>
-        <translation type="unfinished"></translation>
+        <translation>귀하의 PIN은 귀하의 PAI코인 월렛을 열고 코인을 보내기 위해 사용됩니다. PIN은 오직 숫자로만 생성해 주세요.</translation>
     </message>
     <message>
         <source>Remember this PIN. If you forget it, you won&apos;t be able to access your PAIcoin</source>
@@ -3400,15 +3402,15 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>ViewInvestorKeyDialog</name>
     <message>
         <source>View Investor Key</source>
-        <translation type="unfinished"></translation>
+        <translation>투자자 키 보기</translation>
     </message>
     <message>
         <source>Investor key copied</source>
-        <translation type="unfinished"></translation>
+        <translation>투자자 키가 복사됨</translation>
     </message>
     <message>
         <source>Copy Investor Key</source>
-        <translation type="unfinished"></translation>
+        <translation>투자자 키 복사</translation>
     </message>
 </context>
 <context>
@@ -3477,7 +3479,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Restore Wallet</source>
-        <translation type="unfinished"></translation>
+        <translation>월렛을 복구</translation>
     </message>
 </context>
 <context>
@@ -3535,15 +3537,15 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Easy Setup</source>
-        <translation type="unfinished"></translation>
+        <translation>간단한 셋업</translation>
     </message>
     <message>
         <source>Advanced Setup</source>
-        <translation type="unfinished"></translation>
+        <translation>고급 셋업</translation>
     </message>
     <message>
         <source>  By using this application I agree to the &lt;a href=&quot;https://paiup.com/terms-of-service.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://paiup.com/privacy-policy.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>이 어플리케이션을 사용함으로 저는 이 약관에 동의합니다. &lt;a href=&quot;https://paiup.com/terms-of-service.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://paiup.com/privacy-policy.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</translation>
     </message>
 </context>
 <context>
@@ -4526,7 +4528,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Copyright (C)</source>
-        <translation type="unfinished"></translation>
+        <translation>저작권 (C)</translation>
     </message>
     <message>
         <source>Error loading %s: You can&apos;t disable HD on an already existing HD wallet</source>

@@ -171,7 +171,7 @@
     </message>
     <message>
         <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PAICOINS&lt;/b&gt;!</source>
-        <translation>警告: 如果把錢包加密後又忘記密碼，你就會從此&lt;b&gt;失去其中所有的 PAI Coin 了&lt;/b&gt;！</translation>
+        <translation type="vanished">警告: 如果把錢包加密後又忘記密碼，你就會從此&lt;b&gt;失去其中所有的 PAI Coin 了&lt;/b&gt;！</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
@@ -183,7 +183,7 @@
     </message>
     <message>
         <source>%1 will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your paicoins from being stolen by malware infecting your computer.</source>
-        <translation>%1 現在要關閉，好完成加密程序。請注意，加密錢包不能完全防止入侵你的電腦的惡意程式偷取錢幣。</translation>
+        <translation type="vanished">%1 現在要關閉，好完成加密程序。請注意，加密錢包不能完全防止入侵你的電腦的惡意程式偷取錢幣。</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
@@ -220,6 +220,14 @@
     <message>
         <source>Warning: The Caps Lock key is on!</source>
         <translation>警告: 大寫字母鎖定作用中！</translation>
+    </message>
+    <message>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PAI COINS&lt;/b&gt;!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your PAI Coins from being stolen by malware infecting your computer.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -561,7 +569,7 @@ You may still send and receive any PAI Coin in your &quot;Available Funds&quot;<
     <name>HoldingPeriodCompleteDialog</name>
     <message>
         <source>Dialog</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Holding Period Complete</source>
@@ -573,7 +581,7 @@ You may still send and receive any PAI Coin in your &quot;Available Funds&quot;<
     </message>
     <message>
         <source>Go to Lanier.ai</source>
-        <translation type="unfinished"></translation>
+        <translation>(訪問Lanier.ai)</translation>
     </message>
     <message>
         <source>Not now</source>
@@ -584,7 +592,11 @@ You may still send and receive any PAI Coin in your &quot;Available Funds&quot;<
 You may update by downloading the latest version from Lanier.ai
 
 If you do not update the application, your investment will remain in holding.</source>
-        <translation type="unfinished"></translation>
+        <translation>請更新PAI幣錢包來解鎖您的投資。
+您可以從Lanier.ai上下載最新版本來完成更新
+
+
+如果您不更新應用程序，您的投資將被繼續持倉。</translation>
     </message>
     <message>
         <source>Congratulations! Your initial PAI Coin investment is now available for transactions.</source>
@@ -603,7 +615,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>As this is the first time the program is launched, you can choose where %1 will store its data.</source>
-        <translation type="unfinished">因為這是程式第一次啓動，你可以選擇 %1 儲存資料的地方。</translation>
+        <translation>由於這是第一次啟動程序，您可以選擇在1％的位置存儲數據。</translation>
     </message>
     <message>
         <source>%1 will download and store a copy of the PAI Coin block chain. At least %2GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
@@ -638,31 +650,35 @@ If you do not update the application, your investment will remain in holding.</s
         </translation>
     </message>
     <message>
-        <source>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %2 initially launched.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>If you have chosen to limit block chain storage (pruning), the historical data must still be downloaded and processed, but will be deleted afterward to keep your disk usage low.</source>
-        <translation type="unfinished"></translation>
+        <translation>如果您已選擇限制區塊鏈的存儲（縮減），則仍需下載和處理歷史數據，但這些數據之後會被刪除，以此降低磁盤使用率。</translation>
     </message>
     <message>
         <source>PAIcoin</source>
-        <translation type="unfinished">PAIcoin</translation>
+        <translation type="obsolete">PAIcoin</translation>
     </message>
     <message>
         <source>The blockchain data will be stored in this directory, and it will grow over time.</source>
-        <translation type="unfinished"></translation>
+        <translation>區塊鏈數據將存儲在此目錄中，並隨著時間的推移而增多。</translation>
     </message>
     <message>
         <source>Approximately %1 GB of data will be stored in this directory.</source>
-        <translation type="unfinished"></translation>
+        <translation>大約％1 GB的數據將存儲在該目錄中。</translation>
     </message>
     <message>
         <source>%1 will download and store a copy of the PAI Coin blockchain.</source>
-        <translation type="unfinished"></translation>
+        <translation>將下載％1並存儲一個PAI幣區塊鏈副本。</translation>
     </message>
     <message>
         <source>The wallet will also be stored in this directory.</source>
+        <translation>錢包也將存儲在該目錄中。</translation>
+    </message>
+    <message>
+        <source>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %1 initially launched.</source>
+        <translation>當您單擊“確定”時，將開始下載％1並處理完整的％2區塊鏈，從初始啟動％2時的最早交易開始。</translation>
+    </message>
+    <message>
+        <source>PAI Coin</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -678,7 +694,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Attempting to spend paicoins that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
-        <translation>使用還沒顯示出來的交易所影響到的 paicoin 可能會不被網路所接受。</translation>
+        <translation type="vanished">使用還沒顯示出來的交易所影響到的 paicoin 可能會不被網路所接受。</translation>
     </message>
     <message>
         <source>Number of blocks left</source>
@@ -715,6 +731,10 @@ If you do not update the application, your investment will remain in holding.</s
     <message>
         <source>Unknown. Syncing Headers (%1)...</source>
         <translation>不明。正在同步前導資料(%1)中...</translation>
+    </message>
+    <message>
+        <source>Attempting to spend PAI Coins that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1107,11 +1127,11 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Days left in holding:</source>
-        <translation type="unfinished"></translation>
+        <translation>剩餘持倉天數：</translation>
     </message>
     <message>
         <source>days</source>
-        <translation type="unfinished"></translation>
+        <translation>天</translation>
     </message>
     <message>
         <source>Funds in Holding:</source>
@@ -1250,7 +1270,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <translation type="vanished">PAIcoin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -1354,15 +1374,15 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Error</source>
-        <translation>錯誤</translation>
+        <translation type="vanished">錯誤</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>警告</translation>
+        <translation type="vanished">警告</translation>
     </message>
     <message>
         <source>Information</source>
-        <translation>資訊</translation>
+        <translation type="vanished">資訊</translation>
     </message>
     <message>
         <source>Up to date</source>
@@ -1444,19 +1464,19 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Request payments (generates QR codes and paicoin:// URIs)</source>
-        <translation type="unfinished"></translation>
+        <translation>請求付款（生成二維碼和PAI幣：// URIs）</translation>
     </message>
     <message>
         <source>&amp;View Investor Key</source>
-        <translation type="unfinished"></translation>
+        <translation>＆查看投資人密鑰</translation>
     </message>
     <message>
         <source>View Investor Key</source>
-        <translation type="unfinished"></translation>
+        <translation>查看投資人密鑰</translation>
     </message>
     <message>
         <source>Open a paicoin:// URI or payment request</source>
-        <translation type="unfinished"></translation>
+        <translation>打開paicoin：// URI或付款請求</translation>
     </message>
     <message>
         <source>PIN Set</source>
@@ -1464,30 +1484,30 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Paper Key Complete</source>
-        <translation type="unfinished"></translation>
+        <translation>助記詞完成</translation>
     </message>
     <message>
         <source>Wallet Restored</source>
-        <translation type="unfinished"></translation>
+        <translation>錢包已恢復</translation>
     </message>
     <message>
         <source>&amp;Review Paper Key</source>
-        <translation type="unfinished">查看密鑰</translation>
+        <translation>查看密鑰</translation>
     </message>
     <message>
         <source>Review Paper Key</source>
-        <translation type="unfinished">查看密鑰</translation>
+        <translation>查看密鑰</translation>
     </message>
 </context>
 <context>
     <name>PaperKeyCompletionPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">表單</translation>
+        <translation>表單</translation>
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>助記詞</translation>
     </message>
     <message>
         <source>To make sure everything was written down correctly, please enter the following words from your paper key.</source>
@@ -1506,11 +1526,11 @@ If you do not update the application, your investment will remain in holding.</s
     <name>PaperKeyIntroPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">表單</translation>
+        <translation>表單</translation>
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>助記詞</translation>
     </message>
     <message>
         <source>Your paper key is the only way to restore your PAI Coin Wallet if your device is lost, stolen, broken, or updated.
@@ -1529,11 +1549,11 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>PaperKeyWritedownPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">表單</translation>
+        <translation>表單</translation>
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>助記詞</translation>
     </message>
     <message>
         <source>Write down each word in order and store it in a safe place</source>
@@ -1755,6 +1775,22 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <source>unknown</source>
         <translation type="unfinished">未知</translation>
+    </message>
+    <message>
+        <source>PAIcoin</source>
+        <translation type="unfinished">PAIcoin</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation type="unfinished">錯誤</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation type="unfinished">警告</translation>
+    </message>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished">資訊</translation>
     </message>
 </context>
 <context>
@@ -2283,23 +2319,31 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>RestoreWalletPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">表單</translation>
+        <translation>表單</translation>
     </message>
     <message>
         <source>Paper Key</source>
-        <translation type="unfinished"></translation>
+        <translation>助記詞</translation>
     </message>
     <message>
         <source>Enter the Paper Key of the wallet you want to restore</source>
-        <translation type="unfinished"></translation>
+        <translation>輸入要還原的錢包的助記詞</translation>
     </message>
     <message>
         <source>Restore Wallet</source>
-        <translation type="unfinished"></translation>
+        <translation>恢復錢包</translation>
     </message>
     <message>
         <source>Word #%1</source>
-        <translation type="unfinished">詞語 #%1</translation>
+        <translation>詞語 #%1</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <source>The Paper Key you entered is invalid. Please double-check each word and try again.</source>
+        <translation>您輸入的助記詞無效,請仔細檢查每個詞語並重試。</translation>
     </message>
 </context>
 <context>
@@ -2645,7 +2689,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>The fee will be deducted from the amount being sent. The recipient will receive less paicoins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
-        <translation>手續費會從要付款出去的金額中扣掉。因此收款人會收到比輸入的金額還要少的 paicoin。如果有多個收款人的話，手續費會平均分配來扣除。</translation>
+        <translation type="vanished">手續費會從要付款出去的金額中扣掉。因此收款人會收到比輸入的金額還要少的 paicoin。如果有多個收款人的話，手續費會平均分配來扣除。</translation>
     </message>
     <message>
         <source>S&amp;ubtract fee from amount</source>
@@ -2687,6 +2731,10 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <source>A message that was attached to the paicoin:// URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive less PAI Coins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SendConfirmationDialog</name>
@@ -2699,7 +2747,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>SetPinPage</name>
     <message>
         <source>Form</source>
-        <translation type="unfinished">表單</translation>
+        <translation>表單</translation>
     </message>
     <message>
         <source>Set PIN</source>
@@ -2707,7 +2755,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Your PIN will be used to unlock your PAI Coin Wallet and send money. Use only numbers to create your PIN.</source>
-        <translation type="unfinished"></translation>
+        <translation>您的PIN碼將用於解鎖您的PAI幣錢包並彙款。只需用數字來創建PIN。</translation>
     </message>
     <message>
         <source>Remember this PIN. If you forget it, you won&apos;t be able to access your PAIcoin</source>
@@ -2749,7 +2797,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>You can sign messages/agreements with your addresses to prove you can receive paicoins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
-        <translation>你可以用自己的位址簽署訊息或合約，來證明你可以從該位址收款。但是請小心，不要簽署語意含糊不清，或隨機產生的內容，因為釣魚式詐騙可能會用騙你簽署的手法來冒充是你。只有在語句中的細節你都同意時才簽署。</translation>
+        <translation type="vanished">你可以用自己的位址簽署訊息或合約，來證明你可以從該位址收款。但是請小心，不要簽署語意含糊不清，或隨機產生的內容，因為釣魚式詐騙可能會用騙你簽署的手法來冒充是你。只有在語句中的細節你都同意時才簽署。</translation>
     </message>
     <message>
         <source>The PAI Coin address to sign the message with</source>
@@ -2874,6 +2922,10 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <source>Message verified.</source>
         <translation>訊息驗證沒錯。</translation>
+    </message>
+    <message>
+        <source>You can sign messages/agreements with your addresses to prove you can receive PAI Coins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3396,14 +3448,26 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <name>ViewInvestorKeyDialog</name>
     <message>
         <source>View Investor Key</source>
-        <translation type="unfinished"></translation>
+        <translation>查看投資人密鑰</translation>
     </message>
     <message>
         <source>Investor key copied</source>
-        <translation type="unfinished"></translation>
+        <translation>投資人密鑰已複製</translation>
     </message>
     <message>
         <source>Copy Investor Key</source>
+        <translation>複製投資人密鑰</translation>
+    </message>
+    <message>
+        <source>Investor key:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Investor key copied!</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3531,15 +3595,15 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Easy Setup</source>
-        <translation type="unfinished"></translation>
+        <translation>輕鬆安裝</translation>
     </message>
     <message>
         <source>Advanced Setup</source>
-        <translation type="unfinished"></translation>
+        <translation>高級設置</translation>
     </message>
     <message>
         <source>  By using this application I agree to the &lt;a href=&quot;https://paiup.com/terms-of-service.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://paiup.com/privacy-policy.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>使用該app時，我同意 &lt;a href=&quot;https://paiup.com/terms-of-service.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Terms of Service&lt;/b&gt;&lt;/a&gt; and &lt;a href=&quot;https://paiup.com/privacy-policy.html&quot; style=&quot;color:black&quot;&gt;&lt;b&gt;Privacy Policy&lt;/b&gt;&lt;/a&gt;</translation>
     </message>
 </context>
 <context>
@@ -4527,7 +4591,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Copyright (C)</source>
-        <translation type="unfinished"></translation>
+        <translation>版權所有（C）</translation>
     </message>
     <message>
         <source>Error loading %s: You can&apos;t disable HD on an already existing HD wallet</source>
