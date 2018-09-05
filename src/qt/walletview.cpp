@@ -290,8 +290,13 @@ void WalletView::unlockWallet()
 
 void WalletView::viewInvestorKey()
 {
-    ViewInvestorKeyDialog dlg(walletModel, this);
-    dlg.exec();
+    ViewInvestorKeyDialog* investorKeyDialog = new ViewInvestorKeyDialog(this);
+    investorKeyDialog->setModel(walletModel);
+
+    investorKeyDialog->setModal(true);
+    investorKeyDialog->show();
+    investorKeyDialog->raise();
+    investorKeyDialog->activateWindow();
 }
 
 void WalletView::reviewPaperKey()
@@ -300,8 +305,8 @@ void WalletView::reviewPaperKey()
     std::string paperKey(secPaperKey.begin(), secPaperKey.end());
 
     QString message = "<style>" \
-                        "table { width: 100%; }"  \
-                        "td { padding-right: 20px; }"  \
+                      "table { width: 100%; }"  \
+                      "td { padding-right: 20px; }"  \
                       "</style>" \
                       "<table><tr>";
 
@@ -313,9 +318,13 @@ void WalletView::reviewPaperKey()
     }
     message += "</tr></table>";
 
-    QMessageBox information(QMessageBox::Icon::Information, tr("Review Paper Key"), message, QMessageBox::Ok);
-    connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), &information, SLOT(reject()));
-    information.exec();
+    QMessageBox* paperKeyDialog = new QMessageBox(QMessageBox::Icon::Information, tr("Review Paper Key"), message, QMessageBox::Ok, this);
+    connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), paperKeyDialog, SLOT(reject()));
+
+    paperKeyDialog->setModal(true);
+    paperKeyDialog->show();
+    paperKeyDialog->raise();
+    paperKeyDialog->activateWindow();
 }
 
 void WalletView::usedSendingAddresses()

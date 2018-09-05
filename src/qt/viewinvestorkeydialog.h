@@ -2,7 +2,8 @@
 #define VIEWINVESTORKEYDIALOG_H
 
 #include <QDialog>
-#include "walletmodel.h"
+
+class WalletModel;
 
 namespace Ui {
 class ViewInvestorKeyDialog;
@@ -13,8 +14,9 @@ class ViewInvestorKeyDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit ViewInvestorKeyDialog(WalletModel *walletModel, QWidget *parent = nullptr);
+    explicit ViewInvestorKeyDialog(QWidget *parent);
     ~ViewInvestorKeyDialog();
+    void setModel(WalletModel *model);
 
 private Q_SLOTS:
     void onCopyInvestorKeyClicked();

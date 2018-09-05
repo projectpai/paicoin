@@ -1,27 +1,33 @@
 #include "viewinvestorkeydialog.h"
 #include "ui_viewinvestorkeydialog.h"
+#include "walletmodel.h"
 
 #include "guiutil.h"
 
 static constexpr int PUBKEY_SPLIT_INDEX = 33;
 
-ViewInvestorKeyDialog::ViewInvestorKeyDialog(WalletModel *walletModel, QWidget *parent) :
+ViewInvestorKeyDialog::ViewInvestorKeyDialog(QWidget *parent) :
     QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
     ui(new Ui::ViewInvestorKeyDialog)
 {
     ui->setupUi(this);
+    setModel(nullptr);
+
+    connect(ui->pushButtonCopyInvestorKey, SIGNAL(clicked()), this, SLOT(onCopyInvestorKeyClicked()));
+}
+
+void ViewInvestorKeyDialog::setModel(WalletModel *model)
+{
     ui->labelTitle->setText(tr("Investor key:"));
 
     CPubKey pubKey;
-    if (walletModel->getInvestorKey(pubKey)) {
+    if (model != nullptr && model->getInvestorKey(pubKey)) {
         investorKey = GUIUtil::formatPubKey(pubKey);
         ui->labelInvestorKey->setText(QString(investorKey).insert(PUBKEY_SPLIT_INDEX, '\n'));
     } else {
         investorKey.clear();
         ui->labelInvestorKey->setText(tr("Unavailable"));
     }
-
-    connect(ui->pushButtonCopyInvestorKey, SIGNAL(clicked()), this, SLOT(onCopyInvestorKeyClicked()));
 }
 
 ViewInvestorKeyDialog::~ViewInvestorKeyDialog()
