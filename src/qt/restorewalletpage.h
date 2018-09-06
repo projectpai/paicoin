@@ -24,12 +24,10 @@ Q_SIGNALS:
     void backToPreviousPage();
     void restoreWallet(std::string phrase);
 
-protected:
-    bool eventFilter(QObject *object, QEvent *event);
-
 private Q_SLOTS:
     void onRestoreWalletClicked();
     void onBackClicked();
+    void hanleLineEdits(const QString&);
 
 private:
     Ui::RestoreWalletPage *ui;

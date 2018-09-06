@@ -11,29 +11,29 @@ RestoreWalletPage::RestoreWalletPage(QWidget *parent) :
 
     QString hintFormat = QString(tr("Word #%1"));
     ui->lineEdit01->setPlaceholderText(hintFormat.arg(QString::number(1)));
-    ui->lineEdit01->installEventFilter(this);
+    connect(ui->lineEdit01, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
     ui->lineEdit02->setPlaceholderText(hintFormat.arg(QString::number(2)));
-    ui->lineEdit02->installEventFilter(this);
+    connect(ui->lineEdit02, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
     ui->lineEdit03->setPlaceholderText(hintFormat.arg(QString::number(3)));
-    ui->lineEdit03->installEventFilter(this);
+    connect(ui->lineEdit03, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
     ui->lineEdit04->setPlaceholderText(hintFormat.arg(QString::number(4)));
-    ui->lineEdit04->installEventFilter(this);
+    connect(ui->lineEdit04, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
     ui->lineEdit05->setPlaceholderText(hintFormat.arg(QString::number(5)));
-    ui->lineEdit05->installEventFilter(this);
+    connect(ui->lineEdit05, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
     ui->lineEdit06->setPlaceholderText(hintFormat.arg(QString::number(6)));
-    ui->lineEdit06->installEventFilter(this);
+    connect(ui->lineEdit06, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
     ui->lineEdit07->setPlaceholderText(hintFormat.arg(QString::number(7)));
-    ui->lineEdit07->installEventFilter(this);
+    connect(ui->lineEdit07, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
     ui->lineEdit08->setPlaceholderText(hintFormat.arg(QString::number(8)));
-    ui->lineEdit08->installEventFilter(this);
+    connect(ui->lineEdit08, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
     ui->lineEdit09->setPlaceholderText(hintFormat.arg(QString::number(9)));
-    ui->lineEdit09->installEventFilter(this);
+    connect(ui->lineEdit09, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
     ui->lineEdit10->setPlaceholderText(hintFormat.arg(QString::number(10)));
-    ui->lineEdit10->installEventFilter(this);
+    connect(ui->lineEdit10, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
     ui->lineEdit11->setPlaceholderText(hintFormat.arg(QString::number(11)));
-    ui->lineEdit11->installEventFilter(this);
+    connect(ui->lineEdit11, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
     ui->lineEdit12->setPlaceholderText(hintFormat.arg(QString::number(12)));
-    ui->lineEdit12->installEventFilter(this);
+    connect(ui->lineEdit12, SIGNAL(textEdited(const QString&)), this,SLOT(hanleLineEdits(const QString&)));
 
     connect(ui->pushButtonBack, SIGNAL(clicked()), this, SLOT(onBackClicked()));
     connect(ui->pushButtonRestoreWallet, SIGNAL(clicked()), this, SLOT(onRestoreWalletClicked()));
@@ -75,39 +75,31 @@ void RestoreWalletPage::clear()
     ui->pushButtonRestoreWallet->setEnabled(false);
 }
 
-bool RestoreWalletPage::eventFilter(QObject *object, QEvent *event)
+void RestoreWalletPage::hanleLineEdits(const QString& text)
 {
-    if (object != nullptr && event != nullptr)
+    QLineEdit* currentLineEdit = static_cast<QLineEdit*>(sender());
+    if (text.isEmpty())
     {
-        if (event->type() == QEvent::FocusOut && typeid(*object) == typeid(QLineEdit))
+        currentLineEdit->setStyleSheet("color:black;selection-background-color: darkgray;");
+        validLineSet.erase(currentLineEdit);
+    }
+    else
+    {
+        if (b39.WordIsValid(currentLineEdit->text().toStdString().c_str()))
         {
-            QLineEdit* currentLineEdit = (QLineEdit*) object;
-            if (currentLineEdit->text().isEmpty())
-            {
-                currentLineEdit->setStyleSheet("color:black;selection-background-color: darkgray;");
-                validLineSet.erase(currentLineEdit);
-            }
-            else
-            {
-                if (b39.WordIsValid(currentLineEdit->text().toStdString().c_str()))
-                {
-                    currentLineEdit->setStyleSheet("color:black;");
-                    validLineSet.insert(currentLineEdit);
-                }
-                else
-                {
-                    currentLineEdit->setStyleSheet("color:red;");
-                    validLineSet.erase(currentLineEdit);
-                }
-            }
+            currentLineEdit->setStyleSheet("color:black;");
+            validLineSet.insert(currentLineEdit);
+        }
+        else
+        {
+            currentLineEdit->setStyleSheet("color:red;");
+            validLineSet.erase(currentLineEdit);
         }
     }
 
     ui->pushButtonRestoreWallet->setEnabled(false);
     if (validLineSet.size() == 12 ) // only if all 12 lineEdits are valid we enable the button
         ui->pushButtonRestoreWallet->setEnabled(true);
-
-    return false;
 }
 
 void RestoreWalletPage::onRestoreWalletClicked()
