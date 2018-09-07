@@ -1009,6 +1009,7 @@ void PAIcoinGUI::continueFromPinRequest()
         createNewWallet();
         break;
     case PAIcoinGUIState::PaperKeyWritedown:
+        mainStackedWidget->setCurrentWidget(paperKeyWritedownPage);
         break;
     default:
         break;
