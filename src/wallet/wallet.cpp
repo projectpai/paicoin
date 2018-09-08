@@ -31,6 +31,7 @@
 #include "ui_interface.h"
 #include "utilmoneystr.h"
 #include "wallet/fees.h"
+#include "wallet/bip39mnemonic.h"
 
 #include <assert.h>
 
@@ -1364,6 +1365,19 @@ CPubKey CWallet::GenerateNewHDMasterKey()
     CKey key;
     key.MakeNewKey(true);
 
+    return AddHDMasterKey(key);
+}
+
+CPubKey CWallet::GenerateNewHDMasterKey(const CKeyingMaterial& key64)
+{
+    CExtKey extPrivKey;
+    extPrivKey.SetMaster(&key64[0], key64.size());
+
+    return AddHDMasterKey(extPrivKey.key);
+}
+
+CPubKey CWallet::AddHDMasterKey(const CKey& key)
+{
     int64_t nCreationTime = GetTime();
     CKeyMetadata metadata(nCreationTime);
 
@@ -1401,6 +1415,25 @@ bool CWallet::SetHDMasterKey(const CPubKey& pubkey)
     SetHDChain(newHdChain, false);
 
     return true;
+}
+
+CKeyingMaterial CWallet::GetBIP39Seed(const SecureString& phrase)
+{
+    BIP39Mnemonic b39;
+
+    if (!b39.PhraseIsValid(phrase.c_str())) {
+        return CKeyingMaterial();
+    }
+
+    unsigned char key64[64];
+    memset(key64, 0, 64);
+
+    b39.DeriveKey(key64, phrase.c_str(), NULL);
+
+    CKeyingMaterial vkey64(64, 0);
+    vkey64.assign(key64, key64 + 64);
+
+    return vkey64;
 }
 
 bool CWallet::SetHDChain(const CHDChain& chain, bool memonly)

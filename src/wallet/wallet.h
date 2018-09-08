@@ -1100,12 +1100,25 @@ public:
 
     /* Generates a new HD master key (will not be activated) */
     CPubKey GenerateNewHDMasterKey();
+
+    /* Generates a new HD master key using the BIP39 key of 64 bytes (will not be activated) */
+    CPubKey GenerateNewHDMasterKey(const CKeyingMaterial& key64);
+
+    /* Adds a new HD master key (will not be activated) */
+    CPubKey AddHDMasterKey(const CKey& from);
     
     /* Set the current HD master key (will reset the chain child index counters)
        Sets the master key's version based on the current wallet version (so the
        caller must ensure the current wallet version is correct before calling
        this function). */
     bool SetHDMasterKey(const CPubKey& key);
+
+    /*
+     * Get the BIP39 key of 64 bytes to be used in the master key generation
+     * Phrase is the mnemonic phrase from which to compute the seed.
+     * Returns a vector filled with the 64 bytes of seed; might be empty.
+     */
+    CKeyingMaterial GetBIP39Seed(const SecureString& phrase);
 };
 
 /** A key allocated from the key pool. */
