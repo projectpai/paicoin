@@ -71,6 +71,62 @@ std::string DecodeDumpString(const std::string &str) {
     return ret.str();
 }
 
+static UniValue ImportPrivKeyImpl(const CKey& key, const JSONRPCRequest& request, CWallet* pwallet, bool addAsMaster = false)
+{
+    if (!key.IsValid()) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    std::string strLabel = "";
+    if (!request.params[1].isNull())
+        strLabel = request.params[1].get_str();
+
+    // Whether to perform rescan after import
+    bool fRescan = true;
+    if (!request.params[2].isNull())
+        fRescan = request.params[2].get_bool();
+
+    if (fRescan && fPruneMode)
+        throw JSONRPCError(RPC_WALLET_ERROR, "Rescan is disabled in pruned mode");
+
+    CPubKey pubkey = key.GetPubKey();
+    assert(key.VerifyPubKey(pubkey));
+    CKeyID vchAddress = pubkey.GetID();
+    {
+        pwallet->MarkDirty();
+        pwallet->SetAddressBook(vchAddress, strLabel, "receive");
+
+        // Don't throw error in case a key is already there
+        if (pwallet->HaveKey(vchAddress)) {
+            return NullUniValue;
+        }
+
+        auto &metadata = pwallet->mapKeyMetadata[vchAddress];
+        metadata.nCreateTime = 1;
+        if (addAsMaster)
+        {
+            // set the hd keypath to "m" -> Master, refers the masterkeyid to itself
+            metadata.hdKeypath     = "m";
+            metadata.hdMasterKeyID = pubkey.GetID();
+        }
+
+        if (!pwallet->AddKeyPubKey(key, pubkey)) {
+            throw JSONRPCError(RPC_WALLET_ERROR, "Error adding key to wallet");
+        }
+
+        // whenever a key is imported, we need to scan the whole chain
+        pwallet->UpdateTimeFirstKey(1);
+
+        if (fRescan) {
+            pwallet->RescanFromTime(TIMESTAMP_MIN, true /* update */);
+        }
+    }
+
+    return NullUniValue;
+}
+
 UniValue importprivkey(const JSONRPCRequest& request)
 {
     CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
@@ -100,59 +156,47 @@ UniValue importprivkey(const JSONRPCRequest& request)
             + HelpExampleRpc("importprivkey", "\"mykey\", \"testing\", false")
         );
 
-
-    LOCK2(cs_main, pwallet->cs_wallet);
-
-    EnsureWalletIsUnlocked(pwallet);
-
-    std::string strSecret = request.params[0].get_str();
-    std::string strLabel = "";
-    if (!request.params[1].isNull())
-        strLabel = request.params[1].get_str();
-
-    // Whether to perform rescan after import
-    bool fRescan = true;
-    if (!request.params[2].isNull())
-        fRescan = request.params[2].get_bool();
-
-    if (fRescan && fPruneMode)
-        throw JSONRPCError(RPC_WALLET_ERROR, "Rescan is disabled in pruned mode");
-
     CPAIcoinSecret vchSecret;
-    bool fGood = vchSecret.SetString(strSecret);
-
+    const auto fGood = vchSecret.SetString(request.params[0].get_str());
     if (!fGood) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
 
-    CKey key = vchSecret.GetKey();
-    if (!key.IsValid()) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+    return ImportPrivKeyImpl(vchSecret.GetKey(), request, pwallet);
+}
 
-    CPubKey pubkey = key.GetPubKey();
-    assert(key.VerifyPubKey(pubkey));
-    CKeyID vchAddress = pubkey.GetID();
-    {
-        pwallet->MarkDirty();
-        pwallet->SetAddressBook(vchAddress, strLabel, "receive");
-
-        // Don't throw error in case a key is already there
-        if (pwallet->HaveKey(vchAddress)) {
-            return NullUniValue;
-        }
-
-        pwallet->mapKeyMetadata[vchAddress].nCreateTime = 1;
-
-        if (!pwallet->AddKeyPubKey(key, pubkey)) {
-            throw JSONRPCError(RPC_WALLET_ERROR, "Error adding key to wallet");
-        }
-
-        // whenever a key is imported, we need to scan the whole chain
-        pwallet->UpdateTimeFirstKey(1);
-
-        if (fRescan) {
-            pwallet->RescanFromTime(TIMESTAMP_MIN, true /* update */);
-        }
+UniValue importprivkeyphrase(const JSONRPCRequest& request)
+{
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
     }
 
-    return NullUniValue;
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
+        throw std::runtime_error(
+            "importprivkeyphrase \"paperkeyphrase\" ( \"label\" ) ( rescan )\n"
+            "\nAdds an inactive master HD private key to your wallet.\n"
+            "\nArguments:\n"
+            "1. \"paperkeyphrase\"   (string, required) paper key phrase (a space-delimited list of 12 words)\n"
+            "2. \"label\"            (string, optional, default=\"\") An optional label\n"
+            "3. rescan               (boolean, optional, default=true) Rescan the wallet for transactions\n"
+            "\nNote: This call can take minutes to complete if rescan is true.\n"
+            "\nExamples:\n"
+            "\nImport the private key with rescan\n"
+            + HelpExampleCli("importprivkeyphrase", "\"word1 word2 word3 ...\"") +
+            "\nImport using a label and without rescan\n"
+            + HelpExampleCli("importprivkeyphrase", "\"word1 word2 word3 ...\" \"testing\" false") +
+            "\nImport using default blank label and without rescan\n"
+            + HelpExampleCli("importprivkeyphrase", "\"word1 word2 word3 ...\" \"\" false") +
+            "\nAs a JSON-RPC call\n"
+            + HelpExampleRpc("importprivkeyphrase", "\"word1 word2 word3 ...\", \"testing\", false")
+        );
+
+    const auto seed = CWallet::GetBIP39Seed(request.params[0].get_str().c_str());
+    if (seed.size() != 64) throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid paper key phrase");
+
+    CExtKey extPrivKey;
+    extPrivKey.SetMaster(&seed[0], seed.size());
+
+    return ImportPrivKeyImpl(extPrivKey.key, request, pwallet, true);
 }
 
 UniValue abortrescan(const JSONRPCRequest& request)

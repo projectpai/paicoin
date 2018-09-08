@@ -1428,7 +1428,7 @@ CKeyingMaterial CWallet::GetBIP39Seed(const SecureString& phrase)
     unsigned char key64[64];
     memset(key64, 0, 64);
 
-    b39.DeriveKey(key64, phrase.c_str(), NULL);
+    b39.DeriveKey(key64, phrase.c_str(), nullptr);
 
     CKeyingMaterial vkey64(64, 0);
     vkey64.assign(key64, key64 + 64);

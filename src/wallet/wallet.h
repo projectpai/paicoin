@@ -1118,7 +1118,7 @@ public:
      * Phrase is the mnemonic phrase from which to compute the seed.
      * Returns a vector filled with the 64 bytes of seed; might be empty.
      */
-    CKeyingMaterial GetBIP39Seed(const SecureString& phrase);
+    static CKeyingMaterial GetBIP39Seed(const SecureString& phrase);
 };
 
 /** A key allocated from the key pool. */

@@ -79,6 +79,8 @@ void RPCNestedTests::rpcNestedTests()
 
     RPCConsole::RPCParseCommandLine(result, "importprivkey", false, &filtered);
     QVERIFY(filtered == "importprivkey(…)");
+    RPCConsole::RPCParseCommandLine(result, "importprivkeyphrase", false, &filtered);
+    QVERIFY(filtered == "importprivkeyphrase(…)");
     RPCConsole::RPCParseCommandLine(result, "signmessagewithprivkey abc", false, &filtered);
     QVERIFY(filtered == "signmessagewithprivkey(…)");
     RPCConsole::RPCParseCommandLine(result, "signmessagewithprivkey abc,def", false, &filtered);
@@ -97,6 +99,12 @@ void RPCNestedTests::rpcNestedTests()
     QVERIFY(filtered == "help(importprivkey(…))");
     RPCConsole::RPCParseCommandLine(result, "help(importprivkey(abc), walletpassphrase(def))", false, &filtered);
     QVERIFY(filtered == "help(importprivkey(…), walletpassphrase(…))");
+    RPCConsole::RPCParseCommandLine(result, "help(importprivkeyphrase())", false, &filtered);
+    QVERIFY(filtered == "help(importprivkeyphrase(…))");
+    RPCConsole::RPCParseCommandLine(result, "help(importprivkeyphrase(help()))", false, &filtered);
+    QVERIFY(filtered == "help(importprivkeyphrase(…))");
+    RPCConsole::RPCParseCommandLine(result, "help(importprivkeyphrase(abc), walletpassphrase(def))", false, &filtered);
+    QVERIFY(filtered == "help(importprivkeyphrase(…), walletpassphrase(…))");
 
     RPCConsole::RPCExecuteCommandLine(result, "rpcNestedTest");
     QVERIFY(result == "[]");
