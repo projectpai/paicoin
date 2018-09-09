@@ -1,6 +1,7 @@
 #include "viewinvestorkeydialog.h"
 #include "ui_viewinvestorkeydialog.h"
 #include "walletmodel.h"
+#include "authmanager.h"
 
 #include "guiutil.h"
 
@@ -14,6 +15,7 @@ ViewInvestorKeyDialog::ViewInvestorKeyDialog(QWidget *parent) :
     setModel(nullptr);
 
     connect(ui->pushButtonCopyInvestorKey, SIGNAL(clicked()), this, SLOT(onCopyInvestorKeyClicked()));
+    connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), this, SLOT(reject()));
 }
 
 void ViewInvestorKeyDialog::setModel(WalletModel *model)
