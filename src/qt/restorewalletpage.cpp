@@ -85,6 +85,7 @@ void RestoreWalletPage::hanleLineEdits(const QString& text)
     }
     else
     {
+        currentLineEdit->setText(text.trimmed());
         if (b39.WordIsValid(currentLineEdit->text().toStdString().c_str()))
         {
             currentLineEdit->setStyleSheet("color:black;");
