@@ -249,6 +249,7 @@ libpaicoin_wallet_a_SOURCES = \
   wallet/rpcwallet.cpp \
   wallet/wallet.cpp \
   wallet/walletdb.cpp \
+  wallet/wallettxqueue.cpp \
   $(PAICOIN_CORE_H)
 
 # crypto primitives library

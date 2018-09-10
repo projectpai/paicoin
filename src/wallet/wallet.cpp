@@ -34,8 +34,10 @@
 
 #include <assert.h>
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/thread.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 std::vector<CWalletRef> vpwallets;
 /** Transaction fee set by the user */
@@ -867,6 +869,23 @@ bool CWallet::MarkReplaced(const uint256& originalHash, const uint256& newHash)
     return success;
 }
 
+static bool CheckWalletTxAddr(const CWalletTx& wtx, const std::vector<std::string>& addresses)
+{
+    if (addresses.empty())
+        return true;
+
+    for (const CTxOut& out : wtx.tx->vout) {
+        CTxDestination address;
+        if (ExtractDestination(out.scriptPubKey, address)) {
+            std::string pubKey(EncodeDestination(address));
+            if (std::find(addresses.begin(), addresses.end(), pubKey) != addresses.end())
+                return true;
+        }
+    }
+
+    return false;
+}
+
 bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFlushOnClose)
 {
     LOCK(cs_wallet);
@@ -933,10 +952,16 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFlushOnClose)
     // notify an external script when a wallet transaction comes in or is updated
     std::string strCmd = gArgs.GetArg("-walletnotify", "");
 
-    if ( !strCmd.empty())
+    if (!strCmd.empty())
     {
-        boost::replace_all(strCmd, "%s", wtxIn.GetHash().GetHex());
-        boost::thread t(runCommand, strCmd); // thread runs free
+        if (CheckWalletTxAddr(wtxIn, gArgs.GetArgs("-walletnotifyaddress")))
+        {
+            std::string txid = wtxIn.GetHash().GetHex();
+            if (gArgs.IsArgSet("-walletnotifydelay"))
+                walletTxQueue().put(txid);
+            else
+                boost::thread thread(runCommand, boost::replace_all_copy(strCmd, "%s", txid)); // thread runs free
+        }
     }
 
     return true;
@@ -3944,6 +3969,64 @@ CWallet* CWallet::CreateWalletFromFile(const std::string walletFile)
 
 std::atomic<bool> CWallet::fFlushScheduled(false);
 
+CWalletTxQueue& CWallet::walletTxQueue()
+{
+    if (!wtxQueue)
+        wtxQueue.reset(new CWalletTxQueue(GetDataDir() / "wallettxqueue"));
+    return *wtxQueue;
+}
+
+static void WalletNotify(CWalletTxQueue& walletTxQueue, const std::string& commandTemplate, int batch)
+{
+    try
+    {
+        std::vector<std::string> txids(walletTxQueue.take(batch));
+        if (!txids.empty())
+        {
+            std::string command = boost::replace_all_copy(commandTemplate, "%s", boost::algorithm::join(txids, ";"));
+            int err = ::system(command.c_str());
+            if (err != 0)
+                LogPrintf("walletnotify error: system(%s) returned %d\n", command, err);
+        }
+    }
+    catch(const std::exception& e)
+    {
+        LogPrintf("WalletNotify: %s\n", e.what());
+    }
+}
+
+static bool parseWalletNotifyDelayOption(const std::string& option, int& batch, int& delay)
+{
+    if (option.empty())
+        return false;
+
+    try
+    {
+        std::vector<std::string> values;
+        boost::algorithm::split(values, option, boost::algorithm::is_any_of("/"));
+        switch (values.size())
+        {
+            case 1:
+                batch = 50;
+                delay = std::stoi(values[0]);
+                break;
+            case 2:
+                batch = std::stoi(values[0]);
+                delay = std::stoi(values[1]);
+                break;
+            default:
+                LogPrintf("Invalid option: -walletnotifydelay=%s\n", option);
+                return false;
+        }
+    }
+    catch(const std::exception& e)
+    {
+        LogPrintf("Invalid option: -walletnotifydelay=%s\n", option);
+        return false;
+    }
+    return batch > 0 && delay > 0;
+}
+
 void CWallet::postInitProcess(CScheduler& scheduler)
 {
     // Add wallet transactions that aren't already in a block to mempool
@@ -3953,6 +4036,19 @@ void CWallet::postInitProcess(CScheduler& scheduler)
     // Run a thread to flush wallet periodically
     if (!CWallet::fFlushScheduled.exchange(true)) {
         scheduler.scheduleEvery(MaybeCompactWalletDB, 500);
+    }
+
+    std::string strCmd = gArgs.GetArg("-walletnotify", "");
+    if (!strCmd.empty())
+    {
+        int batch;
+        int delay;
+        if (parseWalletNotifyDelayOption(gArgs.GetArg("-walletnotifydelay", ""), batch, delay))
+        {
+            CWalletTxQueue& queue = walletTxQueue();
+            scheduler.scheduleEvery(boost::bind(&WalletNotify, boost::ref(queue), strCmd, batch), delay);
+            scheduler.scheduleEvery(boost::bind(&CWalletTxQueue::compact, boost::ref(queue)), 60 * 1000);
+        }
     }
 }
 

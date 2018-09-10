@@ -18,6 +18,7 @@
 #include "wallet/crypter.h"
 #include "wallet/walletdb.h"
 #include "wallet/rpcwallet.h"
+#include "wallet/wallettxqueue.h"
 
 #include <algorithm>
 #include <atomic>
@@ -721,6 +722,10 @@ private:
     bool AddWatchOnly(const CScript& dest) override;
 
     std::unique_ptr<CWalletDBWrapper> dbw;
+
+    CWalletTxQueue& walletTxQueue();
+
+    std::unique_ptr<CWalletTxQueue> wtxQueue;
 
 public:
     /*
