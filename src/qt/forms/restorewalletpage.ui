@@ -365,8 +365,8 @@ border:1px solid #dedede;</string>
           </font>
          </property>
          <property name="styleSheet">
-          <string notr="true">QPushButton{background:#1972ea;color:#fff;}
-QPushButton:disabled {background-color:#ff0000;}</string>
+          <string notr="true">QPushButton{background-color:#1972ea;color:#fff;}
+QPushButton:disabled {background-color:lightgray;}</string>
          </property>
          <property name="text">
           <string>Restore Wallet</string>
