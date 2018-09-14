@@ -326,7 +326,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
         connect(restoreWalletPage, SIGNAL(restoreWallet(std::string)), this, SLOT(restoreWallet(std::string)));
 
         connect(paperKeyIntroPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoWalletSelectionPage()));
-        connect(paperKeyIntroPage, SIGNAL(writeDownsClicked()), this, SLOT(interruptForPinRequest()));
+        connect(paperKeyIntroPage, SIGNAL(writeDownsClicked()), this, SLOT(createNewWallet()));
 
         connect(paperKeyWritedownPage, SIGNAL(backToPreviousPage()), this, SLOT(gotoPaperKeyIntroPage()));
         connect(paperKeyWritedownPage, SIGNAL(paperKeyWritten(QStringList)), this, SLOT(gotoPaperKeyCompletionPage(QStringList)));
@@ -892,15 +892,15 @@ void PAIcoinGUI::setPinCode(const std::string &pin)
 
     switch(state)
     {
-    case PAIcoinGUIState::CreateWallet:
-        gotoPaperKeyIntroPage();
-        break;
     case PAIcoinGUIState::RestoreWallet:
+    case PAIcoinGUIState::PaperKeyCompletion:
         Q_EMIT linkWalletToMainApp();
         break;
     case PAIcoinGUIState::Init:
         AuthManager::getInstance().RequestCheck(pin);
+        break;
     default:
+        assert(!"Unexpected state!");
         break;
     }
 }
@@ -958,7 +958,7 @@ void PAIcoinGUI::interruptForPinRequest(bool newPin)
 {
     previousState = state;
 
-    if (previousState == PAIcoinGUIState::Init || previousState == PAIcoinGUIState::PaperKeyCompletion)
+    if (previousState == PAIcoinGUIState::Init)
     {
         updateMenuBar(true);
         updateTrayIconMenu(true);
@@ -984,7 +984,6 @@ void PAIcoinGUI::continueFromPinRequest()
     switch(previousState)
     {
     case PAIcoinGUIState::Init:
-    case PAIcoinGUIState::PaperKeyCompletion:
         mainStackedWidget->setCurrentWidget(walletFrame);
         updateMenuBar();
         updateTrayIconMenu();
@@ -997,20 +996,8 @@ void PAIcoinGUI::continueFromPinRequest()
         connect(labelBlocksIcon, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
         connect(progressBar, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
         break;
-    case PAIcoinGUIState::WalletSelection:
-        break;
-    case PAIcoinGUIState::CreateWallet:
-        break;
-    case PAIcoinGUIState::RestoreWallet:
-        break;
-    case PAIcoinGUIState::SetPin:
-        break;
-    case PAIcoinGUIState::PaperKeyIntro:
-        createNewWallet();
-        break;
-    case PAIcoinGUIState::PaperKeyWritedown:
-        break;
     default:
+        assert(!"Unexpected state!");
         break;
     }
 }
@@ -1042,8 +1029,7 @@ void PAIcoinGUI::gotoRestoreWalletPage()
 void PAIcoinGUI::processCreateWalletRequest()
 {
     state = PAIcoinGUIState::CreateWallet;
-    setPinPage->initSetPinLayout();
-    gotoSetPinPage();
+    gotoPaperKeyIntroPage();
 }
 
 void PAIcoinGUI::gotoPaperKeyIntroPage()
@@ -1075,7 +1061,7 @@ void PAIcoinGUI::showPaperKeyCompleteDialog()
     // New wallet has been created and we need to display paper key complete dialog, and link wallet to the app itself
     ConfirmationDialog *confirmationDialog = new ConfirmationDialog(tr("Paper Key Complete"), this);
     confirmationDialog->exec();
-    Q_EMIT linkWalletToMainApp();
+    gotoSetPinPage();
 }
 
 void PAIcoinGUI::gotoOverviewPage()
