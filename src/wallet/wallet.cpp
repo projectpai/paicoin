@@ -715,6 +715,18 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
         }
         pwalletdbEncryption->WriteMasterKey(nMasterKeyMaxID, kMasterKey);
 
+        const auto hasPaperKey = HasPaperKey();
+
+        if (hasPaperKey && IsHDEnabled()) {
+            if (!EncryptPaperKey(_vMasterKey)) {
+                pwalletdbEncryption->TxnAbort();
+                delete pwalletdbEncryption;
+                // We now have the the Paper Key unencrypted in memory...
+                // die and let the user reload the unencrypted wallet.
+                assert(false);
+            }
+        }
+
         if (!EncryptKeys(_vMasterKey))
         {
             pwalletdbEncryption->TxnAbort();
@@ -740,14 +752,17 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
         Lock();
         Unlock(strWalletPassphrase);
 
-        // if we are using HD, replace the HD master key (seed) with a new one
-        if (IsHDEnabled()) {
+        // if we are using HD and we don't have Paper Key, replace the HD master key (seed) with a new one
+        if (!hasPaperKey && IsHDEnabled()) {
             if (!SetHDMasterKey(GenerateNewHDMasterKey())) {
                 return false;
             }
         }
 
-        NewKeyPool();
+        // only generate a new key pool if we don't have a paper key, e.g. we've already set a new HD master key
+        if (!hasPaperKey)
+            NewKeyPool();
+
         Lock();
 
         // Need to completely rewrite the wallet file; if we don't, bdb might keep
@@ -1573,6 +1588,12 @@ bool CWallet::GetCurrentPaperKey(SecureString& paperKey)
     paperKey = paperKeyStr;
 
     return true;
+}
+
+bool CWallet::HasPaperKey()
+{
+    SecureString dummy;
+    return GetCurrentPaperKey(dummy);
 }
 
 int64_t CWalletTx::GetTxTime() const

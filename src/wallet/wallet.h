@@ -1147,6 +1147,11 @@ public:
     bool GetCurrentPaperKey(SecureString& paperKey);
 
     /*
+     * Returns if the wallet has a valid paper key.
+     */
+    bool HasPaperKey();
+
+    /*
      * Get the BIP39 key of 64 bytes to be used in the master key generation
      * Phrase is the mnemonic phrase from which to compute the seed.
      * Returns a vector filled with the 64 bytes of seed; might be empty.
