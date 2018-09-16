@@ -3009,7 +3009,7 @@ bool CWallet::AddAccountingEntry(const CAccountingEntry& acentry, CWalletDB *pwa
     return true;
 }
 
-DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
+DBErrors CWallet::LoadWallet(bool& fFirstRunRet, bool uiProgress)
 {
     LOCK2(cs_main, cs_wallet);
 
@@ -3034,7 +3034,8 @@ DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
     if (nLoadWalletRet != DB_LOAD_OK)
         return nLoadWalletRet;
 
-    uiInterface.LoadWallet(this);
+    if (uiProgress)
+        uiInterface.LoadWallet(this);
 
     return DB_LOAD_OK;
 }
@@ -3964,6 +3965,99 @@ CWallet* CWallet::CreateWalletFromFile(const std::string walletFile)
         }
     }
     walletInstance->SetBroadcastTransactions(gArgs.GetBoolArg("-walletbroadcast", DEFAULT_WALLETBROADCAST));
+
+    {
+        LOCK(walletInstance->cs_wallet);
+        LogPrintf("setKeyPool.size() = %u\n",      walletInstance->GetKeyPoolSize());
+        LogPrintf("mapWallet.size() = %u\n",       walletInstance->mapWallet.size());
+        LogPrintf("mapAddressBook.size() = %u\n",  walletInstance->mapAddressBook.size());
+    }
+
+    return walletInstance;
+}
+
+std::unique_ptr<CWallet> CWallet::JustCreateWalletFile(const std::string& paperKey, const std::string walletFile)
+{
+    int64_t nStart = GetTimeMillis();
+    bool fFirstRun = true;
+    std::unique_ptr<CWalletDBWrapper> dbw(new CWalletDBWrapper(&bitdb, walletFile));
+    std::unique_ptr<CWallet> walletInstance{new CWallet(std::move(dbw))};
+    DBErrors nLoadWalletRet = walletInstance->LoadWallet(fFirstRun, false);
+    if (nLoadWalletRet != DB_LOAD_OK)
+    {
+        error("Error creating %s", walletFile);
+        return nullptr;
+    }
+
+    LogPrintf("Setting wallet min version to %i\n", FEATURE_LATEST);
+    walletInstance->SetMinVersion(FEATURE_LATEST); // permanently upgrade the wallet immediately
+    walletInstance->SetMaxVersion(CLIENT_VERSION);
+
+    // Create new keyUser and set as default key
+    if (DEFAULT_USE_HD_WALLET && !walletInstance->IsHDEnabled()) {
+        // ensure this wallet.dat can only be opened by clients supporting HD with chain split
+        walletInstance->SetMinVersion(FEATURE_HD_SPLIT);
+
+        const auto seed = GetBIP39Seed(SecureString{std::begin(paperKey), std::end(paperKey)});
+        if (seed.size() == 0) {
+            error("Failed to generate BIP39 seed from paper key");
+            return nullptr;
+        }
+
+        // generate a new master key
+        const auto masterPubKey = walletInstance->GenerateNewHDMasterKey(seed);
+        if (!walletInstance->SetHDMasterKey(masterPubKey)) {
+            error("Storing master key failed");
+            return nullptr;
+        }
+    }
+
+    // Top up the keypool
+    if (!walletInstance->TopUpKeyPool()) {
+        error("Unable to generate initial keys");
+        return nullptr;
+    }
+
+    walletInstance->SetBestChain(chainActive.GetLocator());
+
+    LogPrintf(" wallet      %15dms\n", GetTimeMillis() - nStart);
+
+    // Try to top up keypool. No-op if the wallet is locked.
+    walletInstance->TopUpKeyPool();
+
+    CBlockIndex *pindexRescan = chainActive.Genesis();
+    if (chainActive.Tip() && chainActive.Tip() != pindexRescan)
+    {
+        //We can't rescan beyond non-pruned blocks, stop and throw an error
+        //this might happen if a user uses an old wallet within a pruned node
+        // or if he ran -disablewallet for a longer time, then decided to re-enable
+        if (fPruneMode)
+        {
+            CBlockIndex *block = chainActive.Tip();
+            while (block && block->pprev && (block->pprev->nStatus & BLOCK_HAVE_DATA) && block->pprev->nTx > 0 && pindexRescan != block)
+                block = block->pprev;
+
+            if (pindexRescan != block) {
+                error("Prune: last wallet synchronisation goes beyond pruned data. You need to -reindex (download the whole blockchain again in case of pruned node)");
+                return nullptr;
+            }
+        }
+
+        LogPrintf("Rescanning last %i blocks (from block %i)...\n", chainActive.Height() - pindexRescan->nHeight, pindexRescan->nHeight);
+
+        // No need to read and scan block if block was created before
+        // our wallet birthday (as adjusted for block time variability)
+        while (pindexRescan && walletInstance->nTimeFirstKey && (pindexRescan->GetBlockTime() < (walletInstance->nTimeFirstKey - TIMESTAMP_WINDOW))) {
+            pindexRescan = chainActive.Next(pindexRescan);
+        }
+
+        nStart = GetTimeMillis();
+        walletInstance->ScanForWalletTransactions(pindexRescan, true);
+        LogPrintf(" rescan      %15dms\n", GetTimeMillis() - nStart);
+        walletInstance->SetBestChain(chainActive.GetLocator());
+        walletInstance->dbw->IncrementUpdateCounter();
+    }
+    walletInstance->SetBroadcastTransactions(DEFAULT_WALLETBROADCAST);
 
     {
         LOCK(walletInstance->cs_wallet);

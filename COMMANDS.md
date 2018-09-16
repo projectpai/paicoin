@@ -130,7 +130,7 @@ getunconfirmedbalance
 getwalletinfo
 importaddress "address" ( "label" rescan )
 importprivkey "paicoinprivkey" ( "label" rescan )
-importprivkeyphrase "paperkeyphrase" ( "label" rescan )
+restorewallet "paperkeyphrase" "walletfile" ( rescan )
 importwallet "filename"
 keypoolrefill ( newsize )
 listaccounts ( minconf includeWatchonly)

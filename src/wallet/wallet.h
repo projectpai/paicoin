@@ -28,6 +28,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <memory>
 
 typedef CWallet* CWalletRef;
 extern std::vector<CWalletRef> vpwallets;
@@ -998,7 +999,7 @@ public:
     CAmount GetChange(const CTransaction& tx) const;
     void SetBestChain(const CBlockLocator& loc) override;
 
-    DBErrors LoadWallet(bool& fFirstRunRet);
+    DBErrors LoadWallet(bool& fFirstRunRet, bool uiProgress = true);
     DBErrors ZapWalletTx(std::vector<CWalletTx>& vWtx);
     DBErrors ZapSelectTx(std::vector<uint256>& vHashIn, std::vector<uint256>& vHashOut);
 
@@ -1082,6 +1083,12 @@ public:
 
     /* Initializes the wallet, returns a new CWallet instance or a null pointer in case of an error */
     static CWallet* CreateWalletFromFile(const std::string walletFile);
+
+    /**
+     * Creates and initialises a new wallet file from the passed paper key, without registering it in the system in any way.
+     * Precondition: the wallet file doesn't exist
+     */
+    static std::unique_ptr<CWallet> JustCreateWalletFile(const std::string &paperKey, const std::string walletFile);
 
     /**
      * Wallet post-init setup
