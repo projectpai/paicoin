@@ -123,11 +123,21 @@ private:
     //! keeps track of whether Unlock has run a thorough check before
     bool fDecryptionThoroughlyChecked;
 
+    CKeyingMaterial vchCryptedPaperKey;
+
+    uint256 DoubleHashOfString(const std::string& str) const;
+
 protected:
     bool SetCrypted();
 
     //! will encrypt previously unencrypted keys
     bool EncryptKeys(CKeyingMaterial& vMasterKeyIn);
+
+    //! get the encrypted form of the paper key (this is only meant for saving into the database)
+    bool GetCryptedPaperKey(CKeyingMaterial& vchCryptedPaperKey);
+
+    //! will encrypt the paper key
+    bool EncryptPaperKey(CKeyingMaterial& vMasterKeyIn);
 
     bool Unlock(const CKeyingMaterial& vMasterKeyIn);
     CryptedKeyMap mapCryptedKeys;
@@ -155,6 +165,11 @@ public:
     }
 
     bool Lock();
+
+    virtual bool AddCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey);
+    bool AddPaperKey(const SecureString& paperKey) override;
+    bool GetPaperKey(SecureString& paperKey) const override;
+    void DecryptPaperKey();
 
     virtual bool AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey) override;

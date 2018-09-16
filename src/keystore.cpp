@@ -13,6 +13,25 @@ bool CKeyStore::AddKey(const CKey &key) {
     return AddKeyPubKey(key, key.GetPubKey());
 }
 
+bool CBasicKeyStore::AddPaperKey(const SecureString& paperKey)
+{
+    LOCK(cs_KeyStore);
+    this->paperKey = paperKey;
+    return true;
+}
+
+bool CBasicKeyStore::GetPaperKey(SecureString& paperKey) const
+{
+    {
+        LOCK(cs_KeyStore);
+        if (!this->paperKey.empty()) {
+            paperKey = this->paperKey;
+            return true;
+        }
+    }
+    return false;
+}
+
 bool CBasicKeyStore::GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const
 {
     CKey key;

@@ -197,7 +197,7 @@ UniValue restorewallet(const JSONRPCRequest& request)
     if (fRescan && fPruneMode)
         throw JSONRPCError(RPC_WALLET_ERROR, "Rescan is disabled in pruned mode");
 
-    const auto pwallet = CWallet::JustCreateWalletFile(request.params[0].get_str(), walletFile);
+    const auto pwallet = CWallet::CreateWalletFromPaperKey(request.params[0].get_str(), walletFile);
     if (!pwallet) {
         boost::filesystem::remove(walletFilePath);
         throw JSONRPCError(RPC_WALLET_ERROR, "Wallet creation failed");
@@ -205,11 +205,6 @@ UniValue restorewallet(const JSONRPCRequest& request)
 
     try {
         if (fRescan) {
-            if (!pwallet->NewKeyPool()) {
-                boost::filesystem::remove(walletFilePath);
-                throw JSONRPCError(RPC_WALLET_ERROR, "Failed to create new key pool");
-            }
-
             LOCK2(cs_main, pwallet->cs_wallet);
             pwallet->RescanFromTime(TIMESTAMP_MIN, true /* update */);
         }
