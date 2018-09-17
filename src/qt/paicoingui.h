@@ -184,7 +184,7 @@ private:
     /** Create system tray icon and notification */
     void createTrayIcon(const NetworkStyle *networkStyle);
     /** Create system tray menu (or setup the dock menu) */
-    void createTrayIconMenu();
+    void createTrayIconMenu(bool allOptions = true);
     /** Updates system tray menu based on locked state. */
     void updateTrayIconMenu(bool locked = false);
 
@@ -254,6 +254,8 @@ public Q_SLOTS:
     void walletRestored(std::string phrase);
 
     void createWalletFrame();
+
+    void connectWalletFrame(WalletFrame *walletFrame);
 
     void completeUiWalletInitialization();
 

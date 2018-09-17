@@ -23,6 +23,7 @@ public:
     void SetPinCode(const std::string& pin);
     void Reset();
     bool ShouldSet();
+    void TriggerTimer();
 Q_SIGNALS:
     void Authenticate();
     void Authenticated();
