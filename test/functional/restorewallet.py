@@ -13,7 +13,6 @@ from test_framework.util import (
 )
 import shutil
 
-# 'aSUC1GqoM2bTJ2QUKAbuiLxajYfzW4kiuV1JNXqh91e47tWyinJj 2018-09-18T14:36:31Z hdmaster=1 # addr=MYmcLeah2wPeCs7AzCjMsBrFZMJe7Uvune hdkeypath=m',
 def has_key(file_name, key):
     """
     Read the given dump and returns if the passed key is there.
@@ -32,7 +31,7 @@ def has_key(file_name, key):
 
         return False
 
-class ImportPrivKeyPhraseTest(PAIcoinTestFramework):
+class RestoreWalletTest(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2
@@ -92,4 +91,4 @@ class ImportPrivKeyPhraseTest(PAIcoinTestFramework):
         )
 
 if __name__ == '__main__':
-    ImportPrivKeyPhraseTest().main ()
+    RestoreWalletTest().main ()
