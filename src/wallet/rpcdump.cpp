@@ -165,10 +165,10 @@ UniValue restorewallet(const JSONRPCRequest& request)
             "1. \"paperkeyphrase\"   (string, required) paper key phrase (a space-delimited list of 12 words)\n"
             "2. \"walletfile\"       (string, required) output wallet file to restore to\n"
             "3. rescan               (boolean, optional, default=true) Rescan the wallet for transactions\n"
-            "\nNote1: This call can take minutes to complete if rescan is true.\n"
-            "\nNote2: If the passed walletfile exists, the call will fail without changing the existing wallet.\n"
-            "\nNote3: This call will only create the wallet file and it will not register the wallet in the system. "
+            "\nNote1: This call will only create the wallet file and it will not register the wallet in the system. "
             "To use the wallet, please use the \"-wallet\" command line option and pass the walletfile there.\n"
+            "Note2: If the passed walletfile exists, the call will fail without changing the existing file.\n"
+            "Note3: This call can take minutes to complete if rescan is true.\n"
             "\nExamples:\n"
             "\nRestore the wallet with rescan\n"
             + HelpExampleCli("restorewallet", "\"word1 word2 word3 ...\"" "\"walletX.dat\"") +
