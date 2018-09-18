@@ -122,7 +122,7 @@ BASE_SCRIPTS= [
     'uptime.py',
     'resendwallettransactions.py',
     'minchainwork.py',
-    'importprivkeyphrase.py',
+    'restorewallet.py',
 ]
 
 EXTENDED_SCRIPTS = [
