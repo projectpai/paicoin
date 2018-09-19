@@ -494,6 +494,10 @@ $(srcdir)/qt/paicoinstrings.cpp: $(libpaicoin_server_a_SOURCES) $(libpaicoin_wal
 translate: $(srcdir)/qt/paicoinstrings.cpp $(QT_FORMS_UI) $(QT_FORMS_UI) $(PAICOIN_QT_BASE_CPP) qt/paicoin.cpp $(PAICOIN_QT_WINDOWS_CPP) $(PAICOIN_QT_WALLET_CPP) $(PAICOIN_QT_H) $(PAICOIN_MM)
 	@test -n $(LUPDATE) || echo "lupdate is required for updating translations"
 	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -locations relative -no-obsolete -ts $(srcdir)/qt/locale/paicoin_en.ts
+	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -locations relative -no-obsolete -ts $(srcdir)/qt/locale/paicoin_ja.ts
+	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -locations relative -no-obsolete -ts $(srcdir)/qt/locale/paicoin_ko_KR.ts
+	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -locations relative -no-obsolete -ts $(srcdir)/qt/locale/paicoin_zh_CN.ts
+	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -locations relative -no-obsolete -ts $(srcdir)/qt/locale/paicoin_zh_TW.ts
 
 $(QT_QRC_LOCALE_CPP): $(QT_QRC_LOCALE) $(QT_QM)
 	@test -f $(RCC)
