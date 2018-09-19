@@ -2,6 +2,7 @@
 #include "ui_paperkeycompletionpage.h"
 
 #include <set>
+#include <chrono>
 #include <random>
 
 PaperKeyCompletionPage::PaperKeyCompletionPage(QWidget *parent) :
@@ -40,8 +41,9 @@ void PaperKeyCompletionPage::setPaperKeyList(const QStringList &_paperKeyList)
 
 void PaperKeyCompletionPage::SelectRandomKeys()
 {
-    std::random_device randomDevice;
-    std::mt19937 generator(randomDevice());
+    auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    std::mt19937 generator;
+    generator.seed(static_cast<unsigned int>(seed));
     std::uniform_int_distribution<> uniformDistribution(1, PAPER_KEY_WORD_COUNT);
 
     std::set<int> verificationIndexes;
