@@ -3,6 +3,7 @@
 
 #include <set>
 #include <chrono>
+#include <random>
 
 PaperKeyCompletionPage::PaperKeyCompletionPage(QWidget *parent) :
     QWidget(parent),
