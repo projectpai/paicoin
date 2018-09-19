@@ -115,6 +115,7 @@ verifymessage "paicoinaddress" "signature" "message"
 addmultisigaddress nrequired ["key",...] ( "account" )
 backupwallet "destination"
 dumpprivkey "paicoinaddress"
+dumppaperkey
 dumpwallet "filename"
 encryptwallet "passphrase"
 getaccount "paicoinaddress"

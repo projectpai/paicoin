@@ -650,6 +650,42 @@ UniValue dumpprivkey(const JSONRPCRequest& request)
     return CPAIcoinSecret(vchSecret).ToString();
 }
 
+UniValue dumppaperkey(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error(
+            "dumppaperkey\n"
+            "\nReveals the paper key phrase(if any) for the current wallet in a space-delimited format.\n"
+            "Then the restorewallet call can be used with this output.\n"
+            "\nNote: If the wallet hasn't been restored from a paper key phrase via restorewallet, an error is returned."
+            "\nResult:\n"
+            "\"paper key phrase\"                (string) The paper key phrase\n"
+            "\nExamples:\n"
+            + HelpExampleCli("dumppaperkey", "")
+            + HelpExampleCli("restorewallet", "\"paperkeyphrase\"" "\"walletfile\"")
+            + HelpExampleRpc("dumppaperkey", "")
+        );
+
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    if (!pwallet->HasPaperKey()) {
+        throw JSONRPCError(RPC_WALLET_ERROR, "Wallet doesn't have a paper key");
+    }
+
+    SecureString paperKey;
+    if (!pwallet->GetPaperKey(paperKey)) {
+        throw JSONRPCError(RPC_WALLET_ERROR, "Failed to get paper key from wallet");
+    }
+
+    return paperKey.c_str();
+}
 
 UniValue dumpwallet(const JSONRPCRequest& request)
 {
@@ -750,7 +786,6 @@ UniValue dumpwallet(const JSONRPCRequest& request)
 
     return reply;
 }
-
 
 UniValue ProcessImport(CWallet * const pwallet, const UniValue& data, const int64_t timestamp)
 {

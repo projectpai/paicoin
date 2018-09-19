@@ -123,6 +123,7 @@ BASE_SCRIPTS= [
     'resendwallettransactions.py',
     'minchainwork.py',
     'restorewallet.py',
+    'dumppaperkey.py',
 ]
 
 EXTENDED_SCRIPTS = [
