@@ -734,7 +734,7 @@ If you do not update the application, your investment will remain in holding.</s
     </message>
     <message>
         <source>Attempting to spend PAI Coins that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
-        <translation type="unfinished"></translation>
+        <translation>使用還沒顯示出來的交易所影響到的 PAI coin 可能會不被網路所接受。</translation>
     </message>
 </context>
 <context>
@@ -2135,11 +2135,11 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>請用上下游標鍵來瀏覽先前指令的紀錄，並用 %1 來清畫面。</translation>
     </message>
     <message>
         <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
-        <translation type="unfinished"></translation>
+        <translation>警告:  已知有詐騙集團會叫人在這個畫面輸入指令，以偷取他們錢包的內容物。請不要在沒有充分理解指令可能造成後果的情況下使用主控台。</translation>
     </message>
 </context>
 <context>
@@ -3468,7 +3468,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Investor key copied!</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">投資人密鑰已複製</translation>
     </message>
 </context>
 <context>
@@ -3537,7 +3537,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Restore Wallet</source>
-        <translation type="unfinished"></translation>
+        <translation>恢復錢包</translation>
     </message>
 </context>
 <context>

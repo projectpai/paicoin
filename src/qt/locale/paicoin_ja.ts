@@ -734,7 +734,7 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
     </message>
     <message>
         <source>Attempting to spend PAI Coins that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
-        <translation type="unfinished"></translation>
+        <translation>まだ表示されていないトランザクションが影響するビットコインを使用しようとすると、ネットワークから認証がなされないでしょう。</translation>
     </message>
 </context>
 <context>
@@ -2135,11 +2135,11 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>上下の矢印で履歴をたどれます。 %1 でスクリーンを消去できます。</translation>
     </message>
     <message>
         <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
-        <translation type="unfinished"></translation>
+        <translation>警告: 詐欺師が活動しており、ユーザに対してここにコマンドを入力させることでウォレットの中身を盗もうとしています。コマンドの結果を完全に理解していない限り、このコンソールは利用しないでください。</translation>
     </message>
 </context>
 <context>
@@ -3537,7 +3537,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Restore Wallet</source>
-        <translation type="unfinished"></translation>
+        <translation>ウォレットを復元</translation>
     </message>
 </context>
 <context>

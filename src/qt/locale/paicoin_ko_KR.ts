@@ -684,7 +684,7 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
     </message>
     <message>
         <source>Attempting to spend paicoins that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
-        <translation>아직 표시되지 않은 거래의 영향을 받는 비트코인을 사용하려고 하는 것은 네트워크에서 허가되지 않습니다.</translation>
+        <translation type="vanished">아직 표시되지 않은 거래의 영향을 받는 비트코인을 사용하려고 하는 것은 네트워크에서 허가되지 않습니다.</translation>
     </message>
     <message>
         <source>Number of blocks left</source>
@@ -721,6 +721,10 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
     <message>
         <source>Unknown. Syncing Headers (%1)...</source>
         <translation>알수없음. 헤더 동기화중 (%1)...</translation>
+    </message>
+    <message>
+        <source>Attempting to spend PAI Coins that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
+        <translation>아직 표시되지 않은 거래의 영향을 받는 비트코인을 사용하려고 하는 것은 네트워크에서 허가되지 않습니다.</translation>
     </message>
 </context>
 <context>
@@ -2105,11 +2109,11 @@ We will show you a list of words to write down on a piece of paper and keep safe
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>기록을 찾아보려면 위 아래 화살표 키를, 화면을 지우려면 %1 키를 사용하십시오.</translation>
     </message>
     <message>
         <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
-        <translation type="unfinished"></translation>
+        <translation>경고 : 사기꾼이 사용자에게 여기에 명령을 입력하게 하여 지갑 내용을 훔칠수 있다는 사실을 알려드립니다. 명령어를 완전히 이해하지 못한다면 콘솔을 사용하지 마십시오.</translation>
     </message>
 </context>
 <context>
