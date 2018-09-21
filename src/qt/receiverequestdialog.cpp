@@ -32,16 +32,14 @@
 ReceiveRequestDialog::ReceiveRequestDialog(QWidget *parent) :
     QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
     ui(new Ui::ReceiveRequestDialog),
-    model(0)
+    model(nullptr)
 {
     ui->setupUi(this);
 
 #ifndef USE_QRCODE
     ui->btnSaveAs->setVisible(false);
     ui->lblQRCode->setVisible(false);
-#endif
-
-    connect(ui->btnSaveAs, SIGNAL(clicked()), ui->lblQRCode, SLOT(saveImage()));
+#endif // USE_QRCODE
 }
 
 ReceiveRequestDialog::~ReceiveRequestDialog()
@@ -135,7 +133,7 @@ void ReceiveRequestDialog::update()
             ui->btnSaveAs->setEnabled(true);
         }
     }
-#endif
+#endif // USE_QRCODE
 }
 
 void ReceiveRequestDialog::on_btnCopyURI_clicked()
@@ -146,4 +144,9 @@ void ReceiveRequestDialog::on_btnCopyURI_clicked()
 void ReceiveRequestDialog::on_btnCopyAddress_clicked()
 {
     GUIUtil::setClipboard(info.address);
+}
+
+void ReceiveRequestDialog::on_btnSaveAs_clicked()
+{
+    ui->lblQRCode->saveImage();
 }

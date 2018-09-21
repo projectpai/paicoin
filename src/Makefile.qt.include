@@ -156,6 +156,7 @@ QT_MOC_CPP = \
   qt/moc_paymentserver.cpp \
   qt/moc_qvalidatedlineedit.cpp \
   qt/moc_qvaluecombobox.cpp \
+  qt/moc_qrimagewidget.cpp \
   qt/moc_receivecoinsdialog.cpp \
   qt/moc_receiverequestdialog.cpp \
   qt/moc_recentrequeststablemodel.cpp \
@@ -243,6 +244,7 @@ PAICOIN_QT_H = \
   qt/paymentserver.h \
   qt/peertablemodel.h \
   qt/platformstyle.h \
+  qt/qrimagewidget.h \
   qt/qvalidatedlineedit.h \
   qt/qvaluecombobox.h \
   qt/receivecoinsdialog.h \
@@ -266,7 +268,6 @@ PAICOIN_QT_H = \
   qt/walletmodeltransaction.h \
   qt/walletview.h \
   qt/winshutdownmonitor.h \
-  qt/qrimagewidget.h \
   qt/fundsinholdingdialog.h \
   qt/walletselectionpage.h \
   qt/welcomepage.h \
@@ -397,6 +398,7 @@ PAICOIN_QT_WALLET_CPP = \
   qt/overviewpage.cpp \
   qt/paymentrequestplus.cpp \
   qt/paymentserver.cpp \
+  qt/qrimagewidget.cpp \
   qt/receivecoinsdialog.cpp \
   qt/receiverequestdialog.cpp \
   qt/recentrequeststablemodel.cpp \
@@ -413,7 +415,6 @@ PAICOIN_QT_WALLET_CPP = \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
   qt/walletview.cpp \
-  qt/qrimagewidget.cpp \
   qt/versioncheckutil.cpp \
   qt/updateavailabledialog.cpp
 

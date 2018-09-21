@@ -37,7 +37,7 @@ public:
 private Q_SLOTS:
     void on_btnCopyURI_clicked();
     void on_btnCopyAddress_clicked();
-
+    void on_btnSaveAs_clicked();
     void update();
 
 private:
