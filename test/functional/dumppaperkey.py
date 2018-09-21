@@ -9,7 +9,6 @@ from test_framework.util import (
     assert_equal,
     connect_nodes_bi,
 )
-import shutil
 
 class DumpPaperKeyTest(PAIcoinTestFramework):
     def set_test_params(self):

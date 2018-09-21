@@ -116,6 +116,7 @@ addmultisigaddress nrequired ["key",...] ( "account" )
 backupwallet "destination"
 dumpprivkey "paicoinaddress"
 dumppaperkey
+generatepaperkey
 dumpwallet "filename"
 encryptwallet "passphrase"
 getaccount "paicoinaddress"

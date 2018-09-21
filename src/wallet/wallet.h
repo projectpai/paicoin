@@ -1138,7 +1138,7 @@ public:
      * Generates a new BIP39 phrase
      * Returns a string with the phrase. To be used exactly as generated here.
      */
-    SecureString GeneratePaperKey();
+    static SecureString GeneratePaperKey();
 
     /*
      * Get the current BIP39 phrase

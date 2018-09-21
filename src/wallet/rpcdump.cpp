@@ -667,7 +667,7 @@ UniValue dumppaperkey(const JSONRPCRequest& request)
             "\"paper key phrase\"                (string) The paper key phrase\n"
             "\nExamples:\n"
             + HelpExampleCli("dumppaperkey", "")
-            + HelpExampleCli("restorewallet", "\"paperkeyphrase\"" "\"walletfile\"")
+            + HelpExampleCli("restorewallet", "\"paperkeyphrase\" " "\"walletfile\"")
             + HelpExampleRpc("dumppaperkey", "")
         );
 
@@ -685,6 +685,22 @@ UniValue dumppaperkey(const JSONRPCRequest& request)
     }
 
     return paperKey.c_str();
+}
+
+UniValue generatepaperkey(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error(
+            "generatepaperkey\n"
+            "\nGenerates a new paper key phrase. It can later be used in restorewallet. Please keep this phrase safe and don't reveal it.\n"
+            "\nResult:\n"
+            "\"paper key phrase\"                (string) The generated paper key phrase\n"
+            "\nExamples:\n"
+            + HelpExampleCli("generatepaperkey", "")
+            + HelpExampleCli("restorewallet", "\"paperkeyphrase\" " "\"walletfile\"")
+        );
+
+    return CWallet::GeneratePaperKey().c_str();
 }
 
 UniValue dumpwallet(const JSONRPCRequest& request)

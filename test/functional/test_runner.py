@@ -124,6 +124,7 @@ BASE_SCRIPTS= [
     'minchainwork.py',
     'restorewallet.py',
     'dumppaperkey.py',
+    'generatepaperkey.py',
 ]
 
 EXTENDED_SCRIPTS = [

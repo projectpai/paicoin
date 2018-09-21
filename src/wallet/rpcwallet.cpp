@@ -3183,6 +3183,7 @@ UniValue generate(const JSONRPCRequest& request)
 extern UniValue abortrescan(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue dumpprivkey(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue dumppaperkey(const JSONRPCRequest& request); // in rpcdump.cpp
+extern UniValue generatepaperkey(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue importprivkey(const JSONRPCRequest& request);
 extern UniValue restorewallet(const JSONRPCRequest& request);
 extern UniValue importaddress(const JSONRPCRequest& request);
@@ -3206,6 +3207,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "bumpfee",                  &bumpfee,                  {"txid", "options"} },
     { "wallet",             "dumpprivkey",              &dumpprivkey,              {"address"}  },
     { "wallet",             "dumppaperkey",             &dumppaperkey,             {} },
+    { "wallet",             "generatepaperkey",         &generatepaperkey,         {} },
     { "wallet",             "dumpwallet",               &dumpwallet,               {"filename"} },
     { "wallet",             "encryptwallet",            &encryptwallet,            {"passphrase"} },
     { "wallet",             "getaccountaddress",        &getaccountaddress,        {"account"} },
