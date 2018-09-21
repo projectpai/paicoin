@@ -2864,7 +2864,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location filename="../forms/reviewpaperkeydialog.ui" line="+17"/>
         <source>Review Paper Key</source>
-        <translation type="unfinished">查看密鑰</translation>
+        <translation>查看密鑰</translation>
     </message>
     <message>
         <location line="+20"/>
@@ -2874,7 +2874,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+26"/>
         <source>Okay</source>
-        <translation type="unfinished">好的</translation>
+        <translation>好的</translation>
     </message>
     <message>
         <location filename="../reviewpaperkeydialog.cpp" line="+28"/>
@@ -3876,7 +3876,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message numerus="yes">
         <location line="+58"/>
         <source>Open for %n more block(s)</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>到下 %n 個區塊生出來前可修改</numerusform>
         </translation>
     </message>

@@ -2864,7 +2864,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location filename="../forms/reviewpaperkeydialog.ui" line="+17"/>
         <source>Review Paper Key</source>
-        <translation type="unfinished">復元フレーズを確認する</translation>
+        <translation>復元フレーズを確認する</translation>
     </message>
     <message>
         <location line="+20"/>
@@ -2874,7 +2874,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+26"/>
         <source>Okay</source>
-        <translation type="unfinished">はい</translation>
+        <translation>はい</translation>
     </message>
     <message>
         <location filename="../reviewpaperkeydialog.cpp" line="+28"/>

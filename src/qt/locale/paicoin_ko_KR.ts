@@ -765,7 +765,7 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
     <message>
         <location line="+157"/>
         <source>When you click OK, %1 will begin to download and process the full %2 blockchain starting with the earliest transactions when %1 initially launched.</source>
-        <translation type="unfinished"></translation>
+        <translation>OK를 클릭하시면, 1%는 2%가 처음 시작될 때 가장 빠른 거래부터 시작하여 전체 2% 블록체인을 다운로드 하고 처리하기 시작합니다.</translation>
     </message>
     <message>
         <location line="-140"/>
@@ -2866,7 +2866,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location filename="../forms/reviewpaperkeydialog.ui" line="+17"/>
         <source>Review Paper Key</source>
-        <translation type="unfinished">종이 키 확인하기</translation>
+        <translation>종이 키 확인하기</translation>
     </message>
     <message>
         <location line="+20"/>
@@ -2876,7 +2876,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+26"/>
         <source>Okay</source>
-        <translation type="unfinished">오케이</translation>
+        <translation>오케이</translation>
     </message>
     <message>
         <location filename="../reviewpaperkeydialog.cpp" line="+28"/>
@@ -4241,7 +4241,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+59"/>
         <source>Remind me later</source>
-        <translation type="unfinished">나중에 다시 알려주세요</translation>
+        <translation>나중에 다시 알려주세요</translation>
     </message>
 </context>
 <context>
@@ -4345,7 +4345,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location filename="../forms/walletselectionpage.ui" line="+14"/>
         <source>Form</source>
-        <translation type="unfinished">유형</translation>
+        <translation>유형</translation>
     </message>
     <message>
         <location line="+122"/>
