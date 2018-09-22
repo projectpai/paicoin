@@ -14,6 +14,7 @@
 #include "chain.h"
 #include "chainparams.h"
 #include "checkpoints.h"
+#include "coinbase_index.h"
 #include "compat/sanity.h"
 #include "consensus/validation.h"
 #include "fs.h"
@@ -1635,6 +1636,30 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
             condvar_GenesisWait.wait(lock);
         }
         uiInterface.NotifyBlockTip.disconnect(BlockNotifyGenesisWait);
+    }
+
+    {
+        LOCK(cs_gCoinbaseIndex);
+
+        // Initialize/load the coinbase index
+        if (fReindex || fReindexChainState) {
+            // We build the default coinbase index from the hardcoded keys
+            // The rest of it will be added when reindexing the chain
+            // through scanning and accepting each block to the block index
+            gCoinbaseIndex.BuildDefaultFromDisk();
+            gCoinbaseIndexCache.SetNull();
+        } else {
+            CoinbaseIndexDisk cbIndexDisk(gCoinbaseIndex);
+            if (!cbIndexDisk.LoadFromDisk()) {
+                gCoinbaseIndex.BuildDefaultFromDisk();
+            }
+
+            CoinbaseIndexCacheDisk cbIndexCacheDisk(gCoinbaseIndexCache);
+            cbIndexCacheDisk.LoadFromDisk();
+        }
+
+        gCoinbaseIndex.SetIsInitialized();
+        LogPrintf("gCoinbaseIndex.size() = %u\n", gCoinbaseIndex.GetNumCoinbaseAddrs());
     }
 
     // ********************************************************* Step 11: start node

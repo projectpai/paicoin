@@ -11,6 +11,7 @@
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "checkqueue.h"
+#include "coinbase_index.h"
 #include "consensus/consensus.h"
 #include "consensus/merkle.h"
 #include "consensus/tx_verify.h"
@@ -1980,6 +1981,20 @@ bool static FlushStateToDisk(const CChainParams& chainparams, CValidationState &
         // Update best block in wallet (so we can detect restored wallets).
         GetMainSignals().SetBestChain(chainActive.GetLocator());
         nLastSetChain = nNow;
+    }
+
+    {
+        LOCK(cs_gCoinbaseIndex);
+
+        if (gCoinbaseIndex.IsInitialized()) {
+            // Flush the coinbase index and the coinbase index cache
+            if (!CoinbaseIndexDisk(gCoinbaseIndex).SaveToDisk()) {
+                return state.Error("Unable to save coinbase index to disk");
+            }
+            if (!CoinbaseIndexCacheDisk(gCoinbaseIndexCache).SaveToDisk()) {
+                return state.Error("Unable to save coinbase index cache to disk");
+            }
+        }
     }
     } catch (const std::runtime_error& e) {
         return AbortNode(state, std::string("System error while flushing: ") + e.what());

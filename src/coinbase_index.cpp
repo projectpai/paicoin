@@ -9,6 +9,7 @@
 
 CoinbaseIndex gCoinbaseIndex;
 CoinbaseIndexCache gCoinbaseIndexCache;
+CCriticalSection cs_gCoinbaseIndex;
 
 void CoinbaseIndex::BuildDefault()
 {
@@ -58,6 +59,16 @@ bool CoinbaseIndex::IsNull() const
 bool CoinbaseIndex::IsModified() const
 {
     return m_modified;
+}
+
+bool CoinbaseIndex::IsInitialized() const
+{
+    return m_isInitialized;
+}
+
+void CoinbaseIndex::SetIsInitialized()
+{
+    m_isInitialized = true;
 }
 
 void CoinbaseIndex::AddNewAddress(CoinbaseAddress addr, uint256 blockHash)
@@ -249,6 +260,8 @@ bool CoinbaseIndexCache::AddTransactionToCache(CTransactionRef txToCache)
 
 bool CoinbaseIndexCacheDisk::LoadFromDisk()
 {
+    m_indexCache.SetNull();
+
     CAutoFile indexFile = OpenCacheFile(true);
     if (indexFile.IsNull()) {
         // TODO: report here that the index does not exist

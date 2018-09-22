@@ -6,6 +6,7 @@
 #include "pubkey.h"
 #include "serialize.h"
 #include "streams.h"
+#include "sync.h"
 #include "uint256.h"
 #include "validation.h"
 
@@ -28,6 +29,9 @@ public:
     void SetNull();
     bool IsNull() const;
     bool IsModified() const;
+    bool IsInitialized() const;
+
+    void SetIsInitialized();
 
     void AddNewAddress(CoinbaseAddress addr, uint256 blockHash);
     const CoinbaseAddress* GetCoinbaseWithAddr(const std::string& addr) const;
@@ -44,6 +48,7 @@ private:
     std::map<std::string, size_t> m_addrToCoinbaseAddr;
 
     bool m_modified = false;
+    bool m_isInitialized = false;
 };
 
 class CoinbaseIndexDisk
@@ -131,7 +136,26 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action)
     {
-        READWRITE(m_indexCache.m_cachedTx);
+        if (ser_action.ForRead()) {
+            bool hasTx = false;
+            READWRITE(hasTx);
+            if (hasTx) {
+                CMutableTransaction mutTx;
+                UnserializeTransaction(mutTx, s);
+
+                m_indexCache.SetNull();
+                CTransactionRef txRead(new CTransaction(mutTx));
+
+                m_indexCache.AddTransactionToCache(txRead);
+            }
+        } else {
+            bool hasTx = m_indexCache.m_cachedTx != nullptr;
+            READWRITE(hasTx);
+
+            if (hasTx) {
+                SerializeTransaction(CMutableTransaction(*(m_indexCache.m_cachedTx.get())), s);
+            }
+        }
     }
 
     bool LoadFromDisk();
@@ -146,5 +170,7 @@ private:
 
 extern CoinbaseIndex gCoinbaseIndex;
 extern CoinbaseIndexCache gCoinbaseIndexCache;
+
+extern CCriticalSection cs_gCoinbaseIndex;
 
 #endif // PAICOIN_COINBASE_INDEX_H
