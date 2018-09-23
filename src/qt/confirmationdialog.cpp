@@ -7,6 +7,7 @@ ConfirmationDialog::ConfirmationDialog(const QString &title, QWidget *parent) :
 {
     ui->setupUi(this);
     ui->labelTitle->setText(title);
+    adjustSize();
 
     QPainterPath path;
     path.addRoundedRect(QRectF(rect()), 5, 5);

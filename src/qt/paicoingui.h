@@ -259,6 +259,8 @@ public Q_SLOTS:
 
     /** Interrupt current operation and request PIN entry */
     void interruptForPinRequest(bool newPin = false);
+    /** Checks result of PIN entry check, and requests PIN entry */
+    void checkResultAndInterrupt(bool previousPinInvalid = false);
     /** Continue from last state before PIN entry was requested */
     void continueFromPinRequest();
 #endif // ENABLE_WALLET
