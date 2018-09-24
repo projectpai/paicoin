@@ -1374,12 +1374,12 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>Sign &amp;message...</translation>
     </message>
     <message>
-        <location line="+758"/>
+        <location line="+744"/>
         <source>Synchronizing with network...</source>
         <translation>Synchronizing with network...</translation>
     </message>
     <message>
-        <location line="-838"/>
+        <location line="-824"/>
         <source>&amp;Overview</source>
         <translation>&amp;Overview</translation>
     </message>
@@ -1509,7 +1509,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>PIN Set</translation>
     </message>
     <message>
-        <location line="+186"/>
+        <location line="+172"/>
         <source>Paper Key Complete</source>
         <translation>Paper Key Complete</translation>
     </message>
@@ -1539,7 +1539,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>Reindexing blocks on disk...</translation>
     </message>
     <message>
-        <location line="-841"/>
+        <location line="-827"/>
         <source>Send coins to a PAI Coin address</source>
         <translation>Send coins to a PAI Coin address</translation>
     </message>
@@ -1640,7 +1640,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>&amp;Command-line options</translation>
     </message>
     <message numerus="yes">
-        <location line="+666"/>
+        <location line="+652"/>
         <source>%n active connection(s) to PAI Coin network</source>
         <translation>
             <numerusform>%n active connection to PAI Coin network</numerusform>
@@ -1686,7 +1686,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>Up to date</translation>
     </message>
     <message>
-        <location line="-763"/>
+        <location line="-749"/>
         <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
         <translation>Show the %1 help message to get a list with possible PAI Coin command-line options</translation>
     </message>
@@ -1696,7 +1696,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>%1 client</translation>
     </message>
     <message>
-        <location line="+470"/>
+        <location line="+456"/>
         <source>Connecting to peers...</source>
         <translation>Connecting to peers...</translation>
     </message>
@@ -1804,7 +1804,7 @@ If you do not update the application, your investment will remain in holding.</t
         <translation>Submit</translation>
     </message>
     <message>
-        <location filename="../paperkeycompletionpage.cpp" line="+78"/>
+        <location filename="../paperkeycompletionpage.cpp" line="+80"/>
         <location line="+1"/>
         <source>Word #%1</source>
         <translation>Word #%1</translation>
@@ -2160,7 +2160,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>QObject::QObject</name>
     <message>
-        <location filename="../paicoingui.cpp" line="-602"/>
+        <location filename="../paicoingui.cpp" line="-588"/>
         <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2859,7 +2859,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>Word #%1</translation>
     </message>
     <message>
-        <location line="+127"/>
+        <location line="+120"/>
         <source>Warning</source>
         <translation>Warning</translation>
     </message>
@@ -2867,6 +2867,29 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <location line="+1"/>
         <source>The Paper Key you entered is invalid. Please double-check each word and try again.</source>
         <translation>The Paper Key you entered is invalid. Please double-check each word and try again.</translation>
+    </message>
+</context>
+<context>
+    <name>ReviewPaperKeyDialog</name>
+    <message>
+        <location filename="../forms/reviewpaperkeydialog.ui" line="+17"/>
+        <source>Review Paper Key</source>
+        <translation type="unfinished">Review Paper Key</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>TextLabel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Okay</source>
+        <translation type="unfinished">Okay</translation>
+    </message>
+    <message>
+        <location filename="../reviewpaperkeydialog.cpp" line="+28"/>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4201,7 +4224,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+689"/>
+        <location filename="../paicoingui.cpp" line="+675"/>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4237,7 +4260,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>ViewInvestorKeyDialog</name>
     <message>
-        <location filename="../forms/viewinvestorkeydialog.ui" line="+14"/>
+        <location filename="../forms/viewinvestorkeydialog.ui" line="+17"/>
         <source>View Investor Key</source>
         <translation>View Investor Key</translation>
     </message>
@@ -4252,7 +4275,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>Copy Investor Key</translation>
     </message>
     <message>
-        <location filename="../viewinvestorkeydialog.cpp" line="+13"/>
+        <location filename="../viewinvestorkeydialog.cpp" line="+23"/>
         <source>Investor key:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4262,7 +4285,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+14"/>
         <source>Investor key copied!</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4356,7 +4379,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>WalletView</name>
     <message>
-        <location filename="../walletview.cpp" line="+51"/>
+        <location filename="../walletview.cpp" line="+52"/>
         <source>&amp;Export</source>
         <translation>&amp;Export</translation>
     </message>
@@ -4394,11 +4417,6 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <location line="+0"/>
         <source>The wallet data was successfully saved to %1.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+50"/>
-        <source>Review Paper Key</source>
-        <translation>Review Paper Key</translation>
     </message>
 </context>
 <context>

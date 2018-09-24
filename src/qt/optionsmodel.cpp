@@ -149,6 +149,7 @@ void OptionsModel::Init(bool resetSettings)
         addOverriddenOption("-lang");
 
     language = settings.value("language").toString();
+    QLocale::setDefault(QLocale(language));
 }
 
 void OptionsModel::Reset()
