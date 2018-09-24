@@ -2509,6 +2509,11 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
     } while (pindexNewTip != pindexMostWork);
     CheckBlockIndex(chainparams.GetConsensus());
 
+    {
+        LOCK(cs_gCoinbaseIndex);
+        gCoinbaseIndex.PruneAddrsWithBlocks(mapBlockIndex);
+    }
+
     // Write changes periodically to disk, after relay.
     if (!FlushStateToDisk(chainparams, state, FLUSH_STATE_PERIODIC)) {
         return false;
