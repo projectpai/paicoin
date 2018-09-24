@@ -118,6 +118,7 @@ public:
 
     // This also adds the coinbase address to the coinbase index once
     // a transaction pair is supplied
+    void ScanNewBlockForCoinbaseTxs(const std::shared_ptr<const CBlock>& block);
     bool AddTransactionToCache(CTransactionRef txToCache);
     void SetNull() { m_cachedTx.reset(); }
 

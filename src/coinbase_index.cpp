@@ -213,6 +213,20 @@ CAutoFile CoinbaseIndexDisk::OpenIndexFile(bool fReadOnly)
     return OpenDiskFile(path, fReadOnly);
 }
 
+void CoinbaseIndexCache::ScanNewBlockForCoinbaseTxs(const std::shared_ptr<const CBlock>& block)
+{
+    if (!block) {
+        return;
+    }
+
+    CoinbaseTxHandler txHandler;
+    for (auto& tx : block->vtx) {
+        if (txHandler.IsTransactionCoinbaseAddress(tx)) {
+            AddTransactionToCache(tx);
+        }
+    }
+}
+
 bool CoinbaseIndexCache::AddTransactionToCache(CTransactionRef txToCache)
 {
     if (!txToCache) {

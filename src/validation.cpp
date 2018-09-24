@@ -3228,6 +3228,11 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
                 AbortNode(state, "Failed to write block");
         if (!ReceivedBlockTransactions(block, state, pindex, blockPos, chainparams.GetConsensus()))
             return error("AcceptBlock(): ReceivedBlockTransactions failed");
+
+        {
+            LOCK(cs_gCoinbaseIndex);
+            gCoinbaseIndexCache.ScanNewBlockForCoinbaseTxs(pblock);
+        }
     } catch (const std::runtime_error& e) {
         return AbortNode(state, std::string("System error: ") + e.what());
     }
