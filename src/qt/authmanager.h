@@ -24,7 +24,7 @@ public:
     void Reset();
     bool ShouldSet();
 Q_SIGNALS:
-    void Authenticate();
+    void Authenticate(bool enteredPinInvalid = false);
     void Authenticated();
 public Q_SLOTS:
     void RequestCheck(const std::string &pin);

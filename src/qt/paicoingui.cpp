@@ -50,6 +50,7 @@
 #include "util.h"
 
 #include <iostream>
+#include <memory>
 
 #include <QAction>
 #include <QApplication>
@@ -340,7 +341,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     connect(setPinPage, SIGNAL(pinValidationFailed()), this, SLOT(gotoSetPinPage()));
     connect(setPinPage, SIGNAL(backToPreviousPage()), this, SLOT(goBackFromSetPinPage()));
 
-    connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), this, SLOT(interruptForPinRequest()));
+    connect(&AuthManager::getInstance(), SIGNAL(Authenticate(bool)), this, SLOT(checkResultAndInterrupt(bool)));
     connect(&AuthManager::getInstance(), SIGNAL(Authenticated()), this, SLOT(continueFromPinRequest()));
 }
 
@@ -977,6 +978,17 @@ void PAIcoinGUI::interruptForPinRequest(bool newPin)
         installEventFilter(setPinPage);
     }
     gotoSetPinPage();
+}
+
+void PAIcoinGUI::checkResultAndInterrupt(bool previousPinInvalid)
+{
+    if (previousPinInvalid)
+    {
+        std::unique_ptr<ConfirmationDialog> confirmationDialog(
+                    new ConfirmationDialog(tr("Invalid PIN, please try again"), this));
+        confirmationDialog->exec();
+    }
+    interruptForPinRequest();
 }
 
 void PAIcoinGUI::continueFromPinRequest()

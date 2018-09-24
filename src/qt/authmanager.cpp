@@ -37,9 +37,6 @@ bool AuthManager::Check(const std::string& pin)
     bool fMatch = storedPin.compare(pin) == 0;
     if (!fMatch)
     {
-        ConfirmationDialog confirmationDialog(tr("Invalid PIN, please try again"));
-        confirmationDialog.exec();
-
         if (SettingsHelper::IncrementAuthFailCount() >= 3)
         {
             // TODO: Perform back-off action (i.e. disable wallet temporary)
@@ -103,7 +100,7 @@ void AuthManager::RequestCheck(const std::string &pin)
     if (Check(pin))
         Q_EMIT Authenticated();
     else
-        Q_EMIT Authenticate();
+        Q_EMIT Authenticate(true);
 }
 
 void AuthManager::RequestAuthenticate()
