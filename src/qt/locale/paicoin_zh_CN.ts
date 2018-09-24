@@ -2881,7 +2881,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location filename="../reviewpaperkeydialog.cpp" line="+28"/>
         <source>Unavailable</source>
-        <translation type="unfinished"></translation>
+        <translation>不可用</translation>
     </message>
 </context>
 <context>
@@ -4264,17 +4264,17 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location filename="../viewinvestorkeydialog.cpp" line="+23"/>
         <source>Investor key:</source>
-        <translation type="unfinished"></translation>
+        <translation>投资人密钥</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>Unavailable</source>
-        <translation type="unfinished"></translation>
+        <translation>不可用</translation>
     </message>
     <message>
         <location line="+14"/>
         <source>Investor key copied!</source>
-        <translation type="unfinished">投资人密钥已复制</translation>
+        <translation>投资人密钥已复制</translation>
     </message>
 </context>
 <context>
