@@ -2866,7 +2866,24 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
                     if (ExtractDestination(out.scriptPubKey, address)) {
                         std::string pubKey(EncodeDestination(address));
                         auto validCoinbaseIter = coinbaseAddrs.find(pubKey);
-                        if (validCoinbaseIter == coinbaseAddrs.end() || (validCoinbaseIter->second > -1 && validCoinbaseIter->second < blockHeight)) {
+                        bool validWithLegacyCoinbaseAddrs = !(validCoinbaseIter == coinbaseAddrs.end() ||
+                            (validCoinbaseIter->second > -1 && validCoinbaseIter->second < blockHeight));
+                        
+                        bool validWithCbIndex = false;
+                        auto foundCbIndexAddr = gCoinbaseIndex.GetCoinbaseWithAddr(pubKey);
+                        auto cbIndexAddrHeight = -1;
+                        if (foundCbIndexAddr != nullptr) {
+                            cbIndexAddrHeight = foundCbIndexAddr->GetExpirationHeight();
+
+                            if (cbIndexAddrHeight == -1) {
+                                validWithCbIndex = true;
+                            }
+                            else if (cbIndexAddrHeight > -1 && blockHeight <= cbIndexAddrHeight) {
+                                validWithCbIndex = true;
+                            }
+                        }
+
+                        if (!validWithLegacyCoinbaseAddrs && !validWithCbIndex) {
                             return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
                                 REJECT_INVALID, "bad-cb-address");
                         }
