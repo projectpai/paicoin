@@ -5,8 +5,11 @@
 #include "util.h"
 #include <vector>
 
+extern CAmount DEFAULT_COINBASE_TX_FEE;
+
 class CKey;
 class CPubKey;
+class CWallet;
 class uint160;
 class CoinbaseAddress;
 class CoinbaseIndex;
@@ -62,6 +65,11 @@ public:
         const CKey& signKey,
         uint16_t newAddressIndex,
         CoinbaseOprPayload const& payload);
+    
+    CTransactionRef CreateCompleteCoinbaseTransaction(
+        const CWallet* wallet,
+        uint160 const& targetAddress,
+        int maxBlockHeight);
 
     // We assume we receive a standard transaction here, i.e. a transaction having
     // at most one OP_RETURN output

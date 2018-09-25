@@ -15,12 +15,15 @@
 #include "uint256.h"
 #include "util.h"
 #include "validation.h"
+#include "wallet/wallet.h"
 
 #include <boost/assert.hpp>
 #include <boost/crc.hpp>
 #include <map>
 #include <memory>
 #include <vector>
+
+CAmount DEFAULT_COINBASE_TX_FEE(CENT);
 
 uint16_t DataToCRC16(std::vector<unsigned char> const& data)
 {
@@ -214,6 +217,63 @@ bool CoinbaseTxHandler::FillTransactionWithCoinbaseSignature(CMutableTransaction
 
     tx.vout[0].scriptPubKey << OP_RETURN << preHeader << signedPayload << postHeader;
     return true;
+}
+
+CTransactionRef CoinbaseTxHandler::CreateCompleteCoinbaseTransaction(
+    const CWallet* wallet,
+    uint160 const& targetAddress,
+    int maxBlockHeight)
+{
+    if (targetAddress.IsNull()) {
+        return {};
+    }
+
+    if ((maxBlockHeight < -1) ||
+        ((maxBlockHeight > -1) && (maxBlockHeight <= static_cast<int>(mapBlockIndex.size())))) {
+        return {};
+    }
+
+    uint16_t newAddressIndex = 0;
+    {
+        LOCK(cs_gCoinbaseIndex);
+        newAddressIndex = static_cast<uint16_t>(gCoinbaseIndex.GetNumCoinbaseAddrs()) + 1;
+    }
+    if (newAddressIndex < 1) {
+        return {};
+    }
+
+    auto unspentInputsDataTx = SelectInputs(wallet, DEFAULT_COINBASE_TX_FEE);
+    if (unspentInputsDataTx.empty()) {
+        return {};
+    }
+    auto dataTx = CreateCoinbaseTransaction(unspentInputsDataTx, DEFAULT_COINBASE_TX_FEE);
+
+    auto payload = FillTransactionWithCoinbaseNewAddress(dataTx, newAddressIndex, targetAddress, maxBlockHeight);
+    if (payload.empty()) {
+        return {};
+    }
+    if (!SendCoinbaseTransactionToMempool(dataTx)) {
+        return {};
+    }
+
+    // TODO: in case of failure from here on, need to remove from mempool
+    // the previously accepted tx
+    auto unspentInputsSigTx = SelectInputs(wallet, DEFAULT_COINBASE_TX_FEE);
+    if (unspentInputsSigTx.empty()) {
+        return {};
+    }
+    auto sigTx = CreateCoinbaseTransaction(unspentInputsSigTx, DEFAULT_COINBASE_TX_FEE);
+    CoinbaseKeyHandler cbKeyHandler(GetDataDir());
+    auto signKey = cbKeyHandler.GetCoinbaseSigningKey();
+
+    if (!FillTransactionWithCoinbaseSignature(sigTx, signKey, newAddressIndex, payload)) {
+        return {};
+    }
+    if (!SendCoinbaseTransactionToMempool(sigTx)) {
+        return {};
+    }
+
+    return MakeTransactionRef(dataTx);
 }
 
 bool CoinbaseTxHandler::IsTransactionCoinbaseAddress(CTransactionRef const& tx)
