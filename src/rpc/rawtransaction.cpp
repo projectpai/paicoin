@@ -962,19 +962,31 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
     return hashTx.GetHex();
 }
 
-static const CRPCCommand commands[] =
-{ //  category              name                      actor (function)         argNames
-  //  --------------------- ------------------------  -----------------------  ----------
-    { "rawtransactions",    "getrawtransaction",      &getrawtransaction,      {"txid","verbose"} },
-    { "rawtransactions",    "createrawtransaction",   &createrawtransaction,   {"inputs","outputs","locktime","replaceable"} },
-    { "rawtransactions",    "decoderawtransaction",   &decoderawtransaction,   {"hexstring"} },
-    { "rawtransactions",    "decodescript",           &decodescript,           {"hexstring"} },
-    { "rawtransactions",    "sendrawtransaction",     &sendrawtransaction,     {"hexstring","allowhighfees"} },
-    { "rawtransactions",    "combinerawtransaction",  &combinerawtransaction,  {"txs"} },
-    { "rawtransactions",    "signrawtransaction",     &signrawtransaction,     {"hexstring","prevtxs","privkeys","sighashtype"} }, /* uses wallet if enabled */
+UniValue createcoinbasetransaction(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+        throw std::runtime_error(
+            "createcoinbasetransaction\n"
+        );
 
-    { "blockchain",         "gettxoutproof",          &gettxoutproof,          {"txids", "blockhash"} },
-    { "blockchain",         "verifytxoutproof",       &verifytxoutproof,       {"proof"} },
+    UniValue result(UniValue::VOBJ);
+    return result;
+}
+
+static const CRPCCommand commands[] =
+{ //  category              name                         actor (function)            argNames
+  //  --------------------- ------------------------     -----------------------     ----------
+    { "rawtransactions",    "getrawtransaction",         &getrawtransaction,         {"txid","verbose"} },
+    { "rawtransactions",    "createrawtransaction",      &createrawtransaction,      {"inputs","outputs","locktime","replaceable"} },
+    { "rawtransactions",    "decoderawtransaction",      &decoderawtransaction,      {"hexstring"} },
+    { "rawtransactions",    "decodescript",              &decodescript,              {"hexstring"} },
+    { "rawtransactions",    "sendrawtransaction",        &sendrawtransaction,        {"hexstring","allowhighfees"} },
+    { "rawtransactions",    "combinerawtransaction",     &combinerawtransaction,     {"txs"} },
+    { "rawtransactions",    "signrawtransaction",        &signrawtransaction,        {"hexstring","prevtxs","privkeys","sighashtype"} }, /* uses wallet if enabled */
+    { "rawtransactions",    "createcoinbasetransaction", &createcoinbasetransaction, {"address","maxheight"} }, /* uses wallet if enabled */
+
+    { "blockchain",         "gettxoutproof",             &gettxoutproof,             {"txids", "blockhash"} },
+    { "blockchain",         "verifytxoutproof",          &verifytxoutproof,          {"proof"} },
 };
 
 void RegisterRawTransactionRPCCommands(CRPCTable &t)
