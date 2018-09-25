@@ -628,6 +628,15 @@ void ThreadImport(std::vector<fs::path> vImportFiles)
 
     // -reindex
     if (fReindex) {
+        {
+            // When reindexing, the blocks will be scanned
+            // and "accepted" one by one, therefore the
+            // coinbase index will be rebuilt one step at a time.
+            // We can reset it to default now.
+            LOCK(cs_gCoinbaseIndex);
+            gCoinbaseIndex.BuildDefaultFromDisk();
+        }
+
         int nFile = 0;
         while (true) {
             CDiskBlockPos pos(nFile, 0);
