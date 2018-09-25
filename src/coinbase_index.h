@@ -145,7 +145,7 @@ public:
                 UnserializeTransaction(mutTx, s);
 
                 m_indexCache.SetNull();
-                CTransactionRef txRead(new CTransaction(mutTx));
+                CTransactionRef txRead = MakeTransactionRef(mutTx);
 
                 m_indexCache.AddTransactionToCache(txRead);
             }
