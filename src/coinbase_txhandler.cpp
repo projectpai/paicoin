@@ -82,7 +82,7 @@ bool CoinbaseTxHandler::ExtractPayloadFields(CoinbaseOprPayload const& payload,
         } else if (operationType == COT_SIGN) {
             dataStream >> newAddressIndex;
             dataStream >> dataSignature;
-            BOOST_ASSERT(dataSignature.size() == 75);
+            BOOST_ASSERT(dataSignature.size() == 72);
         }
     } catch (...) {
         return false;
