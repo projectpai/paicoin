@@ -22,8 +22,8 @@ class TxnMallTest(PAIcoinTestFramework):
         disconnect_nodes(self.nodes[2], 1)
 
     def run_test(self):
-        # All nodes should start with 1,250 PAI:
-        starting_balance = 1250
+        # All nodes should start with 37,500 PAI:
+        starting_balance = 37500
         for i in range(4):
             assert_equal(self.nodes[i].getbalance(), starting_balance)
             self.nodes[i].getnewaddress("")  # bug workaround, coins generated assigned to first getnewaddress!
@@ -82,10 +82,10 @@ class TxnMallTest(PAIcoinTestFramework):
         tx1 = self.nodes[0].gettransaction(txid1)
         tx2 = self.nodes[0].gettransaction(txid2)
 
-        # Node0's balance should be starting balance, plus 50PAI for another
+        # Node0's balance should be starting balance, plus 1500PAI for another
         # matured block, minus tx1 and tx2 amounts, and minus transaction fees:
         expected = starting_balance + fund_foo_tx["fee"] + fund_bar_tx["fee"]
-        if self.options.mine_block: expected += 50
+        if self.options.mine_block: expected += 1550
         expected += tx1["amount"] + tx1["fee"]
         expected += tx2["amount"] + tx2["fee"]
         assert_equal(self.nodes[0].getbalance(), expected)
@@ -126,11 +126,11 @@ class TxnMallTest(PAIcoinTestFramework):
         assert_equal(tx1_clone["confirmations"], 2)
         assert_equal(tx2["confirmations"], 1)
 
-        # Check node0's total balance; should be same as before the clone, + 100 PAI for 2 matured,
+        # Check node0's total balance; should be same as before the clone, + 3000 PAI for 2 matured,
         # less possible orphaned matured subsidy
-        expected += 100
+        expected += 3000
         if (self.options.mine_block): 
-            expected -= 50
+            expected -= 1500
         assert_equal(self.nodes[0].getbalance(), expected)
         assert_equal(self.nodes[0].getbalance("*", 0), expected)
 
@@ -145,7 +145,7 @@ class TxnMallTest(PAIcoinTestFramework):
                                                                 + fund_foo_tx["fee"]
                                                                 -   29
                                                                 + fund_bar_tx["fee"]
-                                                                +  100)
+                                                                +  3000)
 
         # Node1's "from0" account balance
         assert_equal(self.nodes[1].getbalance("from0", 0), -(tx1["amount"] + tx2["amount"]))
