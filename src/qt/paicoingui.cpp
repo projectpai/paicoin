@@ -767,7 +767,12 @@ void PAIcoinGUI::createTrayIconMenu()
 #ifndef Q_OS_MAC
     // return if trayIcon is unset (only on non-Mac OSes)
     if (!trayIcon)
-        return;
+    {
+        if (networkStyle)
+            createTrayIcon(networkStyle);
+        else
+            return;
+    }
 
     trayIconMenu = new QMenu(this);
     trayIcon->setContextMenu(trayIconMenu);
@@ -894,10 +899,11 @@ void PAIcoinGUI::setPinCode(const std::string &pin)
     switch(state)
     {
     case PAIcoinGUIState::RestoreWallet:
-    case PAIcoinGUIState::PaperKeyCompletion:
         Q_EMIT linkWalletToMainApp();
         break;
     case PAIcoinGUIState::Init:
+    case PAIcoinGUIState::CreateWallet:
+        previousState = state;
         AuthManager::getInstance().RequestCheck(pin);
         break;
     default:
@@ -959,7 +965,7 @@ void PAIcoinGUI::interruptForPinRequest(bool newPin)
 {
     previousState = state;
 
-    if (previousState == PAIcoinGUIState::Init)
+    if (previousState == PAIcoinGUIState::Init || previousState == PAIcoinGUIState::PaperKeyCompletion)
     {
         updateMenuBar(true);
         updateTrayIconMenu(true);
@@ -996,6 +1002,7 @@ void PAIcoinGUI::continueFromPinRequest()
     switch(previousState)
     {
     case PAIcoinGUIState::Init:
+    case PAIcoinGUIState::PaperKeyCompletion:
         mainStackedWidget->setCurrentWidget(walletFrame);
         updateMenuBar();
         updateTrayIconMenu();
@@ -1007,6 +1014,9 @@ void PAIcoinGUI::continueFromPinRequest()
         connect(walletFrame, SIGNAL(requestedSyncWarningInfo()), this, SLOT(showModalOverlay()));
         connect(labelBlocksIcon, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
         connect(progressBar, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
+        break;
+    case PAIcoinGUIState::CreateWallet:
+        gotoPaperKeyIntroPage();
         break;
     default:
         assert(!"Unexpected state!");
@@ -1041,7 +1051,7 @@ void PAIcoinGUI::gotoRestoreWalletPage()
 void PAIcoinGUI::processCreateWalletRequest()
 {
     state = PAIcoinGUIState::CreateWallet;
-    gotoPaperKeyIntroPage();
+    gotoSetPinPage();
 }
 
 void PAIcoinGUI::gotoPaperKeyIntroPage()
@@ -1073,7 +1083,7 @@ void PAIcoinGUI::showPaperKeyCompleteDialog()
     // New wallet has been created and we need to display paper key complete dialog, and link wallet to the app itself
     ConfirmationDialog *confirmationDialog = new ConfirmationDialog(tr("Paper Key Complete"), this);
     confirmationDialog->exec();
-    gotoSetPinPage();
+    Q_EMIT linkWalletToMainApp();
 }
 
 void PAIcoinGUI::gotoOverviewPage()

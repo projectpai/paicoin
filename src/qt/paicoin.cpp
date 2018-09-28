@@ -24,13 +24,6 @@
 #ifdef ENABLE_WALLET
 #include "paymentserver.h"
 #include "walletmodel.h"
-#include "walletselectionpage.h"
-#include "welcomepage.h"
-#include "setpinpage.h"
-#include "paperkeyintropage.h"
-#include "paperkeywritedownpage.h"
-#include "paperkeycompletionpage.h"
-#include "restorewalletpage.h"
 #include "authmanager.h"
 #endif
 
