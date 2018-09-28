@@ -246,10 +246,13 @@ CTransactionRef CoinbaseTxHandler::CreateCompleteCoinbaseTransaction(
     if (unspentInputsDataTx.empty()) {
         return {};
     }
-    auto dataTx = CreateCoinbaseTransaction(unspentInputsDataTx, DEFAULT_COINBASE_TX_FEE);
+    auto dataTx = CreateCoinbaseTransaction(unspentInputsDataTx, DEFAULT_COINBASE_TX_FEE, wallet);
 
     auto payload = FillTransactionWithCoinbaseNewAddress(dataTx, newAddressIndex, targetAddress, maxBlockHeight);
     if (payload.empty()) {
+        return {};
+    }
+    if (!SignCoinbaseTransaction(dataTx, wallet)) {
         return {};
     }
     if (!SendCoinbaseTransactionToMempool(dataTx)) {
@@ -258,15 +261,26 @@ CTransactionRef CoinbaseTxHandler::CreateCompleteCoinbaseTransaction(
 
     // TODO: in case of failure from here on, need to remove from mempool
     // the previously accepted tx
-    auto unspentInputsSigTx = SelectInputs(wallet, DEFAULT_COINBASE_TX_FEE);
-    if (unspentInputsSigTx.empty()) {
-        return {};
+    CAmount totalBefore = -DEFAULT_COINBASE_TX_FEE;
+    for (auto const& u : unspentInputsDataTx) {
+        totalBefore += u.amount;
     }
-    auto sigTx = CreateCoinbaseTransaction(unspentInputsSigTx, DEFAULT_COINBASE_TX_FEE);
+
+    std::unique_ptr<CWalletTx> ptrGuard(new CWalletTx(wallet, MakeTransactionRef(dataTx)));
+    UnspentInput unspentInputSigTx{ptrGuard.get(), 1, totalBefore, 1};
+
+    auto sigTx = CreateCoinbaseTransaction({unspentInputSigTx}, DEFAULT_COINBASE_TX_FEE, wallet);
+    
     CoinbaseKeyHandler cbKeyHandler(GetDataDir());
     auto signKey = cbKeyHandler.GetCoinbaseSigningKey();
+    if (!signKey.IsValid()) {
+        return {};
+    }
 
     if (!FillTransactionWithCoinbaseSignature(sigTx, signKey, newAddressIndex, payload)) {
+        return {};
+    }
+    if (!SignCoinbaseTransaction(sigTx, wallet)) {
         return {};
     }
     if (!SendCoinbaseTransactionToMempool(sigTx)) {

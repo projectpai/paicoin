@@ -1,7 +1,9 @@
 #include "coinbase_utils.h"
 #include "amount.h"
+#include "coins.h"
 #include "consensus/validation.h"
 #include "net.h"
+#include "policy/policy.h"
 #include "txmempool.h"
 #include "validation.h"
 #include "wallet/wallet.h"
@@ -57,21 +59,85 @@ UnspentInputs SelectInputs(const CWallet* wallet, CAmount desiredAmount)
 
 CMutableTransaction CreateCoinbaseTransaction(
     const UnspentInputs& unspentInputs,
-    CAmount txAmount)
+    CAmount txAmount,
+    const CWallet* wallet)
 {
+    if (!wallet || unspentInputs.empty()) {
+        return {};
+    }
+
     CMutableTransaction rawTx;
+    CAmount totalAvailableAmount = 0;
 
     for (auto const& unspentInput: unspentInputs) {
         uint32_t nSequence = std::numeric_limits<uint32_t>::max();
         CTxIn txIn(COutPoint(unspentInput.out->tx->GetHash(), unspentInput.outputNumber), CScript(), nSequence);
 
         rawTx.vin.push_back(txIn);
+        totalAvailableAmount += unspentInput.amount;
     }
 
-    CTxOut txOut(txAmount, CScript());
-    rawTx.vout.push_back(txOut);
+    auto keys = wallet->GetKeys();
+    if (keys.empty()) {
+        return {}; // otherwise the entire amount is lost in the OP_RETURN tx
+    }
+
+    auto firstKey = *(keys.begin());
+    CScript ownDestinationScript = GetScriptForDestination(firstKey);
+
+    CTxOut oprOut(txAmount / 2, CScript());
+    CTxOut restOut(totalAvailableAmount - txAmount, ownDestinationScript);
+
+    rawTx.vout.push_back(oprOut);
+    rawTx.vout.push_back(restOut);
 
     return rawTx;
+}
+
+bool SignCoinbaseTransaction(CMutableTransaction& rawTx, const CWallet* wallet)
+{
+    if (!wallet) {
+        return false;
+    }
+
+    CCoinsView viewDummy;
+    CCoinsViewCache view(&viewDummy);
+    {
+        LOCK(mempool.cs);
+        CCoinsViewCache &viewChain = *pcoinsTip;
+        CCoinsViewMemPool viewMempool(&viewChain, mempool);
+        view.SetBackend(viewMempool);
+
+        for (const CTxIn& txin : rawTx.vin) {
+            view.AccessCoin(txin.prevout);
+        }
+
+        view.SetBackend(viewDummy);
+    }
+
+    const CTransaction txConst(rawTx);
+    for (unsigned int i = 0; i < rawTx.vin.size(); i++) {
+        CTxIn& txin = rawTx.vin[i];
+        const Coin& coin = view.AccessCoin(txin.prevout);
+        if (coin.IsSpent()) {
+            return false;
+        }
+        const CScript& prevPubKey = coin.out.scriptPubKey;
+        const CAmount& amount = coin.out.nValue;
+
+        SignatureData sigdata;
+        ProduceSignature(MutableTransactionSignatureCreator(wallet, &rawTx, i, amount, SIGHASH_ALL), prevPubKey, sigdata);
+        sigdata = CombineSignatures(prevPubKey, TransactionSignatureChecker(&txConst, i, amount), sigdata, DataFromTransaction(rawTx, i));
+
+        UpdateTransaction(rawTx, i, sigdata);
+
+        ScriptError serror = SCRIPT_ERR_OK;
+        if (!VerifyScript(txin.scriptSig, prevPubKey, &txin.scriptWitness, STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&txConst, i, amount), &serror)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool SendCoinbaseTransactionToMempool(CMutableTransaction rawTx)

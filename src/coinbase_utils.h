@@ -18,7 +18,8 @@ struct UnspentInput
 typedef std::vector<UnspentInput> UnspentInputs;
 
 UnspentInputs SelectInputs(const CWallet* wallet, CAmount desiredAmount);
-CMutableTransaction CreateCoinbaseTransaction(const UnspentInputs& unspentInputs, CAmount txAmount);
+CMutableTransaction CreateCoinbaseTransaction(const UnspentInputs& unspentInputs, CAmount txAmount, const CWallet* wallet);
+bool SignCoinbaseTransaction(CMutableTransaction& rawTx, const CWallet* wallet);
 bool SendCoinbaseTransactionToMempool(CMutableTransaction rawTx);
 
 #endif // PAICOIN_COINBASE_UTILS_H  

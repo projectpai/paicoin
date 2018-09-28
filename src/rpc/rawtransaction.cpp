@@ -5,6 +5,7 @@
 
 #include "base58.h"
 #include "chain.h"
+#include "coinbase_txhandler.h"
 #include "coins.h"
 #include "consensus/validation.h"
 #include "core_io.h"
@@ -964,12 +965,64 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
 
 UniValue createcoinbasetransaction(const JSONRPCRequest& request)
 {
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw std::runtime_error(
-            "createcoinbasetransaction\n"
+            "createcoinbasetransaction \"targetAddress\" \"maxBlockHeight\"\n"
+            "\nCreate a coinbase transaction, adding a newly accepted coinbase address to be recognized by the network.\n"
+            "This call is only available to the node having the private keys to the default built-in coinbase addresses.\n"
+            "\nArguments:\n"
+            "1.  \"targetAddress\"    (string, required)              The new target address, given as a hex string representing the public key\n"
+            "2.  \"maxBlockHeight\"   (integer, optional, default=-1) The maximum block height at which the coinbase address can be used\n"
+            "\nExamples:\n"
+            "\nAdd a new coinbase address with expiring block at height 100:\n"
+            + HelpExampleCli("createcoinbasetransaction", "AFE0126BB12ED 100") +
+            "\nAdd a new coinbase address with no expiration block height:\n"
+            + HelpExampleCli("createcoinbasetransaction", "AFE0126BB12ED") +
+            "\nPrevious example, explicitly giving no expiration height:\n"
+            + HelpExampleCli("createcoinbasetransaction", "AFE0126BB12ED -1")
         );
+    
+    ObserveSafeMode();
+    LOCK(cs_main);
+    RPCTypeCheck(request.params, {UniValue::VSTR, UniValue::VSTR});
 
+    auto keyHex = request.params[0].get_str();
+    if (!IsHex(keyHex))
+        throw JSONRPCError(RPC_PARSE_ERROR, "Invalid hex string for the target address/public key");
+    auto keyData = ParseHex(keyHex);
+    if (keyData.empty())
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "Could not parse the target address hex string");
+    
+    CPubKey pubKey(keyData);
+    if (!pubKey.IsFullyValid())
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "The provided target address/key is not valid");
+    
+    int32_t maxBlockHeight = -1;
+    if (!request.params[1].isNull()) {
+        int32_t paramBlockHeight = -1;
+        auto convertedParam = ParseInt32(request.params[1].get_str(), &paramBlockHeight);
+        if (!convertedParam)
+            throw JSONRPCError(RPC_PARSE_ERROR, "Invalid integer format for block height");
+        if ((paramBlockHeight < 0) && (paramBlockHeight != -1))
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid integer value for block height");
+        if ((paramBlockHeight >= 0) && (paramBlockHeight <= static_cast<int>(mapBlockIndex.size())))
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Expiration block height cannot be less than (or equal to) the current height");
+        
+        maxBlockHeight = paramBlockHeight;
+    }
+
+    CoinbaseTxHandler cbTxHandler;
+    auto createdCoinbaseTx = cbTxHandler.CreateCompleteCoinbaseTransaction(pwallet, pubKey.GetID(), maxBlockHeight);
+    if (!createdCoinbaseTx)
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "Could not create the coinbase transaction");
+    
     UniValue result(UniValue::VOBJ);
+    result.push_back(Pair("txid", createdCoinbaseTx->GetHash().ToString()));
     return result;
 }
 
@@ -983,7 +1036,7 @@ static const CRPCCommand commands[] =
     { "rawtransactions",    "sendrawtransaction",        &sendrawtransaction,        {"hexstring","allowhighfees"} },
     { "rawtransactions",    "combinerawtransaction",     &combinerawtransaction,     {"txs"} },
     { "rawtransactions",    "signrawtransaction",        &signrawtransaction,        {"hexstring","prevtxs","privkeys","sighashtype"} }, /* uses wallet if enabled */
-    { "rawtransactions",    "createcoinbasetransaction", &createcoinbasetransaction, {"address","maxheight"} }, /* uses wallet if enabled */
+    { "rawtransactions",    "createcoinbasetransaction", &createcoinbasetransaction, {"address","maxheight"} }, /* needs wallet */
 
     { "blockchain",         "gettxoutproof",             &gettxoutproof,             {"txids", "blockhash"} },
     { "blockchain",         "verifytxoutproof",          &verifytxoutproof,          {"proof"} },
