@@ -12,6 +12,7 @@
 #include "pubkey.h"
 #include "serialize.h"
 #include "streams.h"
+#include "txmempool.h"
 #include "uint256.h"
 #include "util.h"
 #include "validation.h"
@@ -219,6 +220,25 @@ bool CoinbaseTxHandler::FillTransactionWithCoinbaseSignature(CMutableTransaction
     return true;
 }
 
+struct CoinbaseMempoolTxDeleter
+{
+    std::unique_ptr<CMutableTransaction> tx;
+
+    explicit CoinbaseMempoolTxDeleter(CMutableTransaction* _tx): tx(_tx) {}
+    ~CoinbaseMempoolTxDeleter()
+    {
+        if (tx != nullptr)
+        {
+            mempool.removeRecursive(CTransaction(*tx));
+        }
+    }
+
+    void reset()
+    {
+        tx.reset();
+    }
+};
+
 CTransactionRef CoinbaseTxHandler::CreateCompleteCoinbaseTransaction(
     const CWallet* wallet,
     uint160 const& targetAddress,
@@ -259,8 +279,9 @@ CTransactionRef CoinbaseTxHandler::CreateCompleteCoinbaseTransaction(
         return {};
     }
 
-    // TODO: in case of failure from here on, need to remove from mempool
-    // the previously accepted tx
+    // Make sure if we fail to add the second transaction, we undo the first transaction as well
+    CoinbaseMempoolTxDeleter dataTxMempoolDeleter(new CMutableTransaction(dataTx));
+
     CAmount totalBefore = -DEFAULT_COINBASE_TX_FEE;
     for (auto const& u : unspentInputsDataTx) {
         totalBefore += u.amount;
@@ -286,6 +307,10 @@ CTransactionRef CoinbaseTxHandler::CreateCompleteCoinbaseTransaction(
     if (!SendCoinbaseTransactionToMempool(sigTx)) {
         return {};
     }
+
+    // Safe to release the first transaction deleter here, we submitted successfully
+    // both transactions
+    dataTxMempoolDeleter.reset();
 
     return MakeTransactionRef(dataTx);
 }
