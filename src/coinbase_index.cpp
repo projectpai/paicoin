@@ -75,7 +75,7 @@ void CoinbaseIndex::AddNewAddress(CoinbaseAddress addr, uint256 blockHash)
 {
     /* The coinbase addr is already in the index, skip adding */
     auto existingCoinbaseAddr = GetCoinbaseWithAddr(addr.GetHashedAddr());
-    if (existingCoinbaseAddr != nullptr) {
+    if (!!existingCoinbaseAddr) {
         return;
     }
 
@@ -86,16 +86,15 @@ void CoinbaseIndex::AddNewAddress(CoinbaseAddress addr, uint256 blockHash)
     m_modified = true;
 }
 
-const CoinbaseAddress* CoinbaseIndex::GetCoinbaseWithAddr(const std::string& addr) const
+boost::optional<CoinbaseAddress> CoinbaseIndex::GetCoinbaseWithAddr(const std::string& addr) const
 {
     auto foundCoinbase = m_addrToCoinbaseAddr.find(addr);
     if (foundCoinbase == m_addrToCoinbaseAddr.end()) {
-        return nullptr;
+        return boost::optional<CoinbaseAddress>();
     }
 
     BOOST_ASSERT(foundCoinbase->second < m_coinbaseAddrs.size());
-
-    return &m_coinbaseAddrs[foundCoinbase->second];
+    return boost::make_optional(m_coinbaseAddrs[foundCoinbase->second]);
 }
 
 uint256 CoinbaseIndex::GetBlockHashWithAddr(const std::string& addr) const

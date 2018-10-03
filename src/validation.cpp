@@ -2877,7 +2877,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
                         bool validWithCbIndex = false;
                         auto foundCbIndexAddr = gCoinbaseIndex.GetCoinbaseWithAddr(pubKey);
                         auto cbIndexAddrHeight = -1;
-                        if (foundCbIndexAddr != nullptr) {
+                        if (foundCbIndexAddr) {
                             cbIndexAddrHeight = foundCbIndexAddr->GetExpirationHeight();
 
                             if (cbIndexAddrHeight == -1) {

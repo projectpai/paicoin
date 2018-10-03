@@ -10,7 +10,7 @@ struct RegtestingSetup : public TestingSetup {
     RegtestingSetup() : TestingSetup(CBaseChainParams::REGTEST) {}
 };
 
-BOOST_FIXTURE_TEST_SUITE(coinbase_restr_tests, RegtestingSetup)
+BOOST_FIXTURE_TEST_SUITE(coinbase_index_tests, RegtestingSetup)
 
 BOOST_AUTO_TEST_CASE(SimpleDefaultCoinbaseAddrs)
 {
@@ -18,20 +18,21 @@ BOOST_AUTO_TEST_CASE(SimpleDefaultCoinbaseAddrs)
     BOOST_CHECK(cbIndex.IsNull());
     cbIndex.BuildDefault();
     BOOST_CHECK(!cbIndex.IsNull());
+    BOOST_CHECK_EQUAL(cbIndex.GetNumCoinbaseAddrs(), fCoinbaseAddrs.size());
 
     for (auto const& fAddrToHeight : fCoinbaseAddrs) {
         auto const& fAddr = fAddrToHeight.first;
         auto const& height = fAddrToHeight.second;
 
         auto foundCbAddr = cbIndex.GetCoinbaseWithAddr(fAddr);
-        BOOST_CHECK(foundCbAddr != nullptr);
+        BOOST_CHECK(foundCbAddr);
         BOOST_CHECK_EQUAL(foundCbAddr->GetHashedAddr(), fAddr);
         BOOST_CHECK_EQUAL(foundCbAddr->IsDefault(), true);
         BOOST_CHECK_EQUAL(foundCbAddr->GetExpirationHeight(), height);
     }
 
     auto foundBogusAddr = cbIndex.GetCoinbaseWithAddr("123");
-    BOOST_CHECK(foundBogusAddr == nullptr);
+    BOOST_CHECK(!foundBogusAddr);
 }
 
 BOOST_AUTO_TEST_CASE(DefaultCoinbaseAddrsDiskSerialization)
@@ -55,7 +56,7 @@ BOOST_AUTO_TEST_CASE(DefaultCoinbaseAddrsDiskSerialization)
         auto const& height = fAddrToHeight.second;
 
         auto foundCbAddr = cbIndex.GetCoinbaseWithAddr(fAddr);
-        BOOST_CHECK(foundCbAddr != nullptr);
+        BOOST_CHECK(foundCbAddr);
         BOOST_CHECK_EQUAL(foundCbAddr->GetHashedAddr(), fAddr);
         BOOST_CHECK_EQUAL(foundCbAddr->IsDefault(), true);
         BOOST_CHECK_EQUAL(foundCbAddr->GetExpirationHeight(), height);
@@ -76,12 +77,13 @@ BOOST_AUTO_TEST_CASE(CoinbaseAddrInsertion)
     BOOST_CHECK(!cbIndex.IsNull());
 
     auto foundCbAddr = cbIndex.GetCoinbaseWithAddr("1");
+    BOOST_CHECK(foundCbAddr);
     BOOST_CHECK(*foundCbAddr == cbAddr);
     auto foundBlockHash = cbIndex.GetBlockHashWithAddr("1");
     BOOST_CHECK(foundBlockHash == blockHash);
 
     auto notExistingCbAddr = cbIndex.GetCoinbaseWithAddr("2");
-    BOOST_CHECK(notExistingCbAddr == nullptr);
+    BOOST_CHECK(!notExistingCbAddr);
     auto notFoundBlockHash = cbIndex.GetBlockHashWithAddr("2");
     BOOST_CHECK(notFoundBlockHash == uint256());
 }
@@ -108,25 +110,27 @@ BOOST_AUTO_TEST_CASE(CoinbaseAddrPruning)
     cbIndex.AddNewAddress(cbAddr2, blockHash2);
 
     auto foundCbAddr = cbIndex.GetCoinbaseWithAddr("1");
+    BOOST_CHECK(foundCbAddr);
     BOOST_CHECK(*foundCbAddr == cbAddr);
     auto foundBlockHash = cbIndex.GetBlockHashWithAddr("1");
     BOOST_CHECK(foundBlockHash == blockHash);
 
     auto foundCbAddr2 = cbIndex.GetCoinbaseWithAddr("2");
+    BOOST_CHECK(foundCbAddr2);
     BOOST_CHECK(*foundCbAddr2 == cbAddr2);
     auto foundBlockHash2 = cbIndex.GetBlockHashWithAddr("2");
     BOOST_CHECK(foundBlockHash2 == blockHash2);
 
     cbIndex.PruneAddrsWithBlocks(blockMap);
     foundCbAddr2 = cbIndex.GetCoinbaseWithAddr("2");
-    BOOST_CHECK(foundCbAddr2 == nullptr);
+    BOOST_CHECK(!foundCbAddr2);
     foundBlockHash2 = cbIndex.GetBlockHashWithAddr("2");
     BOOST_CHECK(foundBlockHash2 == uint256());
 
     blockMap.clear();
     cbIndex.PruneAddrsWithBlocks(blockMap);
     foundCbAddr = cbIndex.GetCoinbaseWithAddr("1");
-    BOOST_CHECK(foundCbAddr == nullptr);
+    BOOST_CHECK(!foundCbAddr);
     foundBlockHash = cbIndex.GetBlockHashWithAddr("1");
     BOOST_CHECK(foundBlockHash == uint256());
 

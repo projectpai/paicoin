@@ -11,6 +11,7 @@
 #include "util.h"
 #include "validation.h"
 
+#include <boost/optional.hpp>
 #include <map>
 #include <string>
 #include <vector>
@@ -35,7 +36,7 @@ public:
     void SetIsInitialized();
 
     void AddNewAddress(CoinbaseAddress addr, uint256 blockHash);
-    const CoinbaseAddress* GetCoinbaseWithAddr(const std::string& addr) const;
+    boost::optional<CoinbaseAddress> GetCoinbaseWithAddr(const std::string& addr) const;
     uint256 GetBlockHashWithAddr(const std::string& addr) const;
 
     void PruneAddrsWithBlocks(const BlockMap& blockMap);
