@@ -8,6 +8,7 @@
 #include "streams.h"
 #include "sync.h"
 #include "uint256.h"
+#include "util.h"
 #include "validation.h"
 
 #include <map>
@@ -78,6 +79,7 @@ public:
                 auto blockIndexIt = mapBlockIndex.find(coinbaseBlockHash);
                 if (blockIndexIt == mapBlockIndex.end()) {
                     // TODO: report warning/error here, block not found
+                    LogPrintf("%s: could not find block hash %s to serialize", __FUNCTION__, coinbaseBlockHash.ToString());
                     continue;
                 }
 

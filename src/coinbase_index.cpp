@@ -186,7 +186,7 @@ bool CoinbaseIndexDisk::LoadFromDisk()
 {
     CAutoFile indexFile = OpenIndexFile(true);
     if (indexFile.IsNull()) {
-        // TODO: report here that the index does not exist
+        LogPrintf("%s: coinbase index does not (yet) exist", __FUNCTION__);
         return false;
     }
 
@@ -198,8 +198,7 @@ bool CoinbaseIndexDisk::SaveToDisk()
 {
     CAutoFile indexFile = OpenIndexFile(false);
     if (indexFile.IsNull()) {
-        // TODO: fail here, the index should be writable
-        throw 1;
+        LogPrintf("%s: coinbase index could not be written to disk", __FUNCTION__);
         return false;
     }
 
@@ -278,7 +277,7 @@ bool CoinbaseIndexCacheDisk::LoadFromDisk()
 
     CAutoFile indexFile = OpenCacheFile(true);
     if (indexFile.IsNull()) {
-        // TODO: report here that the index does not exist
+        LogPrintf("%s: coinbase index cache does not (yet) exist", __FUNCTION__);
         return false;
     }
 
@@ -290,8 +289,7 @@ bool CoinbaseIndexCacheDisk::SaveToDisk()
 {
     CAutoFile indexFile = OpenCacheFile(false);
     if (indexFile.IsNull()) {
-        // TODO: fail here, the index should be writable
-        throw 1;
+        LogPrintf("%s: coinbase index cache could not be written to disk", __FUNCTION__);
         return false;
     }
 
