@@ -1984,8 +1984,6 @@ bool static FlushStateToDisk(const CChainParams& chainparams, CValidationState &
     }
 
     {
-        LOCK(cs_gCoinbaseIndex);
-
         if (gCoinbaseIndex.IsInitialized()) {
             // Flush the coinbase index and the coinbase index cache
             if (!CoinbaseIndexDisk(gCoinbaseIndex).SaveToDisk()) {
@@ -2509,10 +2507,7 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
     } while (pindexNewTip != pindexMostWork);
     CheckBlockIndex(chainparams.GetConsensus());
 
-    {
-        LOCK(cs_gCoinbaseIndex);
-        gCoinbaseIndex.PruneAddrsWithBlocks(mapBlockIndex);
-    }
+    gCoinbaseIndex.PruneAddrsWithBlocks(mapBlockIndex);
 
     // Write changes periodically to disk, after relay.
     if (!FlushStateToDisk(chainparams, state, FLUSH_STATE_PERIODIC)) {
@@ -3234,10 +3229,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
         if (!ReceivedBlockTransactions(block, state, pindex, blockPos, chainparams.GetConsensus()))
             return error("AcceptBlock(): ReceivedBlockTransactions failed");
 
-        {
-            LOCK(cs_gCoinbaseIndex);
-            gCoinbaseIndexCache.ScanNewBlockForCoinbaseTxs(pblock);
-        }
+        gCoinbaseIndexCache.ScanNewBlockForCoinbaseTxs(pblock);
     } catch (const std::runtime_error& e) {
         return AbortNode(state, std::string("System error: ") + e.what());
     }

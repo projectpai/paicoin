@@ -259,11 +259,7 @@ CTransactionRef CoinbaseTxHandler::CreateCompleteCoinbaseTransaction(
         return {};
     }
 
-    uint16_t newAddressIndex = 0;
-    {
-        LOCK(cs_gCoinbaseIndex);
-        newAddressIndex = static_cast<uint16_t>(gCoinbaseIndex.GetNumCoinbaseAddrs()) + 1;
-    }
+    uint16_t newAddressIndex = static_cast<uint16_t>(gCoinbaseIndex.GetNumCoinbaseAddrs()) + 1;
     if (newAddressIndex < 1) {
         LogPrintf("%s: invalid new coinbase address index", __FUNCTION__);
         return {};

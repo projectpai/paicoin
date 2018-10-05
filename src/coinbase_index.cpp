@@ -9,18 +9,28 @@
 
 CoinbaseIndex gCoinbaseIndex;
 CoinbaseIndexCache gCoinbaseIndexCache;
-CCriticalSection cs_gCoinbaseIndex;
 
 void CoinbaseIndex::BuildDefault()
 {
     SetNull();
 
+    std::vector<CoinbaseAddress> newAddrs;
+    newAddrs.reserve(fCoinbaseAddrs.size());
+
     for (auto const& fAddrToHeight : fCoinbaseAddrs) {
         auto const& fAddr = fAddrToHeight.first;
         auto const& height = fAddrToHeight.second;
 
-        CoinbaseAddress coinbaseAddr{fAddr, CPubKey(), true, height};
-        AddNewAddress(coinbaseAddr, Params().GetConsensus().hashGenesisBlock);
+        newAddrs.emplace_back(CoinbaseAddress{fAddr, CPubKey(), true, height});
+    }
+
+    if (newAddrs.empty()) {
+        return;
+    }
+
+    LOCK(m_lock);
+    for (auto&& addr : newAddrs) {
+        AddNewAddress(addr, Params().GetConsensus().hashGenesisBlock);
     }
 }
 
@@ -34,16 +44,28 @@ void CoinbaseIndex::BuildDefaultFromDisk()
         return;
     }
 
+    std::vector<CoinbaseAddress> newAddrs;
+    newAddrs.reserve(pubKeys.size());
+
     for (auto const& pubKey : pubKeys) {
         auto pubKeyAsAddr = EncodeDestination(pubKey.GetID());
 
-        CoinbaseAddress coinbaseAddr{pubKeyAsAddr, pubKey, true, -1};
-        AddNewAddress(coinbaseAddr, Params().GetConsensus().hashGenesisBlock);
+        newAddrs.emplace_back(CoinbaseAddress{pubKeyAsAddr, pubKey, true, -1});
+    }
+
+    if (newAddrs.empty()) {
+        return;
+    }
+
+    LOCK(m_lock);
+    for (auto&& addr : newAddrs) {
+        AddNewAddress(addr, Params().GetConsensus().hashGenesisBlock);
     }
 }
 
 void CoinbaseIndex::SetNull()
 {
+    LOCK(m_lock);
     m_addrToCoinbaseAddr.clear();
     m_coinbaseBlockHashes.clear();
     m_coinbaseAddrs.clear();
@@ -51,28 +73,48 @@ void CoinbaseIndex::SetNull()
 
 bool CoinbaseIndex::IsNull() const
 {
-    return (m_addrToCoinbaseAddr.empty() &&
+    bool isNull = false;
+    {
+        LOCK(m_lock);
+        isNull = (m_addrToCoinbaseAddr.empty() &&
             m_coinbaseBlockHashes.empty() &&
             m_coinbaseAddrs.empty());
+    }
+
+    return isNull;
 }
 
 bool CoinbaseIndex::IsModified() const
 {
-    return m_modified;
+    bool isModified = false;
+    {
+        LOCK(m_lock);
+        isModified = m_modified;
+    }
+
+    return isModified;
 }
 
 bool CoinbaseIndex::IsInitialized() const
 {
-    return m_isInitialized;
+    bool isInitialized = false;
+    {
+        LOCK(m_lock);
+        isInitialized = m_isInitialized;
+    }
+
+    return isInitialized;
 }
 
 void CoinbaseIndex::SetIsInitialized()
 {
+    LOCK(m_lock);
     m_isInitialized = true;
 }
 
 void CoinbaseIndex::AddNewAddress(CoinbaseAddress addr, uint256 blockHash)
 {
+    LOCK(m_lock);
     /* The coinbase addr is already in the index, skip adding */
     auto existingCoinbaseAddr = GetCoinbaseWithAddr(addr.GetHashedAddr());
     if (!!existingCoinbaseAddr) {
@@ -88,6 +130,8 @@ void CoinbaseIndex::AddNewAddress(CoinbaseAddress addr, uint256 blockHash)
 
 boost::optional<CoinbaseAddress> CoinbaseIndex::GetCoinbaseWithAddr(const std::string& addr) const
 {
+    LOCK(m_lock);
+
     auto foundCoinbase = m_addrToCoinbaseAddr.find(addr);
     if (foundCoinbase == m_addrToCoinbaseAddr.end()) {
         return boost::optional<CoinbaseAddress>();
@@ -99,6 +143,8 @@ boost::optional<CoinbaseAddress> CoinbaseIndex::GetCoinbaseWithAddr(const std::s
 
 uint256 CoinbaseIndex::GetBlockHashWithAddr(const std::string& addr) const
 {
+    LOCK(m_lock);
+
     auto foundCoinbase = m_addrToCoinbaseAddr.find(addr);
     if (foundCoinbase == m_addrToCoinbaseAddr.end()) {
         return uint256();
@@ -111,6 +157,8 @@ uint256 CoinbaseIndex::GetBlockHashWithAddr(const std::string& addr) const
 
 void CoinbaseIndex::PruneAddrsWithBlocks(const BlockMap& blockMap)
 {
+    LOCK(m_lock);
+
     size_t numHashes = m_coinbaseBlockHashes.size();
     std::vector<size_t> indicesToKeep;
     indicesToKeep.reserve(numHashes); // worst case
@@ -150,6 +198,7 @@ std::vector<CPubKey> CoinbaseIndex::GetDefaultCoinbaseKeys() const
 {
     std::vector<CPubKey> keys;
 
+    LOCK(m_lock);
     for (auto const& addr : m_coinbaseAddrs) {
         if (addr.IsDefault() && addr.m_pubKey.IsValid()) {
             keys.push_back(addr.m_pubKey);
@@ -161,7 +210,13 @@ std::vector<CPubKey> CoinbaseIndex::GetDefaultCoinbaseKeys() const
 
 size_t CoinbaseIndex::GetNumCoinbaseAddrs() const
 {
-    return m_coinbaseAddrs.size();
+    size_t numAddrs = 0;
+    {
+        LOCK(m_lock);
+        numAddrs = m_coinbaseAddrs.size();
+    }
+
+    return numAddrs;
 }
 
 CAutoFile OpenDiskFile(fs::path path, bool fReadOnly)

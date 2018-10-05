@@ -633,7 +633,6 @@ void ThreadImport(std::vector<fs::path> vImportFiles)
             // and "accepted" one by one, therefore the
             // coinbase index will be rebuilt one step at a time.
             // We can reset it to default now.
-            LOCK(cs_gCoinbaseIndex);
             gCoinbaseIndex.BuildDefaultFromDisk();
         }
 
@@ -1648,8 +1647,6 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     }
 
     {
-        LOCK(cs_gCoinbaseIndex);
-
         // Initialize/load the coinbase index
         if (fReindex || fReindexChainState) {
             // We build the default coinbase index from the hardcoded keys

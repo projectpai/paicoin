@@ -51,6 +51,8 @@ private:
 
     bool m_modified = false;
     bool m_isInitialized = false;
+
+    mutable CCriticalSection m_lock;
 };
 
 class CoinbaseIndexDisk
@@ -79,7 +81,6 @@ public:
 
                 auto blockIndexIt = mapBlockIndex.find(coinbaseBlockHash);
                 if (blockIndexIt == mapBlockIndex.end()) {
-                    // TODO: report warning/error here, block not found
                     LogPrintf("%s: could not find block hash %s to serialize", __FUNCTION__, coinbaseBlockHash.ToString());
                     continue;
                 }
@@ -92,6 +93,7 @@ public:
 
             READWRITE(VARINT(numCoinbaseAddrs));
 
+            LOCK(m_index.m_lock);
             for (size_t addrIdx = 0; addrIdx < numCoinbaseAddrs; ++addrIdx) {
                 CoinbaseAddress writeAddr = m_index.m_coinbaseAddrs[addrIdx];
                 auto blockHash = m_index.m_coinbaseBlockHashes[addrIdx];
@@ -147,12 +149,15 @@ public:
                 CMutableTransaction mutTx;
                 UnserializeTransaction(mutTx, s);
 
+                LOCK(m_lock);
                 m_indexCache.SetNull();
                 CTransactionRef txRead = MakeTransactionRef(mutTx);
 
                 m_indexCache.AddTransactionToCache(txRead);
             }
         } else {
+            LOCK(m_lock);
+
             bool hasTx = m_indexCache.m_cachedTx != nullptr;
             READWRITE(hasTx);
 
@@ -170,11 +175,10 @@ private:
 
 private:
     CoinbaseIndexCache& m_indexCache;
+    CCriticalSection m_lock;
 };
 
 extern CoinbaseIndex gCoinbaseIndex;
 extern CoinbaseIndexCache gCoinbaseIndexCache;
-
-extern CCriticalSection cs_gCoinbaseIndex;
 
 #endif // PAICOIN_COINBASE_INDEX_H
