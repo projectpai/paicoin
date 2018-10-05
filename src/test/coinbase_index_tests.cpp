@@ -137,4 +137,6 @@ BOOST_AUTO_TEST_CASE(CoinbaseAddrPruning)
     BOOST_CHECK(cbIndex.IsNull());
 }
 
+// TODO: add here the remaining tests from development branch once they all pass
+
 BOOST_AUTO_TEST_SUITE_END()
