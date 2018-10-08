@@ -204,6 +204,7 @@ Q_SIGNALS:
     /** Signal raised when a URI was entered or dragged to the GUI */
     void receivedURI(const QString &uri);
     void shutdown();
+    void firstRunComplete();
 #ifdef ENABLE_WALLET
     void createNewWalletRequest();
     void restoreWalletRequest(std::string paperKeys);

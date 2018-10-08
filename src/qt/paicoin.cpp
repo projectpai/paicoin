@@ -59,6 +59,7 @@
 #include <QTimer>
 #include <QTranslator>
 #include <QSslConfiguration>
+#include <QMessageBox>
 
 #if defined(QT_STATICPLUGIN)
 #include <QtPlugin>
@@ -85,6 +86,8 @@ Q_IMPORT_PLUGIN(QCocoaIntegrationPlugin);
 #if QT_VERSION < 0x050000
 #include <QTextCodec>
 #endif
+
+#define	EXIT_FIRST_RUN	2	/* Exited during first run.  */
 
 // Declare meta types used for QMetaObject::invokeMethod
 Q_DECLARE_METATYPE(bool*)
@@ -368,17 +371,17 @@ void PAIcoinCore::initFinalize()
 
 PAIcoinApplication::PAIcoinApplication(int &argc, char **argv):
     QApplication(argc, argv),
-    coreThread(0),
-    optionsModel(0),
-    clientModel(0),
-    window(0),
-    pollShutdownTimer(0),
+    coreThread(nullptr),
+    optionsModel(nullptr),
+    clientModel(nullptr),
+    window(nullptr),
+    pollShutdownTimer(nullptr),
 #ifdef ENABLE_WALLET
-    paymentServer(0),
-    walletModel(0),
+    paymentServer(nullptr),
+    walletModel(nullptr),
     networkStyle(nullptr),
 #endif
-    returnValue(0)
+    returnValue(EXIT_SUCCESS)
 {
     setQuitOnLastWindowClosed(false);
 
@@ -437,6 +440,7 @@ void PAIcoinApplication::createWindow(bool firstRun)
 
     pollShutdownTimer = new QTimer(window);
     connect(pollShutdownTimer, SIGNAL(timeout()), window, SLOT(detectShutdown()));
+    connect(window, &PAIcoinGUI::firstRunComplete, [=] (void) { returnValue = EXIT_SUCCESS; });
 #ifdef ENABLE_WALLET
     if (firstRun)
     {
@@ -514,7 +518,7 @@ void PAIcoinApplication::requestShutdown()
     if (window != nullptr)
     {
         window->hide();
-        window->setClientModel(0);
+        window->setClientModel(nullptr);
     }
     if (pollShutdownTimer != nullptr)
         pollShutdownTimer->stop();
@@ -523,10 +527,10 @@ void PAIcoinApplication::requestShutdown()
     if (window != nullptr)
         window->removeAllWallets();
     delete walletModel;
-    walletModel = 0;
+    walletModel = nullptr;
 #endif
     delete clientModel;
-    clientModel = 0;
+    clientModel = nullptr;
 
     StartShutdown();
 
@@ -563,8 +567,8 @@ void PAIcoinApplication::initializeResult(bool success)
             window->addWallet(PAIcoinGUI::DEFAULT_WALLET, walletModel);
             window->setCurrentWallet(PAIcoinGUI::DEFAULT_WALLET);
 
-      connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
-                             paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
+            connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
+                    paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
         }
 #endif
 
@@ -616,6 +620,7 @@ void PAIcoinApplication::initializeResult(bool success)
 void PAIcoinApplication::initializeFirstRun()
 {
     qDebug() << __func__ << ": First run.";
+    returnValue = EXIT_FIRST_RUN;
 
     // Log this only after AppInitMain finishes, as then logging setup is guaranteed complete
     qWarning() << "Platform customization:" << platformStyle->getName();
@@ -890,6 +895,9 @@ int main(int argc, char *argv[])
             app.requestShutdown();
             app.exec();
             rv = app.getReturnValue();
+            if (rv == EXIT_FIRST_RUN) {
+                RemoveDataDirectory();
+            }
         } else {
             // A dialog with detailed error will have been shown by InitError()
             rv = EXIT_FAILURE;

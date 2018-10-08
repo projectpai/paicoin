@@ -79,6 +79,7 @@
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 #include <boost/algorithm/string/predicate.hpp> // for startswith() and endswith()
 #include <boost/program_options/detail/config_file.hpp>
+#include <boost/system/error_code.hpp>
 #include <boost/thread.hpp>
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
@@ -604,7 +605,17 @@ bool RemoveDataDirectory()
     }
     boost::uintmax_t count = 0;
     if (fs::exists(path)) {
-        count = fs::remove_all(path);
+        std::vector<fs::path> files_to_remove;
+        boost::system::error_code errcode;
+        for(auto& p : fs::recursive_directory_iterator(path)) {
+            if (p.path().extension() == ".log")
+                continue;
+            files_to_remove.push_back(p.path());
+        }
+        for (auto& path : files_to_remove) {
+            if (fs::remove(path, errcode) && (errcode.value() == boost::system::errc::success))
+                count++;
+        }
     }
     return count > 0;
 }

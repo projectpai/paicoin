@@ -32,6 +32,17 @@ void CDBEnv::EnvShutdown()
         return;
 
     fDbEnvInit = false;
+
+    for (auto& db : mapDb) {
+        auto count = mapFileUseCount.find(db.first);
+        assert(count == mapFileUseCount.end() || count->second == 0);
+        if (db.second) {
+            db.second->close(0);
+            delete db.second;
+            db.second = nullptr;
+        }
+    }
+
     int ret = dbenv->close(0);
     if (ret != 0)
         LogPrintf("CDBEnv::EnvShutdown: Error %d shutting down database environment: %s\n", ret, DbEnv::strerror(ret));
@@ -457,6 +468,18 @@ void CDB::Close()
     }
 }
 
+void CDBEnv::CloseDb()
+{
+    std::vector<std::string> filenames;
+    for (auto it : mapDb) {
+        filenames.push_back(it.first);
+    }
+    // Close the individual Db's
+    for (const std::string& filename : filenames) {
+        CloseDb(filename);
+    }
+}
+
 void CDBEnv::CloseDb(const std::string& strFile)
 {
     {
@@ -688,6 +711,10 @@ bool CWalletDBWrapper::Backup(const std::string& strDest)
 void CWalletDBWrapper::Flush(bool shutdown)
 {
     if (!IsDummy()) {
+        if (shutdown)
+            env->CloseDb();
         env->Flush(shutdown);
+        if (shutdown)
+            env = nullptr;
     }
 }
