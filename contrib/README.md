@@ -16,7 +16,7 @@ A Linux bash script that will set up traffic control (tc) to limit the outgoing 
 Utility to generate the pnSeed[] array that is compiled into the client.
 
 ### [Public Key Uncompress](/contrib/pubkey-uncompress) ###
-Utility to convert (uncompress) a compressed public key to its corresponding uncompressed one. Credit and thanks to: https://bitcointalk.org/index.php?topic=644919.msg7205689#msg7205689
+Utility to convert (uncompress) a compressed public key to its corresponding uncompressed form. Credit and thanks to: https://bitcointalk.org/index.php?topic=644919.msg7205689#msg7205689
 
 Build Tools and Keys
 ---------------------

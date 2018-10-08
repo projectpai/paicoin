@@ -2,7 +2,7 @@
 
 Credit and thanks to: https://bitcointalk.org/index.php?topic=644919.msg7205689#msg7205689
 
-Converts a compressed public key to its corresponding uncompressed one.
+Converts a compressed public key to its corresponding uncompressed form.
 
 * Usage:
 
