@@ -15,7 +15,7 @@ A Linux bash script that will set up traffic control (tc) to limit the outgoing 
 ### [Seeds](/contrib/seeds) ###
 Utility to generate the pnSeed[] array that is compiled into the client.
 
-### [Key Uncompress](/contrib/pubkey-uncompress) ###
+### [Key Uncompress](/contrib/key-uncompress) ###
 Utilities to convert (uncompress) compressed public and private keys to their corresponding uncompressed forms.
 Credit and thanks to:
 
