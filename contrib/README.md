@@ -18,7 +18,9 @@ Utility to generate the pnSeed[] array that is compiled into the client.
 ### [Key Uncompress](/contrib/pubkey-uncompress) ###
 Utilities to convert (uncompress) compressed public and private keys to their corresponding uncompressed forms.
 Credit and thanks to:
+
     https://bitcointalk.org/index.php?topic=644919.msg7205689#msg7205689
+    
     https://www.reddit.com/r/Bitcoin/comments/7fptly/how_to_convert_private_key_wif_compressed_start/
 
 Build Tools and Keys
