@@ -1,6 +1,7 @@
 
 #include "coinbase_index.h"
 #include "coinbase_addresses.h"
+#include "coinbase_keyhandler.h"
 #include "coinbase_txhandler.h"
 #include "coinbase_utils.h"
 #include "wallet/wallet.h"
@@ -8,6 +9,7 @@
 #include "test/test_paicoin.h"
 
 #include <boost/test/unit_test.hpp>
+#include <fstream>
 
 struct RegtestingSetup : public TestingSetup {
     RegtestingSetup() : TestingSetup(CBaseChainParams::REGTEST) {}
@@ -156,21 +158,28 @@ public:
             wallet->AddKeyPubKey(coinbaseKey, coinbaseKey.GetPubKey());
         }
         wallet->ScanForWalletTransactions(chainActive.Genesis());
+
+        dummyWallet.reset(new CWallet());
     }
 
     ~CoinbaseIndexWithBalanceToSpendSetup()
     {
         wallet.reset();
+        dummyWallet.reset();
         ::bitdb.Flush(true);
         ::bitdb.Reset();
     }
 
     std::unique_ptr<CWallet> wallet;
+    std::unique_ptr<CWallet> dummyWallet;
 };
 
 BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_SelectInputs, CoinbaseIndexWithBalanceToSpendSetup)
 {
-    auto unspentInputs = SelectInputs(wallet.get(), DEFAULT_COINBASE_TX_FEE);
+    auto unspentInputs = SelectInputs(dummyWallet.get(), DEFAULT_COINBASE_TX_FEE);
+    BOOST_CHECK(unspentInputs.empty());
+
+    unspentInputs = SelectInputs(wallet.get(), DEFAULT_COINBASE_TX_FEE);
     BOOST_CHECK(!unspentInputs.empty());
 }
 
@@ -190,6 +199,9 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_CreateCoinbaseTransaction, CoinbaseIndexWi
 
     mutTx = CreateCoinbaseTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, wallet.get());
     BOOST_CHECK(!mutTx.vout.empty());
+
+    mutTx = CreateCoinbaseTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, dummyWallet.get());
+    BOOST_CHECK(mutTx.vout.empty());
 }
 
 BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_SignCoinbaseTransaction, CoinbaseIndexWithBalanceToSpendSetup)
@@ -212,6 +224,25 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_SignCoinbaseTransaction, CoinbaseIndexWith
 
     result = SignCoinbaseTransaction(mutTx, wallet.get());
     BOOST_CHECK(result);
+}
+
+BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_SigningKey, CoinbaseIndexWithBalanceToSpendSetup)
+{
+    CKey dummyPrivKey;
+    dummyPrivKey.MakeNewKey(false);
+    BOOST_CHECK(dummyPrivKey.IsValid());
+
+    auto keyHex = HexStr(dummyPrivKey.begin(), dummyPrivKey.end());
+    boost::filesystem::path savePath = GetDataDir() / "coinbase" / "seckeys";
+
+    std::ofstream outputFile(savePath.string());
+    outputFile << keyHex << std::endl;
+    outputFile.close();
+
+    CoinbaseKeyHandler keyHandler(GetDataDir());
+    auto loadedPrivKey = keyHandler.GetCoinbaseSigningKey();
+    BOOST_CHECK(loadedPrivKey.IsValid());
+    BOOST_CHECK(dummyPrivKey == loadedPrivKey);
 }
 
 // TODO: add here the remaining tests from development branch once they all pass
