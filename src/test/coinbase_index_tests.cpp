@@ -1,6 +1,9 @@
 
 #include "coinbase_index.h"
 #include "coinbase_addresses.h"
+#include "coinbase_txhandler.h"
+#include "coinbase_utils.h"
+#include "wallet/wallet.h"
 
 #include "test/test_paicoin.h"
 
@@ -135,6 +138,80 @@ BOOST_AUTO_TEST_CASE(CoinbaseAddrPruning)
     BOOST_CHECK(foundBlockHash == uint256());
 
     BOOST_CHECK(cbIndex.IsNull());
+}
+
+class CoinbaseIndexWithBalanceToSpendSetup : public TestChain100Setup
+{
+public:
+    CoinbaseIndexWithBalanceToSpendSetup()
+    {
+        CreateAndProcessBlock({}, GetScriptForRawPubKey(coinbaseKey.GetPubKey()));
+        ::bitdb.MakeMock();
+        wallet.reset(new CWallet(std::unique_ptr<CWalletDBWrapper>(new CWalletDBWrapper(&bitdb, "wallet_test.dat"))));
+        bool firstRun;
+        wallet->LoadWallet(firstRun);
+
+        {
+            LOCK(wallet->cs_wallet);
+            wallet->AddKeyPubKey(coinbaseKey, coinbaseKey.GetPubKey());
+        }
+        wallet->ScanForWalletTransactions(chainActive.Genesis());
+    }
+
+    ~CoinbaseIndexWithBalanceToSpendSetup()
+    {
+        wallet.reset();
+        ::bitdb.Flush(true);
+        ::bitdb.Reset();
+    }
+
+    std::unique_ptr<CWallet> wallet;
+};
+
+BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_SelectInputs, CoinbaseIndexWithBalanceToSpendSetup)
+{
+    auto unspentInputs = SelectInputs(wallet.get(), DEFAULT_COINBASE_TX_FEE);
+    BOOST_CHECK(!unspentInputs.empty());
+}
+
+BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_CreateCoinbaseTransaction, CoinbaseIndexWithBalanceToSpendSetup)
+{
+    auto mutTx = CreateCoinbaseTransaction({}, DEFAULT_COINBASE_TX_FEE, wallet.get());
+    BOOST_CHECK(mutTx.vout.empty());
+
+    auto unspentInputs = SelectInputs(wallet.get(), DEFAULT_COINBASE_TX_FEE);
+    BOOST_CHECK(!unspentInputs.empty());
+
+    mutTx = CreateCoinbaseTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, nullptr);
+    BOOST_CHECK(mutTx.vout.empty());
+    
+    mutTx = CreateCoinbaseTransaction(unspentInputs, CAmount(0), wallet.get());
+    BOOST_CHECK(mutTx.vout.empty());
+
+    mutTx = CreateCoinbaseTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, wallet.get());
+    BOOST_CHECK(!mutTx.vout.empty());
+}
+
+BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_SignCoinbaseTransaction, CoinbaseIndexWithBalanceToSpendSetup)
+{
+    CMutableTransaction mutTx;
+    auto result = SignCoinbaseTransaction(mutTx, wallet.get());
+    BOOST_CHECK(result);
+
+    result = SignCoinbaseTransaction(mutTx, nullptr);
+    BOOST_CHECK(!result);
+
+    auto unspentInputs = SelectInputs(wallet.get(), DEFAULT_COINBASE_TX_FEE);
+    BOOST_CHECK(!unspentInputs.empty());
+
+    mutTx = CreateCoinbaseTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, wallet.get());
+    BOOST_CHECK(!mutTx.vout.empty());
+
+    result = SignCoinbaseTransaction(mutTx, nullptr);
+    BOOST_CHECK(!result);
+
+    result = SignCoinbaseTransaction(mutTx, wallet.get());
+    BOOST_CHECK(result);
 }
 
 // TODO: add here the remaining tests from development branch once they all pass

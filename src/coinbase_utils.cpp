@@ -64,7 +64,7 @@ CMutableTransaction CreateCoinbaseTransaction(
     CAmount txAmount,
     const CWallet* wallet)
 {
-    if (!wallet || unspentInputs.empty()) {
+    if (!wallet || unspentInputs.empty() || (txAmount < CAmount(1))) {
         LogPrintf("%s: wallet not available or no available funds", __FUNCTION__);
         return {};
     }
