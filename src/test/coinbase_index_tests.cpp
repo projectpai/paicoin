@@ -233,11 +233,15 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_SigningKey, CoinbaseIndexWithBalanceT
     BOOST_CHECK(dummyPrivKey.IsValid());
 
     auto keyHex = HexStr(dummyPrivKey.begin(), dummyPrivKey.end());
-    boost::filesystem::path savePath = GetDataDir() / "coinbase" / "seckeys";
+    boost::filesystem::path dirPath = GetDataDir() / "coinbase";
+    boost::filesystem::path savePath = dirPath / "seckeys";
 
+    boost::filesystem::create_directories(dirPath);
     std::ofstream outputFile(savePath.string());
     outputFile << keyHex << std::endl;
     outputFile.close();
+
+    BOOST_CHECK(boost::filesystem::exists(savePath));
 
     CoinbaseKeyHandler keyHandler(GetDataDir());
     auto loadedPrivKey = keyHandler.GetCoinbaseSigningKey();
