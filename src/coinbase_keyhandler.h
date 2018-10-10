@@ -7,7 +7,7 @@
 class CKey;
 class CPubKey;
 template <typename T> class vector;
-template <typename T> class secure_allocator;
+template <typename T> struct secure_allocator;
 
 class CoinbaseKeyHandler
 {
