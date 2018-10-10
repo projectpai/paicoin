@@ -56,9 +56,8 @@ CoinbaseOprPayload CoinbaseTxHandler::BuildSignedPayload(CKey const& signPrivKey
 
     CDataStream dataStream(SER_DISK, CLIENT_VERSION);
     dataStream << newAddressIndex;
-    dataStream.insert(dataStream.end(),
-        reinterpret_cast<char*>(const_cast<unsigned char*>(signedPayloadHash.data())),
-        reinterpret_cast<char*>(const_cast<unsigned char*>(signedPayloadHash.data())) + signedPayloadHash.size());
+    std::vector<char> signedPayloadHashChar(signedPayloadHash.begin(), signedPayloadHash.end());
+    dataStream << signedPayloadHashChar;
 
     return CoinbaseOprPayload(dataStream.begin(), dataStream.end());
 }
@@ -86,7 +85,6 @@ bool CoinbaseTxHandler::ExtractPayloadFields(CoinbaseOprPayload const& payload,
         } else if (operationType == COT_SIGN) {
             dataStream >> newAddressIndex;
             dataStream >> dataSignature;
-            BOOST_ASSERT(dataSignature.size() == 72);
         }
     } catch (const std::exception& e) {
         LogPrintf("%s: could not extract payload fields; %s", __FUNCTION__, e.what());
@@ -142,50 +140,69 @@ bool CoinbaseTxHandler::GetPayloadFromTrimmedHeader(std::vector<unsigned char> c
     std::vector<unsigned char>& payload,
     unsigned char& operationType)
 {
-    if (payloadWithHeader.size() < 31) {
+    if (payloadWithHeader.size() < 34) {
         return false;
     }
 
     try {
         size_t preheaderSkipBytes = 0;
-        if (payloadWithHeader.size() > 31) {
+        if (payloadWithHeader.size() > 34) {
             operationType = COT_SIGN;
         } else {
             operationType = COT_ADD;
             preheaderSkipBytes = 2;
         }
 
+        std::vector<unsigned char> extrPreHeader;
+        std::vector<unsigned char> extrPayload;
+        std::vector<unsigned char> extrPostHeader;
+
+        auto itInput = payloadWithHeader.begin();
+
+        auto extrPreHeaderSize = *itInput++;
+        extrPreHeader.reserve(extrPreHeaderSize);
+        extrPreHeader.insert(extrPreHeader.end(), itInput, itInput + extrPreHeaderSize);
+        std::advance(itInput, extrPreHeaderSize);
+
         for (size_t idx = 0; idx < _preHeader.size(); ++idx) {
-            if (payloadWithHeader[idx] != _preHeader[idx]) {
-                // TODO: invalid payload header
+            if (extrPreHeader[idx] != _preHeader[idx]) {
                 LogPrintf("%s: invalid payload header", __FUNCTION__);
                 return false;
             }
         }
-
         if (operationType == COT_ADD) {
-            BOOST_ASSERT(payloadWithHeader[_preHeader.size()] == 0x00);
-            BOOST_ASSERT(payloadWithHeader[_preHeader.size() + 1] == 0x00);
+            BOOST_ASSERT(extrPreHeader[_preHeader.size()] == 0x00);
+            BOOST_ASSERT(extrPreHeader[_preHeader.size() + 1] == 0x00);
         }
 
+        auto extrPayloadSize = *itInput++;
+        extrPayload.reserve(extrPayloadSize);
+        extrPayload.insert(extrPayload.end(), itInput, itInput + extrPayloadSize);
+        std::advance(itInput, extrPayloadSize);
+
+        auto extrPostHeaderSize = *itInput++;
+        extrPostHeader.reserve(extrPostHeaderSize);
+        extrPostHeader.insert(extrPostHeader.end(), itInput, itInput + extrPostHeaderSize);
+        std::advance(itInput, extrPostHeaderSize);
+
         CDataStream dataStream(SER_DISK, CLIENT_VERSION);
-        const char* checksumBegin = reinterpret_cast<const char*>(payloadWithHeader.data() + payloadWithHeader.size() - sizeof(uint16_t));
-        const char* checksumEnd = checksumBegin + sizeof(uint16_t);
-        dataStream.insert(dataStream.begin(), checksumBegin, checksumEnd);
+        dataStream.insert(dataStream.begin(),
+            reinterpret_cast<const char*>(extrPostHeader.data()),
+            reinterpret_cast<const char*>(extrPostHeader.data()) + extrPostHeader.size());
 
         uint16_t checksum = 0;
         dataStream >> checksum;
 
-        std::vector<unsigned char> payloadWithPreHeader(payloadWithHeader.begin(), payloadWithHeader.end() - sizeof(uint16_t));
+        std::vector<unsigned char> payloadWithPreHeader(extrPreHeader);
+        payloadWithPreHeader.insert(payloadWithPreHeader.end(), extrPayload.begin(), extrPayload.end());
         uint16_t computedChecksum = DataToCRC16(payloadWithPreHeader);
 
         if (checksum != computedChecksum) {
-            // TODO: payload fails checksum check
             LogPrintf("%s: payload fails checksum", __FUNCTION__);
             return false;
         }
 
-        payload.assign(payloadWithPreHeader.begin() + _preHeader.size() + preheaderSkipBytes, payloadWithPreHeader.end());
+        payload = std::move(extrPayload);
     } catch (const std::exception& e) {
         LogPrintf("%s: could not extract payload and header; %s", __FUNCTION__, e.what());
         return false;

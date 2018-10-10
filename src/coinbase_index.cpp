@@ -316,6 +316,12 @@ bool CoinbaseIndexCache::AddTransactionToCache(CTransactionRef txToCache)
             }
         }
 
+        if (hashBlock.IsNull()) {
+            auto tip = chainActive.Tip();
+            if (tip != nullptr) {
+                hashBlock = *(tip->phashBlock);
+            }
+        }
         gCoinbaseIndex.AddNewAddress(*coinbaseAddr, std::move(hashBlock));
 
         m_cachedTx.reset();

@@ -362,21 +362,7 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseTxHandler_ClosedLoopTest, CoinbaseIndexWithBalan
     newBlockSize = mapBlockIndex.size();
     BOOST_CHECK(newBlockSize == (oldBlockSize + 2));
 
-    CoinbaseOperationType op1Type = COT_INVALID;
-    CoinbaseOperationType op2Type = COT_INVALID;
-    auto cbAddress = txHandler.GetCoinbaseAddrFromTransactions(createdTransactions.first,
-        createdTransactions.second, gCoinbaseIndex, op1Type, op2Type);
-    BOOST_CHECK(!!cbAddress);
-
     BOOST_CHECK(gCoinbaseIndex.GetNumCoinbaseAddrs() == 2);
-
-    // CoinbaseKeyHandler keyHandler(GetDataDir());
-    // auto publicKeys = keyHandler.GetCoinbasePublicKeys();
-    // BOOST_CHECK(publicKeys.size() == 1);
-
-    // BOOST_CHECK(dummyPrivKey.VerifyPubKey(publicKeys.front()));
 }
-
-// TODO: add here the remaining tests from development branch once they all pass
 
 BOOST_AUTO_TEST_SUITE_END()
