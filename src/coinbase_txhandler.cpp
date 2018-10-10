@@ -243,7 +243,7 @@ struct CoinbaseMempoolTxDeleter
     }
 };
 
-CTransactionRef CoinbaseTxHandler::CreateCompleteCoinbaseTransaction(
+std::pair<CTransactionRef, CTransactionRef> CoinbaseTxHandler::CreateCompleteCoinbaseTransaction(
     const CWallet* wallet,
     uint160 const& targetAddress,
     int maxBlockHeight)
@@ -323,7 +323,7 @@ CTransactionRef CoinbaseTxHandler::CreateCompleteCoinbaseTransaction(
     // both transactions
     dataTxMempoolDeleter.reset();
 
-    return MakeTransactionRef(dataTx);
+    return std::make_pair(MakeTransactionRef(dataTx), MakeTransactionRef(sigTx));
 }
 
 bool CoinbaseTxHandler::IsTransactionCoinbaseAddress(CTransactionRef const& tx)

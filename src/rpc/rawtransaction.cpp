@@ -1018,11 +1018,12 @@ UniValue createcoinbasetransaction(const JSONRPCRequest& request)
 
     CoinbaseTxHandler cbTxHandler;
     auto createdCoinbaseTx = cbTxHandler.CreateCompleteCoinbaseTransaction(pwallet, pubKey.GetID(), maxBlockHeight);
-    if (!createdCoinbaseTx)
+    if (!createdCoinbaseTx.first || !!createdCoinbaseTx.second)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Could not create the coinbase transaction");
     
     UniValue result(UniValue::VOBJ);
-    result.push_back(Pair("txid", createdCoinbaseTx->GetHash().ToString()));
+    result.push_back(Pair("data_txid", createdCoinbaseTx.first->GetHash().ToString()));
+    result.push_back(Pair("sig_txid", createdCoinbaseTx.second->GetHash().ToString()));
     return result;
 }
 

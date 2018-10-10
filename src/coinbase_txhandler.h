@@ -30,6 +30,24 @@ enum CoinbaseOperationType {
 class CoinbaseTxHandler
 {
 public:
+    // We assume we receive a standard transaction here, i.e. a transaction having
+    // at most one OP_RETURN output
+    bool IsTransactionCoinbaseAddress(CTransactionRef const& tx);
+
+    std::unique_ptr<CoinbaseAddress> GetCoinbaseAddrFromTransactions(
+        CTransactionRef const& tx1,
+        CTransactionRef const& tx2,
+        CoinbaseIndex const& coinbaseIndex,
+        CoinbaseOperationType& tx1OpType,
+        CoinbaseOperationType& tx2OpType);
+
+    std::pair<CTransactionRef, CTransactionRef> CreateCompleteCoinbaseTransaction(
+        const CWallet* wallet,
+        uint160 const& targetAddress,
+        int maxBlockHeight);
+
+private:
+
     CoinbaseOprPayload BuildNewAddressPayload(uint16_t newAddressIndex, uint160 const& targetAddress, int maxBlockHeight);
     CoinbaseOprPayload BuildSignedPayload(CKey const& signPrivKey, uint16_t newAddressIndex, CoinbaseOprPayload const& clearPayload);
 
@@ -65,23 +83,8 @@ public:
         const CKey& signKey,
         uint16_t newAddressIndex,
         CoinbaseOprPayload const& payload);
-    
-    CTransactionRef CreateCompleteCoinbaseTransaction(
-        const CWallet* wallet,
-        uint160 const& targetAddress,
-        int maxBlockHeight);
-
-    // We assume we receive a standard transaction here, i.e. a transaction having
-    // at most one OP_RETURN output
-    bool IsTransactionCoinbaseAddress(CTransactionRef const& tx);
 
     std::vector<unsigned char> GetCoinbaseAddressTransactionPayload(CTransactionRef const& tx);
-    std::unique_ptr<CoinbaseAddress> GetCoinbaseAddrFromTransactions(
-        CTransactionRef const& tx1,
-        CTransactionRef const& tx2,
-        CoinbaseIndex const& coinbaseIndex,
-        CoinbaseOperationType& tx1OpType,
-        CoinbaseOperationType& tx2OpType);
 
 private:
     std::vector<unsigned char> _preHeader{
