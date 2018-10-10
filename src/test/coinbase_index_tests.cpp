@@ -4,6 +4,7 @@
 #include "coinbase_keyhandler.h"
 #include "coinbase_txhandler.h"
 #include "coinbase_utils.h"
+#include "script/script.h"
 #include "wallet/wallet.h"
 
 #include "test/test_paicoin.h"
@@ -170,6 +171,18 @@ public:
         ::bitdb.Reset();
     }
 
+    CScript GetScriptPubKey()
+    {
+        CScript scriptPubKey = CScript() <<  ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
+        return scriptPubKey;
+    }
+
+    CScript GetScriptPubKey(CKey const& privKey)
+    {
+        CScript scriptPubKey = CScript() <<  ToByteVector(privKey.GetPubKey()) << OP_CHECKSIG;
+        return scriptPubKey;
+    }
+
     std::unique_ptr<CWallet> wallet;
     std::unique_ptr<CWallet> dummyWallet;
 };
@@ -271,6 +284,97 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_PublicKeys, CoinbaseIndexWithBalanceT
     BOOST_CHECK(publicKeys.size() == 1);
 
     BOOST_CHECK(dummyPrivKey.VerifyPubKey(publicKeys.front()));
+}
+
+BOOST_FIXTURE_TEST_CASE(CoinbaseTxHandler_CreateCoinbaseTxInvalidArgs, CoinbaseIndexWithBalanceToSpendSetup)
+{
+    CKey insertionKey;
+    insertionKey.MakeNewKey(false);
+    int maxBlockHeight = static_cast<int>(mapBlockIndex.size()) + 100;
+
+    CoinbaseTxHandler txHandler;
+
+    // Try a series of calls with invalid parameters
+    auto createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(nullptr,
+        insertionKey.GetPubKey().GetID(), maxBlockHeight);
+    BOOST_CHECK(!createdTransactions.first);
+    BOOST_CHECK(!createdTransactions.second);
+
+    createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(wallet.get(),
+        uint160(), maxBlockHeight);
+    BOOST_CHECK(!createdTransactions.first);
+    BOOST_CHECK(!createdTransactions.second);
+
+    createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(wallet.get(),
+        insertionKey.GetPubKey().GetID(), 0);
+    BOOST_CHECK(!createdTransactions.first);
+    BOOST_CHECK(!createdTransactions.second);
+
+    createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(wallet.get(),
+        insertionKey.GetPubKey().GetID(), static_cast<int>(mapBlockIndex.size()));
+    BOOST_CHECK(!createdTransactions.first);
+    BOOST_CHECK(!createdTransactions.second);
+}
+
+BOOST_FIXTURE_TEST_CASE(CoinbaseTxHandler_ClosedLoopTest, CoinbaseIndexWithBalanceToSpendSetup)
+{
+    CKey dummyPrivKey = coinbaseKey;
+    BOOST_CHECK(dummyPrivKey.IsValid());
+
+    auto keyHex = HexStr(dummyPrivKey.begin(), dummyPrivKey.end());
+    boost::filesystem::path dirPath = GetDataDir() / "coinbase";
+    boost::filesystem::path savePath = dirPath / "seckeys";
+
+    boost::filesystem::create_directories(dirPath);
+    std::ofstream outputFile(savePath.string());
+    outputFile << keyHex << std::endl;
+    outputFile.close();
+
+    BOOST_CHECK(boost::filesystem::exists(savePath));
+
+    gCoinbaseIndex.BuildDefaultFromDisk();
+    BOOST_CHECK(gCoinbaseIndex.GetNumCoinbaseAddrs() == 1);
+
+    CKey insertionKey;
+    insertionKey.MakeNewKey(false);
+    int maxBlockHeight = static_cast<int>(mapBlockIndex.size()) + 3;
+    auto oldBlockSize = mapBlockIndex.size();
+
+    CoinbaseTxHandler txHandler;
+
+    // Try a good parameter combination
+    auto createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(wallet.get(),
+        insertionKey.GetPubKey().GetID(), maxBlockHeight);
+    BOOST_CHECK(!!createdTransactions.first);
+    BOOST_CHECK(!!createdTransactions.second);
+
+    std::vector<CMutableTransaction> transactions{
+        CMutableTransaction(*(createdTransactions.first)),
+        CMutableTransaction(*(createdTransactions.second))
+    };
+    CreateAndProcessBlock(transactions, GetScriptPubKey());
+
+    auto newBlockSize = mapBlockIndex.size();
+    BOOST_CHECK(newBlockSize == (oldBlockSize + 1));
+
+    // Try to create a block with new coinbase address
+    CreateAndProcessBlock({}, GetScriptPubKey(insertionKey));
+    newBlockSize = mapBlockIndex.size();
+    BOOST_CHECK(newBlockSize == (oldBlockSize + 2));
+
+    CoinbaseOperationType op1Type = COT_INVALID;
+    CoinbaseOperationType op2Type = COT_INVALID;
+    auto cbAddress = txHandler.GetCoinbaseAddrFromTransactions(createdTransactions.first,
+        createdTransactions.second, gCoinbaseIndex, op1Type, op2Type);
+    BOOST_CHECK(!!cbAddress);
+
+    BOOST_CHECK(gCoinbaseIndex.GetNumCoinbaseAddrs() == 2);
+
+    // CoinbaseKeyHandler keyHandler(GetDataDir());
+    // auto publicKeys = keyHandler.GetCoinbasePublicKeys();
+    // BOOST_CHECK(publicKeys.size() == 1);
+
+    // BOOST_CHECK(dummyPrivKey.VerifyPubKey(publicKeys.front()));
 }
 
 // TODO: add here the remaining tests from development branch once they all pass

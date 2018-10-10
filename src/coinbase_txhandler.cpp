@@ -248,6 +248,11 @@ std::pair<CTransactionRef, CTransactionRef> CoinbaseTxHandler::CreateCompleteCoi
     uint160 const& targetAddress,
     int maxBlockHeight)
 {
+    if (!wallet) {
+        LogPrintf("%s: wallet should be available for this method", __FUNCTION__);
+        return {};
+    }
+
     if (targetAddress.IsNull()) {
         LogPrintf("%s: target address is invalid", __FUNCTION__);
         return {};
