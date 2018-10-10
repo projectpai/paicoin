@@ -249,6 +249,30 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_SigningKey, CoinbaseIndexWithBalanceT
     BOOST_CHECK(dummyPrivKey == loadedPrivKey);
 }
 
+BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_PublicKeys, CoinbaseIndexWithBalanceToSpendSetup)
+{
+    CKey dummyPrivKey;
+    dummyPrivKey.MakeNewKey(false);
+    BOOST_CHECK(dummyPrivKey.IsValid());
+
+    auto keyHex = HexStr(dummyPrivKey.begin(), dummyPrivKey.end());
+    boost::filesystem::path dirPath = GetDataDir() / "coinbase";
+    boost::filesystem::path savePath = dirPath / "seckeys";
+
+    boost::filesystem::create_directories(dirPath);
+    std::ofstream outputFile(savePath.string());
+    outputFile << keyHex << std::endl;
+    outputFile.close();
+
+    BOOST_CHECK(boost::filesystem::exists(savePath));
+
+    CoinbaseKeyHandler keyHandler(GetDataDir());
+    auto publicKeys = keyHandler.GetCoinbasePublicKeys();
+    BOOST_CHECK(publicKeys.size() == 1);
+
+    BOOST_CHECK(dummyPrivKey.VerifyPubKey(publicKeys.front()));
+}
+
 // TODO: add here the remaining tests from development branch once they all pass
 
 BOOST_AUTO_TEST_SUITE_END()
