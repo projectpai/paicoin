@@ -145,12 +145,10 @@ bool CoinbaseTxHandler::GetPayloadFromTrimmedHeader(std::vector<unsigned char> c
     }
 
     try {
-        size_t preheaderSkipBytes = 0;
         if (payloadWithHeader.size() > 34) {
             operationType = COT_SIGN;
         } else {
             operationType = COT_ADD;
-            preheaderSkipBytes = 2;
         }
 
         std::vector<unsigned char> extrPreHeader;
