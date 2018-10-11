@@ -5,6 +5,7 @@
 #include "coinbase_addresses.h"
 #include "coinbase_keyhandler.h"
 #include "coinbase_txhandler.h"
+#include "coinbase_utils.h"
 #include "util.h"
 
 CoinbaseIndex gCoinbaseIndex;
@@ -229,7 +230,7 @@ CAutoFile OpenDiskFile(fs::path path, bool fReadOnly)
     if (!file && !fReadOnly)
         file = fsbridge::fopen(path, "wb+");
     if (!file) {
-        LogPrintf("Unable to open file %s\n", path.string());
+        CoinbaseIndexLog("Unable to open file %s\n", path.string());
         return CAutoFile(nullptr, SER_DISK, CLIENT_VERSION);
     }
 
@@ -240,7 +241,7 @@ bool CoinbaseIndexDisk::LoadFromDisk()
 {
     CAutoFile indexFile = OpenIndexFile(true);
     if (indexFile.IsNull()) {
-        LogPrintf("%s: coinbase index does not (yet) exist", __FUNCTION__);
+        CoinbaseIndexLog("%s: coinbase index does not (yet) exist", __FUNCTION__);
         return false;
     }
 
@@ -252,7 +253,7 @@ bool CoinbaseIndexDisk::SaveToDisk()
 {
     CAutoFile indexFile = OpenIndexFile(false);
     if (indexFile.IsNull()) {
-        LogPrintf("%s: coinbase index could not be written to disk", __FUNCTION__);
+        CoinbaseIndexLog("%s: coinbase index could not be written to disk", __FUNCTION__);
         return false;
     }
 

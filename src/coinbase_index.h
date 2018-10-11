@@ -2,6 +2,7 @@
 #define PAICOIN_COINBASE_INDEX_H
 
 #include "coinbase_address.h"
+#include "coinbase_utils.h"
 #include "primitives/transaction.h"
 #include "pubkey.h"
 #include "serialize.h"
@@ -81,7 +82,7 @@ public:
 
                 auto blockIndexIt = mapBlockIndex.find(coinbaseBlockHash);
                 if (blockIndexIt == mapBlockIndex.end()) {
-                    LogPrintf("%s: could not find block hash %s to serialize", __FUNCTION__, coinbaseBlockHash.ToString());
+                    CoinbaseIndexLog("%s: could not find block hash %s to serialize", __FUNCTION__, coinbaseBlockHash.ToString());
                     continue;
                 }
 

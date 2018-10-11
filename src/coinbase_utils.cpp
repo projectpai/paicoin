@@ -52,7 +52,7 @@ UnspentInputs SelectInputs(const CWallet* wallet, CAmount desiredAmount)
     }
 
     if (!foundAmount) {
-        LogPrintf("%s: unable to find the needed amount for coinbase transaction inputs", __FUNCTION__);
+        CoinbaseIndexLog("%s: unable to find the needed amount for coinbase transaction inputs", __FUNCTION__);
         return {};
     }
 
@@ -65,7 +65,7 @@ CMutableTransaction CreateCoinbaseTransaction(
     const CWallet* wallet)
 {
     if (!wallet || unspentInputs.empty() || (txAmount < CAmount(1))) {
-        LogPrintf("%s: wallet not available or no available funds", __FUNCTION__);
+        CoinbaseIndexLog("%s: wallet not available or no available funds", __FUNCTION__);
         return {};
     }
 
@@ -82,7 +82,7 @@ CMutableTransaction CreateCoinbaseTransaction(
 
     auto keys = wallet->GetKeys();
     if (keys.empty()) {
-        LogPrintf("%s: cannot find any wallet keys to accept the remaining output", __FUNCTION__);
+        CoinbaseIndexLog("%s: cannot find any wallet keys to accept the remaining output", __FUNCTION__);
         return {}; // otherwise the entire amount is lost in the OP_RETURN tx
     }
 
@@ -101,7 +101,7 @@ CMutableTransaction CreateCoinbaseTransaction(
 bool SignCoinbaseTransaction(CMutableTransaction& rawTx, const CWallet* wallet)
 {
     if (!wallet) {
-        LogPrintf("%s: wallet must be available in order to sign the coinbase transaction", __FUNCTION__);
+        CoinbaseIndexLog("%s: wallet must be available in order to sign the coinbase transaction", __FUNCTION__);
         return false;
     }
 
@@ -125,7 +125,7 @@ bool SignCoinbaseTransaction(CMutableTransaction& rawTx, const CWallet* wallet)
         CTxIn& txin = rawTx.vin[i];
         const Coin& coin = view.AccessCoin(txin.prevout);
         if (coin.IsSpent()) {
-            LogPrintf("%s: coin is spent, cancelling the operation", __FUNCTION__);
+            CoinbaseIndexLog("%s: coin is spent, cancelling the operation", __FUNCTION__);
             return false;
         }
         const CScript& prevPubKey = coin.out.scriptPubKey;
@@ -139,7 +139,7 @@ bool SignCoinbaseTransaction(CMutableTransaction& rawTx, const CWallet* wallet)
 
         ScriptError serror = SCRIPT_ERR_OK;
         if (!VerifyScript(txin.scriptSig, prevPubKey, &txin.scriptWitness, STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&txConst, i, amount), &serror)) {
-            LogPrintf("%s: could not verify the destination script", __FUNCTION__);
+            CoinbaseIndexLog("%s: could not verify the destination script", __FUNCTION__);
             return false;
         }
     }
@@ -177,7 +177,7 @@ bool SendCoinbaseTransactionToMempool(CMutableTransaction rawTx)
     }
 
     if (!txAccepted) {
-        LogPrintf("%s: transaction mempool could not accept the tentative coinbase transaction", __FUNCTION__);
+        CoinbaseIndexLog("%s: transaction mempool could not accept the tentative coinbase transaction", __FUNCTION__);
     }
 
     if(!g_connman)

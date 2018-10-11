@@ -3,6 +3,7 @@
 
 #include "amount.h"
 #include "primitives/transaction.h"
+#include "util.h"
 #include <vector>
 
 class CWallet;
@@ -21,5 +22,11 @@ UnspentInputs SelectInputs(const CWallet* wallet, CAmount desiredAmount);
 CMutableTransaction CreateCoinbaseTransaction(const UnspentInputs& unspentInputs, CAmount txAmount, const CWallet* wallet);
 bool SignCoinbaseTransaction(CMutableTransaction& rawTx, const CWallet* wallet);
 bool SendCoinbaseTransactionToMempool(CMutableTransaction rawTx);
+
+template <typename... Args>
+void CoinbaseIndexLog(Args... params)
+{
+    LogPrint(BCLog::CBINDEX, params...);
+}
 
 #endif // PAICOIN_COINBASE_UTILS_H  
