@@ -122,10 +122,6 @@ void CoinbaseTxHandler::GetAssembledHeader(std::vector<unsigned char> const& pay
     std::vector<unsigned char>& postHeader)
 {
     preHeader = _preHeader;
-    if (operationType == COT_ADD) {
-        preHeader.push_back(0x00);
-        preHeader.push_back(0x00);
-    }
 
     std::vector<unsigned char> dataToCRC(preHeader.begin(), preHeader.end());
     dataToCRC.insert(dataToCRC.end(), payload.begin(), payload.end());
@@ -167,10 +163,6 @@ bool CoinbaseTxHandler::GetPayloadFromTrimmedHeader(std::vector<unsigned char> c
                 CoinbaseIndexLog("%s: invalid payload header", __FUNCTION__);
                 return false;
             }
-        }
-        if (operationType == COT_ADD) {
-            BOOST_ASSERT(extrPreHeader[_preHeader.size()] == 0x00);
-            BOOST_ASSERT(extrPreHeader[_preHeader.size() + 1] == 0x00);
         }
 
         auto extrPayloadSize = *itInput++;
