@@ -1,4 +1,5 @@
 #include "coinbase_keyhandler.h"
+#include "coinbase_utils.h"
 #include "key.h"
 #include "pubkey.h"
 #include "utilstrencodings.h"
@@ -12,6 +13,7 @@ CKey CoinbaseKeyHandler::GetCoinbaseSigningKey()
     fs::path secKeyFilePath = m_dataDir / "coinbase" / "seckeys";
     auto secKeys = LoadSecretKeys(secKeyFilePath);
     if (secKeys.empty()) {
+        CoinbaseIndexLog("%s: No secret/private keys found in data dir.", __FUNCTION__);
         return CKey();
     }
 
