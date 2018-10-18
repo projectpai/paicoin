@@ -1,0 +1,8 @@
+/usr/bin/paicoin-cli		--	gen_context(system_u:object_r:paicoin_exec_t,s0)
+/usr/sbin/paicoind		--	gen_context(system_u:object_r:paicoin_exec_t,s0)
+/usr/lib(64)?/paicoin/paicoind		--	gen_context(system_u:object_r:paicoin_exec_t,s0)
+
+/etc/paicoin(/.*)?		gen_context(system_u:object_r:paicoin_conf_t,s0)
+/var/lib/paicoin(/.*)?		gen_context(system_u:object_r:paicoin_var_lib_t,s0)
+
+(/var)?/run/paicoind(/.*)?   gen_context(system_u:object_r:paicoin_var_run_t,s0)
