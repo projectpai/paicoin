@@ -365,4 +365,53 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseTxHandler_ClosedLoopTest, CoinbaseIndexWithBalan
     BOOST_CHECK(gCoinbaseIndex.GetNumCoinbaseAddrs() == 2);
 }
 
+BOOST_FIXTURE_TEST_CASE(CoinbaseTxHandler_ClosedLoopTest_SeparateBlockTxs, CoinbaseIndexWithBalanceToSpendSetup)
+{
+    CKey dummyPrivKey = coinbaseKey;
+    BOOST_CHECK(dummyPrivKey.IsValid());
+
+    auto keyHex = HexStr(dummyPrivKey.begin(), dummyPrivKey.end());
+    boost::filesystem::path dirPath = GetDataDir() / "coinbase";
+    boost::filesystem::path savePath = dirPath / "seckeys";
+
+    boost::filesystem::create_directories(dirPath);
+    std::ofstream outputFile(savePath.string());
+    outputFile << keyHex << std::endl;
+    outputFile.close();
+
+    BOOST_CHECK(boost::filesystem::exists(savePath));
+
+    gCoinbaseIndex.BuildDefaultFromDisk();
+    BOOST_CHECK(gCoinbaseIndex.GetNumCoinbaseAddrs() == 1);
+
+    CKey insertionKey;
+    insertionKey.MakeNewKey(false);
+    int maxBlockHeight = static_cast<int>(mapBlockIndex.size()) + 3;
+    auto oldBlockSize = mapBlockIndex.size();
+
+    CoinbaseTxHandler txHandler;
+
+    auto createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(wallet.get(),
+        insertionKey.GetPubKey().GetID(), maxBlockHeight);
+    BOOST_CHECK(!!createdTransactions.first);
+    BOOST_CHECK(!!createdTransactions.second);
+
+    std::vector<CMutableTransaction> transactions{
+        CMutableTransaction(*(createdTransactions.first)),
+    };
+    CreateAndProcessBlock(transactions, GetScriptPubKey());
+
+    auto newBlockSize = mapBlockIndex.size();
+    BOOST_CHECK(newBlockSize == (oldBlockSize + 1));
+
+    BOOST_CHECK(gCoinbaseIndex.GetNumCoinbaseAddrs() == 1);
+
+    transactions = {
+        CMutableTransaction(*(createdTransactions.second))
+    };
+
+    CreateAndProcessBlock(transactions, GetScriptPubKey());
+    BOOST_CHECK(gCoinbaseIndex.GetNumCoinbaseAddrs() == 2);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
