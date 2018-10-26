@@ -972,7 +972,7 @@ UniValue createcoinbasetransaction(const JSONRPCRequest& request)
 
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw std::runtime_error(
-            "createcoinbasetransaction \"targetAddress\" \"maxBlockHeight\"\n"
+            "createcoinbasetransaction \"targetAddress\" [\"maxBlockHeight\"]\n"
             "\nCreate a coinbase transaction, adding a newly accepted coinbase address to be recognized by the network.\n"
             "This call is only available to the node having the private keys to the default built-in coinbase addresses.\n"
             "\nArguments:\n"
