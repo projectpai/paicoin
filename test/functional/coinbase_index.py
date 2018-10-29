@@ -40,12 +40,6 @@ def generate_keypair():
 
     return sk_string, pk_string
 
-def createCoinbaseWithSequence(height=0):
-    coinbase_tx = create_coinbase(height=height)
-    coinbase_tx.vin[0].nSequence = 2 ** 32 - 2
-    coinbase_tx.rehash()
-    return coinbase_tx
-
 def createBlockFromTemplate(block_template, coinbase_tx=None, hash_prevblock=None):
     block = CBlock()
     block.nVersion = block_template["version"]
