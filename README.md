@@ -67,3 +67,36 @@ Changes should be tested by somebody other than the developer who wrote the
 code. This is especially important for large or high-risk changes. It is useful
 to add a test plan to the pull request description if testing the changes is
 not straightforward.
+
+Community Resources
+-------------------
+
+### English
+
+- [PAI Forum](https://www.paiforum.com)
+- [Telegram (USA)](https://t.me/projectpai)
+- [Telegram (EU)](https://t.me/projectpaiEUR)
+- [Twitter](https://twitter.com/projectpai)
+- [Facebook](https://www.facebook.com/projectpai)
+- [LinkedIn](https://www.linkedin.com/company/projectpai/)
+- [Medium](https://medium.com/project-pai)
+- [YouTube](https://www.youtube.com/c/projectpai)
+
+### Chinese
+
+- [Telegram](https://t.me/projectpaiCN)
+- [Weibo](https://weibo.com/p/1005055231677544/)
+- [Youku](http://i.youku.com/i/UNjA4ODk0MDE3Ng==)
+- WeChat
+
+### Japanese
+
+- [Telegram](https://t.me/ProjectPAIJapanOFFICIAL)
+- [Line](http://line.me/ti/g/ZeZog_6Gbc)
+- [Ameba](https://ameblo.jp/projectpai/)
+
+### Korean
+
+- [Telegram](https://t.me/ProjectPAIKoreaOFFICIAL)
+- [Kakao](https://open.kakao.com/o/ggXD4VN)
+- [Naver](https://blog.naver.com/projectpai/)

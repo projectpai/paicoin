@@ -41,8 +41,8 @@
 #define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
 #define TESTNET_GENESIS_BLOCK_SIGNATURE  "9a8abac6c3d97d37d627e6ebcaf68be72275168b"
 
-#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706516  
-#define TESTNET_GENESIS_BLOCK_NONCE          2253953817  
+#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706516
+#define TESTNET_GENESIS_BLOCK_NONCE          2253953817
 #define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x0000000003976df1a1393912d10ea68fae1175ee2c7e6011a0dc4e05f18f8403")
 #define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19")
 
@@ -178,7 +178,7 @@ public:
         LogPrintf("- old mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
         // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { }
 
         LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
@@ -210,7 +210,7 @@ public:
         vSeeds.emplace_back("193.112.7.193", false);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
-        
+
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,56);  // P
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,130); // u
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247); // 9
@@ -235,12 +235,12 @@ public:
         // TODO PAICOIN Update this when releasing, using the block timestamp and the number of transactions upto that block
         // use the blockchain info
         chainTxData = ChainTxData{
-			// tx hash = c54bee8227b2b009dcd4d53b1f01de328b86417b475a1f0540b8cca91797b256
-			// block hash = 0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec
-			// block index = 25000
-			// tx index = 25073
-			// tx timestamp = 1523981287
-			
+      // tx hash = c54bee8227b2b009dcd4d53b1f01de328b86417b475a1f0540b8cca91797b256
+      // block hash = 0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec
+      // block index = 25000
+      // tx index = 25073
+      // tx timestamp = 1523981287
+
             1523981287, // * UNIX timestamp of last known number of transactions
             25073,      // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
@@ -308,7 +308,7 @@ public:
         LogPrintf("- old testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
         // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { }
 
         LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
@@ -333,7 +333,7 @@ public:
 
         vFixedSeeds.clear();
         vSeeds.clear();
-       
+
         // nodes with support for servicebits filtering should be at the top
         vSeeds.emplace_back("52.37.189.65", false);
         vSeeds.emplace_back("13.59.205.159", false);
@@ -341,7 +341,7 @@ public:
         vSeeds.emplace_back("193.112.4.118", false);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
-        
+
         // same as for the CRegTestParams
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
@@ -365,12 +365,12 @@ public:
         // TODO PAICOIN Update this when releasing, using the block timestamp and the number of transactions upto that block
         // use the blockchain info
         chainTxData = ChainTxData{
-			// tx hash = 0xd714e38737c9a4f2f0f59bdd6ffa6e527a6874a7f599849dfe042c8bd1f49ce5
-			// block hash = 0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b
-			// block index = 2500
-			// tx index = 3434
-			// tx timestamp = 1523601213
-			
+      // tx hash = 0xd714e38737c9a4f2f0f59bdd6ffa6e527a6874a7f599849dfe042c8bd1f49ce5
+      // block hash = 0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b
+      // block index = 2500
+      // tx index = 3434
+      // tx timestamp = 1523601213
+
             1523601213, // * UNIX timestamp of last known number of transactions
             3434,       // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
@@ -438,7 +438,7 @@ public:
         LogPrintf("- old regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
         // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { }
 
         LogPrintf("- new regtest genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new regtest genesis hash: %s\n", genesis.GetHash().ToString().c_str());

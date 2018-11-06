@@ -1,6 +1,10 @@
 Repository Tools
 ---------------------
 
+### [Data Sharing](/contrib/data-share) ###
+
+Protocol definition of, and tools for using, the Data Storage Layer of the PAI Blockchain, which allows for trustless data sharing across P2P networks via specialized `OP_RETURN` transactions.
+
 ### [Linearize](/contrib/linearize) ###
 Construct a linear, no-fork, best version of the blockchain.
 

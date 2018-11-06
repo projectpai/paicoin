@@ -2790,7 +2790,7 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
     return true;
 }
 
-bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase)
+bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase, int blockHeight)
 {
     // These are checks that are independent of context.
 
@@ -2835,12 +2835,15 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
 
     // Check transactions
     for (const auto& tx : block.vtx)
-        if (!CheckTransaction(*tx, state, false))
+        if (!CheckTransaction(*tx, state, true))
             return state.Invalid(false, state.GetRejectCode(), state.GetRejectReason(),
                                  strprintf("Transaction check failed (tx hash %s) %s", tx->GetHash().ToString(), state.GetDebugMessage()));
 
     if (fCheckCoinbase && block.GetHash() != consensusParams.hashGenesisBlock) {
         const auto& coinbaseAddrs = Params().coinbaseAddrs;
+        if (blockHeight < 0) {
+            blockHeight = chainActive.Height() + 1;
+        }
         if (!coinbaseAddrs.empty()) {
             for (const CTxOut& out : block.vtx[0]->vout) {
                 if (out.nValue > 0.00) {
@@ -2848,7 +2851,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
                     if (ExtractDestination(out.scriptPubKey, address)) {
                         std::string pubKey(EncodeDestination(address));
                         auto validCoinbaseIter = coinbaseAddrs.find(pubKey);
-                        if (validCoinbaseIter == coinbaseAddrs.end() || (validCoinbaseIter->second > -1 && validCoinbaseIter->second < chainActive.Height() + 1)) {
+                        if (validCoinbaseIter == coinbaseAddrs.end() || (validCoinbaseIter->second > -1 && validCoinbaseIter->second < blockHeight)) {
                             return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
                                 REJECT_INVALID, "bad-cb-address");
                         }
@@ -3651,7 +3654,7 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
         if (!ReadBlockFromDisk(block, pindex, chainparams.GetConsensus()))
             return error("VerifyDB(): *** ReadBlockFromDisk failed at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString());
         // check level 1: verify block validity
-        if (nCheckLevel >= 1 && !CheckBlock(block, state, chainparams.GetConsensus()))
+        if (nCheckLevel >= 1 && !CheckBlock(block, state, chainparams.GetConsensus(), true, true, true, pindex->nHeight))
             return error("%s: *** found bad block at %d, hash=%s (%s)\n", __func__,
                          pindex->nHeight, pindex->GetBlockHash().ToString(), FormatStateMessage(state));
         // check level 2: verify undo validity

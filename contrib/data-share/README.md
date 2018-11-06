@@ -10,7 +10,7 @@ Created: 2018-05-15
 License: MIT
 </pre>
 
-# PAIcoin Development Proposal (PDP)
+# PAI Coin Development Proposal (PDP)
 ## Data Storage and Sharing
 - [Abstract](#abstract)
 - [Copyright](#copyright)
@@ -30,9 +30,9 @@ License: MIT
 
 ## Abstract
 
-This document describes an initial specification for extending the standard PAIcoin protocol to include a method of submitting and provisioning access to arbitrary data.  This is achieved by utilizing a segmented network of torrent nodes, a custom OP_RETURN data protocol and elliptical encryption.
+This document describes an initial specification for extending the standard PAI Coin protocol to include a method of submitting and provisioning access to arbitrary data.  This is achieved by utilizing a segmented network of torrent nodes, a custom `OP_RETURN` data protocol and elliptical encryption.
 
-The specification consists of several parts. In the first part, the protocol for the OP_RETURN format for submitters and recipients is detailed. The second part discusses how the data is stored and distributed in v1 of the implementation.  The third part covers further expansion of ideas for indexing, storage and participant rewards.
+The specification consists of several parts. In the first part, the protocol for the `OP_RETURN` format for submitters and recipients is detailed. The second part discusses how the data is stored and distributed in v1 of the implementation.  The third part covers further expansion of ideas for indexing, storage and participant rewards.
 
 ## Copyright
 
@@ -48,11 +48,11 @@ Securely sharing data, such as on a public website, has been well-covered for so
 
 #### Glossary
 
-**Submitter**-- User that is providing data to a Recipient
+**Submitter** -- User that is providing data to a Recipient.
 
-**Provider**-- Data storage provider as tracked in the PAI blockchain
+**Provider** -- Data storage provider as tracked in the PAI blockchain.
 
-**Recipient**-- Entity that is to receive the data from the Submitter
+**Recipient** -- Entity that is to receive the data from the Submitter.
 
 #### Flow
 
@@ -66,25 +66,25 @@ Securely sharing data, such as on a public website, has been well-covered for so
 
 **Submitter**: Creates a transaction on the blockchain according to the OP_RETURN protocol. This grants access to the data to the intended recipient as well as pays the storage provider, if necessary.
 
-**Recipient**: Notified via PAI transaction with OP_RETURN and their wallet address that data has been submitted.  Retrieves ID from OP_RETURN.
+**Recipient**: Notified via PAI transaction with `OP_RETURN` and their wallet address that data has been submitted.  Retrieves ID from `OP_RETURN`.
 
-**Recipient**: Calls Provider API get-torrent to retrieve the torrent file for accessing data
+**Recipient**: Calls Provider API `/get-torrent` to retrieve the torrent file for accessing data.
 
-**Recipient**: Retrieves data using the torrent protocol
+**Recipient**: Retrieves data using the torrent protocol.
 
-**Recipient**: Monitors for ‘revoke’ operations.  When such is received immediately destroys all copies of provided data and discontinues any usage.
+**Recipient**: Monitors for ‘revoke’ operations.  When such is received, immediately destroys all copies of provided data and discontinues any usage.
 
 ### OP_RETURN Protocol
 
-In order to achieve our goals with using the PAI blockchain to track provisioning, revocation and storage requests we need to embed this data into transactions.  To do so, we have chosen to use the standard approach of embedding data in the chain utilizing the op code OP_RETURN.
+In order to achieve our goals with using the PAI blockchain to track provisioning, revocation and storage requests we need to embed this data into transactions.  To do so, we have chosen to use the standard approach of embedding data in the chain utilizing the op code `OP_RETURN`.
 
 #### Glossary
 
-**Header**:  The initial 8 bytes after the OP_RETURN code that indicate that it is a PAI data storage txout and the version currently being used.
+**Header**:  The initial 8 bytes after the `OP_RETURN` code that indicate it is a PAI data storage txout and the version currently being used.
 
-**Payload**: The operation and associated parameters for the request
+**Payload**: The operation and associated parameters for the request.
 
-**Operations**: Types of requests that can be made via the PAIcoin data storage implementation
+**Operations**: Types of requests that can be made via the PAI Coin data storage implementation.
 
 **Storage Method**: This is the storage method being utilized.  In the initial implementation we have 0x01 which is the segmented bittorrent based solution as detailed below.
 
@@ -198,17 +198,17 @@ In order to achieve our goals with using the PAI blockchain to track provisionin
 
 #### Operations Details
 
-**Grant**-- This is the method an end-user follows to grant access to arbitrary data to a recipient.  The first operand is the hash reference returned by the data storage provider upon submission for later retrieval.  The second operand is the txout index of the intended recipient of that data within the transaction as a whole.  One additional note is that if the storage provider requires a payment for this operation that should be paid for with the Grant request as one of the txouts of the transaction.
+**Grant** -- This is the method an end user follows to grant access to arbitrary data to a recipient.  The first operand is the hash reference returned by the data storage provider upon submission for later retrieval.  The second operand is the txout index of the intended recipient of that data within the transaction as a whole.  One additional note is that if the storage provider requires a payment for this operation that should be paid for with the Grant request as one of the txouts of the transaction.
 
 **Revoke** -- This method is used to tell the original recipient of the encrypted data that all copies of the provided data should be destroyed and further usage is prohibited.
 
-**Add Provider**-- This method is used with the initial PAI data storage method for submitting base URLs for submitting data to the PAI data storage system per the API definition defined below
+**Add Provider** -- This method is used with the initial PAI data storage method for submitting base URLs for submitting data to the PAI data storage system per the API definition defined below.
 
-**Remove Provider**-- This method is used with the initial PAI data storage method to indicate that an existing entrypoint should no longer be used and has been retired
+**Remove Provider** -- This method is used with the initial PAI data storage method to indicate that an existing entrypoint should no longer be used and has been retired.
 
 ### Storage Provider API and Behavior
 
-In order to standardize interactions with PAI data storage providers, below is the initial API paths, parameters and responses.  This is only storage method 0x01 per the OP return protocol. 
+In order to standardize interactions with PAI data storage providers, below are the initial API paths, parameters and responses.  This is only storage method 0x01 per the `OP_RETURN` protocol. 
 
 <table>
   <tr>
@@ -260,9 +260,9 @@ signature: [signed hash proving ownership of original submission]</td>
 </table>
 
 
-**Info**-- Used to retrieve high level information about a given provider.  This can be used to determine information about an unknown provider that has been added via the add-entrypoint operation.  Response data is currently limited to the provider name, retention period and cost (per MB) stored.
+**Info** -- Used to retrieve high-level information about a given provider.  This can be used to determine information about an unknown provider that has been added via the `/add-entrypoint` operation.  Response data is currently limited to the provider name, retention period and cost (e.g., per MB) stored.
 
-**Make Torrent** -- This is used to submit an encrypted data file to be stored on the provider along with a public key to use for later operations.  The data provider should create the torrent file, associate it with the public key, add it to its index and return the ID to be used by other operations
+**Make Torrent** -- This is used to submit an encrypted data file to be stored on the provider along with a public key to use for later operations.  The data provider should create the torrent file, associate it with the public key, add it to its index and return the ID to be used by other operations.
 
 **Get Torrent** -- This is used by the recipient of the data file to get the torrent file to be used for retrieval.
 
@@ -276,4 +276,4 @@ This PDP on its own does not cause any backwards incompatibility.
 
 ## Implementation
 
-An initial implementation of this PDP is included in the PAIcoin core in the contrib/data-store directory.  This includes a Python API implementation of the Data Provider specification and Dockerfiles for launching torrent nodes using OpenTracker.  It also includes sample code for submitting OP_RETURN transactions and exercising the protocol for Submitters and Recipients.
+An initial implementation of this PDP is included in the PAI Coin core in the `contrib/data-store` directory.  This includes a Python API implementation of the Data Provider specification and Dockerfiles for launching torrent nodes using OpenTracker.  It also includes sample code for submitting `OP_RETURN` transactions and exercising the protocol for Submitters and Recipients.
