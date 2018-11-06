@@ -701,6 +701,7 @@ public:
 
     CNode(NodeId id, ServiceFlags nLocalServicesIn, int nMyStartingHeightIn, SOCKET hSocketIn, const CAddress &addrIn, uint64_t nKeyedNetGroupIn, uint64_t nLocalHostNonceIn, const CAddress &addrBindIn, const std::string &addrNameIn = "", bool fInboundIn = false);
     ~CNode();
+    // No copying, only moves.
     CNode(const CNode&) = delete;
     CNode& operator=(const CNode&) = delete;
 
