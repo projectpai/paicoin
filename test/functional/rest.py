@@ -60,7 +60,7 @@ class RESTTest (PAIcoinTestFramework):
         self.nodes[2].generate(100)
         self.sync_all()
 
-        assert_equal(self.nodes[0].getbalance(), 50)
+        assert_equal(self.nodes[0].getbalance(), 1500)
 
         txid = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 0.1)
         self.sync_all()

@@ -53,14 +53,20 @@ class BlockchainTest(PAIcoinTestFramework):
         assert_equal(round(chaintxstats['txrate'] * 600, 10), Decimal(1))
 
     def _test_gettxoutsetinfo(self):
+        # this test takes into account the following:
+        #  - genesis block reward of 1470000000
+        #  - additional transaction from the genesis block
+        #  - block reward halving after 150 blocks
+        #  - bogosize = 73 for the genesis block
+        #  - total_amount = 1470000000 + 149 * 1500 + 51 * 750 = 1470261750
         node = self.nodes[0]
         res = node.gettxoutsetinfo()
 
-        assert_equal(res['total_amount'], Decimal('8725.00000000'))
-        assert_equal(res['transactions'], 200)
+        assert_equal(res['total_amount'], Decimal('1470261750.00000000'))
+        assert_equal(res['transactions'], 201)
         assert_equal(res['height'], 200)
-        assert_equal(res['txouts'], 200)
-        assert_equal(res['bogosize'], 17000),
+        assert_equal(res['txouts'], 201)
+        assert_equal(res['bogosize'], 17073),
         assert_equal(res['bestblock'], node.getblockhash(200))
         size = res['disk_size']
         assert size > 6400
@@ -73,11 +79,11 @@ class BlockchainTest(PAIcoinTestFramework):
         node.invalidateblock(b1hash)
 
         res2 = node.gettxoutsetinfo()
-        assert_equal(res2['transactions'], 0)
-        assert_equal(res2['total_amount'], Decimal('0'))
+        assert_equal(res2['transactions'], 1)
+        assert_equal(res2['total_amount'], Decimal('1470000000'))
         assert_equal(res2['height'], 0)
-        assert_equal(res2['txouts'], 0)
-        assert_equal(res2['bogosize'], 0),
+        assert_equal(res2['txouts'], 1)
+        assert_equal(res2['bogosize'], 73),
         assert_equal(res2['bestblock'], node.getblockhash(0))
         assert_equal(len(res2['hash_serialized_2']), 64)
 

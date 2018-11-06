@@ -48,7 +48,7 @@ class MultiWalletTest(PAIcoinTestFramework):
 
         # check w1 wallet balance
         w1_info = w1.getwalletinfo()
-        assert_equal(w1_info['immature_balance'], 50)
+        assert_equal(w1_info['immature_balance'], 1500)
         w1_name = w1_info['walletname']
         assert_equal(w1_name, "w1")
 
@@ -64,7 +64,7 @@ class MultiWalletTest(PAIcoinTestFramework):
         assert_equal({"w1", "w2", "w3"}, {w1_name, w2_name, w3_name})
 
         w1.generate(101)
-        assert_equal(w1.getbalance(), 100)
+        assert_equal(w1.getbalance(), 3000)
         assert_equal(w2.getbalance(), 0)
         assert_equal(w3.getbalance(), 0)
 
