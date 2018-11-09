@@ -61,6 +61,9 @@ public:
     /* Returns true if the address is one of the investor's multisig addresses */
     bool AddressIsMyMultisig(std::string& address);
 
+    /* Returns true if the script is paying to one of the investor's multisig addresses */
+    bool ScriptIsMyMultisig(const CScript& script);
+
     /* Returns true if the Hash160 is one of the investor's multisig keys */
     bool Hash160IsMyMultisig(const uint160& hash160);
 
