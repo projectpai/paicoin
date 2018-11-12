@@ -46,7 +46,7 @@ bool AuthManager::Check(const std::string& pin)
     {
         SettingsHelper::ResetAuthFailCount();
         SettingsHelper::SetAuthRequested(false);
-        QTimer::singleShot(5 * 60 * 1000, this, SLOT(RequestAuthenticate()));
+        TriggerTimer();
     }
     return fMatch;
 }
@@ -93,6 +93,11 @@ bool AuthManager::ShouldSet()
     else
         storedPin = SettingsHelper::GetPinCode();
     return storedPin.compare("noPin") == 0 || storedPin.empty();
+}
+
+void AuthManager::TriggerTimer()
+{
+    QTimer::singleShot(5 * 60 * 1000, this, SLOT(RequestAuthenticate()));
 }
 
 void AuthManager::RequestCheck(const std::string &pin)

@@ -224,11 +224,17 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
         setCentralWidget(rpcConsole);
     }
 
+    // Create actions for the toolbar, menu bar and tray/dock icon
+    createActions();
+
+    // Create system tray icon and notification
+    createTrayIcon(networkStyle);
+
     if (!firstRun)
     {
-        // Create actions for the toolbar, menu bar and tray/dock icon
-        // Needs walletFrame to be initialized
-        createActions();
+#ifdef ENABLE_WALLET
+        connectWalletFrame(walletFrame);
+#endif // ENABLE_WALLET
 
         // Accept D&D of URIs
         setAcceptDrops(true);
@@ -238,9 +244,6 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
 
         // Create the toolbars
         createToolBars();
-
-        // Create system tray icon and notification
-        createTrayIcon(networkStyle);
 
         // Create status bar
         statusBar();
@@ -486,24 +489,6 @@ void PAIcoinGUI::createActions()
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
 
-#ifdef ENABLE_WALLET
-    if(walletFrame)
-    {
-#ifdef ENABLE_ENCRYPT_WALLET
-        connect(encryptWalletAction, SIGNAL(triggered(bool)), walletFrame, SLOT(encryptWallet(bool)));
-        connect(changePassphraseAction, SIGNAL(triggered()), walletFrame, SLOT(changePassphrase()));
-#endif // ENABLE_ENCRYPT_WALLET
-        connect(backupWalletAction, SIGNAL(triggered()), walletFrame, SLOT(backupWallet()));
-        connect(signMessageAction, SIGNAL(triggered()), this, SLOT(gotoSignMessageTab()));
-        connect(verifyMessageAction, SIGNAL(triggered()), this, SLOT(gotoVerifyMessageTab()));
-        connect(usedSendingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedSendingAddresses()));
-        connect(usedReceivingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedReceivingAddresses()));
-        connect(openAction, SIGNAL(triggered()), this, SLOT(openClicked()));
-        connect(viewInvestorKeyAction, SIGNAL(triggered()), walletFrame, SLOT(viewInvestorKey()));
-        connect(reviewPaperKeyAction, SIGNAL(triggered()), walletFrame, SLOT(reviewPaperKey()));
-    }
-#endif // ENABLE_WALLET
-
     new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_C), this, SLOT(showDebugWindowActivateConsole()));
     new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_D), this, SLOT(showDebugWindow()));
 
@@ -646,9 +631,8 @@ void PAIcoinGUI::setClientModel(ClientModel *_clientModel)
     this->clientModel = _clientModel;
     if(_clientModel)
     {
-        // Create system tray menu (or setup the dock menu) that late to prevent users from calling actions,
-        // while the client has not yet fully loaded
-        createTrayIconMenu();
+        // Update system tray menu
+        updateTrayIconMenu(state != PAIcoinGUIState::Init);
 
         // Keep up to date with client
         updateNetworkState();
@@ -757,18 +741,6 @@ void PAIcoinGUI::createTrayIcon(const NetworkStyle *networkStyle)
     trayIcon->setToolTip(toolTip);
     trayIcon->setIcon(networkStyle->getTrayAndWindowIcon());
     trayIcon->hide();
-#endif
-
-    notificator = new Notificator(QApplication::applicationName(), trayIcon, this);
-}
-
-void PAIcoinGUI::createTrayIconMenu()
-{
-#ifndef Q_OS_MAC
-    // return if trayIcon is unset (only on non-Mac OSes)
-    if (!trayIcon)
-        return;
-
     trayIconMenu = new QMenu(this);
     trayIcon->setContextMenu(trayIconMenu);
 
@@ -781,17 +753,27 @@ void PAIcoinGUI::createTrayIconMenu()
     trayIconMenu = dockIconHandler->dockMenu();
 #endif
 
+    notificator = new Notificator(QApplication::applicationName(), trayIcon, this);
+
+    createTrayIconMenu(false);
+}
+
+void PAIcoinGUI::createTrayIconMenu(bool allOptions)
+{
     // Configuration of the tray icon (or dock icon) icon menu
     trayIconMenu->addAction(toggleHideAction);
-    trayIconMenu->addSeparator();
-    trayIconMenu->addAction(sendCoinsMenuAction);
-    trayIconMenu->addAction(receiveCoinsMenuAction);
-    trayIconMenu->addSeparator();
-    trayIconMenu->addAction(signMessageAction);
-    trayIconMenu->addAction(verifyMessageAction);
-    trayIconMenu->addSeparator();
-    trayIconMenu->addAction(optionsAction);
-    trayIconMenu->addAction(openRPCConsoleAction);
+    if (allOptions)
+    {
+        trayIconMenu->addSeparator();
+        trayIconMenu->addAction(sendCoinsMenuAction);
+        trayIconMenu->addAction(receiveCoinsMenuAction);
+        trayIconMenu->addSeparator();
+        trayIconMenu->addAction(signMessageAction);
+        trayIconMenu->addAction(verifyMessageAction);
+        trayIconMenu->addSeparator();
+        trayIconMenu->addAction(optionsAction);
+        trayIconMenu->addAction(openRPCConsoleAction);
+    }
 #ifndef Q_OS_MAC // This is built-in on Mac
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
@@ -896,6 +878,7 @@ void PAIcoinGUI::setPinCode(const std::string &pin)
     case PAIcoinGUIState::RestoreWallet:
     case PAIcoinGUIState::PaperKeyCompletion:
         Q_EMIT linkWalletToMainApp();
+        AuthManager::getInstance().TriggerTimer();
         break;
     case PAIcoinGUIState::Init:
         AuthManager::getInstance().RequestCheck(pin);
@@ -959,7 +942,8 @@ void PAIcoinGUI::interruptForPinRequest(bool newPin)
 {
     previousState = state;
 
-    if (previousState == PAIcoinGUIState::Init)
+    if (previousState == PAIcoinGUIState::Init || previousState == PAIcoinGUIState::RestoreWallet ||
+            previousState == PAIcoinGUIState::PaperKeyCompletion)
     {
         updateMenuBar(true);
         updateTrayIconMenu(true);
@@ -996,14 +980,19 @@ void PAIcoinGUI::continueFromPinRequest()
     switch(previousState)
     {
     case PAIcoinGUIState::Init:
+    case PAIcoinGUIState::RestoreWallet:
+    case PAIcoinGUIState::PaperKeyCompletion:
         mainStackedWidget->setCurrentWidget(walletFrame);
         updateMenuBar();
         updateTrayIconMenu();
         toolbar->show();
         tabGroup->setVisible(true);
+        statusBar()->show();
         if (walletFrame && walletFrame->isOutOfSync())
+        {
+            progressBar->show();
             modalOverlay->showHide();
-
+        }
         connect(walletFrame, SIGNAL(requestedSyncWarningInfo()), this, SLOT(showModalOverlay()));
         connect(labelBlocksIcon, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
         connect(progressBar, SIGNAL(clicked(QPoint)), this, SLOT(showModalOverlay()));
@@ -1401,14 +1390,30 @@ void PAIcoinGUI::createWalletFrame()
     walletFrame->setClientModel(clientModel);
 
     // Create actions for the toolbar, menu bar and tray/dock icon
-    // Needs walletFrame to be initialized
     createActions();
+    connectWalletFrame(walletFrame);
 
     mainStackedWidget->addWidget(walletFrame);
     mainStackedWidget->setCurrentWidget(walletFrame);
 
     modalOverlay->setParent(this->centralWidget());
     modalOverlay->showHide();
+}
+
+void PAIcoinGUI::connectWalletFrame(WalletFrame *walletFrame)
+{
+#ifdef ENABLE_ENCRYPT_WALLET
+        connect(encryptWalletAction, SIGNAL(triggered(bool)), walletFrame, SLOT(encryptWallet(bool)));
+        connect(changePassphraseAction, SIGNAL(triggered()), walletFrame, SLOT(changePassphrase()));
+#endif // ENABLE_ENCRYPT_WALLET
+        connect(backupWalletAction, SIGNAL(triggered()), walletFrame, SLOT(backupWallet()));
+        connect(signMessageAction, SIGNAL(triggered()), this, SLOT(gotoSignMessageTab()));
+        connect(verifyMessageAction, SIGNAL(triggered()), this, SLOT(gotoVerifyMessageTab()));
+        connect(usedSendingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedSendingAddresses()));
+        connect(usedReceivingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedReceivingAddresses()));
+        connect(openAction, SIGNAL(triggered()), this, SLOT(openClicked()));
+        connect(viewInvestorKeyAction, SIGNAL(triggered()), walletFrame, SLOT(viewInvestorKey()));
+        connect(reviewPaperKeyAction, SIGNAL(triggered()), walletFrame, SLOT(reviewPaperKey()));
 }
 
 void PAIcoinGUI::completeUiWalletInitialization()
@@ -1424,8 +1429,8 @@ void PAIcoinGUI::completeUiWalletInitialization()
     // Create the toolbars
     createToolBars();
 
-    // Create system tray icon and notification
-    createTrayIcon(networkStyle);
+    // Update tray menu
+    updateTrayIconMenu();
 
     // Create status bar
     statusBar();
