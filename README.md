@@ -1,9 +1,9 @@
-PAIcoin Core integration/staging tree
+PAI Coin Core integration/staging tree
 =====================================
 
 https://projectpai.com
 
-What is Project PAI and PAIcoin?
+What is Project PAI and PAI Coin?
 ----------------
 
 Project PAI is an open-source, blockchain-based platform designed to allow
@@ -17,17 +17,17 @@ in their own unique experiences. The focal point of all interactions on the PAI
 blockchain are PAIs - intelligent 3D avatars that look, talk and behave just like their
 human counterparts, made from the digital profiles of the user's online behavior.
 
-PAIcoin is a digital currency that enables instant payments to anyone, anywhere in the world.
-PAIcoin uses peer-to-peer technology to operate with no central authority: managing
+PAI Coin is a digital currency that enables instant payments to anyone, anywhere in the world.
+PAI Coin uses peer-to-peer technology to operate with no central authority: managing
 transactions and issuing money are carried out collectively by the network.
-PAIcoin Core is the name of the open-source software which enables the use of this currency.
+PAI Coin Core is the name of the open-source software which enables the use of this currency.
 
 Read the whitepapers [here](https://projectpai.com/pai-whitepaper/).
 
 License
 -------
 
-PAIcoin Core is released under the terms of the MIT license. See [COPYING](COPYING) for more
+PAI Coin Core is released under the terms of the MIT license. See [COPYING](COPYING) for more
 information or see https://opensource.org/licenses/MIT.
 
 Development Process
@@ -35,7 +35,7 @@ Development Process
 
 The `master` branch is regularly built and tested, but is not guaranteed to be
 completely stable. [Tags](https://github.com/projectpai/paicoin/tags) are created
-regularly to indicate new official, stable release versions of PAIcoin Core.
+regularly to indicate new official, stable release versions of PAI Coin Core.
 
 The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -67,3 +67,36 @@ Changes should be tested by somebody other than the developer who wrote the
 code. This is especially important for large or high-risk changes. It is useful
 to add a test plan to the pull request description if testing the changes is
 not straightforward.
+
+Community Resources
+-------------------
+
+### English
+
+- [PAI Forum](https://www.paiforum.com)
+- [Telegram (USA)](https://t.me/projectpai)
+- [Telegram (EU)](https://t.me/projectpaiEUR)
+- [Twitter](https://twitter.com/projectpai)
+- [Facebook](https://www.facebook.com/projectpai)
+- [LinkedIn](https://www.linkedin.com/company/projectpai/)
+- [Medium](https://medium.com/project-pai)
+- [YouTube](https://www.youtube.com/c/projectpai)
+
+### Chinese
+
+- [Telegram](https://t.me/projectpaiCN)
+- [Weibo](https://weibo.com/p/1005055231677544/)
+- [Youku](http://i.youku.com/i/UNjA4ODk0MDE3Ng==)
+- WeChat
+
+### Japanese
+
+- [Telegram](https://t.me/ProjectPAIJapanOFFICIAL)
+- [Line](http://line.me/ti/g/ZeZog_6Gbc)
+- [Ameba](https://ameblo.jp/projectpai/)
+
+### Korean
+
+- [Telegram](https://t.me/ProjectPAIKoreaOFFICIAL)
+- [Kakao](https://open.kakao.com/o/ggXD4VN)
+- [Naver](https://blog.naver.com/projectpai/)

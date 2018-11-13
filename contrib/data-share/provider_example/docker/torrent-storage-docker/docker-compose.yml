@@ -1,0 +1,32 @@
+version: "3"
+services:
+        transmission:
+                build:
+                        context: .
+                        dockerfile: Dockerfile-transmission
+                image: transmission
+                volumes:
+                        - ./configs:/home/oben/.transmission:rw
+                        - ./Downloads:/home/oben/Downloads:rw
+                ports:
+                        - 8000:8000
+                links:
+                  - opentracker
+                command: /usr/bin/python3 /opt/api/manage.py runserver 0.0.0.0:8000
+
+        opentracker:
+                build:
+                        context: .
+                        dockerfile: Dockerfile-opentracker
+                image: opentracker
+
+        # api:
+        #   build:
+        #     context: torrent_storage
+        #     dockerfile: Dockerfile-api
+        #   ports:
+        #     - "80:8000"
+        #   links:
+        #     - opentracker
+        #   depends_on:
+        #     - opentracker

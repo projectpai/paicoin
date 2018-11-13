@@ -29,7 +29,7 @@ static CBlock BuildBlockTestCase() {
 
     block.vtx.resize(3);
     block.vtx[0] = MakeTransactionRef(tx);
-    block.nVersion = 42;
+    block.nVersion = 4;
     block.hashPrevBlock = InsecureRand256();
     block.nBits = 0x207fffff;
 
@@ -269,7 +269,6 @@ BOOST_AUTO_TEST_CASE(SufficientPreforwardRTTest)
     }
     BOOST_CHECK_EQUAL(pool.mapTx.find(txhash)->GetSharedTx().use_count(), SHARED_TX_OFFSET + 0);
 }
-
 BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest)
 {
     CTxMemPool pool;
@@ -282,7 +281,7 @@ BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest)
     CBlock block;
     block.vtx.resize(1);
     block.vtx[0] = MakeTransactionRef(std::move(coinbase));
-    block.nVersion = 42;
+    block.nVersion = 4;
     block.hashPrevBlock = InsecureRand256();
     block.nBits = 0x207fffff;
 
@@ -290,7 +289,6 @@ BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest)
     block.hashMerkleRoot = BlockMerkleRoot(block, &mutated);
     assert(!mutated);
     while (!CheckProofOfWork(block.GetHash(), block.nBits, Params().GetConsensus())) ++block.nNonce;
-
     // Test simple header round-trip with only coinbase
     {
         CBlockHeaderAndShortTxIDs shortIDs(block, false);

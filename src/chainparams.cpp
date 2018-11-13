@@ -515,6 +515,13 @@ public:
         base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xE3, 0xC5, 0x26};  // ptpu
         base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xE3, 0xC5, 0x2D};  // ptpv
 
+        // same as for the CRegTestParams
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xE3, 0xC5, 0x26};  // ptpu
+        base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xE3, 0xC5, 0x2D};  // ptpv
+
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fMineBlocksOnDemand = false;

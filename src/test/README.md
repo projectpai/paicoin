@@ -35,7 +35,7 @@ Run `test_paicoin --help` for the full list.
 ### Note on adding test cases
 
 The sources in this directory are unit test cases.  Boost includes a
-unit testing framework, and since paicoin already uses boost, it makes
+unit testing framework, and since PAI Coin already uses boost, it makes
 sense to simply use this framework rather than require developers to
 configure some other framework (we want as few impediments to creating
 unit tests as possible).
