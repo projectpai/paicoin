@@ -1098,7 +1098,7 @@ UniValue sendmany(const JSONRPCRequest& request)
 }
 
 // Defined in rpc/misc.cpp
-extern CScript _createmultisig_redeemScript(CWallet * const pwallet, const UniValue& params);
+extern CScript _createmultisig_redeemScript(const CWallet * const pwallet, const UniValue& params);
 
 UniValue addmultisigaddress(const JSONRPCRequest& request)
 {
