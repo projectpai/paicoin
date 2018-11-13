@@ -110,6 +110,9 @@ static int AppInitRPC(int argc, char* argv[])
         fprintf(stderr,"Error reading configuration file: %s\n", e.what());
         return EXIT_FAILURE;
     }
+#ifdef PAI_BABY
+    gChainparams.ReadConfigFile(gArgs.GetArg("-chainparams-conf", PAICOIN_CHAINPARAMS_CONF_FILENAME));
+#endif
     // Check for -testnet or -regtest parameter (BaseParams() calls are only valid after this clause)
     try {
         SelectBaseParams(ChainNameFromCommandLine());

@@ -1033,11 +1033,11 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 
     // PAICOIN Note: If the initial block subsidy has been changed,
     // update the subsidy with the correct value
-    #ifdef PAI_BABY
-		CAmount nSubsidy = gChainparams.GetArg("INITIAL_BLOCK_REWARD", (CAmount) 1500) * COIN;
-	#else
-		CAmount nSubsidy = 1500 * COIN;
-	#endif
+#ifdef PAI_BABY
+    CAmount nSubsidy = gChainparams.GetArg("INITIAL_BLOCK_REWARD", (CAmount) 1500) * COIN;
+#else
+    CAmount nSubsidy = 1500 * COIN;
+#endif
     // Subsidy is cut in half every 210,000 blocks which will occur approximately every 4 years.
     nSubsidy >>= halvings;
     return nSubsidy;

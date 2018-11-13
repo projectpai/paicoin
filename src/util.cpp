@@ -93,11 +93,11 @@ const char * const PAICOIN_PID_FILENAME = "paicoind.pid";
 ArgsManager gArgs;
 
 #ifdef PAI_BABY
-	const char * const PAICOIN_CHAINPARAMS_CONF_FILENAME = "chainparams.conf";
-	const char * const PAICOIN_GENESIS_CONF_FILENAME = "genesis.conf";
-	
-	ArgsManager gChainparams(false);
-	ArgsManager gGenesisparams(false);
+const char * const PAICOIN_CHAINPARAMS_CONF_FILENAME = "chainparams.conf";
+const char * const PAICOIN_GENESIS_CONF_FILENAME = "genesis.conf";
+
+ArgsManager gChainparams(false);
+ArgsManager gGenesisparams(false);
 #endif
 
 bool fPrintToConsole = false;
@@ -608,15 +608,15 @@ fs::path GetConfigFile(const std::string& confPath)
 void ArgsManager::ReadConfigFile(const std::string& confPath)
 {
     fs::ifstream streamConfig(GetConfigFile(confPath));
-	if (!streamConfig.good())
-	{
-	    if (main)
-		{
-			return; // No paicoin.conf file is OK
-		}
+    if (!streamConfig.good())
+    {
+        if (main)
+        {
+            return; // No paicoin.conf file is OK
+        }
 
-		throw std::runtime_error(strerror(errno));
-	}
+        throw std::runtime_error(strerror(errno));
+    }
 
     {
         LOCK(cs_args);
@@ -637,9 +637,9 @@ void ArgsManager::ReadConfigFile(const std::string& confPath)
     
     if (main)
     {
-		// If datadir is changed in main .conf file:
-		ClearDatadirCache();
-	}
+        // If datadir is changed in main .conf file:
+        ClearDatadirCache();
+    }
 }
 
 #ifndef WIN32

@@ -60,23 +60,23 @@ void WaitForShutdown(boost::thread_group* threadGroup)
 
 void SaveGenesisConf(const std::string& confPath)
 {
-	std::ofstream conf;
-	conf.exceptions(std::ios_base::eofbit | std::ios_base::failbit | std::ios_base::badbit);
-	conf.open(confPath);
+    std::ofstream conf;
+    conf.exceptions(std::ios_base::eofbit | std::ios_base::failbit | std::ios_base::badbit);
+    conf.open(confPath);
 
-	conf << "MAINNET_GENESIS_BLOCK_NONCE = "          << gGenesisparams.GetArg("MAINNET_GENESIS_BLOCK_NONCE", "") << "\n";
-	conf << "MAINNET_CONSENSUS_HASH_GENESIS_BLOCK = " << gGenesisparams.GetArg("MAINNET_CONSENSUS_HASH_GENESIS_BLOCK", "") << "\n";
-	conf << "MAINNET_GENESIS_HASH_MERKLE_ROOT = "     << gGenesisparams.GetArg("MAINNET_GENESIS_HASH_MERKLE_ROOT", "") << "\n";
+    conf << "MAINNET_GENESIS_BLOCK_NONCE = "          << gGenesisparams.GetArg("MAINNET_GENESIS_BLOCK_NONCE", "") << "\n";
+    conf << "MAINNET_CONSENSUS_HASH_GENESIS_BLOCK = " << gGenesisparams.GetArg("MAINNET_CONSENSUS_HASH_GENESIS_BLOCK", "") << "\n";
+    conf << "MAINNET_GENESIS_HASH_MERKLE_ROOT = "     << gGenesisparams.GetArg("MAINNET_GENESIS_HASH_MERKLE_ROOT", "") << "\n";
 
-	conf << "TESTNET_GENESIS_BLOCK_NONCE = "          << gGenesisparams.GetArg("TESTNET_GENESIS_BLOCK_NONCE", "") << "\n";
-	conf << "TESTNET_CONSENSUS_HASH_GENESIS_BLOCK = " << gGenesisparams.GetArg("TESTNET_CONSENSUS_HASH_GENESIS_BLOCK", "") << "\n";
-	conf << "TESTNET_GENESIS_HASH_MERKLE_ROOT = "     << gGenesisparams.GetArg("TESTNET_GENESIS_HASH_MERKLE_ROOT", "") << "\n";
+    conf << "TESTNET_GENESIS_BLOCK_NONCE = "          << gGenesisparams.GetArg("TESTNET_GENESIS_BLOCK_NONCE", "") << "\n";
+    conf << "TESTNET_CONSENSUS_HASH_GENESIS_BLOCK = " << gGenesisparams.GetArg("TESTNET_CONSENSUS_HASH_GENESIS_BLOCK", "") << "\n";
+    conf << "TESTNET_GENESIS_HASH_MERKLE_ROOT = "     << gGenesisparams.GetArg("TESTNET_GENESIS_HASH_MERKLE_ROOT", "") << "\n";
 
-	conf << "REGTEST_GENESIS_BLOCK_NONCE = "          << gGenesisparams.GetArg("REGTEST_GENESIS_BLOCK_NONCE", "") << "\n";
-	conf << "REGTEST_CONSENSUS_HASH_GENESIS_BLOCK = " << gGenesisparams.GetArg("REGTEST_CONSENSUS_HASH_GENESIS_BLOCK", "") << "\n";
-	conf << "REGTEST_GENESIS_HASH_MERKLE_ROOT = "     << gGenesisparams.GetArg("REGTEST_GENESIS_HASH_MERKLE_ROOT", "") << "\n";
+    conf << "REGTEST_GENESIS_BLOCK_NONCE = "          << gGenesisparams.GetArg("REGTEST_GENESIS_BLOCK_NONCE", "") << "\n";
+    conf << "REGTEST_CONSENSUS_HASH_GENESIS_BLOCK = " << gGenesisparams.GetArg("REGTEST_CONSENSUS_HASH_GENESIS_BLOCK", "") << "\n";
+    conf << "REGTEST_GENESIS_HASH_MERKLE_ROOT = "     << gGenesisparams.GetArg("REGTEST_GENESIS_HASH_MERKLE_ROOT", "") << "\n";
 
-	conf.close();
+    conf.close();
 }
 
 #endif
@@ -133,17 +133,15 @@ bool AppInit(int argc, char* argv[])
             fprintf(stderr,"Error reading configuration file: %s\n", e.what());
             return false;
         }
-        
-        #ifdef PAI_BABY
-			try
-			{
-				gChainparams.ReadConfigFile(gArgs.GetArg("-chainparams-conf", PAICOIN_CHAINPARAMS_CONF_FILENAME));
-			} catch (const std::exception& e) {
-				fprintf(stderr,"Error reading chainparams configuration file: %s\n", e.what());
-				return false;
-			}
-		#endif
-		
+#ifdef PAI_BABY
+        try
+        {
+            gChainparams.ReadConfigFile(gArgs.GetArg("-chainparams-conf", PAICOIN_CHAINPARAMS_CONF_FILENAME));
+        } catch (const std::exception& e) {
+            fprintf(stderr,"Error reading chainparams configuration file: %s\n", e.what());
+            return false;
+        }
+#endif
         // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
         try {
             SelectParams(ChainNameFromCommandLine());
@@ -180,19 +178,19 @@ bool AppInit(int argc, char* argv[])
             // InitError will have been called with detailed error, which ends up on console
             exit(EXIT_FAILURE);
         }
-		#ifdef PAI_BABY
-			if (gArgs.IsArgSet("-mine-genesis-block"))
-			{
-				try
-				{
-					SaveGenesisConf(GetDataDir().string() + '/' + PAICOIN_GENESIS_CONF_FILENAME);
-				} catch (const std::exception& e) {
-					fprintf(stderr,"Error writting genesis configuration file: %s\n", e.what());
-					return false;
-				}
-				exit(0);
-			}
-		#endif
+#ifdef PAI_BABY
+        if (gArgs.IsArgSet("-mine-genesis-block"))
+        {
+            try
+            {
+                SaveGenesisConf(GetDataDir().string() + '/' + PAICOIN_GENESIS_CONF_FILENAME);
+            } catch (const std::exception& e) {
+                fprintf(stderr,"Error writting genesis configuration file: %s\n", e.what());
+                return false;
+            }
+            exit(0);
+        }
+#endif
         if (gArgs.GetBoolArg("-daemon", false))
         {
 #if HAVE_DECL_DAEMON

@@ -59,58 +59,56 @@
 
 uint256 GENESIS_UINT256(const char * name, uint256 value)
 {
-	#ifdef PAI_BABY
-		return uint256S(gGenesisparams.GetArg(name, ""));
-	#else
-		return value;
-	#endif
+#ifdef PAI_BABY
+    return uint256S(gGenesisparams.GetArg(name, ""));
+#else
+    return value;
+#endif
 }
 
 uint32_t GENESIS_UINT32(const char * name, uint32_t value)
 {
-	#ifdef PAI_BABY
-		return gGenesisparams.GetArg(name, (uint32_t) 0);
-	#else
-		return value;
-	#endif
-
+#ifdef PAI_BABY
+    return gGenesisparams.GetArg(name, (uint32_t) 0);
+#else
+    return value;
+#endif
 }
 
 uint256 CHAINPARAMS_UINT256(const char * name, uint256 value)
 {
-	#ifdef PAI_BABY
-		return uint256S(gChainparams.GetArg(name, ""));
-	#else
-		return value;
-	#endif
-
+#ifdef PAI_BABY
+    return uint256S(gChainparams.GetArg(name, ""));
+#else
+    return value;
+#endif
 }
 
 uint32_t CHAINPARAMS_UINT32(const char * name, uint32_t value)
 {
-	#ifdef PAI_BABY
-		return gChainparams.GetArg(name, (uint32_t) 0);
-	#else
-		return value;
-	#endif
+#ifdef PAI_BABY
+    return gChainparams.GetArg(name, (uint32_t) 0);
+#else
+    return value;
+#endif
 }
 
 std::string CHAINPARAMS_STR(const char * name, const std::string & value)
 {
-	#ifdef PAI_BABY
-		return gChainparams.GetArg(name, "");
-	#else
-		return value;
-	#endif
+#ifdef PAI_BABY
+    return gChainparams.GetArg(name, "");
+#else
+    return value;
+#endif
 }
 
 uint32_t CHAINPARAMS_XUINT32(const char * name, uint32_t value)
 {
-	#ifdef PAI_BABY
-		return strtoll(gChainparams.GetArg(name, "").c_str(), nullptr, 16);
-	#else
-		return value;
-	#endif
+#ifdef PAI_BABY
+    return strtoll(gChainparams.GetArg(name, "").c_str(), nullptr, 16);
+#else
+    return value;
+#endif
 }
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
@@ -185,26 +183,26 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
 void CChainParams::LoadGenesisParams() const
 {
 #ifdef PAI_BABY
-	std::string genesisConfFilename = GetDataDir().string() + '/' + PAICOIN_GENESIS_CONF_FILENAME;
-	try
-	{
-		gGenesisparams.ReadConfigFile(genesisConfFilename);
-	}
-	catch (std::exception & ex)
-	{
-		throw std::runtime_error(std::string("Error reading genesis configuration (") + genesisConfFilename + ") : " + ex.what());
-	}
+    std::string genesisConfFilename = GetDataDir().string() + '/' + PAICOIN_GENESIS_CONF_FILENAME;
+    try
+    {
+        gGenesisparams.ReadConfigFile(genesisConfFilename);
+    }
+    catch (std::exception & ex)
+    {
+        throw std::runtime_error(std::string("Error reading genesis configuration (") + genesisConfFilename + ") : " + ex.what());
+    }
 #endif
 }
 
 void SaveGenesisParams(const std::string & prefix, const CBlock & genesis)
 {
 #ifdef PAI_BABY
-	char buffer[32];
-	snprintf(buffer, sizeof(buffer), "%u", genesis.nNonce);
-	gGenesisparams.SoftSetArg(prefix + "_GENESIS_BLOCK_NONCE", buffer);
-	gGenesisparams.SoftSetArg(prefix + "_CONSENSUS_HASH_GENESIS_BLOCK", std::string("0x") + genesis.GetHash().ToString());
-	gGenesisparams.SoftSetArg(prefix + "_GENESIS_HASH_MERKLE_ROOT", std::string("0x") + genesis.hashMerkleRoot.ToString());
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "%u", genesis.nNonce);
+    gGenesisparams.SoftSetArg(prefix + "_GENESIS_BLOCK_NONCE", buffer);
+    gGenesisparams.SoftSetArg(prefix + "_CONSENSUS_HASH_GENESIS_BLOCK", std::string("0x") + genesis.GetHash().ToString());
+    gGenesisparams.SoftSetArg(prefix + "_GENESIS_HASH_MERKLE_ROOT", std::string("0x") + genesis.hashMerkleRoot.ToString());
 #endif
 }
 
@@ -269,78 +267,79 @@ public:
         nDefaultPort = CHAINPARAMS_UINT32("MAINNET_PORT", 8567);
         nPruneAfterHeight = 100000;
 
-		if (gArgs.IsArgSet("-mine-genesis-block"))
-		{
-			genesis = CreateGenesisBlock(
-				CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
-				0,
-				CHAINPARAMS_XUINT32("MAINNET_GENESIS_BLOCK_NBITS", MAINNET_GENESIS_BLOCK_NBITS),
-				4,
-				CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
-				CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
-			);
+        if (gArgs.IsArgSet("-mine-genesis-block"))
+        {
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                0,
+                CHAINPARAMS_XUINT32("MAINNET_GENESIS_BLOCK_NBITS", MAINNET_GENESIS_BLOCK_NBITS),
+                4,
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
+            );
 
-			arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_POW_BITS", MAINNET_GENESIS_BLOCK_POW_BITS));
+            arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_POW_BITS", MAINNET_GENESIS_BLOCK_POW_BITS));
 
-			LogPrintf("Recalculating params for mainnet.\n");
-			LogPrintf("- old mainnet genesis nonce: %u\n", genesis.nNonce);
-			LogPrintf("- old mainnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
-			LogPrintf("- old mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+            LogPrintf("Recalculating params for mainnet.\n");
+            LogPrintf("- old mainnet genesis nonce: %u\n", genesis.nNonce);
+            LogPrintf("- old mainnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
+            LogPrintf("- old mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-			// deliberately empty for loop finds nonce value.
-			for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+            // deliberately empty for loop finds nonce value.
+            for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
 
-			LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
-			LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
-			LogPrintf("- new mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+            LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
+            LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
+            LogPrintf("- new mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-			consensus.hashGenesisBlock = genesis.GetHash();
-			consensus.BIP34Hash = consensus.hashGenesisBlock;
+            consensus.hashGenesisBlock = genesis.GetHash();
+            consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-			LogPrintf("- new mainnet genesis block: %s\n", genesis.ToString().c_str());
+            LogPrintf("- new mainnet genesis block: %s\n", genesis.ToString().c_str());
 
-			SaveGenesisParams("MAINNET", genesis);
-		}
-		else
-		{
-			LoadGenesisParams();
-			genesis = CreateGenesisBlock(
-				CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
-				GENESIS_UINT32("MAINNET_GENESIS_BLOCK_NONCE", MAINNET_GENESIS_BLOCK_NONCE),
-				CHAINPARAMS_XUINT32("MAINNET_GENESIS_BLOCK_NBITS", MAINNET_GENESIS_BLOCK_NBITS),
-				4,
-				CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
-				CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
-			);
+            SaveGenesisParams("MAINNET", genesis);
+        }
+        else
+        {
+            LoadGenesisParams();
 
-			consensus.hashGenesisBlock = genesis.GetHash();
-			consensus.BIP34Hash = consensus.hashGenesisBlock;
-			
-			assert(consensus.hashGenesisBlock == GENESIS_UINT256("MAINNET_CONSENSUS_HASH_GENESIS_BLOCK", MAINNET_CONSENSUS_HASH_GENESIS_BLOCK));
-			assert(genesis.hashMerkleRoot == GENESIS_UINT256("MAINNET_GENESIS_HASH_MERKLE_ROOT", MAINNET_GENESIS_HASH_MERKLE_ROOT));
-		}
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                GENESIS_UINT32("MAINNET_GENESIS_BLOCK_NONCE", MAINNET_GENESIS_BLOCK_NONCE),
+                CHAINPARAMS_XUINT32("MAINNET_GENESIS_BLOCK_NBITS", MAINNET_GENESIS_BLOCK_NBITS),
+                4,
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
+            );
+
+            consensus.hashGenesisBlock = genesis.GetHash();
+            consensus.BIP34Hash = consensus.hashGenesisBlock;
+            
+            assert(consensus.hashGenesisBlock == GENESIS_UINT256("MAINNET_CONSENSUS_HASH_GENESIS_BLOCK", MAINNET_CONSENSUS_HASH_GENESIS_BLOCK));
+            assert(genesis.hashMerkleRoot == GENESIS_UINT256("MAINNET_GENESIS_HASH_MERKLE_ROOT", MAINNET_GENESIS_HASH_MERKLE_ROOT));
+        }
 
         vFixedSeeds.clear();
         vSeeds.clear();
         // Note that of those with the service bits flag, most only support a subset of possible options
         
-        #ifndef PAI_BABY
-			vSeeds.emplace_back("34.215.125.66", false);
-			vSeeds.emplace_back("13.58.110.183", false);
-			vSeeds.emplace_back("13.124.177.237", false);
-			vSeeds.emplace_back("193.112.7.193", false);
-		#else
-			for (int index = 0; index < 3; ++index)
-			{
-				char buf[20];
-				snprintf(buf, sizeof(buf), "MAINNET_SEED_%d", index); 
-				std::string seed = CHAINPARAMS_STR(buf, "");
-				if (!seed.empty())
-				{
-					vSeeds.emplace_back(seed, false);
-				}
-			}
-		#endif
+#ifndef PAI_BABY
+        vSeeds.emplace_back("34.215.125.66", false);
+        vSeeds.emplace_back("13.58.110.183", false);
+        vSeeds.emplace_back("13.124.177.237", false);
+        vSeeds.emplace_back("193.112.7.193", false);
+#else
+        for (int index = 0; index < 3; ++index)
+        {
+            char buf[20];
+            snprintf(buf, sizeof(buf), "MAINNET_SEED_%d", index); 
+            std::string seed = CHAINPARAMS_STR(buf, "");
+            if (!seed.empty())
+            {
+                vSeeds.emplace_back(seed, false);
+            }
+        }
+#endif
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
@@ -354,36 +353,42 @@ public:
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
 
+#ifndef PAI_BABY
         checkpointData = (CCheckpointData) {
             {
-#ifdef PAI_BABY
-                { 0, GENESIS_UINT256("MAINNET_CONSENSUS_HASH_GENESIS_BLOCK", MAINNET_CONSENSUS_HASH_GENESIS_BLOCK) }
-#else
                 {     0, MAINNET_CONSENSUS_HASH_GENESIS_BLOCK },
                 {   500, uint256S("0x0000000004d612f13cf5426902fb1533a659b16b2e349d941588d6b2de60f99c")},
                 { 15000, uint256S("0x00000000000031c7063e5c25c471474d8e983a0456944bef32a09ebfbe38adcd")},
                 { 25000, uint256S("0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec")}
-#endif
             }
         };
 
-        chainTxData = ChainTxData{
-#ifdef PAI_BABY
-            CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP), // * UNIX timestamp of last known number of transactions
-            0,          // * total number of transactions between genesis and that timestamp
-#else
-			// tx hash = c54bee8227b2b009dcd4d53b1f01de328b86417b475a1f0540b8cca91797b256
-			// block hash = 0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec
-			// block index = 25000
-			// tx index = 25073
-			// tx timestamp = 1523981287
-			
+        chainTxData = ChainTxData {
+            // tx hash = c54bee8227b2b009dcd4d53b1f01de328b86417b475a1f0540b8cca91797b256
+            // block hash = 0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec
+            // block index = 25000
+            // tx index = 25073
+            // tx timestamp = 1523981287
+            
             1523981287, // * UNIX timestamp of last known number of transactions
             25073,      // * total number of transactions between genesis and that timestamp
-#endif
                         //   (the tx=... number in the SetBestChain debug.log lines)
             0.00179     // * estimated number of transactions per second after that timestamp
         };
+#else
+        checkpointData = (CCheckpointData) {
+            {
+                { 0, GENESIS_UINT256("MAINNET_CONSENSUS_HASH_GENESIS_BLOCK", MAINNET_CONSENSUS_HASH_GENESIS_BLOCK) }
+            }
+        };
+        
+        chainTxData = ChainTxData {
+            CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP), // * UNIX timestamp of last known number of transactions
+            0,          // * total number of transactions between genesis and that timestamp
+                        //   (the tx=... number in the SetBestChain debug.log lines)
+            3.1         // * estimated number of transactions per second after that timestamp
+        };
+#endif
     }
 };
 
@@ -434,77 +439,77 @@ public:
         nDefaultPort = CHAINPARAMS_UINT32("TESTNET_PORT", 18567);;
         nPruneAfterHeight = 1000;
 
-		if (gArgs.IsArgSet("-mine-genesis-block"))
-		{
-			genesis = CreateGenesisBlock(
-				CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
-				0,
-				CHAINPARAMS_XUINT32("TESTNET_GENESIS_BLOCK_NBITS", TESTNET_GENESIS_BLOCK_NBITS),
-				4,
-				CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
-				CHAINPARAMS_STR("TESTNET_GENESIS_BLOCK_SIGNATURE", TESTNET_GENESIS_BLOCK_SIGNATURE)
-			);
+        if (gArgs.IsArgSet("-mine-genesis-block"))
+        {
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                0,
+                CHAINPARAMS_XUINT32("TESTNET_GENESIS_BLOCK_NBITS", TESTNET_GENESIS_BLOCK_NBITS),
+                4,
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("TESTNET_GENESIS_BLOCK_SIGNATURE", TESTNET_GENESIS_BLOCK_SIGNATURE)
+            );
 
-			arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_POW_BITS", TESTNET_GENESIS_BLOCK_POW_BITS));
+            arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_POW_BITS", TESTNET_GENESIS_BLOCK_POW_BITS));
 
-			LogPrintf("Recalculating params for testnet.\n");
-			LogPrintf("- old testnet genesis nonce: %u\n", genesis.nNonce);
-			LogPrintf("- old testnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
-			LogPrintf("- old testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+            LogPrintf("Recalculating params for testnet.\n");
+            LogPrintf("- old testnet genesis nonce: %u\n", genesis.nNonce);
+            LogPrintf("- old testnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
+            LogPrintf("- old testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-			// deliberately empty for loop finds nonce value.
-			for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+            // deliberately empty for loop finds nonce value.
+            for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
 
-			LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
-			LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
-			LogPrintf("- new testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+            LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
+            LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
+            LogPrintf("- new testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-			consensus.hashGenesisBlock = genesis.GetHash();
-			consensus.BIP34Hash = consensus.hashGenesisBlock;
+            consensus.hashGenesisBlock = genesis.GetHash();
+            consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-			LogPrintf("- new testnet genesis block: %s\n", genesis.ToString().c_str());
+            LogPrintf("- new testnet genesis block: %s\n", genesis.ToString().c_str());
 
-			SaveGenesisParams("TESTNET", genesis);
-		}
-		else {
-			LoadGenesisParams();
-			genesis = CreateGenesisBlock(
-				CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
-				GENESIS_UINT32("TESTNET_GENESIS_BLOCK_NONCE", TESTNET_GENESIS_BLOCK_NONCE),
-				CHAINPARAMS_XUINT32("TESTNET_GENESIS_BLOCK_NBITS", TESTNET_GENESIS_BLOCK_NBITS),
-				4,
-				CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
-				CHAINPARAMS_STR("TESTNET_GENESIS_BLOCK_SIGNATURE", TESTNET_GENESIS_BLOCK_SIGNATURE)
-			);
+            SaveGenesisParams("TESTNET", genesis);
+        }
+        else {
+            LoadGenesisParams();
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                GENESIS_UINT32("TESTNET_GENESIS_BLOCK_NONCE", TESTNET_GENESIS_BLOCK_NONCE),
+                CHAINPARAMS_XUINT32("TESTNET_GENESIS_BLOCK_NBITS", TESTNET_GENESIS_BLOCK_NBITS),
+                4,
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("TESTNET_GENESIS_BLOCK_SIGNATURE", TESTNET_GENESIS_BLOCK_SIGNATURE)
+            );
 
-			consensus.hashGenesisBlock = genesis.GetHash();
-			consensus.BIP34Hash = consensus.hashGenesisBlock;
+            consensus.hashGenesisBlock = genesis.GetHash();
+            consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-			assert(consensus.hashGenesisBlock == GENESIS_UINT256("TESTNET_CONSENSUS_HASH_GENESIS_BLOCK", TESTNET_CONSENSUS_HASH_GENESIS_BLOCK));
-			assert(genesis.hashMerkleRoot == GENESIS_UINT256("TESTNET_GENESIS_HASH_MERKLE_ROOT", TESTNET_GENESIS_HASH_MERKLE_ROOT));
-		}
+            assert(consensus.hashGenesisBlock == GENESIS_UINT256("TESTNET_CONSENSUS_HASH_GENESIS_BLOCK", TESTNET_CONSENSUS_HASH_GENESIS_BLOCK));
+            assert(genesis.hashMerkleRoot == GENESIS_UINT256("TESTNET_GENESIS_HASH_MERKLE_ROOT", TESTNET_GENESIS_HASH_MERKLE_ROOT));
+        }
 
         vFixedSeeds.clear();
         vSeeds.clear();
        
         // nodes with support for servicebits filtering should be at the top
-        #ifndef PAI_BABY
-			vSeeds.emplace_back("52.37.189.65", false);
-			vSeeds.emplace_back("13.59.205.159", false);
-			vSeeds.emplace_back("52.78.224.215", false);
-			vSeeds.emplace_back("193.112.4.118", false);
-		#else
-			for (int index = 0; index < 3; ++index)
-			{
-				char buf[20];
-				snprintf(buf, sizeof(buf), "TESTNET_SEED_%d", index); 
-				std::string seed = CHAINPARAMS_STR(buf, "");
-				if (!seed.empty())
-				{
-					vSeeds.emplace_back(seed, false);
-				}
-			}
-		#endif
+#ifndef PAI_BABY
+        vSeeds.emplace_back("52.37.189.65", false);
+        vSeeds.emplace_back("13.59.205.159", false);
+        vSeeds.emplace_back("52.78.224.215", false);
+        vSeeds.emplace_back("193.112.4.118", false);
+#else
+        for (int index = 0; index < 3; ++index)
+        {
+            char buf[20];
+            snprintf(buf, sizeof(buf), "TESTNET_SEED_%d", index); 
+            std::string seed = CHAINPARAMS_STR(buf, "");
+            if (!seed.empty())
+            {
+                vSeeds.emplace_back(seed, false);
+            }
+        }
+#endif
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
         
@@ -515,47 +520,47 @@ public:
         base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xE3, 0xC5, 0x26};  // ptpu
         base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xE3, 0xC5, 0x2D};  // ptpv
 
-        // same as for the CRegTestParams
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
-        base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xE3, 0xC5, 0x26};  // ptpu
-        base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xE3, 0xC5, 0x2D};  // ptpv
-
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
 
+#ifndef PAI_BABY
         checkpointData = (CCheckpointData) {
             {
-#ifdef PAI_BABY
-                { 0, GENESIS_UINT256("TESTNET_CONSENSUS_HASH_GENESIS_BLOCK", TESTNET_CONSENSUS_HASH_GENESIS_BLOCK) }
-#else
                 {    0, TESTNET_CONSENSUS_HASH_GENESIS_BLOCK },
                 {    1, uint256S("0x0000000007f33c46116ced43fbb7eb0307080ab7071c134e4b9ccd1334c61177")},
                 { 1000, uint256S("0x0000000008668e5c597a6f0a97c3aced17389a8bd842afe61dd2310b4f301c9a")},
                 { 2500, uint256S("0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b")}
-#endif
             }
         };
 
         chainTxData = ChainTxData{
-#ifdef PAI_BABY
-            CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP), // * UNIX timestamp of last known number of transactions
-            0,          // * total number of transactions between genesis and that timestamp
-#else
-			// tx hash = 0xd714e38737c9a4f2f0f59bdd6ffa6e527a6874a7f599849dfe042c8bd1f49ce5
-			// block hash = 0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b
-			// block index = 2500
-			// tx index = 3434
-			// tx timestamp = 1523601213
-			
+            // tx hash = 0xd714e38737c9a4f2f0f59bdd6ffa6e527a6874a7f599849dfe042c8bd1f49ce5
+            // block hash = 0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b
+            // block index = 2500
+            // tx index = 3434
+            // tx timestamp = 1523601213
+            
             1523601213, // * UNIX timestamp of last known number of transactions
             3434,       // * total number of transactions between genesis and that timestamp
-#endif
                         //   (the tx=... number in the SetBestChain debug.log lines)
             0.00052     // * estimated number of transactions per second after that timestamp
         };
+#else
+
+        checkpointData = (CCheckpointData) {
+            {
+                { 0, GENESIS_UINT256("TESTNET_CONSENSUS_HASH_GENESIS_BLOCK", TESTNET_CONSENSUS_HASH_GENESIS_BLOCK) }
+            }
+        };
+
+        chainTxData = ChainTxData{
+            CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP), // * UNIX timestamp of last known number of transactions
+            0,          // * total number of transactions between genesis and that timestamp
+                        //   (the tx=... number in the SetBestChain debug.log lines)
+            3.1         // * estimated number of transactions per second after that timestamp
+        };
+#endif
     }
 };
 
@@ -606,59 +611,59 @@ public:
         nDefaultPort = CHAINPARAMS_UINT32("REGTEST_PORT", 19567);
         nPruneAfterHeight = 1000;
 
-		if (gArgs.IsArgSet("-mine-genesis-block"))
-		{
-			genesis = CreateGenesisBlock(
-				CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP", REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP),
-				0,
-				CHAINPARAMS_XUINT32("REGTEST_GENESIS_BLOCK_NBITS", REGTEST_GENESIS_BLOCK_NBITS),
-				4,
-				CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
-				CHAINPARAMS_STR("REGTEST_GENESIS_BLOCK_SIGNATURE", REGTEST_GENESIS_BLOCK_SIGNATURE)
-			);
+        if (gArgs.IsArgSet("-mine-genesis-block"))
+        {
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP", REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                0,
+                CHAINPARAMS_XUINT32("REGTEST_GENESIS_BLOCK_NBITS", REGTEST_GENESIS_BLOCK_NBITS),
+                4,
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("REGTEST_GENESIS_BLOCK_SIGNATURE", REGTEST_GENESIS_BLOCK_SIGNATURE)
+            );
 
-			arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_POW_BITS", REGTEST_GENESIS_BLOCK_POW_BITS));
+            arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_POW_BITS", REGTEST_GENESIS_BLOCK_POW_BITS));
 
-			LogPrintf("Recalculating params for regtest.\n");
-			LogPrintf("- old regtest genesis nonce: %u\n", genesis.nNonce);
-			LogPrintf("- old regtest genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
-			LogPrintf("- old regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+            LogPrintf("Recalculating params for regtest.\n");
+            LogPrintf("- old regtest genesis nonce: %u\n", genesis.nNonce);
+            LogPrintf("- old regtest genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
+            LogPrintf("- old regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-			// deliberately empty for loop finds nonce value.
-			for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
+            // deliberately empty for loop finds nonce value.
+            for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
 
-			LogPrintf("- new regtest genesis nonce: %u\n", genesis.nNonce);
-			LogPrintf("- new regtest genesis hash: %s\n", genesis.GetHash().ToString().c_str());
-			LogPrintf("- new regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+            LogPrintf("- new regtest genesis nonce: %u\n", genesis.nNonce);
+            LogPrintf("- new regtest genesis hash: %s\n", genesis.GetHash().ToString().c_str());
+            LogPrintf("- new regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-			consensus.hashGenesisBlock = genesis.GetHash();
-			consensus.BIP34Hash = consensus.hashGenesisBlock;
+            consensus.hashGenesisBlock = genesis.GetHash();
+            consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-			LogPrintf("- new regtest genesis block: %s\n", genesis.ToString().c_str());
+            LogPrintf("- new regtest genesis block: %s\n", genesis.ToString().c_str());
 
-			SaveGenesisParams("REGTEST", genesis);
-		}
-		else {
-			LoadGenesisParams();
-			// TODO: Update the values below with the nonce from the above mining for the genesis block
-			//       This should only be done once, after the mining and prior to production release
-			genesis = CreateGenesisBlock(
-				CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP", REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP),
-				GENESIS_UINT32("REGTEST_GENESIS_BLOCK_NONCE", REGTEST_GENESIS_BLOCK_NONCE),
-				CHAINPARAMS_XUINT32("REGTEST_GENESIS_BLOCK_NBITS", REGTEST_GENESIS_BLOCK_NBITS),
-				4,
-				CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
-				CHAINPARAMS_STR("REGTEST_GENESIS_BLOCK_SIGNATURE", REGTEST_GENESIS_BLOCK_SIGNATURE)
-			);
+            SaveGenesisParams("REGTEST", genesis);
+        }
+        else {
+            LoadGenesisParams();
+            // TODO: Update the values below with the nonce from the above mining for the genesis block
+            //       This should only be done once, after the mining and prior to production release
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP", REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                GENESIS_UINT32("REGTEST_GENESIS_BLOCK_NONCE", REGTEST_GENESIS_BLOCK_NONCE),
+                CHAINPARAMS_XUINT32("REGTEST_GENESIS_BLOCK_NBITS", REGTEST_GENESIS_BLOCK_NBITS),
+                4,
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("REGTEST_GENESIS_BLOCK_SIGNATURE", REGTEST_GENESIS_BLOCK_SIGNATURE)
+            );
 
-			consensus.hashGenesisBlock = genesis.GetHash();
-			consensus.BIP34Hash = consensus.hashGenesisBlock;
+            consensus.hashGenesisBlock = genesis.GetHash();
+            consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-			// TODO: Update the values below with the data from the above mining for the genesis block
-			//       This should only be done once, after the mining and prior to production release
-			assert(consensus.hashGenesisBlock == GENESIS_UINT256("REGTEST_CONSENSUS_HASH_GENESIS_BLOCK", REGTEST_CONSENSUS_HASH_GENESIS_BLOCK));
-			assert(genesis.hashMerkleRoot == GENESIS_UINT256("REGTEST_GENESIS_HASH_MERKLE_ROOT", REGTEST_GENESIS_HASH_MERKLE_ROOT));
-		}
+            // TODO: Update the values below with the data from the above mining for the genesis block
+            //       This should only be done once, after the mining and prior to production release
+            assert(consensus.hashGenesisBlock == GENESIS_UINT256("REGTEST_CONSENSUS_HASH_GENESIS_BLOCK", REGTEST_CONSENSUS_HASH_GENESIS_BLOCK));
+            assert(genesis.hashMerkleRoot == GENESIS_UINT256("REGTEST_GENESIS_HASH_MERKLE_ROOT", REGTEST_GENESIS_HASH_MERKLE_ROOT));
+        }
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.

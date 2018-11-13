@@ -40,6 +40,9 @@ static int AppInitRawTx(int argc, char* argv[])
     // Parameters
     //
     gArgs.ParseParameters(argc, argv);
+#ifdef PAI_BABY
+    gChainparams.ReadConfigFile(gArgs.GetArg("-chainparams-conf", PAICOIN_CHAINPARAMS_CONF_FILENAME));
+#endif
 
     // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
     try {

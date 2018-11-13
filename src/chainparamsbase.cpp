@@ -32,11 +32,11 @@ class CBaseMainParams : public CBaseChainParams
 public:
     CBaseMainParams()
     {
-		#ifdef PAI_BABY
-			nRPCPort = gChainparams.GetArg("MAINNET_RPC_PORT", 8566);
-		#else
-			nRPCPort = 8566;
-		#endif
+#ifdef PAI_BABY
+        nRPCPort = gChainparams.GetArg("MAINNET_RPC_PORT", 8566);
+#else
+        nRPCPort = 8566;
+#endif
     }
 };
 
@@ -48,11 +48,11 @@ class CBaseTestNetParams : public CBaseChainParams
 public:
     CBaseTestNetParams()
     {
-		#ifdef PAI_BABY
-			nRPCPort = gChainparams.GetArg("TESTNET_RPC_PORT", 18566);
-		#else
-			nRPCPort = 18566;
-		#endif
+#ifdef PAI_BABY
+        nRPCPort = gChainparams.GetArg("TESTNET_RPC_PORT", 18566);
+#else
+        nRPCPort = 18566;
+#endif
         
         strDataDir = "testnet3";
     }
@@ -66,11 +66,11 @@ class CBaseRegTestParams : public CBaseChainParams
 public:
     CBaseRegTestParams()
     {
-		#ifdef PAI_BABY
-			nRPCPort = gChainparams.GetArg("REGTEST_RPC_PORT", 19566);
-		#else
-			nRPCPort = 19566;
-		#endif
+#ifdef PAI_BABY
+        nRPCPort = gChainparams.GetArg("REGTEST_RPC_PORT", 19566);
+#else
+        nRPCPort = 19566;
+#endif
         strDataDir = "regtest";
     }
 };

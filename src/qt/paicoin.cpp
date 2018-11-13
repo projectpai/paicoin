@@ -633,6 +633,16 @@ int main(int argc, char *argv[])
                               QObject::tr("Error: Cannot parse configuration file: %1. Only use key=value syntax.").arg(e.what()));
         return EXIT_FAILURE;
     }
+#ifdef PAI_BABY
+    std::string chainparamsConfFilename = gArgs.GetArg("-chainparams-conf", PAICOIN_CHAINPARAMS_CONF_FILENAME);
+    try {
+        gChainparams.ReadConfigFile(chainparamsConfFilename);
+    } catch (const std::exception& e) {
+        QMessageBox::critical(0, QObject::tr(PACKAGE_NAME),
+                              QObject::tr("Error: Cannot parse '%2' configuration file: %1. Only use key=value syntax.").arg(e.what(), chainparamsConfFilename.c_str()));
+        return EXIT_FAILURE;
+    }
+#endif
 
     /// 7. Determine network (and switch to network specific options)
     // - Do not call Params() before this step

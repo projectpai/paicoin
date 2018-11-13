@@ -57,8 +57,8 @@ extern const char * const PAICOIN_CONF_FILENAME;
 extern const char * const PAICOIN_PID_FILENAME;
 
 #ifdef PAI_BABY
-	extern const char * const PAICOIN_CHAINPARAMS_CONF_FILENAME;
-	extern const char * const PAICOIN_GENESIS_CONF_FILENAME;
+extern const char * const PAICOIN_CHAINPARAMS_CONF_FILENAME;
+extern const char * const PAICOIN_GENESIS_CONF_FILENAME;
 #endif
 
 extern std::atomic<uint32_t> logCategories;
@@ -205,7 +205,7 @@ protected:
     std::map<std::string, std::vector<std::string>> mapMultiArgs;
     bool main;
 public:
-	ArgsManager(bool isMainConfig = true) : main(isMainConfig) { }
+    ArgsManager(bool isMainConfig = true) : main(isMainConfig) { }
 
     void ParseParameters(int argc, const char*const argv[]);
     void ReadConfigFile(const std::string& confPath);
@@ -279,8 +279,8 @@ public:
 extern ArgsManager gArgs;
 
 #ifdef PAI_BABY
-	extern ArgsManager gChainparams;
-	extern ArgsManager gGenesisparams;
+extern ArgsManager gChainparams;
+extern ArgsManager gGenesisparams;
 #endif
 
 /**
