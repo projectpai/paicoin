@@ -19,8 +19,11 @@
 
 #include <boost/algorithm/string.hpp> // boost::trim
 
+#include <string>
+#include <array>
+
 /** WWW-Authenticate to present with 401 Unauthorized response */
-static const char* WWW_AUTH_HEADER_DATA = "Basic realm=\"jsonrpc\"";
+static const char* const WWW_AUTH_HEADER_DATA = "Basic realm=\"jsonrpc\"";
 
 /** Simple one-shot callback timer to be used by the RPC mechanism to e.g.
  * re-lock the wallet.
@@ -43,10 +46,10 @@ private:
 class HTTPRPCTimerInterface : public RPCTimerInterface
 {
 public:
-    explicit HTTPRPCTimerInterface(struct event_base* _base) : base(_base)
+    explicit HTTPRPCTimerInterface(struct event_base* _base) : base{_base}
     {
     }
-    const char* Name() override
+    const char* Name() const override
     {
         return "HTTP";
     }
@@ -67,15 +70,15 @@ static HTTPRPCTimerInterface* httpRPCTimerInterface = nullptr;
 static void JSONErrorReply(HTTPRequest* req, const UniValue& objError, const UniValue& id)
 {
     // Send error reply from json-rpc error object
-    int nStatus = HTTP_INTERNAL_SERVER_ERROR;
-    int code = find_value(objError, "code").get_int();
+    auto nStatus = HTTP_INTERNAL_SERVER_ERROR;
+    const auto code = find_value(objError, "code").get_int();
 
     if (code == RPC_INVALID_REQUEST)
         nStatus = HTTP_BAD_REQUEST;
     else if (code == RPC_METHOD_NOT_FOUND)
         nStatus = HTTP_NOT_FOUND;
 
-    std::string strReply = JSONRPCReply(NullUniValue, objError, id);
+    const auto strReply = JSONRPCReply(NullUniValue, objError, id);
 
     req->WriteHeader("Content-Type", "application/json");
     req->WriteReply(nStatus, strReply);
@@ -83,15 +86,15 @@ static void JSONErrorReply(HTTPRequest* req, const UniValue& objError, const Uni
 
 //This function checks username and password against -rpcauth
 //entries from config file.
-static bool multiUserAuthorized(std::string strUserPass)
+static bool multiUserAuthorized(const std::string& strUserPass)
 {    
     if (strUserPass.find(":") == std::string::npos) {
         return false;
     }
-    std::string strUser = strUserPass.substr(0, strUserPass.find(":"));
-    std::string strPass = strUserPass.substr(strUserPass.find(":") + 1);
+    const auto strUser = strUserPass.substr(0, strUserPass.find(":"));
+    const auto strPass = strUserPass.substr(strUserPass.find(":") + 1);
 
-    for (const std::string& strRPCAuth : gArgs.GetArgs("-rpcauth")) {
+    for (const auto& strRPCAuth : gArgs.GetArgs("-rpcauth")) {
         //Search for multi-user login/pass "rpcauth" from config
         std::vector<std::string> vFields;
         boost::split(vFields, strRPCAuth, boost::is_any_of(":$"));
@@ -100,20 +103,17 @@ static bool multiUserAuthorized(std::string strUserPass)
             continue;
         }
 
-        std::string strName = vFields[0];
+        const auto& strName = vFields[0];
         if (!TimingResistantEqual(strName, strUser)) {
             continue;
         }
 
-        std::string strSalt = vFields[1];
-        std::string strHash = vFields[2];
+        const auto& strSalt = vFields[1];
+        const auto& strHash = vFields[2];
 
-        static const unsigned int KEY_SIZE = 32;
-        unsigned char out[KEY_SIZE];
-
-        CHMAC_SHA256(reinterpret_cast<const unsigned char*>(strSalt.c_str()), strSalt.size()).Write(reinterpret_cast<const unsigned char*>(strPass.c_str()), strPass.size()).Finalize(out);
-        std::vector<unsigned char> hexvec(out, out+KEY_SIZE);
-        std::string strHashFromPass = HexStr(hexvec);
+        std::array<unsigned char, 32> out;
+        CHMAC_SHA256(reinterpret_cast<const unsigned char*>(strSalt.c_str()), strSalt.size()).Write(reinterpret_cast<const unsigned char*>(strPass.c_str()), strPass.size()).Finalize(out.data());
+        const auto strHashFromPass = HexStr(std::begin(out), std::end(out));
 
         if (TimingResistantEqual(strHashFromPass, strHash)) {
             return true;
@@ -128,9 +128,9 @@ static bool RPCAuthorized(const std::string& strAuth, std::string& strAuthUserna
         return false;
     if (strAuth.substr(0, 6) != "Basic ")
         return false;
-    std::string strUserPass64 = strAuth.substr(6);
+    auto strUserPass64 = strAuth.substr(6);
     boost::trim(strUserPass64);
-    std::string strUserPass = DecodeBase64(strUserPass64);
+    const auto strUserPass = DecodeBase64(strUserPass64);
 
     if (strUserPass.find(":") != std::string::npos)
         strAuthUsernameOut = strUserPass.substr(0, strUserPass.find(":"));
@@ -150,7 +150,7 @@ static bool HTTPReq_JSONRPC(HTTPRequest* req, const std::string &)
         return false;
     }
     // Check authorization
-    std::pair<bool, std::string> authHeader = req->GetHeader("authorization");
+    const auto authHeader = req->GetHeader("authorization");
     if (!authHeader.first) {
         req->WriteHeader("WWW-Authenticate", WWW_AUTH_HEADER_DATA);
         req->WriteReply(HTTP_UNAUTHORIZED);
@@ -185,7 +185,7 @@ static bool HTTPReq_JSONRPC(HTTPRequest* req, const std::string &)
         if (valRequest.isObject()) {
             jreq.parse(valRequest);
 
-            UniValue result = tableRPC.execute(jreq);
+            const auto result = tableRPC.execute(jreq);
 
             // Send reply
             strReply = JSONRPCReply(result, NullUniValue, jreq.id);
