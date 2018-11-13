@@ -161,10 +161,10 @@ public:
 
 CRPCConvertTable::CRPCConvertTable()
 {
-    const unsigned int n_elem =
-        (sizeof(vRPCConvertParams) / sizeof(vRPCConvertParams[0]));
+    const unsigned int n_elem{
+        (sizeof(vRPCConvertParams) / sizeof(vRPCConvertParams[0]))};
 
-    for (unsigned int i = 0; i < n_elem; i++) {
+    for (unsigned int i{0}; i < n_elem; ++i) {
         members.insert(std::make_pair(vRPCConvertParams[i].methodName,
                                       vRPCConvertParams[i].paramIdx));
         membersByName.insert(std::make_pair(vRPCConvertParams[i].methodName,
@@ -180,18 +180,18 @@ static CRPCConvertTable rpcCvtTable;
 UniValue ParseNonRFCJSONValue(const std::string& strVal)
 {
     UniValue jVal;
-    if (!jVal.read(std::string("[")+strVal+std::string("]")) ||
-        !jVal.isArray() || jVal.size()!=1)
-        throw std::runtime_error(std::string("Error parsing JSON:")+strVal);
+    if (!jVal.read("[" + strVal + "]") || !jVal.isArray() || jVal.size() != 1)
+        throw std::runtime_error(std::string("Error parsing JSON:") + strVal);
+
     return jVal[0];
 }
 
 UniValue RPCConvertValues(const std::string &strMethod, const std::vector<std::string> &strParams)
 {
-    UniValue params(UniValue::VARR);
+    UniValue params{UniValue::VARR};
 
-    for (unsigned int idx = 0; idx < strParams.size(); idx++) {
-        const std::string& strVal = strParams[idx];
+    for (decltype(strParams.size()) idx{0}; idx < strParams.size(); ++idx) {
+        const auto& strVal = strParams[idx];
 
         if (!rpcCvtTable.convert(strMethod, idx)) {
             // insert string value directly
@@ -207,16 +207,16 @@ UniValue RPCConvertValues(const std::string &strMethod, const std::vector<std::s
 
 UniValue RPCConvertNamedValues(const std::string &strMethod, const std::vector<std::string> &strParams)
 {
-    UniValue params(UniValue::VOBJ);
+    UniValue params{UniValue::VOBJ};
 
-    for (const std::string &s: strParams) {
-        size_t pos = s.find("=");
+    for (const auto& s: strParams) {
+        const auto pos = s.find("=");
         if (pos == std::string::npos) {
             throw(std::runtime_error("No '=' in named argument '"+s+"', this needs to be present for every argument (even if it is empty)"));
         }
 
-        std::string name = s.substr(0, pos);
-        std::string value = s.substr(pos+1);
+        const auto name = s.substr(0, pos);
+        const auto value = s.substr(pos+1);
 
         if (!rpcCvtTable.convert(strMethod, name)) {
             // insert string value directly
