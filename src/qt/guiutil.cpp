@@ -145,8 +145,23 @@ void setupAmountWidget(QLineEdit *widget, QWidget *parent)
     widget->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
 }
 
-bool parsePAIcoinURI(const QUrl &uri, SendCoinsRecipient *out)
+bool parsePAIcoinURI(QString uriString, SendCoinsRecipient *out)
 {
+    if(uriString.startsWith("paicoin://", Qt::CaseInsensitive))
+    {
+        // Convert paicoin:// to paicoin:
+        //
+        //    Cannot handle this later, because paicoin:// will cause Qt to see the part after // as host,
+        //    which will lower-case it (and thus invalidate the address).
+        uriString.replace(0, 10, "paicoin:");
+    }
+    else {
+      //Force paicoin:// URI usage
+      return false;
+    }
+
+    QUrl uri(uriString);
+
     // return if URI is not valid or is no paicoin:// URI
     if(!uri.isValid() || uri.scheme() != QString("paicoin"))
         return false;
@@ -204,12 +219,6 @@ bool parsePAIcoinURI(const QUrl &uri, SendCoinsRecipient *out)
         *out = rv;
     }
     return true;
-}
-
-bool parsePAIcoinURI(QString uri, SendCoinsRecipient *out)
-{
-    QUrl uriInstance(uri);
-    return parsePAIcoinURI(uriInstance, out);
 }
 
 QString formatPAIcoinURI(const SendCoinsRecipient &info)
