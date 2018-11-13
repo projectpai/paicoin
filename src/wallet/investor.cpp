@@ -553,6 +553,22 @@ bool Investor::AddressIsMyMultisig(std::string& address)
     return false;
 }
 
+bool Investor::ScriptIsMyMultisig(const CScript& script)
+{
+    if (script.size() == 23
+        && script[0] == OP_HASH160
+        && script[1] == 20
+        && script[22] == OP_EQUAL) {
+
+        uint160 hash160;
+        memcpy(&hash160, &script[2], 20);
+
+        return Hash160IsMyMultisig(hash160);
+    }
+
+    return false;
+}
+
 bool Investor::Hash160IsMyMultisig(const uint160& hash160)
 {
     if (hash160.size() == 0) { return false; }

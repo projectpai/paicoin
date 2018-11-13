@@ -2630,6 +2630,10 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
                 if (IsSpent(wtxid, i))
                     continue;
 
+                // do not allow the investor multisig addresses to be referred directly into funding transactions
+                if (Investor::GetInstance().ScriptIsMyMultisig(pcoin->tx->vout[i].scriptPubKey))
+                    continue;
+
                 isminetype mine = IsMine(pcoin->tx->vout[i]);
 
                 if (mine == ISMINE_NO) {
