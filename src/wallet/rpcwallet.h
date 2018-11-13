@@ -18,8 +18,8 @@ void RegisterWalletRPCCommands(CRPCTable &t);
  */
 CWallet *GetWalletForJSONRPCRequest(const JSONRPCRequest& request);
 
-std::string HelpRequiringPassphrase(CWallet *);
-void EnsureWalletIsUnlocked(CWallet *);
-bool EnsureWalletIsAvailable(CWallet *, bool avoidException);
+std::string HelpRequiringPassphrase(const CWallet * const);
+void EnsureWalletIsUnlocked(const CWallet * const);
+bool EnsureWalletIsAvailable(const CWallet * const, bool avoidException);
 
 #endif //PAICOIN_WALLET_RPCWALLET_H
