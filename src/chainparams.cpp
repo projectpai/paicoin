@@ -145,7 +145,7 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
 
 class CMainParams : public CChainParams {
 public:
-    CMainParams(): CChainParams(fCoinbaseAddrs) {
+    CMainParams(): CChainParams() {
         strNetworkID = "main";
 
         consensus.nSubsidyHalvingInterval = 210000;
@@ -277,21 +277,17 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
         // Note that of those with the service bits flag, most only support a subset of possible options
-        vSeeds.emplace_back("seed.projectpai.com", false);  //Project PAI Foundation - Fallback DNS
-        vSeeds.emplace_back("us-west-seed.projectpai.com", false);  //Project PAI Foundation
-        vSeeds.emplace_back("us-east-seed.projectpai.com", false); //Project PAI Foundation
-        vSeeds.emplace_back("seoul-seed.projectpai.com", false); //Project PAI Foundation
-        vSeeds.emplace_back("sing-seed.projectpai.com", false); //Project PAI Foundation
-        vSeeds.emplace_back("china-seed.projectpai.com", false); //Project PAI Foundation
-        vSeeds.emplace_back("painode.lanier.ai", false); //Lanier AI Labs
-        vSeeds.emplace_back("painode.everchain.site", false); //Ever Chain
-        vSeeds.emplace_back("relay.j1149.com", false); //J1149
-        vSeeds.emplace_back("pai-seed-ohio-1.paico.in", false); //MJH Technologies
-        vSeeds.emplace_back("pai-seed-china-1.paico.in", false); //MJH Technologies
-        vSeeds.emplace_back("paiseed.upandrunningsoftware.com", false); //Up and Running Software
-        vSeeds.emplace_back("paiseed.oben.me", false); //ObEN
-
-
+        
+        for (int index = 0; index < 3; ++index)
+        {
+            char buf[20];
+            snprintf(buf, sizeof(buf), "MAINNET_SEED_%d", index); 
+            std::string seed = CHAINPARAMS_STR(buf, "");
+            if (!seed.empty())
+            {
+                vSeeds.emplace_back(seed, false);
+            }
+        }
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,56);  // P
@@ -347,7 +343,7 @@ public:
  */
 class CTestNetParams : public CChainParams {
 public:
-    CTestNetParams(): CChainParams(fCoinbaseAddrs) {
+    CTestNetParams(): CChainParams() {
         strNetworkID = "test";
 
         consensus.nSubsidyHalvingInterval = 210000;
@@ -475,10 +471,16 @@ public:
         vSeeds.clear();
 
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.emplace_back("34.212.218.239", false);
-        vSeeds.emplace_back("13.59.205.159", false);
-        vSeeds.emplace_back("52.78.224.215", false);
-        vSeeds.emplace_back("13.251.4.241", false);
+        for (int index = 0; index < 3; ++index)
+        {
+            char buf[20];
+            snprintf(buf, sizeof(buf), "TESTNET_SEED_%d", index); 
+            std::string seed = CHAINPARAMS_STR(buf, "");
+            if (!seed.empty())
+            {
+                vSeeds.emplace_back(seed, false);
+            }
+        }
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 
@@ -512,7 +514,7 @@ public:
       // tx hash = 5e018f1b6d7df6f25a6f6aad59e9176924d5af1390b4c56eee84ced31756519e
       // block hash = 0x0000000001a2549ab5b9496082d269abfece06fdf156899f9163e86414613765
       // block index = 25000
-      // tx index = 
+      // tx index =
       // tx timestamp = 1538415658
 
             1538415658, // * UNIX timestamp of last known number of transactions
