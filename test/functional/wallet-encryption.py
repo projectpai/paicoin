@@ -24,7 +24,7 @@ class WalletEncryptionTest(PAIcoinTestFramework):
         # Make sure the wallet isn't encrypted first
         address = self.nodes[0].getnewaddress()
         privkey = self.nodes[0].dumpprivkey(address)
-        assert_equal(privkey[:1], "c")
+        assert_equal(privkey[:1], "a")
         assert_equal(len(privkey), 52)
 
         # Encrypt the wallet

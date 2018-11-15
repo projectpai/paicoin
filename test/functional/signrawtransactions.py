@@ -20,17 +20,17 @@ class SignRawTransactionsTest(PAIcoinTestFramework):
 
         1) The transaction has a complete set of signatures
         2) No script verification error occurred"""
-        privKeys = ['cUeKHd5orzT3mz8P9pxyREHfsWtVfgsfDjiZZBcjUBAaGk1BTj7N', 'cVKpPfVKSJxKqVpE9awvXNWuLHCa5j5tiE7K6zbUSptFpTEtiFrA']
+        privKeys = ['aSbwAbjFNvaeJjyhn7ASB1sLASCDSSy4G631f15DkEqxjBMiy9BN', 'aSG4AcPAqEirQgvZUmxQhY6YnuewULhxJKYqTJp5YEdokfUHQfrT']
 
         inputs = [
             # Valid pay-to-pubkey scripts
-            {'txid': '9b907ef1e3c26fc71fe4a4b3580bc75264112f95050014157059c736f0202e71', 'vout': 0,
-             'scriptPubKey': '76a91460baa0f494b38ce3c940dea67f3804dc52d1fb9488ac'},
-            {'txid': '83a4f6a6b73660e13ee6cb3c6063fa3759c50c9b7521d0536022961898f4fb02', 'vout': 0,
-             'scriptPubKey': '76a914669b857c03a5ed269d5d85a1ffac9ed5d663072788ac'},
+            {'txid': '6eb87c5418924facd795820d0a4ad1b381c9d6f7d47359c4f3247b18df484f84', 'vout': 0,
+             'scriptPubKey': '2102f03b363a8cad5428b573e9ba182c21ca1c8369618bdb48d6bde1a0e0ac1109a5ac'},
+            {'txid': '01efc5ab8fbabfc2e99dfdde9ca6df9daef79fdc1eff16feae8b385140e0683c', 'vout': 0,
+             'scriptPubKey': '2103bcde3466992466516218611ec82880321d6dbe081b592f9566344c2fc6183a0aac'},
         ]
 
-        outputs = {'mpLQjfK79b7CCV4VMJWEWAj5Mpx8Up5zxB': 0.1}
+        outputs = {'MnT4pn4LK7uyiMS4q1ForPN4DhyZyxscuZ': 0.1}
 
         rawTx = self.nodes[0].createrawtransaction(inputs, outputs)
         rawTxSigned = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys)
@@ -51,27 +51,27 @@ class SignRawTransactionsTest(PAIcoinTestFramework):
         4) Two script verification errors occurred
         5) Script verification errors have certain properties ("txid", "vout", "scriptSig", "sequence", "error")
         6) The verification errors refer to the invalid (vin 1) and missing input (vin 2)"""
-        privKeys = ['cUeKHd5orzT3mz8P9pxyREHfsWtVfgsfDjiZZBcjUBAaGk1BTj7N']
+        privKeys = ['aSbwAbjFNvaeJjyhn7ASB1sLASCDSSy4G631f15DkEqxjBMiy9BN']
 
         inputs = [
             # Valid pay-to-pubkey script
-            {'txid': '9b907ef1e3c26fc71fe4a4b3580bc75264112f95050014157059c736f0202e71', 'vout': 0},
+            {'txid': '6eb87c5418924facd795820d0a4ad1b381c9d6f7d47359c4f3247b18df484f84', 'vout': 0},
             # Invalid script
-            {'txid': '5b8673686910442c644b1f4993d8f7753c7c8fcb5c87ee40d56eaeef25204547', 'vout': 7},
+            {'txid': '92d1a1325eb77e5f333b54086c862fea847fea2b1ac0ca02b93fb6c2336bb4c1', 'vout': 7},
             # Missing scriptPubKey
-            {'txid': '9b907ef1e3c26fc71fe4a4b3580bc75264112f95050014157059c736f0202e71', 'vout': 1},
+            {'txid': '6eb87c5418924facd795820d0a4ad1b381c9d6f7d47359c4f3247b18df484f84', 'vout': 1},
         ]
 
         scripts = [
             # Valid pay-to-pubkey script
-            {'txid': '9b907ef1e3c26fc71fe4a4b3580bc75264112f95050014157059c736f0202e71', 'vout': 0,
-             'scriptPubKey': '76a91460baa0f494b38ce3c940dea67f3804dc52d1fb9488ac'},
+            {'txid': '6eb87c5418924facd795820d0a4ad1b381c9d6f7d47359c4f3247b18df484f84', 'vout': 0,
+             'scriptPubKey': '2102f03b363a8cad5428b573e9ba182c21ca1c8369618bdb48d6bde1a0e0ac1109a5ac'},
             # Invalid script
-            {'txid': '5b8673686910442c644b1f4993d8f7753c7c8fcb5c87ee40d56eaeef25204547', 'vout': 7,
+            {'txid': '92d1a1325eb77e5f333b54086c862fea847fea2b1ac0ca02b93fb6c2336bb4c1', 'vout': 7,
              'scriptPubKey': 'badbadbadbad'}
         ]
 
-        outputs = {'mpLQjfK79b7CCV4VMJWEWAj5Mpx8Up5zxB': 0.1}
+        outputs = {'MnT4pn4LK7uyiMS4q1ForPN4DhyZyxscuZ': 0.1}
 
         rawTx = self.nodes[0].createrawtransaction(inputs, outputs)
 

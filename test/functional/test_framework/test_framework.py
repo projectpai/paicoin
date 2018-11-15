@@ -329,8 +329,8 @@ class PAIcoinTestFramework(object):
 
         For backwared compatibility of the python scripts with previous
         versions of the cache, this helper function sets mocktime to Jan 1,
-        2014 + (201 * 10 * 60)"""
-        self.mocktime = 1388534400 + (201 * 10 * 60)
+        2018 + (201 * 10 * 60)"""
+        self.mocktime = 1514764800 + (201 * 10 * 60)
 
     def disable_mocktime(self):
         self.mocktime = 0
@@ -368,7 +368,7 @@ class PAIcoinTestFramework(object):
     def _initialize_chain(self):
         """Initialize a pre-mined blockchain for use by the test.
 
-        Create a cache of a 200-block-long chain (with wallet) for MAX_NODES
+        Create a cache of a 201-block-long (genesis block + 200) chain with wallet for MAX_NODES
         Afterward, create num_nodes copies from the cache."""
 
         assert self.num_nodes <= MAX_NODES
