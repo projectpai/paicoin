@@ -1182,7 +1182,8 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
     obj.push_back(Pair("pruned",                fPruneMode));
 
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    CBlockIndex* tip = chainActive.Tip();
+    const auto tip = chainActive.Tip();
+    assert(tip);
     UniValue softforks(UniValue::VARR);
     UniValue bip9_softforks(UniValue::VOBJ);
     softforks.push_back(SoftForkDesc("bip34", 2, tip, consensusParams));
@@ -1195,7 +1196,7 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
 
     if (fPruneMode)
     {
-        CBlockIndex *block = chainActive.Tip();
+        auto block = tip;
         while (block && block->pprev && (block->pprev->nStatus & BLOCK_HAVE_DATA))
             block = block->pprev;
 
