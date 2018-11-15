@@ -219,7 +219,7 @@ void SaveGenesisParams(const std::string & prefix, const CBlock & genesis)
 
 class CMainParams : public CChainParams {
 public:
-    CMainParams(): CChainParams(fCoinbaseAddrs) {
+    CMainParams(): CChainParams() {
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
@@ -324,10 +324,10 @@ public:
         // Note that of those with the service bits flag, most only support a subset of possible options
         
 #ifndef PAI_BABY
-        vSeeds.emplace_back("34.215.125.66", false);
-        vSeeds.emplace_back("13.58.110.183", false);
-        vSeeds.emplace_back("13.124.177.237", false);
-        vSeeds.emplace_back("193.112.7.193", false);
+        //vSeeds.emplace_back("34.215.125.66", false);
+        //vSeeds.emplace_back("13.58.110.183", false);
+        //vSeeds.emplace_back("13.124.177.237", false);
+        //vSeeds.emplace_back("193.112.7.193", false);
 #else
         for (int index = 0; index < 3; ++index)
         {
@@ -397,7 +397,7 @@ public:
  */
 class CTestNetParams : public CChainParams {
 public:
-    CTestNetParams(): CChainParams(fCoinbaseAddrs) {
+    CTestNetParams(): CChainParams() {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
@@ -494,10 +494,10 @@ public:
        
         // nodes with support for servicebits filtering should be at the top
 #ifndef PAI_BABY
-        vSeeds.emplace_back("52.37.189.65", false);
-        vSeeds.emplace_back("13.59.205.159", false);
-        vSeeds.emplace_back("52.78.224.215", false);
-        vSeeds.emplace_back("193.112.4.118", false);
+        //vSeeds.emplace_back("52.37.189.65", false);
+        //vSeeds.emplace_back("13.59.205.159", false);
+        //vSeeds.emplace_back("52.78.224.215", false);
+        //vSeeds.emplace_back("193.112.4.118", false);
 #else
         for (int index = 0; index < 3; ++index)
         {
