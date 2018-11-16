@@ -5,6 +5,8 @@
 #include "crypter.h"
 
 #include "crypto/aes.h"
+#include "uint256.h"
+#include "crypto/sha256.h"
 #include "crypto/sha512.h"
 #include "script/script.h"
 #include "script/standard.h"
@@ -142,6 +144,26 @@ static bool DecryptKey(const CKeyingMaterial& vMasterKey, const std::vector<unsi
     return key.VerifyPubKey(vchPubKey);
 }
 
+static uint256 DoubleHashOfString(const std::string& str)
+{
+    if (str.empty())
+        return uint256{};
+
+    CSHA256 h1;
+    uint256 h1hash;
+    h1.Write(reinterpret_cast<const unsigned char*>(str.c_str()), str.size());
+    h1.Finalize(h1hash.begin());
+
+    CSHA256 h2;
+    uint256 h2hash;
+    h2.Write(h1hash.begin(), h1hash.size());
+    h2.Finalize(h2hash.begin());
+
+    return h2hash;
+}
+
+static const auto PAPER_KEY_DOUBLE_HASH = DoubleHashOfString("paperkey");
+
 bool CCryptoKeyStore::SetCrypted()
 {
     LOCK(cs_KeyStore);
@@ -229,7 +251,7 @@ bool CCryptoKeyStore::AddPaperKey(const SecureString& paperKey)
 
         std::vector<unsigned char> vchOut;
         CKeyingMaterial vchPaperKey(paperKey.begin(), paperKey.end());
-        bool result = EncryptSecret(vMasterKey, vchPaperKey, DoubleHashOfString("paperkey"), vchOut);
+        bool result = EncryptSecret(vMasterKey, vchPaperKey, PAPER_KEY_DOUBLE_HASH, vchOut);
 
         if (result)
             result = AddCryptedPaperKey(CKeyingMaterial(vchOut.begin(), vchOut.end()));
@@ -255,7 +277,7 @@ bool CCryptoKeyStore::GetPaperKey(SecureString& paperKey) const
 
         std::vector<unsigned char> vchIn(vchCryptedPaperKey.begin(), vchCryptedPaperKey.end());
         CKeyingMaterial vchPaperKey;
-        bool result = DecryptSecret(vMasterKey, vchIn, DoubleHashOfString("paperkey"), vchPaperKey);
+        bool result = DecryptSecret(vMasterKey, vchIn, PAPER_KEY_DOUBLE_HASH, vchPaperKey);
 
         memory_cleanse(&vchIn[0], vchIn.size());
         vchIn.clear();
@@ -398,7 +420,7 @@ bool CCryptoKeyStore::EncryptPaperKey(CKeyingMaterial& vMasterKeyIn)
 
         std::vector<unsigned char> vchOut;
         CKeyingMaterial vchPaperKey(paperKey.begin(), paperKey.end());
-        bool result = EncryptSecret(vMasterKeyIn, vchPaperKey, DoubleHashOfString("paperkey"), vchOut);
+        bool result = EncryptSecret(vMasterKeyIn, vchPaperKey, PAPER_KEY_DOUBLE_HASH, vchOut);
 
         if (result)
         {
@@ -414,26 +436,4 @@ bool CCryptoKeyStore::EncryptPaperKey(CKeyingMaterial& vMasterKeyIn)
         return result;
     }
     return true;
-}
-
-uint256 CCryptoKeyStore::DoubleHashOfString(const std::string& str) const
-{
-    if (str.length() == 0)
-        return uint256();
-
-    CSHA256 h1;
-    unsigned char h1hash[256 / 8];
-    memset(h1hash, 0, sizeof(h1hash));
-    h1.Write((const unsigned char *)str.c_str(), str.length());
-    h1.Finalize(h1hash);
-
-    CSHA256 h2;
-    unsigned char h2hash[256 / 8];
-    memset(h2hash, 0, sizeof(h2hash));
-    h2.Write(h1hash, sizeof(h1hash));
-    h2.Finalize(h2hash);
-
-    uint256 result(std::vector<unsigned char>(h2hash, h2hash + 32));
-
-    return result;
 }

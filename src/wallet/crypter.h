@@ -125,8 +125,6 @@ private:
 
     CKeyingMaterial vchCryptedPaperKey;
 
-    uint256 DoubleHashOfString(const std::string& str) const;
-
 protected:
     bool SetCrypted();
 
