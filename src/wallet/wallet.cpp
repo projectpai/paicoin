@@ -31,6 +31,7 @@
 #include "ui_interface.h"
 #include "utilmoneystr.h"
 #include "wallet/fees.h"
+#include "wallet/bip39mnemonic.h"
 
 #include <assert.h>
 
@@ -123,6 +124,83 @@ const CWalletTx* CWallet::GetWalletTx(const uint256& hash) const
     return &(it->second);
 }
 
+bool CWallet::AddCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey)
+{
+    if (!CCryptoKeyStore::AddCryptedPaperKey(vchCryptedPaperKey))
+        return false;
+    {
+        LOCK(cs_wallet);
+        if (pwalletdbEncryption)
+            return pwalletdbEncryption->WriteCryptedPaperKey(vchCryptedPaperKey);
+        else
+            return CWalletDB(*dbw).WriteCryptedPaperKey(vchCryptedPaperKey);
+    }
+}
+
+bool CWallet::AddPaperKey(const SecureString& paperKey)
+{
+    CWalletDB walletdb(*dbw);
+    return CWallet::AddPaperKeyWithDB(walletdb, paperKey);
+}
+
+bool CWallet::AddPaperKeyWithDB(CWalletDB &walletdb, const SecureString& paperKey)
+{
+    // CCryptoKeyStore has no concept of wallet databases, but calls AddCryptedPaperKey
+    // which is overridden above. To avoid flushes, the database handle is
+    // tunneled through to it.
+    bool needsDB = !pwalletdbEncryption;
+    if (needsDB) {
+        pwalletdbEncryption = &walletdb;
+    }
+    if (!CCryptoKeyStore::AddPaperKey(paperKey)) {
+        if (needsDB) pwalletdbEncryption = nullptr;
+        return false;
+    }
+    if (needsDB) pwalletdbEncryption = nullptr;
+
+    if (!IsCrypted()) {
+        return walletdb.WritePaperKey(paperKey);
+    }
+    return true;
+}
+
+bool CWallet::LoadPaperKey(const SecureString& paperkey)
+{
+    if (!CCryptoKeyStore::AddPaperKey(paperkey))
+        return false;
+
+    return true;
+}
+
+bool CWallet::LoadCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey)
+{
+    if (!CCryptoKeyStore::AddCryptedPaperKey(vchCryptedPaperKey))
+        return false;
+
+    return true;
+}
+
+bool CWallet::EncryptPaperKey(CKeyingMaterial& vMasterKeyIn) {
+    if (!CCryptoKeyStore::EncryptPaperKey(vMasterKeyIn))
+        return false;
+
+    CKeyingMaterial vchCryptedPaperKey;
+    if (!CCryptoKeyStore::GetCryptedPaperKey(vchCryptedPaperKey))
+        return false;
+
+    bool result;
+
+    {
+        LOCK(cs_wallet);
+        if (pwalletdbEncryption)
+            result = pwalletdbEncryption->WriteCryptedPaperKey(vchCryptedPaperKey);
+        else
+            result = CWalletDB(*dbw).WriteCryptedPaperKey(vchCryptedPaperKey);
+    }
+
+    return result;
+}
+
 CPubKey CWallet::GenerateNewKey(CWalletDB &walletdb, bool internal)
 {
     AssertLockHeld(cs_wallet); // mapKeyMetadata
@@ -161,17 +239,31 @@ CPubKey CWallet::GenerateNewKey(CWalletDB &walletdb, bool internal)
 void CWallet::DeriveNewChildKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKey& secret, bool internal)
 {
     // for now we use a fixed keypath scheme of m/0'/0'/k
-    CKey key;                      //master key seed (256bit)
     CExtKey masterKey;             //hd master key
     CExtKey accountKey;            //key at m/0'
     CExtKey chainChildKey;         //key at m/0'/0' (external) or m/0'/1' (internal)
     CExtKey childKey;              //key at m/0'/0'/<n>'
 
-    // try to get the master key
-    if (!GetKey(hdChain.masterKeyID, key))
-        throw std::runtime_error(std::string(__func__) + ": Master key not found");
+    // if there's a paper key in the wallet - seed from it
+    SecureString paperKey;
+    if (GetCurrentPaperKey(paperKey)) {
+        // seed from paper key
+        const auto seed = GetBIP39Seed(paperKey);
+        assert(seed.size() != 0);
+        masterKey.SetMaster(&seed[0], seed.size());
 
-    masterKey.SetMaster(key.begin(), key.size());
+        // keep the parent fingerprint
+        const auto id = masterKey.key.GetPubKey().GetID();
+        memcpy(&masterKey.vchFingerprint[0], &id, 4);
+    }
+    // else, seed from the master key
+    else {
+        CKey key;
+        if (!GetKey(hdChain.masterKeyID, key))
+            throw std::runtime_error(std::string(__func__) + ": Master key not found");
+
+        masterKey.SetMaster(key.begin(), key.size());
+    }
 
     // derive m/0'
     // use hardened derivation (child keys >= 0x80000000 are hardened after bip32)
@@ -623,6 +715,18 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
         }
         pwalletdbEncryption->WriteMasterKey(nMasterKeyMaxID, kMasterKey);
 
+        const auto hasPaperKey = HasPaperKey();
+
+        if (hasPaperKey && IsHDEnabled()) {
+            if (!EncryptPaperKey(_vMasterKey)) {
+                pwalletdbEncryption->TxnAbort();
+                delete pwalletdbEncryption;
+                // We now have the the Paper Key unencrypted in memory...
+                // die and let the user reload the unencrypted wallet.
+                assert(false);
+            }
+        }
+
         if (!EncryptKeys(_vMasterKey))
         {
             pwalletdbEncryption->TxnAbort();
@@ -648,14 +752,17 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
         Lock();
         Unlock(strWalletPassphrase);
 
-        // if we are using HD, replace the HD master key (seed) with a new one
-        if (IsHDEnabled()) {
+        // if we are using HD and we don't have Paper Key, replace the HD master key (seed) with a new one
+        if (!hasPaperKey && IsHDEnabled()) {
             if (!SetHDMasterKey(GenerateNewHDMasterKey())) {
                 return false;
             }
         }
 
-        NewKeyPool();
+        // only generate a new key pool if we don't have a paper key, e.g. we've already set a new HD master key
+        if (!hasPaperKey)
+            NewKeyPool();
+
         Lock();
 
         // Need to completely rewrite the wallet file; if we don't, bdb might keep
@@ -1364,6 +1471,19 @@ CPubKey CWallet::GenerateNewHDMasterKey()
     CKey key;
     key.MakeNewKey(true);
 
+    return AddHDMasterKey(key);
+}
+
+CPubKey CWallet::GenerateNewHDMasterKey(const CKeyingMaterial& key64)
+{
+    CExtKey extPrivKey;
+    extPrivKey.SetMaster(&key64[0], key64.size());
+
+    return AddHDMasterKey(extPrivKey.key);
+}
+
+CPubKey CWallet::AddHDMasterKey(const CKey& key)
+{
     int64_t nCreationTime = GetTime();
     CKeyMetadata metadata(nCreationTime);
 
@@ -1403,6 +1523,25 @@ bool CWallet::SetHDMasterKey(const CPubKey& pubkey)
     return true;
 }
 
+CKeyingMaterial CWallet::GetBIP39Seed(const SecureString& phrase)
+{
+    BIP39Mnemonic b39;
+
+    if (!b39.PhraseIsValid(phrase.c_str())) {
+        return CKeyingMaterial();
+    }
+
+    unsigned char key64[64];
+    memset(key64, 0, 64);
+
+    b39.DeriveKey(key64, phrase.c_str(), nullptr);
+
+    CKeyingMaterial vkey64(64, 0);
+    vkey64.assign(key64, key64 + 64);
+
+    return vkey64;
+}
+
 bool CWallet::SetHDChain(const CHDChain& chain, bool memonly)
 {
     LOCK(cs_wallet);
@@ -1416,6 +1555,45 @@ bool CWallet::SetHDChain(const CHDChain& chain, bool memonly)
 bool CWallet::IsHDEnabled() const
 {
     return !hdChain.masterKeyID.IsNull();
+}
+
+SecureString CWallet::GeneratePaperKey()
+{
+    constexpr static size_t bufferSize = 128 / 8;
+    unsigned char buffer[bufferSize] = {0};
+
+    GetStrongRandBytes(buffer, bufferSize);
+
+    BIP39Mnemonic b39;
+
+    size_t phraseLen = b39.Encode(NULL, 0, buffer, bufferSize);
+
+    SecureVector<char> phrase(phraseLen, 0);
+    phraseLen = b39.Encode(phrase.data(), phraseLen, buffer, bufferSize);
+
+    SecureString phraseString(phrase.data());
+
+    memory_cleanse(buffer, bufferSize);
+
+    return phraseString;
+}
+
+bool CWallet::GetCurrentPaperKey(SecureString& paperKey)
+{
+    SecureString paperKeyStr;
+    if (!CCryptoKeyStore::GetPaperKey(paperKeyStr)) {
+        return false;
+    }
+
+    paperKey = paperKeyStr;
+
+    return true;
+}
+
+bool CWallet::HasPaperKey()
+{
+    SecureString dummy;
+    return GetCurrentPaperKey(dummy);
 }
 
 int64_t CWalletTx::GetTxTime() const
@@ -2976,7 +3154,7 @@ bool CWallet::AddAccountingEntry(const CAccountingEntry& acentry, CWalletDB *pwa
     return true;
 }
 
-DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
+DBErrors CWallet::LoadWallet(bool& fFirstRunRet, bool uiProgress)
 {
     LOCK2(cs_main, cs_wallet);
 
@@ -3001,7 +3179,8 @@ DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
     if (nLoadWalletRet != DB_LOAD_OK)
         return nLoadWalletRet;
 
-    uiInterface.LoadWallet(this);
+    if (uiProgress)
+        uiInterface.LoadWallet(this);
 
     return DB_LOAD_OK;
 }
@@ -3931,6 +4110,106 @@ CWallet* CWallet::CreateWalletFromFile(const std::string walletFile)
         }
     }
     walletInstance->SetBroadcastTransactions(gArgs.GetBoolArg("-walletbroadcast", DEFAULT_WALLETBROADCAST));
+
+    {
+        LOCK(walletInstance->cs_wallet);
+        LogPrintf("setKeyPool.size() = %u\n",      walletInstance->GetKeyPoolSize());
+        LogPrintf("mapWallet.size() = %u\n",       walletInstance->mapWallet.size());
+        LogPrintf("mapAddressBook.size() = %u\n",  walletInstance->mapAddressBook.size());
+    }
+
+    return walletInstance;
+}
+
+std::unique_ptr<CWallet> CWallet::CreateWalletFromPaperKey(const std::string& paperKey, const std::string walletFile)
+{
+    int64_t nStart = GetTimeMillis();
+    bool fFirstRun = true;
+    std::unique_ptr<CWalletDBWrapper> dbw(new CWalletDBWrapper(&bitdb, walletFile));
+    std::unique_ptr<CWallet> walletInstance{new CWallet(std::move(dbw))};
+    DBErrors nLoadWalletRet = walletInstance->LoadWallet(fFirstRun, false);
+    if (nLoadWalletRet != DB_LOAD_OK)
+    {
+        error("Error creating %s", walletFile);
+        return nullptr;
+    }
+
+    LogPrintf("Setting wallet min version to %i\n", FEATURE_LATEST);
+    walletInstance->SetMinVersion(FEATURE_LATEST); // permanently upgrade the wallet immediately
+    walletInstance->SetMaxVersion(CLIENT_VERSION);
+
+    const auto paperKeySec = SecureString{std::begin(paperKey), std::end(paperKey)};
+
+    // Create new keyUser and set as default key
+    if (DEFAULT_USE_HD_WALLET && !walletInstance->IsHDEnabled()) {
+        // ensure this wallet.dat can only be opened by clients supporting HD with chain split
+        walletInstance->SetMinVersion(FEATURE_HD_SPLIT);
+
+        const auto seed = GetBIP39Seed(paperKeySec);
+        if (seed.size() == 0) {
+            error("Failed to generate BIP39 seed from paper key");
+            return nullptr;
+        }
+
+        // generate a new master key
+        const auto masterPubKey = walletInstance->GenerateNewHDMasterKey(seed);
+        if (!masterPubKey.IsFullyValid()) {
+            error("Failed to generate new master HD key");
+            return nullptr;
+        }
+        if (!walletInstance->SetHDMasterKey(masterPubKey)) {
+            error("Storing master key failed");
+            return nullptr;
+        }
+    }
+
+    walletInstance->SetBestChain(chainActive.GetLocator());
+
+    if (!walletInstance->AddPaperKey(paperKeySec)) {
+        error("Unable to add Paper Key");
+        return nullptr;
+    }
+
+    if (!walletInstance->NewKeyPool()) {
+        error("Unable to create new key pool");
+        return nullptr;
+    }
+
+    LogPrintf(" wallet      %15dms\n", GetTimeMillis() - nStart);
+
+    CBlockIndex *pindexRescan = chainActive.Genesis();
+    if (chainActive.Tip() && chainActive.Tip() != pindexRescan)
+    {
+        //We can't rescan beyond non-pruned blocks, stop and throw an error
+        //this might happen if a user uses an old wallet within a pruned node
+        // or if he ran -disablewallet for a longer time, then decided to re-enable
+        if (fPruneMode)
+        {
+            CBlockIndex *block = chainActive.Tip();
+            while (block && block->pprev && (block->pprev->nStatus & BLOCK_HAVE_DATA) && block->pprev->nTx > 0 && pindexRescan != block)
+                block = block->pprev;
+
+            if (pindexRescan != block) {
+                error("Prune: last wallet synchronisation goes beyond pruned data. You need to -reindex (download the whole blockchain again in case of pruned node)");
+                return nullptr;
+            }
+        }
+
+        LogPrintf("Rescanning last %i blocks (from block %i)...\n", chainActive.Height() - pindexRescan->nHeight, pindexRescan->nHeight);
+
+        // No need to read and scan block if block was created before
+        // our wallet birthday (as adjusted for block time variability)
+        while (pindexRescan && walletInstance->nTimeFirstKey && (pindexRescan->GetBlockTime() < (walletInstance->nTimeFirstKey - TIMESTAMP_WINDOW))) {
+            pindexRescan = chainActive.Next(pindexRescan);
+        }
+
+        nStart = GetTimeMillis();
+        walletInstance->ScanForWalletTransactions(pindexRescan, true);
+        LogPrintf(" rescan      %15dms\n", GetTimeMillis() - nStart);
+        walletInstance->SetBestChain(chainActive.GetLocator());
+        walletInstance->dbw->IncrementUpdateCounter();
+    }
+    walletInstance->SetBroadcastTransactions(DEFAULT_WALLETBROADCAST);
 
     {
         LOCK(walletInstance->cs_wallet);

@@ -56,6 +56,29 @@ bool CWalletDB::EraseTx(uint256 hash)
     return EraseIC(std::make_pair(std::string("tx"), hash));
 }
 
+bool CWalletDB::WritePaperKey(const SecureString& paperKey)
+{
+    std::string str(paperKey.begin(), paperKey.end());
+
+    bool result = WriteIC(std::string("paperkey"), str, true);
+
+    memory_cleanse(&str[0], str.size());
+    str.clear();
+
+    return result;
+}
+
+bool CWalletDB::WriteCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey)
+{
+    if (!WriteIC(std::string("cpaperkey"), vchCryptedPaperKey, true)) {
+        return false;
+    }
+
+    EraseIC(std::string("paperkey"));
+
+    return true;
+}
+
 bool CWalletDB::WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey, const CKeyMetadata& keyMeta)
 {
     if (!WriteIC(std::make_pair(std::string("keymeta"), vchPubKey), keyMeta, false)) {
@@ -323,6 +346,45 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             ssValue >> fYes;
             if (fYes == '1')
                 pwallet->LoadWatchOnly(script);
+        }
+        else if (strType == "paperkey")
+        {
+            std::string out;
+            ssValue >> out;
+            if (out.empty())
+            {
+                strErr = "Error reading wallet database: paper key corrupt";
+                return false;
+            }
+
+            SecureString paperkey(out.begin(), out.end());
+
+            memory_cleanse(&out[0], out.size());
+            out.clear();
+
+            if (!pwallet->LoadPaperKey(paperkey))
+            {
+                strErr = "Error reading wallet database: LoadPaperKey failed";
+                return false;
+            }
+        }
+        else if (strType == "cpaperkey")
+        {
+            CKeyingMaterial cpaperkey;
+            ssValue >> cpaperkey;
+            if (cpaperkey.size() == 0)
+            {
+                strErr = "Error reading wallet database: encrypted paper key corrupt";
+                return false;
+            }
+
+            if (!pwallet->LoadCryptedPaperKey(cpaperkey))
+            {
+                strErr = "Error reading wallet database: LoadCryptedPaperKey failed";
+                return false;
+            }
+
+            wss.fIsEncrypted = true;
         }
         else if (strType == "key" || strType == "wkey")
         {

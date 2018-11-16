@@ -5,6 +5,8 @@
 #include "crypter.h"
 
 #include "crypto/aes.h"
+#include "uint256.h"
+#include "crypto/sha256.h"
 #include "crypto/sha512.h"
 #include "script/script.h"
 #include "script/standard.h"
@@ -142,6 +144,26 @@ static bool DecryptKey(const CKeyingMaterial& vMasterKey, const std::vector<unsi
     return key.VerifyPubKey(vchPubKey);
 }
 
+static uint256 DoubleHashOfString(const std::string& str)
+{
+    if (str.empty())
+        return uint256{};
+
+    CSHA256 h1;
+    uint256 h1hash;
+    h1.Write(reinterpret_cast<const unsigned char*>(str.c_str()), str.size());
+    h1.Finalize(h1hash.begin());
+
+    CSHA256 h2;
+    uint256 h2hash;
+    h2.Write(h1hash.begin(), h1hash.size());
+    h2.Finalize(h2hash.begin());
+
+    return h2hash;
+}
+
+static const auto PAPER_KEY_DOUBLE_HASH = DoubleHashOfString("paperkey");
+
 bool CCryptoKeyStore::SetCrypted()
 {
     LOCK(cs_KeyStore);
@@ -203,6 +225,74 @@ bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
     }
     NotifyStatusChanged(this);
     return true;
+}
+
+bool CCryptoKeyStore::AddCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey)
+{
+    {
+        LOCK(cs_KeyStore);
+        if (!SetCrypted())
+            return false;
+
+        this->vchCryptedPaperKey = vchCryptedPaperKey;
+    }
+    return true;
+}
+
+bool CCryptoKeyStore::AddPaperKey(const SecureString& paperKey)
+{
+    {
+        LOCK(cs_KeyStore);
+        if (!IsCrypted())
+            return CBasicKeyStore::AddPaperKey(paperKey);
+
+        if (IsLocked())
+            return false;
+
+        std::vector<unsigned char> vchOut;
+        CKeyingMaterial vchPaperKey(paperKey.begin(), paperKey.end());
+        bool result = EncryptSecret(vMasterKey, vchPaperKey, PAPER_KEY_DOUBLE_HASH, vchOut);
+
+        if (result)
+            result = AddCryptedPaperKey(CKeyingMaterial(vchOut.begin(), vchOut.end()));
+
+        memory_cleanse(&vchOut[0], vchOut.size());
+        vchOut.clear();
+
+        return result;
+    }
+    return true;
+}
+
+bool CCryptoKeyStore::GetPaperKey(SecureString& paperKey) const
+{
+    {
+        LOCK(cs_KeyStore);
+
+        if (!this->paperKey.empty())
+            return CBasicKeyStore::GetPaperKey(paperKey);
+
+        if (!IsCrypted())
+            return CBasicKeyStore::GetPaperKey(paperKey);
+
+        std::vector<unsigned char> vchIn(vchCryptedPaperKey.begin(), vchCryptedPaperKey.end());
+        CKeyingMaterial vchPaperKey;
+        bool result = DecryptSecret(vMasterKey, vchIn, PAPER_KEY_DOUBLE_HASH, vchPaperKey);
+
+        memory_cleanse(&vchIn[0], vchIn.size());
+        vchIn.clear();
+
+        if (result)
+            paperKey = SecureString(vchPaperKey.begin(), vchPaperKey.end());
+
+        return result;
+    }
+    return false;
+}
+
+void CCryptoKeyStore::DecryptPaperKey()
+{
+    GetPaperKey(this->paperKey);
 }
 
 bool CCryptoKeyStore::AddKeyPubKey(const CKey& key, const CPubKey &pubkey)
@@ -295,6 +385,55 @@ bool CCryptoKeyStore::EncryptKeys(CKeyingMaterial& vMasterKeyIn)
                 return false;
         }
         mapKeys.clear();
+    }
+    return true;
+}
+
+bool CCryptoKeyStore::GetCryptedPaperKey(CKeyingMaterial& vchCryptedPaperKey)
+{
+    {
+        LOCK(cs_KeyStore);
+
+        if (IsLocked())
+            return false;
+
+        if (this->vchCryptedPaperKey.size() == 0)
+            return false;
+
+        vchCryptedPaperKey = this->vchCryptedPaperKey;
+    }
+    return true;
+}
+
+bool CCryptoKeyStore::EncryptPaperKey(CKeyingMaterial& vMasterKeyIn)
+{
+    {
+        LOCK(cs_KeyStore);
+
+        if (IsLocked())
+            return false;
+
+        SecureString paperKey;
+        if (!GetPaperKey(paperKey)) {
+            return false;
+        }
+
+        std::vector<unsigned char> vchOut;
+        CKeyingMaterial vchPaperKey(paperKey.begin(), paperKey.end());
+        bool result = EncryptSecret(vMasterKeyIn, vchPaperKey, PAPER_KEY_DOUBLE_HASH, vchOut);
+
+        if (result)
+        {
+            this->vchCryptedPaperKey = CKeyingMaterial(vchOut.begin(), vchOut.end());
+
+            memory_cleanse(&(this->paperKey[0]), this->paperKey.size());
+            this->paperKey = "";
+        }
+
+        memory_cleanse(&vchOut[0], vchOut.size());
+        vchOut.clear();
+
+        return result;
     }
     return true;
 }

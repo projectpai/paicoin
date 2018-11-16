@@ -28,6 +28,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <memory>
 
 typedef CWallet* CWalletRef;
 extern std::vector<CWalletRef> vpwallets;
@@ -722,6 +723,9 @@ private:
 
     std::unique_ptr<CWalletDBWrapper> dbw;
 
+    //! Explicitly encrypt the paper key and store it to disk
+    bool EncryptPaperKey(CKeyingMaterial& vMasterKeyIn);
+
 public:
     /*
      * Main wallet lock.
@@ -851,6 +855,15 @@ public:
     void AbortRescan() { fAbortRescan = true; }
     bool IsAbortingRescan() { return fAbortRescan; }
     bool IsScanning() { return fScanningWallet; }
+
+    //! Adds paper keys to the store
+    bool AddCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey) override;
+    bool AddPaperKey(const SecureString& paperKey) override;
+    bool AddPaperKeyWithDB(CWalletDB &walletdb, const SecureString& paperKey);
+    //! Adds the paper key to the store, without saving it to disk (used by LoadWallet)
+    bool LoadPaperKey(const SecureString& paperkey);
+    //! Adds the encrypted paper key to the store, without saving it to disk (used by LoadWallet)
+    bool LoadCryptedPaperKey(const CKeyingMaterial& vchCryptedPaperKey);
 
     /**
      * keystore implementation
@@ -998,7 +1011,7 @@ public:
     CAmount GetChange(const CTransaction& tx) const;
     void SetBestChain(const CBlockLocator& loc) override;
 
-    DBErrors LoadWallet(bool& fFirstRunRet);
+    DBErrors LoadWallet(bool& fFirstRunRet, bool uiProgress = true);
     DBErrors ZapWalletTx(std::vector<CWalletTx>& vWtx);
     DBErrors ZapSelectTx(std::vector<uint256>& vHashIn, std::vector<uint256>& vHashOut);
 
@@ -1084,6 +1097,12 @@ public:
     static CWallet* CreateWalletFromFile(const std::string walletFile);
 
     /**
+     * Creates and initialises a new wallet file from the passed paper key, without registering it in the system in any way.
+     * Precondition: the wallet file doesn't exist
+     */
+    static std::unique_ptr<CWallet> CreateWalletFromPaperKey(const std::string &paperKey, const std::string walletFile);
+
+    /**
      * Wallet post-init setup
      * Gives the wallet a chance to register repetitive tasks and complete post-init tasks
      */
@@ -1100,12 +1119,44 @@ public:
 
     /* Generates a new HD master key (will not be activated) */
     CPubKey GenerateNewHDMasterKey();
+
+    /* Generates a new HD master key using the BIP39 key of 64 bytes (will not be activated) */
+    CPubKey GenerateNewHDMasterKey(const CKeyingMaterial& key64);
+
+    /* Adds a new HD master key (will not be activated) */
+    CPubKey AddHDMasterKey(const CKey& from);
     
     /* Set the current HD master key (will reset the chain child index counters)
        Sets the master key's version based on the current wallet version (so the
        caller must ensure the current wallet version is correct before calling
        this function). */
     bool SetHDMasterKey(const CPubKey& key);
+
+    // BIP39 MNEMONIC
+
+    /*
+     * Generates a new BIP39 phrase
+     * Returns a string with the phrase. To be used exactly as generated here.
+     */
+    static SecureString GeneratePaperKey();
+
+    /*
+     * Get the current BIP39 phrase
+     * Returns true if the string with the paper key is valid. To be used exactly as generated here.
+     */
+    bool GetCurrentPaperKey(SecureString& paperKey);
+
+    /*
+     * Returns if the wallet has a valid paper key.
+     */
+    bool HasPaperKey();
+
+    /*
+     * Get the BIP39 key of 64 bytes to be used in the master key generation
+     * Phrase is the mnemonic phrase from which to compute the seed.
+     * Returns a vector filled with the 64 bytes of seed; might be empty.
+     */
+    static CKeyingMaterial GetBIP39Seed(const SecureString& phrase);
 };
 
 /** A key allocated from the key pool. */

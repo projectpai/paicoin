@@ -115,6 +115,8 @@ verifymessage "paicoinaddress" "signature" "message"
 addmultisigaddress nrequired ["key",...] ( "account" )
 backupwallet "destination"
 dumpprivkey "paicoinaddress"
+dumppaperkey
+generatepaperkey
 dumpwallet "filename"
 encryptwallet "passphrase"
 getaccount "paicoinaddress"
@@ -130,6 +132,7 @@ getunconfirmedbalance
 getwalletinfo
 importaddress "address" ( "label" rescan )
 importprivkey "paicoinprivkey" ( "label" rescan )
+restorewallet "paperkeyphrase" "walletfile" ( rescan )
 importwallet "filename"
 keypoolrefill ( newsize )
 listaccounts ( minconf includeWatchonly)

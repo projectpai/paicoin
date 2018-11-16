@@ -23,6 +23,10 @@ protected:
 public:
     virtual ~CKeyStore() {}
 
+    //! Paper key management
+    virtual bool AddPaperKey(const SecureString& paperKey) = 0;
+    virtual bool GetPaperKey(SecureString& paperKey) const = 0;
+
     //! Add a key to the store.
     virtual bool AddKeyPubKey(const CKey &key, const CPubKey &pubkey) =0;
     virtual bool AddKey(const CKey &key);
@@ -33,7 +37,7 @@ public:
     virtual std::set<CKeyID> GetKeys() const =0;
     virtual bool GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const =0;
 
-    //! Support for BIP 0013 : see https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki
+    //! Support for BIP 0013 : see https://github.com/paicoin/bips/blob/master/bip-0013.mediawiki
     virtual bool AddCScript(const CScript& redeemScript) =0;
     virtual bool HaveCScript(const CScriptID &hash) const =0;
     virtual bool GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const =0;
@@ -54,12 +58,16 @@ typedef std::set<CScript> WatchOnlySet;
 class CBasicKeyStore : public CKeyStore
 {
 protected:
+    SecureString paperKey;
     KeyMap mapKeys;
     WatchKeyMap mapWatchKeys;
     ScriptMap mapScripts;
     WatchOnlySet setWatchOnly;
 
 public:
+    bool AddPaperKey(const SecureString& paperKey) override;
+    bool GetPaperKey(SecureString& paperKey) const override;
+
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey) override;
     bool GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const override;
     bool HaveKey(const CKeyID &address) const override

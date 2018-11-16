@@ -155,6 +155,67 @@ UniValue importprivkey(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
+UniValue restorewallet(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
+        throw std::runtime_error(
+            "restorewallet \"paperkeyphrase\" \"walletfile\" ( rescan )\n"
+            "\nRestores an HD wallet from a paper key phrase into the passed wallet file.\n"
+            "\nArguments:\n"
+            "1. \"paperkeyphrase\"   (string, required) paper key phrase (a space-delimited list of 12 words)\n"
+            "2. \"walletfile\"       (string, required) output wallet file to restore to\n"
+            "3. rescan               (boolean, optional, default=true) Rescan the wallet for transactions\n"
+            "\nNote1: This call will only create the wallet file and it will not register the wallet in the system. "
+            "To use the wallet, please use the \"-wallet\" command line option and pass the walletfile there.\n"
+            "Note2: If the passed walletfile exists, the call will fail without changing the existing file.\n"
+            "Note3: This call can take minutes to complete if rescan is true.\n"
+            "\nExamples:\n"
+            "\nRestore the wallet with rescan\n"
+            + HelpExampleCli("restorewallet", "\"word1 word2 word3 ...\"" "\"walletX.dat\"") +
+            "\nImport without rescan\n"
+            + HelpExampleCli("restorewallet", "\"word1 word2 word3 ...\" \"walletX.dat\" false") +
+            "\nAs a JSON-RPC call\n"
+            + HelpExampleRpc("restorewallet", "\"word1 word2 word3 ...\", \"walletX.dat\", false")
+        );
+
+    const auto walletFile = request.params[1].get_str();
+    for (const auto& w : ::vpwallets) {
+        if (w->GetName() == walletFile) {
+            throw JSONRPCError(RPC_WALLET_ERROR, "Wallet file already loaded in the system");
+        }
+    }
+
+    const auto walletFilePath = GetDataDir() / walletFile;
+    if (boost::filesystem::exists(walletFilePath)) {
+        throw JSONRPCError(RPC_WALLET_ERROR, "Existing wallet file");
+    }
+
+    auto fRescan = true;
+    if (!request.params[2].isNull())
+        fRescan = request.params[2].get_bool();
+
+    if (fRescan && fPruneMode)
+        throw JSONRPCError(RPC_WALLET_ERROR, "Rescan is disabled in pruned mode");
+
+    const auto pwallet = CWallet::CreateWalletFromPaperKey(request.params[0].get_str(), walletFile);
+    if (!pwallet) {
+        boost::filesystem::remove(walletFilePath);
+        throw JSONRPCError(RPC_WALLET_ERROR, "Wallet creation failed");
+    }
+
+    try {
+        if (fRescan) {
+            LOCK2(cs_main, pwallet->cs_wallet);
+            pwallet->RescanFromTime(TIMESTAMP_MIN, true /* update */);
+        }
+    } catch (...) {
+        boost::filesystem::remove(walletFilePath);
+        throw;
+    }
+
+    return NullUniValue;
+}
+
 UniValue abortrescan(const JSONRPCRequest& request)
 {
     CWallet* const pwallet = GetWalletForJSONRPCRequest(request);
@@ -589,6 +650,58 @@ UniValue dumpprivkey(const JSONRPCRequest& request)
     return CPAIcoinSecret(vchSecret).ToString();
 }
 
+UniValue dumppaperkey(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error(
+            "dumppaperkey\n"
+            "\nReveals the paper key phrase(if any) for the current wallet in a space-delimited format.\n"
+            "Then the restorewallet call can be used with this output.\n"
+            "\nNote: If the wallet hasn't been restored from a paper key phrase via restorewallet, an error is returned."
+            "\nResult:\n"
+            "\"paper key phrase\"                (string) The paper key phrase\n"
+            "\nExamples:\n"
+            + HelpExampleCli("dumppaperkey", "")
+            + HelpExampleCli("restorewallet", "\"paperkeyphrase\" " "\"walletfile\"")
+            + HelpExampleRpc("dumppaperkey", "")
+        );
+
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    if (!pwallet->HasPaperKey()) {
+        throw JSONRPCError(RPC_WALLET_ERROR, "Wallet doesn't have a paper key");
+    }
+
+    SecureString paperKey;
+    if (!pwallet->GetPaperKey(paperKey)) {
+        throw JSONRPCError(RPC_WALLET_ERROR, "Failed to get paper key from wallet");
+    }
+
+    return paperKey.c_str();
+}
+
+UniValue generatepaperkey(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error(
+            "generatepaperkey\n"
+            "\nGenerates a new paper key phrase. It can later be used in restorewallet. Please keep this phrase safe and don't reveal it.\n"
+            "\nResult:\n"
+            "\"paper key phrase\"                (string) The generated paper key phrase\n"
+            "\nExamples:\n"
+            + HelpExampleCli("generatepaperkey", "")
+            + HelpExampleCli("restorewallet", "\"paperkeyphrase\" " "\"walletfile\"")
+        );
+
+    return CWallet::GeneratePaperKey().c_str();
+}
 
 UniValue dumpwallet(const JSONRPCRequest& request)
 {
@@ -689,7 +802,6 @@ UniValue dumpwallet(const JSONRPCRequest& request)
 
     return reply;
 }
-
 
 UniValue ProcessImport(CWallet * const pwallet, const UniValue& data, const int64_t timestamp)
 {
