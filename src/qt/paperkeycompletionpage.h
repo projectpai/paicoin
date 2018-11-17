@@ -20,8 +20,8 @@ class PaperKeyCompletionPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit PaperKeyCompletionPage(QWidget *parent = 0);
-    explicit PaperKeyCompletionPage(QStringList words, QWidget *parent = 0);
+    explicit PaperKeyCompletionPage(QWidget *parent = nullptr);
+    explicit PaperKeyCompletionPage(QStringList words, QWidget *parent = nullptr);
     ~PaperKeyCompletionPage();
 
 public:
@@ -33,7 +33,6 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onSubmitClicked();
-    void onBackClicked();
     void textChangedFirst(QString text);
     void textChangedSecond(QString text);
 

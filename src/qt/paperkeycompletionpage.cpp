@@ -82,7 +82,6 @@ void PaperKeyCompletionPage::ConnectSignalsAndSlots()
     ui->lineEditWordFirst->setStyleSheet(Ui::LineEditStyleSheetFormat.arg(Ui::IconNameFail));
     ui->lineEditWordSecond->setStyleSheet(Ui::LineEditStyleSheetFormat.arg(Ui::IconNameFail));
 
-    connect(ui->pushButtonBack, SIGNAL(clicked()), this, SLOT(onBackClicked()));
     connect(ui->pushButtonSubmit, SIGNAL(clicked()), this, SLOT(onSubmitClicked()));
     connect(ui->lineEditWordFirst, SIGNAL(textChanged(QString)), this, SLOT(textChangedFirst(QString)));
     connect(ui->lineEditWordSecond, SIGNAL(textChanged(QString)), this, SLOT(textChangedSecond(QString)));
@@ -97,11 +96,6 @@ void PaperKeyCompletionPage::onSubmitClicked()
 {
     if (firstEquality && secondEquality)
         Q_EMIT paperKeyProven();
-}
-
-void PaperKeyCompletionPage::onBackClicked()
-{
-    Q_EMIT backToPreviousPage();
 }
 
 void PaperKeyCompletionPage::textChangedFirst(QString text)
