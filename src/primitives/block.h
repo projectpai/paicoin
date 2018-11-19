@@ -28,21 +28,16 @@ class CBlockHeader
 {
 public:
     // header
-    int32_t    nVersion;
-    uint256    hashPrevBlock;
-    uint256    hashMerkleRoot;
-    uint32_t   nTime;
-    uint32_t   nBits;
-    uint32_t   nNonce;
-    int64_t    nStakeDifficulty;
-    VoteBits   nVoteBits;
-    uint32_t   nTicketPoolSize;
-    uint48     ticketLotteryState;
-    uint16_t   nVoters;
-    uint8_t    nFreshStake;
-    uint8_t    nRevocations;
-    uint256    extraData;
-    uint32_t   nStakeVersion;
+    int32_t nVersion;
+    uint256 hashPrevBlock;
+    uint256 hashMerkleRoot;
+    uint32_t nTime;
+    uint32_t nBits;
+    uint32_t nNonce;
+    enum { MSG_ID_SIZE = 60 };
+    char powMsgID[MSG_ID_SIZE];
+    char powNextMsgID[MSG_ID_SIZE];
+    uint256 powModelHash;
 
     CBlockHeader()
     {
@@ -59,22 +54,20 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
-        // serialization of stake fields activates when Hybrid PoW/PoS deploys
-        if (this->nVersion & HARDFORK_VERSION_BIT) {
-            READWRITE(nStakeDifficulty);
-            READWRITE(nVoteBits);
-            READWRITE(nTicketPoolSize);
-            READWRITE(ticketLotteryState);
-            READWRITE(nVoters);
-            READWRITE(nFreshStake);
-            READWRITE(nRevocations);
-            READWRITE(extraData);
-            READWRITE(nStakeVersion);
+
+        std::string strMsgID, strNextMsgID;
+        if (!ser_action.ForRead()) {
+            strMsgID = powMsgID;
+            strNextMsgID = powNextMsgID;
         }
-        else if (ser_action.ForRead())
-        {
-           SetReadStakeDefaultBeforeFork(); 
+        READWRITE(strMsgID);
+        READWRITE(strNextMsgID);
+        if (ser_action.ForRead()) {
+            strncpy(powMsgID, strMsgID.c_str(), MSG_ID_SIZE);
+            strncpy(powNextMsgID, strNextMsgID.c_str(), MSG_ID_SIZE);
         }
+
+        READWRITE(powModelHash);
     }
 
     void SetReadStakeDefaultBeforeFork();
@@ -87,15 +80,9 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
-        nStakeDifficulty = 0;
-        nVoteBits = VoteBits::rttAccepted;
-        nTicketPoolSize = 0;
-        ticketLotteryState.SetNull();
-        nVoters = 0;
-        nFreshStake = 0;
-        nRevocations = 0;
-        extraData.SetNull();
-        nStakeVersion = 0;
+        powMsgID[0] = '\0';
+        powNextMsgID[0] = '\0';
+        powModelHash.SetNull();
     }
 
     bool IsNull() const

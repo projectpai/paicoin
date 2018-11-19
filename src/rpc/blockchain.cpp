@@ -201,8 +201,10 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("version", block.nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", block.nVersion)));
     result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
-    bool includeStake = (!gArgs.GetBoolArg("-testnet", false)) || IsHybridConsensusForkEnabled(blockindex, Params().GetConsensus());
-    UniValue txs{UniValue::VARR};
+    result.push_back(Pair("powMsgID", std::string(block.powMsgID)));
+    result.push_back(Pair("powNextMsgID", std::string(block.powNextMsgID)));
+    result.push_back(Pair("powModelHash", block.powModelHash.GetHex()));
+    UniValue txs(UniValue::VARR);
     for(const auto& tx : block.vtx)
     {
         if(txDetails)
@@ -812,6 +814,9 @@ UniValue getblock(const JSONRPCRequest& request)
             "  \"version\" : n,         (numeric) The block version\n"
             "  \"versionHex\" : \"00000000\", (string) The block version formatted in hexadecimal\n"
             "  \"merkleroot\" : \"xxxx\", (string) The merkle root\n"
+            "  \"powMsgID\" : \"...\",  (string) The ID of the message used for POW\n"
+            "  \"powNextMsgID\" : \"...\",  (string) The ID of the next message used for POW\n"
+            "  \"powModelHash\" : \"hash\",  (string) The hash of the ML model used for POW\n"
             "  \"tx\" : [               (array of string) The transaction ids\n"
             "     \"transactionid\"     (string) The transaction id\n"
             "     ,...\n"
@@ -1753,7 +1758,7 @@ UniValue version(const JSONRPCRequest& request)
             + HelpExampleCli("version", "")
             + HelpExampleRpc("version", "")
         };
-    
+
     UniValue versionResult{UniValue::VOBJ};
 
     versionResult.push_back(Pair("versionstring", FormatFullVersion()));
@@ -1812,7 +1817,7 @@ UniValue getinfo(const JSONRPCRequest& request)
             + HelpExampleCli("getinfo", "")
             + HelpExampleRpc("getinfo", "")
         };
-    
+
     auto numConnections = 0;
     if (g_connman) {
         numConnections = static_cast<int>(g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL));
@@ -1954,7 +1959,7 @@ UniValue txfeeinfo(const JSONRPCRequest& request)
             + HelpExampleCli("txfeeinfo", "3 5 7")
             + HelpExampleRpc("txfeeinfo", "3 5 7")
         };
-    
+
     LOCK(cs_main);
     auto blocksTip = chainActive.Tip();
     auto currHeight = static_cast<uint32_t>(blocksTip->nHeight);
@@ -2031,7 +2036,7 @@ UniValue getblocksubsidy(const JSONRPCRequest& request)
             + HelpExampleCli("getblocksubsidy", "100 5")
             + HelpExampleRpc("getblocksubsidy", "100 5")
         };
-    
+
     UniValue result{UniValue::VOBJ};
     const auto& height = static_cast<uint32_t>(request.params[0].get_int());
     const auto& voters = static_cast<uint32_t>(request.params[1].get_int());
@@ -2059,7 +2064,7 @@ UniValue getcfilter(const JSONRPCRequest& request)
             "   \"filterbytes\":  (serialized bytes) The committed filter serialized with the N value and encoded as a hex string\n"
             "}\n"
         };
-    
+
     UniValue result{UniValue::VSTR};
     result.setStr("000000");
     return result;
@@ -2079,7 +2084,7 @@ UniValue getcfilterheader(const JSONRPCRequest& request)
             "   \"filterbytes\":  (serialized bytes) The filter header commitment hash\n"
             "}\n"
         };
-    
+
     UniValue result{UniValue::VSTR};
     result.setStr("000000");
     return result;
@@ -2131,7 +2136,7 @@ UniValue getvoteinfo(const JSONRPCRequest& request)
             + HelpExampleCli("getvoteinfo", "2")
             + HelpExampleRpc("getvoteinfo", "2")
         };
-    
+
     UniValue resultChoice{UniValue::VOBJ};
     resultChoice.push_back(Pair("id", "choice"));
     resultChoice.push_back(Pair("description", "choice description"));

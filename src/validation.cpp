@@ -45,6 +45,7 @@
 #include "utilmoneystr.h"
 #include "utilstrencodings.h"
 #include "validationinterface.h"
+#include "verification_client.h"
 #include "versionbits.h"
 #include "warnings.h"
 #include "stake/stakenode.h"
@@ -543,7 +544,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     std::set<uint256> setConflicts;
     {
     LOCK(pool.cs); // protect pool.mapNextTx
-    for (size_t in = 0; in < tx.vin.size(); ++in) 
+    for (size_t in = 0; in < tx.vin.size(); ++in)
     {
         if (ParseTxClass(tx) == TX_Vote && in == voteSubsidyInputIndex)
             continue; //skip the stakebase as coin doesn't exist
@@ -2285,7 +2286,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
                 // auto txClass = ParseTxClass(tx);
                 // LogPrint(BCLog::ALL, "    - CheckTxInputs: %s , %d , vin[0]: %s n: %d -> %s\n", tx.GetHash().GetHex().c_str(),
                 //     txClass, tx.vin[0].prevout.hash.GetHex(), tx.vin[0].prevout.n, view.HaveCoinString(tx.vin[0].prevout).c_str());
-                
+
                 // LogPrint(BCLog::ALL, "    - CheckTxInputs: coinscacheview best block: %s\n", view.GetBestBlock().GetHex().c_str());
                 if (!Consensus::CheckTxInputs(tx, state, view, pindex->nHeight, txfee, chainparams)) {
                     return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), FormatStateMessage(state));
@@ -3534,12 +3535,11 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
     if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, block.nVersion, consensusParams))
         return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
 
-    // Consensus checks rely on this assumption
-    if (consensusParams.nHybridConsensusHeight > consensusParams.nStakeEnabledHeight ||
-        consensusParams.nStakeEnabledHeight > consensusParams.nStakeValidationHeight)
-        return state.Error("bad stake height consensus parameters");
-
-    return true;
+    // TODO: test this with validation server running and fix if necessary
+    VerificationClient client(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+    auto result = client.Verify(std::string(block.powMsgID), block.powModelHash.ToString(), std::string(block.powNextMsgID));
+    int resultCode = int(result.first);
+    return resultCode == pai::pouw::verification::Response::OK;
 }
 
 bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase, int blockHeight)
