@@ -27,6 +27,10 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
+    enum { MSG_ID_SIZE = 60 };
+    char powMsgID[MSG_ID_SIZE];
+    char powNextMsgID[MSG_ID_SIZE];
+    uint256 powModelHash;
 
     CBlockHeader()
     {
@@ -43,6 +47,20 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+
+        std::string strMsgID, strNextMsgID;
+        if (!ser_action.ForRead()) {
+            strMsgID = powMsgID;
+            strNextMsgID = powNextMsgID;
+        }
+        READWRITE(strMsgID);
+        READWRITE(strNextMsgID);
+        if (ser_action.ForRead()) {
+            strncpy(powMsgID, strMsgID.c_str(), MSG_ID_SIZE);
+            strncpy(powNextMsgID, strNextMsgID.c_str(), MSG_ID_SIZE);
+        }
+
+        READWRITE(powModelHash);
     }
 
     void SetNull()
@@ -53,6 +71,9 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        powMsgID[0] = '\0';
+        powNextMsgID[0] = '\0';
+        powModelHash.SetNull();
     }
 
     bool IsNull() const
