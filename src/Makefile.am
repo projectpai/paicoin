@@ -158,6 +158,9 @@ PAICOIN_CORE_H = \
   utiltime.h \
   validation.h \
   validationinterface.h \
+  verifier.pb.h \
+  verifier.grpc.pb.h \
+  verification_client.h \
   versionbits.h \
   wallet/coincontrol.h \
   wallet/crypter.h \
@@ -222,6 +225,8 @@ libpaicoin_server_a_SOURCES = \
   ui_interface.cpp \
   validation.cpp \
   validationinterface.cpp \
+  verifier.pb.cc \
+  verifier.grpc.pb.cc \
   versionbits.cpp \
   $(PAICOIN_CORE_H)
 
