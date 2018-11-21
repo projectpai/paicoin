@@ -319,6 +319,16 @@ AC_ARG_WITH([daemon],
   [build_paicoind=$withval],
   [build_paicoind=yes])
 
+AC_ARG_WITH([protoc],
+    [AS_HELP_STRING([--with-protoc=/path/of/protoc],
+        [Location of the protocol buffers compiler protoc. Defaults to looking on path.])],
+    [PROTOC="$withval"],
+    [ AS_IF([test "x${PROTOC}" == "x"],
+        [AC_PATH_PROG([PROTOC], [protoc], [no])])
+    ]
+)
+AS_IF([test "${PROTOC}" == "no"], [AC_MSG_ERROR([ProtoBuf compiler "protoc" not found.])])
+
 use_pkgconfig=yes
 case $host in
   *mingw*)
