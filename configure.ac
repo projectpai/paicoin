@@ -731,6 +731,10 @@ if test x$use_upnp != xno; then
   )
 fi
 
+AC_CHECK_HEADER([grpcpp/impl/codegen/status.h],,AC_MSG_ERROR(libgrpc headers missing))
+AC_CHECK_LIB([grpc++],      [main],GRPC_LIBS=-lgrpc++, AC_MSG_ERROR(libgrpc missing))
+AC_CHECK_LIB([protoc],      [main],PROTOC_LIBS=-lprotoc, AC_MSG_ERROR(libprotoc missing))
+
 PAICOIN_QT_INIT
 
 dnl sets $paicoin_enable_qt, $paicoin_enable_qt_test, $paicoin_enable_qt_dbus
@@ -1241,6 +1245,8 @@ AC_SUBST(EVENT_PTHREADS_LIBS)
 AC_SUBST(ZMQ_LIBS)
 AC_SUBST(PROTOBUF_LIBS)
 AC_SUBST(QR_LIBS)
+AC_SUBST(GRPC_LIBS)
+AC_SUBST(PROTOC_LIBS)
 AC_CONFIG_FILES([Makefile src/Makefile doc/man/Makefile share/setup.nsi share/qt/Info.plist test/config.ini])
 AC_CONFIG_FILES([doc/Doxyfile])
 AC_CONFIG_LINKS([test/functional/test_runner.py:test/functional/test_runner.py])
