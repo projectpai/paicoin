@@ -1317,7 +1317,6 @@ void PAIcoinGUI::closeEvent(QCloseEvent *event)
 {
     if (firstRun)
     {
-        RemoveDataDirectory();
 #ifndef Q_OS_MAC // Ignored on Mac
         QApplication::quit();
     }
@@ -1381,6 +1380,7 @@ void PAIcoinGUI::walletRestored(std::string phrase)
 void PAIcoinGUI::createWalletFrame()
 {
     firstRun = false;
+    Q_EMIT firstRunComplete();
 
     if (walletFrame != nullptr)
         mainStackedWidget->removeWidget(walletFrame);

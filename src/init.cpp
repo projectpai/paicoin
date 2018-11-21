@@ -275,6 +275,7 @@ void Shutdown()
 #ifdef ENABLE_WALLET
     for (CWalletRef pwallet : vpwallets) {
         delete pwallet;
+        pwallet = nullptr;
     }
     vpwallets.clear();
 #endif

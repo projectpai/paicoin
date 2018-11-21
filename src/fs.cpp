@@ -12,4 +12,9 @@ FILE *freopen(const fs::path& p, const char *mode, FILE *stream)
     return ::freopen(p.string().c_str(), mode, stream);
 }
 
+int fclose (FILE *file)
+{
+    return ::fclose(file);
+}
+
 } // fsbridge

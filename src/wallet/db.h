@@ -73,6 +73,7 @@ public:
     void Flush(bool fShutdown);
     void CheckpointLSN(const std::string& strFile);
 
+    void CloseDb();
     void CloseDb(const std::string& strFile);
 
     DbTxn* TxnBegin(int flags = DB_TXN_WRITE_NOSYNC)
