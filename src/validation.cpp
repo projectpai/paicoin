@@ -2792,6 +2792,24 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
     if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, consensusParams))
         return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
 
+    // check that the nonce is derived from ML data
+    unsigned char hashOutput[CHash256::OUTPUT_SIZE];  // a buffer that will hold a temporary hash in native form (32 bytes)
+    uint256 hash256;                                  // directly corresponding to the above buffer
+    std::string hashConcat;                           // a concatenation of all 3 ML field hashes in hex string form
+    CHash256().Write((const unsigned char*)block.powMsgID, strlen(block.powMsgID)).Finalize(hashOutput); // hash msg ID
+    memcpy(hash256.begin(), hashOutput, CHash256::OUTPUT_SIZE);  // convert msg ID hash to uint256
+    hashConcat += hash256.ToString();                            // convert msg ID hash to hex string and concatenate
+    hashConcat += block.powModelHash.ToString();                 // convert model hash to hex string and concatenate
+    CHash256().Write((const unsigned char*)block.powNextMsgID, strlen(block.powNextMsgID)).Finalize(hashOutput); // hash next msg ID
+    memcpy(hash256.begin(), hashOutput, CHash256::OUTPUT_SIZE);  // convert next msg ID hash to uint256
+    hashConcat += hash256.ToString();                            // convert next msg ID hash to hex string and concatenate
+    CHash256().Write((const unsigned char*)hashConcat.c_str(), hashConcat.length()).Finalize(hashOutput); // hash the concatenated hex string of hashes
+    memcpy(hash256.begin(), hashOutput, CHash256::OUTPUT_SIZE);  // convert the final hash to uint256 (note that it is big endian)
+    uint64_t hash64 = hash256.GetUint64(0);   // take the first 8 bytes from the final hash (it is now little endian)
+    uint32_t hash32 = uint32_t(hash64 & 0x00000000FFFFFFFF);     // take the least significant 4 bytes from the final hash; these correspond to the first 4 bytes of hash256
+    if (block.nNonce != hash32)                // verify that block nonce == first4bytes(hash(hash(msgID) | hash(model) | hash(nextMsgID)))
+        return false;
+
     // TODO: test this with validation server running and fix if necessary
     VerificationClient client(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
     auto result = client.Verify(std::string(block.powMsgID), block.powModelHash.ToString(), std::string(block.powNextMsgID));
