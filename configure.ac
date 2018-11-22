@@ -727,6 +727,7 @@ fi
 AC_CHECK_HEADER([grpcpp/impl/codegen/status.h],,AC_MSG_ERROR(libgrpc headers missing))
 AC_CHECK_LIB([grpc++],      [main],GRPC_LIBS=-lgrpc++, AC_MSG_ERROR(libgrpc missing))
 AC_CHECK_LIB([protoc],      [main],PROTOC_LIBS=-lprotoc, AC_MSG_ERROR(libprotoc missing))
+AC_CHECK_LIB([protobuf],    [main],PROTOBUF_LIBS=-lprotobuf, AC_MSG_ERROR(libprotobuf missing))
 
 PAICOIN_QT_INIT
 
