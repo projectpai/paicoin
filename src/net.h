@@ -421,8 +421,10 @@ private:
     std::thread threadMessageHandler;
 };
 extern std::unique_ptr<CConnman> g_connman;
-void Discover(boost::thread_group& threadGroup);
-void MapPort(bool fUseUPnP);
+void Discover();
+void StartMapPort();
+void InterruptMapPort();
+void StopMapPort();
 unsigned short GetListenPort();
 bool BindListenPort(const CService &bindAddr, std::string& strError, bool fWhitelisted = false);
 

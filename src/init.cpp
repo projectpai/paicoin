@@ -164,6 +164,7 @@ void Interrupt(boost::thread_group& threadGroup)
     InterruptRPC();
     InterruptREST();
     InterruptTorControl();
+    InterruptMapPort();
     if (g_connman)
         g_connman->Interrupt();
     threadGroup.interrupt_all();
@@ -193,7 +194,7 @@ void Shutdown()
         pwallet->Flush(false);
     }
 #endif
-    MapPort(false);
+    StopMapPort();
     UnregisterValidationInterface(peerLogic.get());
     peerLogic.reset();
     g_connman.reset();
@@ -1644,10 +1645,12 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     if (gArgs.GetBoolArg("-listenonion", DEFAULT_LISTEN_ONION))
         StartTorControl(threadGroup, scheduler);
 
-    Discover(threadGroup);
+    Discover();
 
     // Map ports with UPnP
-    MapPort(gArgs.GetBoolArg("-upnp", DEFAULT_UPNP));
+    if (gArgs.GetBoolArg("-upnp", DEFAULT_UPNP)) {
+        StartMapPort();
+    }
 
     CConnman::Options connOptions;
     connOptions.nLocalServices = nLocalServices;
