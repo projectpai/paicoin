@@ -188,6 +188,8 @@ libpaicoin_util_a-clientversion.$(OBJEXT): obj/build.h
 libpaicoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libpaicoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpaicoin_server_a_SOURCES = \
+  verifier.pb.cc \
+  verifier.grpc.pb.cc \
   addrdb.cpp \
   addrman.cpp \
   bloom.cpp \
@@ -225,8 +227,6 @@ libpaicoin_server_a_SOURCES = \
   ui_interface.cpp \
   validation.cpp \
   validationinterface.cpp \
-  verifier.pb.cc \
-  verifier.grpc.pb.cc \
   versionbits.cpp \
   $(PAICOIN_CORE_H)
 
@@ -401,7 +401,7 @@ paicoind_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-paicoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS) $(GRPC_LIBS) $(PROTOC_LIBS)
+paicoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS) $(GRPC_LIBS) $(PROTOC_LIBS) $(PROTOBUF_LIBS)
 
 # paicoin-cli binary #
 paicoin_cli_SOURCES = paicoin-cli.cpp
