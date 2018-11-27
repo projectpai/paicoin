@@ -112,9 +112,8 @@ UniValue getnetworkhashps(const JSONRPCRequest& request)
 
 UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript)
 {
-    const int nInnerLoopCount{0x10000};
-    int nHeightEnd{0};
-    int nHeight{0};
+    int nHeightEnd = 0;
+    int nHeight = 0;
 
     {   // Don't keep cs_main locked
         LOCK(cs_main);
@@ -127,24 +126,27 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     {
         auto pblocktemplate = BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript);
         if (!pblocktemplate.get())
-            throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Couldn't create new block");
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
+        CBlock *pblock = &pblocktemplate->block;
 
-        auto * const pblock = &pblocktemplate->block;
+        // add coinbase tx and update merkle root
         {
             LOCK(cs_main);
             IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
         }
-        while (nMaxTries > 0 && pblock->nNonce < nInnerLoopCount && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, pblock->nVersion, Params().GetConsensus())) {
-            ++pblock->nNonce;
+
+        // find a model hash / nonce with which this block satisfies difficulty
+        pblock->nNonce = pblock->DeriveNonceFromML();
+        while (nMaxTries > 0 && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus()))
+        {
+            pblock->powModelHash = ArithToUint256(UintToArith256(pblock->powModelHash) + 1);
+            pblock->nNonce = pblock->DeriveNonceFromML();
             --nMaxTries;
         }
         if (nMaxTries == 0) {
             break;
         }
-        if (pblock->nNonce == nInnerLoopCount) {
-            continue;
-        }
-        const auto shared_pblock = std::make_shared<const CBlock>(*pblock);
+        std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
         if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
             throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
         ++nHeight;
@@ -923,7 +925,7 @@ UniValue submitblock(const JSONRPCRequest& request)
 
 UniValue existsexpiredtickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
             "existsexpiredtickets \"txhashes\"\n"
             "\nTest for the existence of the provided tickets in the expired ticket map.\n"
@@ -964,7 +966,7 @@ UniValue existsexpiredtickets(const JSONRPCRequest& request)
 
 UniValue existsliveticket(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
             "existsliveticket \"txhash\"\n"
             "\nTest for the existence of the provided ticket.\n"
@@ -987,7 +989,7 @@ UniValue existsliveticket(const JSONRPCRequest& request)
 
 UniValue existslivetickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
             "existslivetickets \"txhashes\"\n"
             "\nTest for the existence of the provided tickets in the live ticket map.\n"
@@ -1028,7 +1030,7 @@ UniValue existslivetickets(const JSONRPCRequest& request)
 
 UniValue existsmissedtickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
             "existsmissedtickets \"txhashes\"\n"
             "\nTest for the existence of the provided tickets in the missed ticket map.\n"
@@ -1069,7 +1071,7 @@ UniValue existsmissedtickets(const JSONRPCRequest& request)
 
 UniValue getticketpoolvalue(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 0) 
+    if (request.fHelp || request.params.size() != 0)
         throw std::runtime_error{
             "getticketpoolvalue\n"
             "\nReturn the current value of all locked funds in the ticket pool.\n"
@@ -1111,7 +1113,7 @@ static int getTicketPurchaseHeight(const uint256& hashBlock)
 
 UniValue livetickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 2) 
+    if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error{
             "livetickets ( verbose blockheight )\n"
             "\nReturns live ticket hashes from the ticket database\n"
@@ -1121,7 +1123,7 @@ UniValue livetickets(const JSONRPCRequest& request)
             "\nResult:\n"
             "{\n"
             "   \"tickets\": [\"value\",...], (array of string) List of live tickets\n"
-            "}\n" 
+            "}\n"
             "\nExamples:\n"
             + HelpExampleCli("livetickets", "")
             + HelpExampleRpc("livetickets", "")
@@ -1168,7 +1170,7 @@ UniValue livetickets(const JSONRPCRequest& request)
 
 UniValue winningtickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 1) 
+    if (request.fHelp || request.params.size() > 1)
         throw std::runtime_error{
             "winningtickets ( blockheight )\n"
             "\nReturns winning ticket hashes from the chain tip's ticket database\n"
@@ -1177,7 +1179,7 @@ UniValue winningtickets(const JSONRPCRequest& request)
             "\nResult:\n"
             "{\n"
             "   \"tickets\": [\"value\",...], (array of string) List of winning tickets\n"
-            "}\n" 
+            "}\n"
             "\nExamples:\n"
             + HelpExampleCli("winningtickets", "")
             + HelpExampleRpc("winningtickets", "")
@@ -1223,7 +1225,7 @@ UniValue winningtickets(const JSONRPCRequest& request)
 
 UniValue missedtickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 2) 
+    if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error{
             "missedtickets ( verbose blockheight )\n"
             "\nReturns missed ticket hashes from the ticket database\n"
@@ -1233,7 +1235,7 @@ UniValue missedtickets(const JSONRPCRequest& request)
             "\nResult:\n"
             "{\n"
             "   \"tickets\": [\"value\",...], (array of string) List of missed tickets\n"
-            "}\n" 
+            "}\n"
             "\nExamples:\n"
             + HelpExampleCli("missedtickets", "")
             + HelpExampleRpc("missedtickets", "")
@@ -1273,7 +1275,7 @@ UniValue missedtickets(const JSONRPCRequest& request)
             info.push_back(Pair("cause", bExpired ? "expiration" : "missed_vote"));
             if (!bExpired) {
                 auto missedHeight = nHeight - 1;
-                for (; missedHeight > purchaseHeight + Params().GetConsensus().nTicketMaturity 
+                for (; missedHeight > purchaseHeight + Params().GetConsensus().nTicketMaturity
                        && chainActive[missedHeight]->pstakeNode->ExistsMissedTicket(txhash); --missedHeight);
                 info.push_back(Pair("missed_height", missedHeight + 1));
             } else {
@@ -1291,7 +1293,7 @@ UniValue missedtickets(const JSONRPCRequest& request)
 
 UniValue ticketfeeinfo(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 2) 
+    if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error{
             "ticketfeeinfo (blocks windows)\n"
             "\nGet various information about ticket fees from the mempool, blocks, and difficulty windows (units: PAI/kB)\n"
@@ -1327,7 +1329,7 @@ UniValue ticketfeeinfo(const JSONRPCRequest& request)
             "   \"median\": n.nnn,      (numeric)         Median of transaction fees in the window\n"
             "   \"stddev\": n.nnn,      (numeric)         Standard deviation of transaction fees in the window\n"
             "   },...],\n"
-            "}\n"  
+            "}\n"
             "\nExamples:\n"
             + HelpExampleCli("ticketfeeinfo", "5 3")
             + HelpExampleRpc("ticketfeeinfo", "5 3")
@@ -1427,7 +1429,7 @@ UniValue ticketfeeinfo(const JSONRPCRequest& request)
 
 UniValue ticketsforaddress(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
             "ticketsforaddress \"address\"\n"
             "\nRequest all the tickets for an address.\n"
@@ -1436,7 +1438,7 @@ UniValue ticketsforaddress(const JSONRPCRequest& request)
             "\nResult:\n"
             "{\n"
             "   \"tickets\": [\"value\",...], (array of string) Tickets owned by the specified address.\n"
-            "}\n" 
+            "}\n"
             "\nExamples:\n"
             + HelpExampleCli("ticketsforaddress", "\"address\"")
             + HelpExampleRpc("ticketsforaddress", "\"address\"")
@@ -1473,7 +1475,7 @@ UniValue ticketsforaddress(const JSONRPCRequest& request)
 
 UniValue ticketvwap(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 2) 
+    if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error{
             "ticketvwap (start end)\n"
             "\nCalculate the volume weighted average price of tickets for a range of blocks (default: full PoS difficulty adjustment depth)\n"
