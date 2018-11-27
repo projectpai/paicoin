@@ -35,6 +35,7 @@
 #define MAINNET_CONSENSUS_POW_LIMIT      uint256S("0x0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff");
 #define MAINNET_GENESIS_BLOCK_POW_BITS   36 // 32
 #define MAINNET_GENESIS_BLOCK_NBITS      0x1c09fe61
+#define MAINNET_GENESIS_BLOCK_MODEL      uint256()
 #define MAINNET_GENESIS_BLOCK_SIGNATURE  "95ba0161eb524f97d3847653057baaef7d7ba0ff"
 
 #define MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706776
@@ -50,10 +51,11 @@
 #define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
 #define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
+#define TESTNET_GENESIS_BLOCK_MODEL      uint256S("0x00000000000000000000000000000000000000000000000000000000000045c1")
 #define TESTNET_GENESIS_BLOCK_SIGNATURE  "9a8abac6c3d97d37d627e6ebcaf68be72275168b"
 
-#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706516
-#define TESTNET_GENESIS_BLOCK_NONCE          2253953817
+#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706516  
+#define TESTNET_GENESIS_BLOCK_NONCE          142389244
 #define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x0000000003976df1a1393912d10ea68fae1175ee2c7e6011a0dc4e05f18f8403")
 #define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19")
 
@@ -65,10 +67,11 @@
 #define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define REGTEST_GENESIS_BLOCK_POW_BITS   1
 #define REGTEST_GENESIS_BLOCK_NBITS      0x207fffff
+#define REGTEST_GENESIS_BLOCK_MODEL      uint256S("0x000000000000000000000000000000000000000000000000000000000004505d")
 #define REGTEST_GENESIS_BLOCK_SIGNATURE  "23103f0e2d2abbaad0d79b7a37759b1a382b7821"
 
 #define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509798928
-#define REGTEST_GENESIS_BLOCK_NONCE          0
+#define REGTEST_GENESIS_BLOCK_NONCE          2092766129
 #define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x47b736c948f15d787327c84bb3ad30a064e67c79154c7608da4b062c1adfe7bb")
 #define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0xcaed1b804a2aa916d899cb398aed398fa9316d972f615903aafe06d10bedca44")
 
@@ -81,7 +84,17 @@
 #   include "arith_uint256.h"
 #endif // MINE_FOR_THE_GENESIS_BLOCK
 
-static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int64_t nStakeDiff, int32_t nVersion, const CAmount& genesisReward)
+std::string CHAINPARAMS_STR(const char * name, const std::string & value)
+{
+    return value;
+}
+
+uint32_t CHAINPARAMS_XUINT32(const char * name, uint32_t value)
+{
+    return value;
+}
+
+static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, uint256 powModelHash, const CAmount& genesisReward)
 {
     CMutableTransaction txNew;
     txNew.nVersion = 1;
@@ -101,6 +114,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     genesis.nStakeVersion = 0;
     genesis.nNonce   = nNonce;
     genesis.nVersion = nVersion;
+    genesis.powModelHash = powModelHash;
     genesis.vtx.push_back(MakeTransactionRef(std::move(txNew)));
     genesis.hashPrevBlock.SetNull();
     genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
@@ -110,11 +124,11 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
 /**
  * Build the genesis block.
  */
-static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int64_t nStakeDiff, int32_t nVersion, const CAmount& genesisReward, const char* signature)
+static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, uint256 powModelHash, const CAmount& genesisReward, const std::string & signature)
 {
-    const char* pszTimestamp = GENESIS_BLOCK_TIMESTAMP_STRING;
-    const CScript genesisOutputScript = CScript() << OP_HASH160 << ParseHex(signature) << OP_EQUAL;
-    return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nStakeDiff, nVersion, genesisReward);
+    std::string sTimestamp = CHAINPARAMS_STR("GENESIS_BLOCK_TIMESTAMP_STRING", GENESIS_BLOCK_TIMESTAMP_STRING);
+    const CScript genesisOutputScript = CScript() << OP_HASH160 << ParseHex(signature.c_str()) << OP_EQUAL;
+    return CreateGenesisBlock(sTimestamp.c_str(), genesisOutputScript, nTime, nNonce, nBits, nVersion, powModelHash, genesisReward);
 }
 
 void CChainParams::UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout)
@@ -130,6 +144,33 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
             return true;
     }
     return false;
+}
+
+void CChainParams::LoadGenesisParams() const
+{
+#ifdef PAI_BABY
+    std::string genesisConfFilename = GetDataDir().string() + '/' + PAICOIN_GENESIS_CONF_FILENAME;
+    try
+    {
+        gGenesisparams.ReadConfigFile(genesisConfFilename);
+    }
+    catch (std::exception & ex)
+    {
+        throw std::runtime_error(std::string("Error reading genesis configuration (") + genesisConfFilename + ") : " + ex.what());
+    }
+#endif
+}
+
+void SaveGenesisParams(const std::string & prefix, const CBlock & genesis)
+{
+#ifdef PAI_BABY
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "%u", genesis.nNonce);
+    gGenesisparams.SoftSetArg(prefix + "_GENESIS_BLOCK_NONCE", buffer);
+    gGenesisparams.SoftSetArg(prefix + "_GENESIS_BLOCK_MODEL", std::string("0x") + genesis.powModelHash.ToString());
+    gGenesisparams.SoftSetArg(prefix + "_CONSENSUS_HASH_GENESIS_BLOCK", std::string("0x") + genesis.GetHash().ToString());
+    gGenesisparams.SoftSetArg(prefix + "_GENESIS_HASH_MERKLE_ROOT", std::string("0x") + genesis.hashMerkleRoot.ToString());
+#endif
 }
 
 /**
@@ -239,7 +280,17 @@ public:
         nDefaultPort = 8567;
         nPruneAfterHeight = 100000;
 
-#ifdef MINE_FOR_THE_GENESIS_BLOCK
+        if (gArgs.IsArgSet("-mine-genesis-block"))
+        {
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                0,
+                CHAINPARAMS_XUINT32("MAINNET_GENESIS_BLOCK_NBITS", MAINNET_GENESIS_BLOCK_NBITS),
+                4,
+                uint256(),
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
+            );
 
         genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, MAINNET_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
 
@@ -250,8 +301,11 @@ public:
         LogPrintf("- old mainnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
         LogPrintf("- old mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { }
+            while (UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit)
+            {
+                genesis.powModelHash = ArithToUint256(UintToArith256(genesis.powModelHash) + 1);
+                genesis.nNonce = genesis.DeriveNonceFromML();
+            }
 
         LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
@@ -264,7 +318,15 @@ public:
 
 #else
 
-        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, MAINNET_GENESIS_BLOCK_NONCE, MAINNET_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                GENESIS_UINT32("MAINNET_GENESIS_BLOCK_NONCE", MAINNET_GENESIS_BLOCK_NONCE),
+                CHAINPARAMS_XUINT32("MAINNET_GENESIS_BLOCK_NBITS", MAINNET_GENESIS_BLOCK_NBITS),
+                4,
+                GENESIS_UINT256("MAINNET_GENESIS_BLOCK_MODEL", MAINNET_GENESIS_BLOCK_MODEL),
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
+            );
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
@@ -277,7 +339,7 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
         // Note that of those with the service bits flag, most only support a subset of possible options
-        
+
         for (int index = 0; index < 3; ++index)
         {
             char buf[20];
@@ -432,7 +494,17 @@ public:
         nDefaultPort = 18567;
         nPruneAfterHeight = 1000;
 
-#ifdef MINE_FOR_THE_GENESIS_BLOCK
+        if (gArgs.IsArgSet("-mine-genesis-block"))
+        {
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                0,
+                CHAINPARAMS_XUINT32("TESTNET_GENESIS_BLOCK_NBITS", TESTNET_GENESIS_BLOCK_NBITS),
+                4,
+                uint256(),
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("TESTNET_GENESIS_BLOCK_SIGNATURE", TESTNET_GENESIS_BLOCK_SIGNATURE)
+            );
 
         genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, TESTNET_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
 
@@ -443,8 +515,11 @@ public:
         LogPrintf("- old testnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
         LogPrintf("- old testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { }
+            while (UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit)
+            {
+                genesis.powModelHash = ArithToUint256(UintToArith256(genesis.powModelHash) + 1);
+                genesis.nNonce = genesis.DeriveNonceFromML();
+            }
 
         LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
@@ -455,9 +530,19 @@ public:
 
         LogPrintf("- new testnet genesis block: %s\n", genesis.ToString().c_str());
 
-#else
-
-        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, TESTNET_GENESIS_BLOCK_NONCE, TESTNET_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+            SaveGenesisParams("TESTNET", genesis);
+        }
+        else {
+            LoadGenesisParams();
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                GENESIS_UINT32("TESTNET_GENESIS_BLOCK_NONCE", TESTNET_GENESIS_BLOCK_NONCE),
+                CHAINPARAMS_XUINT32("TESTNET_GENESIS_BLOCK_NBITS", TESTNET_GENESIS_BLOCK_NBITS),
+                4,
+                GENESIS_UINT256("TESTNET_GENESIS_BLOCK_MODEL", TESTNET_GENESIS_BLOCK_MODEL),
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("TESTNET_GENESIS_BLOCK_SIGNATURE", TESTNET_GENESIS_BLOCK_SIGNATURE)
+            );
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
@@ -619,7 +704,17 @@ public:
         nDefaultPort = 19567;
         nPruneAfterHeight = 1000;
 
-#ifdef MINE_FOR_THE_GENESIS_BLOCK
+        if (gArgs.IsArgSet("-mine-genesis-block"))
+        {
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP", REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                0,
+                CHAINPARAMS_XUINT32("REGTEST_GENESIS_BLOCK_NBITS", REGTEST_GENESIS_BLOCK_NBITS),
+                4,
+                uint256(),
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("REGTEST_GENESIS_BLOCK_SIGNATURE", REGTEST_GENESIS_BLOCK_SIGNATURE)
+            );
 
         genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, REGTEST_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
 
@@ -630,8 +725,11 @@ public:
         LogPrintf("- old regtest genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
         LogPrintf("- old regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-        // deliberately empty for loop finds nonce value.
-        for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { }
+            while (UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit)
+            {
+                genesis.powModelHash = ArithToUint256(UintToArith256(genesis.powModelHash) + 1);
+                genesis.nNonce = genesis.DeriveNonceFromML();
+            }
 
         LogPrintf("- new regtest genesis nonce: %u\n", genesis.nNonce);
         LogPrintf("- new regtest genesis hash: %s\n", genesis.GetHash().ToString().c_str());
@@ -642,11 +740,21 @@ public:
 
         LogPrintf("- new regtest genesis block: %s\n", genesis.ToString().c_str());
 
-#else
-
-        // TODO: Update the values below with the nonce from the above mining for the genesis block
-        //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, REGTEST_GENESIS_BLOCK_NONCE, REGTEST_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
+            SaveGenesisParams("REGTEST", genesis);
+        }
+        else {
+            LoadGenesisParams();
+            // TODO: Update the values below with the nonce from the above mining for the genesis block
+            //       This should only be done once, after the mining and prior to production release
+            genesis = CreateGenesisBlock(
+                CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP", REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP),
+                GENESIS_UINT32("REGTEST_GENESIS_BLOCK_NONCE", REGTEST_GENESIS_BLOCK_NONCE),
+                CHAINPARAMS_XUINT32("REGTEST_GENESIS_BLOCK_NBITS", REGTEST_GENESIS_BLOCK_NBITS),
+                4,
+                GENESIS_UINT256("REGTEST_GENESIS_BLOCK_MODEL", REGTEST_GENESIS_BLOCK_MODEL),
+                CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
+                CHAINPARAMS_STR("REGTEST_GENESIS_BLOCK_SIGNATURE", REGTEST_GENESIS_BLOCK_SIGNATURE)
+            );
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;

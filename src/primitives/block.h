@@ -97,6 +97,8 @@ public:
         return (int64_t)nTime;
     }
 
+    uint32_t DeriveNonceFromML() const;
+
     bool isPaicoinHashBlock() const;
 };
 
