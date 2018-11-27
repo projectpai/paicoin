@@ -2793,7 +2793,7 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
         return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
 
     // check that the nonce is derived from ML data
-    if (block.nNonce != block.DeriveNonceFromML())
+    if (fCheckPOW && block.nNonce != block.DeriveNonceFromML())
         return false;
 
     return true;

@@ -107,7 +107,6 @@ UniValue getnetworkhashps(const JSONRPCRequest& request)
 
 UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript)
 {
-    static const int nInnerLoopCount = 0x10000;
     int nHeightEnd = 0;
     int nHeight = 0;
 
@@ -124,19 +123,23 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         if (!pblocktemplate.get())
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
         CBlock *pblock = &pblocktemplate->block;
+
+        // add coinbase tx and update merkle root
         {
             LOCK(cs_main);
             IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
         }
-        while (nMaxTries > 0 && pblock->nNonce < nInnerLoopCount && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus())) {
-            ++pblock->nNonce;
+
+        // find a model hash / nonce with which this block satisfies difficulty
+        pblock->nNonce = pblock->DeriveNonceFromML();
+        while (nMaxTries > 0 && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus()))
+        {
+            pblock->powModelHash = ArithToUint256(UintToArith256(pblock->powModelHash) + 1);
+            pblock->nNonce = pblock->DeriveNonceFromML();
             --nMaxTries;
         }
         if (nMaxTries == 0) {
             break;
-        }
-        if (pblock->nNonce == nInnerLoopCount) {
-            continue;
         }
         std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
         if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
