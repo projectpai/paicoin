@@ -160,6 +160,9 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("height", blockindex->nHeight));
     result.push_back(Pair("version", blockindex->nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", blockindex->nVersion)));
+    result.push_back(Pair("powMsgID", blockindex->powMsgID));
+    result.push_back(Pair("powModelHash", blockindex->powModelHash.GetHex()));
+    result.push_back(Pair("powNextMsgID", blockindex->powNextMsgID));
     result.push_back(Pair("merkleroot", blockindex->hashMerkleRoot.GetHex()));
     result.push_back(Pair("time", static_cast<int64_t>(blockindex->nTime)));
     result.push_back(Pair("mediantime", static_cast<int64_t>(blockindex->GetMedianTimePast())));

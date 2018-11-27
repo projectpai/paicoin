@@ -226,6 +226,10 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
+    enum { MSG_ID_SIZE = 60 };
+    char powMsgID[MSG_ID_SIZE];
+    char powNextMsgID[MSG_ID_SIZE];
+    uint256 powModelHash;
 
     int64_t  nStakeDifficulty;
 
@@ -274,15 +278,9 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
-        nStakeDifficulty = 0;
-        nVoteBits      = VoteBits::rttAccepted;
-        nTicketPoolSize = 0;
-        ticketLotteryState.SetNull();
-        nVoters = 0;
-        nFreshStake = 0;
-        nRevocations = 0;
-        extraData.SetNull();
-        nStakeVersion  = 0;
+        powMsgID[0]    = '\0';
+        powNextMsgID[0] = '\0';
+        powModelHash   = uint256();
     }
 
     CBlockIndex()
@@ -299,15 +297,9 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
-        nStakeDifficulty = block.nStakeDifficulty;
-        nVoteBits      = block.nVoteBits;
-        nTicketPoolSize = block.nTicketPoolSize;
-        ticketLotteryState = block.ticketLotteryState;
-        nVoters        = block.nVoters;
-        nFreshStake    = block.nFreshStake;
-        nRevocations   = block.nRevocations;
-        extraData      = block.extraData;
-        nStakeVersion  = block.nStakeVersion;
+        strcpy(powMsgID, block.powMsgID);
+        strcpy(powNextMsgID, block.powNextMsgID);
+        powModelHash = block.powModelHash;
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -347,15 +339,9 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
-        block.nStakeDifficulty = nStakeDifficulty;
-        block.nVoteBits      = nVoteBits;
-        block.nTicketPoolSize = nTicketPoolSize;
-        block.ticketLotteryState = ticketLotteryState;
-        block.nVoters        = nVoters;
-        block.nFreshStake    = nFreshStake;
-        block.nRevocations   = nRevocations;
-        block.extraData      = extraData;
-        block.nStakeVersion = nStakeVersion;
+        strcpy(block.powMsgID, powMsgID);
+        strcpy(block.powNextMsgID, powNextMsgID);
+        block.powModelHash   = powModelHash;
         return block;
     }
 
@@ -483,31 +469,18 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
-
-        if (this->nVersion & HARDFORK_VERSION_BIT) {
-            READWRITE(nStakeDifficulty);
-            READWRITE(nVoteBits);
-            READWRITE(nTicketPoolSize);
-            READWRITE(ticketLotteryState);
-            READWRITE(nVoters);
-            READWRITE(nFreshStake);
-            READWRITE(nRevocations);
-            READWRITE(extraData);
-            READWRITE(nStakeVersion);
+        std::string strMsgID, strNextMsgID;
+        if (!ser_action.ForRead()) {
+            strMsgID = powMsgID;
+            strNextMsgID = powNextMsgID;
         }
-        else if (ser_action.ForRead())
-        {
-            nStakeDifficulty = Params().GetConsensus().nMinimumStakeDiff;
-            nVoteBits = VoteBits::rttAccepted;
-            nTicketPoolSize = 0;
-            ticketLotteryState.SetNull();
-            nVoters = 0;
-            nFreshStake = 0;
-            nRevocations = 0;
-            extraData.SetNull();
-            nStakeVersion = 0;
+        READWRITE(strMsgID);
+        READWRITE(strNextMsgID);
+        if (ser_action.ForRead()) {
+            strncpy(powMsgID, strMsgID.c_str(), MSG_ID_SIZE);
+            strncpy(powNextMsgID, strNextMsgID.c_str(), MSG_ID_SIZE);
         }
-        // READWRITE(nStakeDifficulty);
+        READWRITE(powModelHash);
     }
 
     uint256 GetBlockHash() const
@@ -519,15 +492,9 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
-        block.nStakeDifficulty = nStakeDifficulty;
-        block.nVoteBits       = nVoteBits;
-        block.nTicketPoolSize = nTicketPoolSize;
-        block.ticketLotteryState = ticketLotteryState;
-        block.nVoters         = nVoters;
-        block.nFreshStake     = nFreshStake;
-        block.nRevocations    = nRevocations;
-        block.extraData       = extraData;
-        block.nStakeVersion   = nStakeVersion;
+        strcpy(block.powMsgID, powMsgID);
+        strcpy(block.powNextMsgID, powNextMsgID);
+        block.powModelHash   = powModelHash;
         return block.GetHash();
     }
 
