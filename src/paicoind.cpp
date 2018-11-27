@@ -65,14 +65,17 @@ void SaveGenesisConf(const std::string& confPath)
     conf.open(confPath);
 
     conf << "MAINNET_GENESIS_BLOCK_NONCE = "          << gGenesisparams.GetArg("MAINNET_GENESIS_BLOCK_NONCE", "") << "\n";
+    conf << "MAINNET_GENESIS_BLOCK_MODEL = "          << gGenesisparams.GetArg("MAINNET_GENESIS_BLOCK_MODEL", "") << "\n";
     conf << "MAINNET_CONSENSUS_HASH_GENESIS_BLOCK = " << gGenesisparams.GetArg("MAINNET_CONSENSUS_HASH_GENESIS_BLOCK", "") << "\n";
     conf << "MAINNET_GENESIS_HASH_MERKLE_ROOT = "     << gGenesisparams.GetArg("MAINNET_GENESIS_HASH_MERKLE_ROOT", "") << "\n";
 
     conf << "TESTNET_GENESIS_BLOCK_NONCE = "          << gGenesisparams.GetArg("TESTNET_GENESIS_BLOCK_NONCE", "") << "\n";
+    conf << "TESTNET_GENESIS_BLOCK_MODEL = "          << gGenesisparams.GetArg("TESTNET_GENESIS_BLOCK_MODEL", "") << "\n";
     conf << "TESTNET_CONSENSUS_HASH_GENESIS_BLOCK = " << gGenesisparams.GetArg("TESTNET_CONSENSUS_HASH_GENESIS_BLOCK", "") << "\n";
     conf << "TESTNET_GENESIS_HASH_MERKLE_ROOT = "     << gGenesisparams.GetArg("TESTNET_GENESIS_HASH_MERKLE_ROOT", "") << "\n";
 
     conf << "REGTEST_GENESIS_BLOCK_NONCE = "          << gGenesisparams.GetArg("REGTEST_GENESIS_BLOCK_NONCE", "") << "\n";
+    conf << "REGTEST_GENESIS_BLOCK_MODEL = "          << gGenesisparams.GetArg("REGTEST_GENESIS_BLOCK_MODEL", "") << "\n";
     conf << "REGTEST_CONSENSUS_HASH_GENESIS_BLOCK = " << gGenesisparams.GetArg("REGTEST_CONSENSUS_HASH_GENESIS_BLOCK", "") << "\n";
     conf << "REGTEST_GENESIS_HASH_MERKLE_ROOT = "     << gGenesisparams.GetArg("REGTEST_GENESIS_HASH_MERKLE_ROOT", "") << "\n";
 
