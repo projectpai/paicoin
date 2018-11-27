@@ -212,6 +212,10 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
+    enum { MSG_ID_SIZE = 60 };
+    char powMsgID[MSG_ID_SIZE];
+    char powNextMsgID[MSG_ID_SIZE];
+    uint256 powModelHash;
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t nSequenceId;
@@ -240,6 +244,9 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
+        powMsgID[0]    = '\0';
+        powNextMsgID[0] = '\0';
+        powModelHash   = uint256();
     }
 
     CBlockIndex()
@@ -256,6 +263,9 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
+        strcpy(powMsgID, block.powMsgID);
+        strcpy(powNextMsgID, block.powNextMsgID);
+        powModelHash = block.powModelHash;
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -286,6 +296,9 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        strcpy(block.powMsgID, powMsgID);
+        strcpy(block.powNextMsgID, powNextMsgID);
+        block.powModelHash   = powModelHash;
         return block;
     }
 
@@ -405,6 +418,18 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+        std::string strMsgID, strNextMsgID;
+        if (!ser_action.ForRead()) {
+            strMsgID = powMsgID;
+            strNextMsgID = powNextMsgID;
+        }
+        READWRITE(strMsgID);
+        READWRITE(strNextMsgID);
+        if (ser_action.ForRead()) {
+            strncpy(powMsgID, strMsgID.c_str(), MSG_ID_SIZE);
+            strncpy(powNextMsgID, strNextMsgID.c_str(), MSG_ID_SIZE);
+        }
+        READWRITE(powModelHash);
     }
 
     uint256 GetBlockHash() const
@@ -416,6 +441,9 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
+        strcpy(block.powMsgID, powMsgID);
+        strcpy(block.powNextMsgID, powNextMsgID);
+        block.powModelHash   = powModelHash;
         return block.GetHash();
     }
 
