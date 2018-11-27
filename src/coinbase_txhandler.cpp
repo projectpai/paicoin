@@ -136,12 +136,12 @@ bool CoinbaseTxHandler::GetPayloadFromTrimmedHeader(std::vector<unsigned char> c
     std::vector<unsigned char>& payload,
     unsigned char& operationType)
 {
-    if (payloadWithHeader.size() < 34) {
+    if (payloadWithHeader.size() < 33) {
         return false;
     }
 
     try {
-        if (payloadWithHeader.size() > 34) {
+        if (payloadWithHeader.size() > 33) {
             operationType = COT_SIGN;
         } else {
             operationType = COT_ADD;

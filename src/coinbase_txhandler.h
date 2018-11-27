@@ -90,7 +90,7 @@ private:
     std::vector<unsigned char> _preHeader{
         0x66,       // crc8('PAICB')
         0x10,       // version 1.0
-        0x00, 0x00  // reserved for future use
+        0x00        // reserved for future use
     };
 };
 

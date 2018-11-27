@@ -345,12 +345,12 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseTxHandler_ClosedLoopTest, CoinbaseIndexWithBalan
     // Try a good parameter combination
     auto createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(wallet.get(),
         insertionKey.GetPubKey().GetID(), maxBlockHeight);
-    BOOST_CHECK(!!createdTransactions.first);
-    BOOST_CHECK(!!createdTransactions.second);
+    BOOST_CHECK(createdTransactions.first.get() != nullptr);
+    BOOST_CHECK(createdTransactions.second.get() != nullptr);
 
     std::vector<CMutableTransaction> transactions{
-        CMutableTransaction(*(createdTransactions.first)),
-        CMutableTransaction(*(createdTransactions.second))
+        CMutableTransaction(*(createdTransactions.first.get())),
+        CMutableTransaction(*(createdTransactions.second.get()))
     };
     CreateAndProcessBlock(transactions, GetScriptPubKey());
 
