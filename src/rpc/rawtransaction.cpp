@@ -980,11 +980,11 @@ UniValue createcoinbasetransaction(const JSONRPCRequest& request)
             "2.  \"maxBlockHeight\"   (integer, optional, default=-1) The maximum block height at which the coinbase address can be used\n"
             "\nExamples:\n"
             "\nAdd a new coinbase address with expiring block at height 100:\n"
-            + HelpExampleCli("createcoinbasetransaction", "AFE0126BB12ED 100") +
+            + HelpExampleCli("createcoinbasetransaction", "\"addressHex\" 100") +
             "\nAdd a new coinbase address with no expiration block height:\n"
-            + HelpExampleCli("createcoinbasetransaction", "AFE0126BB12ED") +
+            + HelpExampleCli("createcoinbasetransaction", "\"addressHex\"") +
             "\nPrevious example, explicitly giving no expiration height:\n"
-            + HelpExampleCli("createcoinbasetransaction", "AFE0126BB12ED -1")
+            + HelpExampleCli("createcoinbasetransaction", "\"addressHex\" -1")
         );
     
     ObserveSafeMode();
