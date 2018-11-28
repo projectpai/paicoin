@@ -91,32 +91,31 @@ std::vector<std::vector<unsigned char, secure_allocator<unsigned char>>> Coinbas
         return keysInFile;
     }
 
-    char keyHexChars[201] = {0};
+    std::vector<char, secure_allocator<char>> keyHexChars;
+    keyHexChars.resize(201, 0);
+
     std::ifstream inputFile(filePath.string(), std::ios_base::in);
     while (!inputFile.eof() && inputFile.good()) {
-        inputFile.getline(keyHexChars, 200, '\n');
+        inputFile.getline(keyHexChars.data(), 200, '\n');
         if (!inputFile.good()) {
             break;
         }
 
-        std::string keyHexCharsStr(keyHexChars);
+        SecureString keyHexCharsStr(keyHexChars.data());
         if (keyHexCharsStr.empty()) {
             continue;
         }
+        // zero out to not keep eventual secret keys in static memory
+        std::fill(keyHexChars.begin(), keyHexChars.end(), 0);
 
-        auto parsedBytes = ParseHex(keyHexCharsStr);
+        auto parsedBytes = ParseHex(keyHexCharsStr.c_str());
         std::vector<unsigned char, secure_allocator<unsigned char>> keyBytes(parsedBytes.cbegin(), parsedBytes.cend());
         if (keyBytes.empty()) {
             continue;
         }
 
-        // zero out to not keep eventual secret keys in static memory
-        memset(keyHexChars, 0, 201);
-
         // we need to make sure to overwrite the existing parsed bytes
-        for (auto& pb : parsedBytes) {
-            pb = 0xFF; // random value
-        }
+        std::fill(parsedBytes.begin(), parsedBytes.end(), 0);
 
         keysInFile.emplace_back(std::move(keyBytes));
     }
