@@ -3278,8 +3278,8 @@ static uint64_t CalculateCurrentUsage()
 /* Prune a block file (modify associated database entries)*/
 void PruneOneBlockFile(const int fileNumber)
 {
-    for (BlockMap::iterator it = mapBlockIndex.begin(); it != mapBlockIndex.end(); ++it) {
-        CBlockIndex* pindex = it->second;
+    for (const auto& entry : mapBlockIndex) {
+        CBlockIndex* pindex = entry.second;
         if (pindex->nFile == fileNumber) {
             pindex->nStatus &= ~BLOCK_HAVE_DATA;
             pindex->nStatus &= ~BLOCK_HAVE_UNDO;
@@ -3831,8 +3831,8 @@ bool RewindBlockIndex(const CChainParams& params)
     // Reduce validity flag and have-data flags.
     // We do this after actual disconnecting, otherwise we'll end up writing the lack of data
     // to disk before writing the chainstate, resulting in a failure to continue if interrupted.
-    for (BlockMap::iterator it = mapBlockIndex.begin(); it != mapBlockIndex.end(); it++) {
-        CBlockIndex* pindexIter = it->second;
+    for (const auto& entry : mapBlockIndex) {
+        CBlockIndex* pindexIter = entry.second;
 
         // Note: If we encounter an insufficiently validated block that
         // is on chainActive, it must be because we are a pruning node, and
@@ -4107,8 +4107,8 @@ void static CheckBlockIndex(const Consensus::Params& consensusParams)
 
     // Build forward-pointing map of the entire block tree.
     std::multimap<CBlockIndex*,CBlockIndex*> forward;
-    for (BlockMap::iterator it = mapBlockIndex.begin(); it != mapBlockIndex.end(); it++) {
-        forward.insert(std::make_pair(it->second->pprev, it->second));
+    for (const auto& entry : mapBlockIndex) {
+        forward.insert(std::make_pair(entry.second->pprev, entry.second));
     }
 
     assert(forward.size() == mapBlockIndex.size());
