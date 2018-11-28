@@ -163,6 +163,7 @@ void Interrupt(boost::thread_group& threadGroup)
     InterruptRPC();
     InterruptREST();
     InterruptTorControl();
+    InterruptMapPort();
     if (g_connman)
         g_connman->Interrupt();
     threadGroup.interrupt_all();
@@ -200,7 +201,7 @@ void Shutdown()
     g_connman.reset();
 
     StopTorControl();
-    UnregisterNodeSignals(GetNodeSignals());
+
     if (fDumpMempoolLater && gArgs.GetArg("-persistmempool", DEFAULT_PERSIST_MEMPOOL)) {
         DumpMempool();
     }
@@ -1264,7 +1265,6 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     peerLogic.reset(new PeerLogicValidation(&connman));
     RegisterValidationInterface(peerLogic.get());
-    RegisterNodeSignals(GetNodeSignals());
 
     // sanitize comments per BIP-0014, format user agent and check total size
     std::vector<std::string> uacomments;
@@ -1648,10 +1648,12 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     if (gArgs.GetBoolArg("-listenonion", DEFAULT_LISTEN_ONION))
         StartTorControl(threadGroup, scheduler);
 
-    Discover(threadGroup);
+    Discover();
 
     // Map ports with UPnP
-    MapPort(gArgs.GetBoolArg("-upnp", DEFAULT_UPNP));
+    if (gArgs.GetBoolArg("-upnp", DEFAULT_UPNP)) {
+        StartMapPort();
+    }
 
     CConnman::Options connOptions;
     connOptions.nLocalServices = nLocalServices;
@@ -1662,8 +1664,10 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     connOptions.nMaxFeeler = 1;
     connOptions.nBestHeight = chain_active_height;
     connOptions.uiInterface = &uiInterface;
+    connOptions.m_msgproc = peerLogic.get();
     connOptions.nSendBufferMaxSize = 1000*gArgs.GetArg("-maxsendbuffer", DEFAULT_MAXSENDBUFFER);
     connOptions.nReceiveFloodSize = 1000*gArgs.GetArg("-maxreceivebuffer", DEFAULT_MAXRECEIVEBUFFER);
+    connOptions.m_added_nodes = gArgs.GetArgs("-addnode");
 
     connOptions.nMaxOutboundTimeframe = nMaxOutboundTimeframe;
     connOptions.nMaxOutboundLimit = nMaxOutboundLimit;
