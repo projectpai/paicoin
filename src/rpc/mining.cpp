@@ -704,7 +704,6 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         coinbaseTx.vout[0].scriptPubKey = scriptPubKey;
         coinbaseTx.vout[0].nValue = nFees + GetBlockSubsidy(nHeight, Params().GetConsensus());
         coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
-        
         UniValue coinbase(UniValue::VOBJ);
         coinbase.push_back(Pair("data", EncodeHexTx(coinbaseTx)));
         coinbase.push_back(Pair("hash", coinbaseTx.GetHash().GetHex()));
