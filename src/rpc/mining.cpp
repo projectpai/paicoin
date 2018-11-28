@@ -375,6 +375,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     LOCK(cs_main);
 
     std::string strMode = "template";
+    std::string address = "";
     UniValue lpval = NullUniValue;
     std::set<std::string> setClientRules;
     int64_t nMaxVersionPreVB = -1;
@@ -391,6 +392,12 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         else
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
         lpval = find_value(oparam, "longpollid");
+
+        const UniValue& addressval = find_value(oparam, "address");
+        if (addressval.isStr())
+        {
+            address = addressval.get_str();
+        }
 
         if (strMode == "proposal")
         {
@@ -678,6 +685,30 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
     if (!pblocktemplate->vchCoinbaseCommitment.empty() && fSupportsSegwit) {
         result.push_back(Pair("default_witness_commitment", HexStr(pblocktemplate->vchCoinbaseCommitment.begin(), pblocktemplate->vchCoinbaseCommitment.end())));
+    }
+
+    if (!address.empty())
+    {
+        const CTxDestination coinbaseScript = DecodeDestination(address);
+        if (!IsValidDestination(coinbaseScript)) {
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error: Invalid coinbase payout address");
+        }
+        const CScript scriptPubKey = GetScriptForDestination(coinbaseScript);
+        CAmount nFees = 0;
+        int nHeight = pindexPrev->nHeight + 1;
+        // Create coinbase transaction.
+        CMutableTransaction coinbaseTx;
+        coinbaseTx.vin.resize(1);
+        coinbaseTx.vin[0].prevout.SetNull();
+        coinbaseTx.vout.resize(1);
+        coinbaseTx.vout[0].scriptPubKey = scriptPubKey;
+        coinbaseTx.vout[0].nValue = nFees + GetBlockSubsidy(nHeight, Params().GetConsensus());
+        coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
+        
+        UniValue coinbase(UniValue::VOBJ);
+        coinbase.push_back(Pair("data", EncodeHexTx(coinbaseTx)));
+        coinbase.push_back(Pair("hash", coinbaseTx.GetHash().GetHex()));
+        result.push_back(Pair("coinbasetxn", coinbase));
     }
 
     return result;
