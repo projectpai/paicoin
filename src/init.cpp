@@ -191,7 +191,7 @@ void Shutdown()
 #ifdef ENABLE_WALLET
     FlushWallets();
 #endif
-    MapPort(false);
+    StopMapPort();
 
     // Because these depend on each-other, we make sure that neither can be
     // using the other before destroying them.
