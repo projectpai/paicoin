@@ -92,7 +92,7 @@ UniValue getpeerinfo(const JSONRPCRequest& request)
             "    \"version\": v,              (numeric) The peer version, such as 7001\n"
             "    \"subver\": \"/Turing:0.8.5/\",  (string) The string version\n"
             "    \"inbound\": true|false,     (boolean) Inbound (true) or Outbound (false)\n"
-            "    \"addnode\": true|false,     (boolean) Whether connection was due to addnode and is using an addnode slot\n"
+            "    \"addnode\": true|false,     (boolean) Whether connection was due to addnode/-connect or if it was an automatic/inbound connection\n"
             "    \"startingheight\": n,       (numeric) The starting height (block) of the peer\n"
             "    \"banscore\": n,             (numeric) The ban score\n"
             "    \"synced_headers\": n,       (numeric) The last header we have in common with this peer\n"
@@ -146,7 +146,7 @@ UniValue getpeerinfo(const JSONRPCRequest& request)
         obj.push_back(Pair("timeoffset", stats.nTimeOffset));
         if (stats.dPingTime > 0.0)
             obj.push_back(Pair("pingtime", stats.dPingTime));
-        if (stats.dMinPing < std::numeric_limits<int64_t>::max()/1e6)
+        if (stats.dMinPing < static_cast<double>(std::numeric_limits<int64_t>::max())/1e6)
             obj.push_back(Pair("minping", stats.dMinPing));
         if (stats.dPingWait > 0.0)
             obj.push_back(Pair("pingwait", stats.dPingWait));
@@ -156,7 +156,7 @@ UniValue getpeerinfo(const JSONRPCRequest& request)
         // their ver message.
         obj.push_back(Pair("subver", stats.cleanSubVer));
         obj.push_back(Pair("inbound", stats.fInbound));
-        obj.push_back(Pair("addnode", stats.fAddnode));
+        obj.push_back(Pair("addnode", stats.m_manual_connection));
         obj.push_back(Pair("startingheight", stats.nStartingHeight));
         if (fStateStats) {
             obj.push_back(Pair("banscore", statestats.nMisbehavior));

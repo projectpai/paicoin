@@ -1,4 +1,4 @@
-PAIcoin Core Daemon version v0.15.99.0-f65a860
+PAIcoin Core Daemon version v0.16.01
 
 Usage:
   paicoind [options]                     Start PAIcoin Core Daemon

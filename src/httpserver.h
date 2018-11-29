@@ -74,7 +74,7 @@ public:
 
     /** Get requested URI.
      */
-    std::string GetURI();
+    std::string GetURI() const;
 
     /** Get CService (address:ip) for the origin of the http request.
      */
@@ -82,7 +82,7 @@ public:
 
     /** Get request method.
      */
-    RequestMethod GetRequestMethod();
+    RequestMethod GetRequestMethod() const;
 
     /**
      * Get the request header specified by hdr, or an empty string.
