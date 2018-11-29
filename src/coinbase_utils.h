@@ -1,3 +1,7 @@
+// Copyright (c) 2018 The PAIcoin Core developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #ifndef PAICOIN_COINBASE_UTILS_H
 #define PAICOIN_COINBASE_UTILS_H
 

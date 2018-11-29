@@ -1,3 +1,7 @@
+// Copyright (c) 2018 The PAIcoin Core developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #include "coinbase_keyhandler.h"
 #include "coinbase_utils.h"
 #include "key.h"
