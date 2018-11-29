@@ -277,12 +277,13 @@ std::pair<CTransactionRef, CTransactionRef> CoinbaseTxHandler::CreateCompleteCoi
         return {};
     }
 
-    auto unspentInputsDataTx = SelectInputs(wallet, DEFAULT_COINBASE_TX_FEE);
+    CAmount txFeePerCbIndexTx = DEFAULT_COINBASE_TX_FEE / 2;
+    auto unspentInputsDataTx = SelectInputs(wallet, txFeePerCbIndexTx);
     if (unspentInputsDataTx.empty()) {
         CoinbaseIndexLog("%s: could not select inputs for coinbase transaction", __FUNCTION__);
         return {};
     }
-    auto dataTx = CreateCoinbaseTransaction(unspentInputsDataTx, DEFAULT_COINBASE_TX_FEE, wallet);
+    auto dataTx = CreateCoinbaseTransaction(unspentInputsDataTx, txFeePerCbIndexTx, wallet);
 
     auto payload = FillTransactionWithCoinbaseNewAddress(dataTx, newAddressIndex, targetAddress, maxBlockHeight);
     if (payload.empty()) {
@@ -301,7 +302,7 @@ std::pair<CTransactionRef, CTransactionRef> CoinbaseTxHandler::CreateCompleteCoi
     // Make sure if we fail to add the second transaction, we undo the first transaction as well
     CoinbaseMempoolTxDeleter dataTxMempoolDeleter(new CMutableTransaction(dataTx));
 
-    CAmount totalBefore = -DEFAULT_COINBASE_TX_FEE;
+    CAmount totalBefore = -txFeePerCbIndexTx - DEFAULT_MIN_RELAY_TX_FEE;
     for (auto const& u : unspentInputsDataTx) {
         totalBefore += u.amount;
     }
@@ -309,7 +310,7 @@ std::pair<CTransactionRef, CTransactionRef> CoinbaseTxHandler::CreateCompleteCoi
     std::unique_ptr<CWalletTx> ptrGuard(new CWalletTx(wallet, MakeTransactionRef(dataTx)));
     UnspentInput unspentInputSigTx{ptrGuard.get(), 1, totalBefore, 1};
 
-    auto sigTx = CreateCoinbaseTransaction({unspentInputSigTx}, DEFAULT_COINBASE_TX_FEE, wallet);
+    auto sigTx = CreateCoinbaseTransaction({unspentInputSigTx}, txFeePerCbIndexTx, wallet);
     
     CoinbaseKeyHandler cbKeyHandler(GetDataDir());
     auto signKey = cbKeyHandler.GetCoinbaseSigningKey();

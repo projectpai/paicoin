@@ -89,8 +89,8 @@ CMutableTransaction CreateCoinbaseTransaction(
     auto firstKey = *(keys.begin());
     CScript ownDestinationScript = GetScriptForDestination(firstKey);
 
-    CTxOut oprOut(txAmount / 2, CScript());
-    CTxOut restOut(totalAvailableAmount - txAmount, ownDestinationScript);
+    CTxOut oprOut(txAmount, CScript());
+    CTxOut restOut(totalAvailableAmount - txAmount - DEFAULT_MIN_RELAY_TX_FEE, ownDestinationScript);
 
     rawTx.vout.push_back(oprOut);
     rawTx.vout.push_back(restOut);
