@@ -620,12 +620,12 @@ CService HTTPRequest::GetPeer()
     return peer;
 }
 
-std::string HTTPRequest::GetURI()
+std::string HTTPRequest::GetURI() const
 {
     return evhttp_request_get_uri(req);
 }
 
-HTTPRequest::RequestMethod HTTPRequest::GetRequestMethod()
+HTTPRequest::RequestMethod HTTPRequest::GetRequestMethod() const
 {
     switch (evhttp_request_get_command(req)) {
     case EVHTTP_REQ_GET:
@@ -654,8 +654,8 @@ void RegisterHTTPHandler(const std::string &prefix, bool exactMatch, const HTTPR
 
 void UnregisterHTTPHandler(const std::string &prefix, bool exactMatch)
 {
-    std::vector<HTTPPathHandler>::iterator i = pathHandlers.begin();
-    std::vector<HTTPPathHandler>::iterator iend = pathHandlers.end();
+    auto i = pathHandlers.begin();
+    auto iend = pathHandlers.end();
     for (; i != iend; ++i)
         if (i->prefix == prefix && i->exactMatch == exactMatch)
             break;
@@ -669,7 +669,7 @@ void UnregisterHTTPHandler(const std::string &prefix, bool exactMatch)
 std::string urlDecode(const std::string &urlEncoded) {
     std::string res;
     if (!urlEncoded.empty()) {
-        char *decoded = evhttp_uridecode(urlEncoded.c_str(), false, nullptr);
+        auto decoded = evhttp_uridecode(urlEncoded.c_str(), false, nullptr);
         if (decoded) {
             res = std::string(decoded);
             free(decoded);
