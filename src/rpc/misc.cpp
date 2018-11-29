@@ -25,6 +25,8 @@
 #include "warnings.h"
 
 #include <stdint.h>
+#include <iterator>
+#include <string>
 #ifdef HAVE_MALLOC_INFO
 #include <malloc.h>
 #endif
@@ -35,14 +37,14 @@
 class DescribeAddressVisitor : public boost::static_visitor<UniValue>
 {
 public:
-    CWallet * const pwallet;
+    const CWallet * const pwallet;
 
-    explicit DescribeAddressVisitor(CWallet *_pwallet) : pwallet(_pwallet) {}
+    explicit DescribeAddressVisitor(const CWallet *_pwallet) : pwallet{_pwallet} {}
 
-    UniValue operator()(const CNoDestination &dest) const { return UniValue(UniValue::VOBJ); }
+    UniValue operator()(const CNoDestination&) const { return UniValue{UniValue::VOBJ}; }
 
     UniValue operator()(const CKeyID &keyID) const {
-        UniValue obj(UniValue::VOBJ);
+        UniValue obj{UniValue::VOBJ};
         CPubKey vchPubKey;
         obj.push_back(Pair("isscript", false));
         if (pwallet && pwallet->GetPubKey(keyID, vchPubKey)) {
@@ -53,7 +55,7 @@ public:
     }
 
     UniValue operator()(const CScriptID &scriptID) const {
-        UniValue obj(UniValue::VOBJ);
+        UniValue obj{UniValue::VOBJ};
         CScript subscript;
         obj.push_back(Pair("isscript", true));
         if (pwallet && pwallet->GetCScript(scriptID, subscript)) {
@@ -63,8 +65,8 @@ public:
             ExtractDestinations(subscript, whichType, addresses, nRequired);
             obj.push_back(Pair("script", GetTxnOutputType(whichType)));
             obj.push_back(Pair("hex", HexStr(subscript.begin(), subscript.end())));
-            UniValue a(UniValue::VARR);
-            for (const CTxDestination& addr : addresses) {
+            UniValue a{UniValue::VARR};
+            for (const auto& addr : addresses) {
                 a.push_back(EncodeDestination(addr));
             }
             obj.push_back(Pair("addresses", a));
@@ -79,7 +81,7 @@ public:
 UniValue validateaddress(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
-        throw std::runtime_error(
+        throw std::runtime_error{
             "validateaddress \"address\"\n"
             "\nReturn information about the given paicoin address.\n"
             "\nArguments:\n"
@@ -110,41 +112,41 @@ UniValue validateaddress(const JSONRPCRequest& request)
             "\nExamples:\n"
             + HelpExampleCli("validateaddress", "\"1PSSGeFHDnKNxiEyFrD1wcEaHr9hrQDDWc\"")
             + HelpExampleRpc("validateaddress", "\"1PSSGeFHDnKNxiEyFrD1wcEaHr9hrQDDWc\"")
-        );
+        };
 
 #ifdef ENABLE_WALLET
-    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
 
     LOCK2(cs_main, pwallet ? &pwallet->cs_wallet : nullptr);
 #else
     LOCK(cs_main);
 #endif
 
-    CTxDestination dest = DecodeDestination(request.params[0].get_str());
-    bool isValid = IsValidDestination(dest);
+    const auto dest = DecodeDestination(request.params[0].get_str());
+    const auto isValid = IsValidDestination(dest);
 
-    UniValue ret(UniValue::VOBJ);
+    UniValue ret{UniValue::VOBJ};
     ret.push_back(Pair("isvalid", isValid));
     if (isValid)
     {
-        std::string currentAddress = EncodeDestination(dest);
+        const auto currentAddress = EncodeDestination(dest);
         ret.push_back(Pair("address", currentAddress));
 
-        CScript scriptPubKey = GetScriptForDestination(dest);
-        ret.push_back(Pair("scriptPubKey", HexStr(scriptPubKey.begin(), scriptPubKey.end())));
+        const auto scriptPubKey = GetScriptForDestination(dest);
+        ret.push_back(Pair("scriptPubKey", HexStr(std::begin(scriptPubKey), std::end(scriptPubKey))));
 
 #ifdef ENABLE_WALLET
-        isminetype mine = pwallet ? IsMine(*pwallet, dest) : ISMINE_NO;
-        ret.push_back(Pair("ismine", bool(mine & ISMINE_SPENDABLE)));
-        ret.push_back(Pair("iswatchonly", bool(mine & ISMINE_WATCH_ONLY)));
-        UniValue detail = boost::apply_visitor(DescribeAddressVisitor(pwallet), dest);
+        const isminetype mine = pwallet ? IsMine(*pwallet, dest) : ISMINE_NO;
+        ret.push_back(Pair("ismine", static_cast<bool>(mine & ISMINE_SPENDABLE)));
+        ret.push_back(Pair("iswatchonly", static_cast<bool>(mine & ISMINE_WATCH_ONLY)));
+        const auto detail = boost::apply_visitor(DescribeAddressVisitor(pwallet), dest);
         ret.pushKVs(detail);
         if (pwallet && pwallet->mapAddressBook.count(dest)) {
             ret.push_back(Pair("account", pwallet->mapAddressBook[dest].name));
         }
         if (pwallet) {
             const auto& meta = pwallet->mapKeyMetadata;
-            const CKeyID *keyID = boost::get<CKeyID>(&dest);
+            const auto * const keyID = boost::get<CKeyID>(&dest);
             auto it = keyID ? meta.find(*keyID) : meta.end();
             if (it == meta.end()) {
                 it = meta.find(CScriptID(scriptPubKey));
@@ -168,15 +170,15 @@ class CWallet;
 /**
  * Used by addmultisigaddress / createmultisig:
  */
-CScript _createmultisig_redeemScript(CWallet * const pwallet, const UniValue& params)
+CScript _createmultisig_redeemScript(const CWallet * const pwallet, const UniValue& params)
 {
-    int nRequired = params[0].get_int();
-    const UniValue& keys = params[1].get_array();
+    const int nRequired = params[0].get_int();
+    const auto& keys = params[1].get_array();
 
     // Gather public keys
     if (nRequired < 1)
         throw std::runtime_error("a multisignature address must require at least one key to redeem");
-    if ((int)keys.size() < nRequired)
+    if (static_cast<int>(keys.size()) < nRequired)
         throw std::runtime_error(
             strprintf("not enough keys supplied "
                       "(got %u keys, but need at least %d to redeem)", keys.size(), nRequired));
@@ -184,14 +186,14 @@ CScript _createmultisig_redeemScript(CWallet * const pwallet, const UniValue& pa
         throw std::runtime_error("Number of addresses involved in the multisignature address creation > 16\nReduce the number");
     std::vector<CPubKey> pubkeys;
     pubkeys.resize(keys.size());
-    for (unsigned int i = 0; i < keys.size(); i++)
+    for (size_t i{0}; i < keys.size(); i++)
     {
-        const std::string& ks = keys[i].get_str();
+        const auto& ks = keys[i].get_str();
 #ifdef ENABLE_WALLET
         // Case 1: PAIcoin address and we have full public key:
-        CTxDestination dest = DecodeDestination(ks);
+        const auto dest = DecodeDestination(ks);
         if (pwallet && IsValidDestination(dest)) {
-            const CKeyID *keyID = boost::get<CKeyID>(&dest);
+            const auto * const keyID = boost::get<CKeyID>(&dest);
             if (!keyID) {
                 throw std::runtime_error(strprintf("%s does not refer to a key", ks));
             }
@@ -209,7 +211,7 @@ CScript _createmultisig_redeemScript(CWallet * const pwallet, const UniValue& pa
 #endif
         if (IsHex(ks))
         {
-            CPubKey vchPubKey(ParseHex(ks));
+            CPubKey vchPubKey{ParseHex(ks)};
             if (!vchPubKey.IsFullyValid())
                 throw std::runtime_error(" Invalid public key: "+ks);
             pubkeys[i] = vchPubKey;
@@ -219,7 +221,7 @@ CScript _createmultisig_redeemScript(CWallet * const pwallet, const UniValue& pa
             throw std::runtime_error(" Invalid public key: "+ks);
         }
     }
-    CScript result = GetScriptForMultisig(nRequired, pubkeys);
+    const auto result = GetScriptForMultisig(nRequired, pubkeys);
 
     if (result.size() > MAX_SCRIPT_ELEMENT_SIZE)
         throw std::runtime_error(
@@ -231,14 +233,15 @@ CScript _createmultisig_redeemScript(CWallet * const pwallet, const UniValue& pa
 UniValue createmultisig(const JSONRPCRequest& request)
 {
 #ifdef ENABLE_WALLET
-    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+    const CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
 #else
-    CWallet * const pwallet = nullptr;
+    const CWallet * const pwallet = nullptr;
 #endif
 
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 2)
     {
-        std::string msg = "createmultisig nrequired [\"key\",...]\n"
+        throw std::runtime_error{
+           "createmultisig nrequired [\"key\",...]\n"
             "\nCreates a multi-signature address with n signature of m keys required.\n"
             "It returns a json object with the address and redeemScript.\n"
 
@@ -261,17 +264,16 @@ UniValue createmultisig(const JSONRPCRequest& request)
             + HelpExampleCli("createmultisig", "2 \"[\\\"16sSauSf5pF2UkUwvKGq4qjNRzBZYqgEL5\\\",\\\"171sgjn4YtPu27adkKGrdDwzRTxnRkBfKV\\\"]\"") +
             "\nAs a json rpc call\n"
             + HelpExampleRpc("createmultisig", "2, \"[\\\"16sSauSf5pF2UkUwvKGq4qjNRzBZYqgEL5\\\",\\\"171sgjn4YtPu27adkKGrdDwzRTxnRkBfKV\\\"]\"")
-        ;
-        throw std::runtime_error(msg);
+        };
     }
 
     // Construct using pay-to-script-hash:
-    CScript inner = _createmultisig_redeemScript(pwallet, request.params);
-    CScriptID innerID(inner);
+    const auto inner = _createmultisig_redeemScript(pwallet, request.params);
+    CScriptID innerID{inner};
 
-    UniValue result(UniValue::VOBJ);
+    UniValue result{UniValue::VOBJ};
     result.push_back(Pair("address", EncodeDestination(innerID)));
-    result.push_back(Pair("redeemScript", HexStr(inner.begin(), inner.end())));
+    result.push_back(Pair("redeemScript", HexStr(inner)));
 
     return result;
 }
@@ -279,7 +281,7 @@ UniValue createmultisig(const JSONRPCRequest& request)
 UniValue verifymessage(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 3)
-        throw std::runtime_error(
+        throw std::runtime_error{
             "verifymessage \"address\" \"signature\" \"message\"\n"
             "\nVerify a signed message\n"
             "\nArguments:\n"
@@ -297,31 +299,31 @@ UniValue verifymessage(const JSONRPCRequest& request)
             + HelpExampleCli("verifymessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"signature\" \"my message\"") +
             "\nAs json rpc\n"
             + HelpExampleRpc("verifymessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\", \"signature\", \"my message\"")
-        );
+        };
 
     LOCK(cs_main);
 
-    std::string strAddress  = request.params[0].get_str();
-    std::string strSign     = request.params[1].get_str();
-    std::string strMessage  = request.params[2].get_str();
+    const auto& strAddress  = request.params[0].get_str();
+    const auto& strSign     = request.params[1].get_str();
+    const auto& strMessage  = request.params[2].get_str();
 
-    CTxDestination destination = DecodeDestination(strAddress);
+    const auto destination = DecodeDestination(strAddress);
     if (!IsValidDestination(destination)) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
     }
 
-    const CKeyID *keyID = boost::get<CKeyID>(&destination);
+    const auto * const keyID = boost::get<CKeyID>(&destination);
     if (!keyID) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to key");
     }
 
-    bool fInvalid = false;
-    std::vector<unsigned char> vchSig = DecodeBase64(strSign.c_str(), &fInvalid);
+    auto fInvalid = false;
+    const auto vchSig = DecodeBase64(strSign.c_str(), &fInvalid);
 
     if (fInvalid)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Malformed base64 encoding");
 
-    CHashWriter ss(SER_GETHASH, 0);
+    CHashWriter ss{SER_GETHASH, 0};
     ss << strMessageMagic;
     ss << strMessage;
 
@@ -335,7 +337,7 @@ UniValue verifymessage(const JSONRPCRequest& request)
 UniValue signmessagewithprivkey(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
-        throw std::runtime_error(
+        throw std::runtime_error{
             "signmessagewithprivkey \"privkey\" \"message\"\n"
             "\nSign a message with the private key of an address\n"
             "\nArguments:\n"
@@ -350,20 +352,19 @@ UniValue signmessagewithprivkey(const JSONRPCRequest& request)
             + HelpExampleCli("verifymessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"signature\" \"my message\"") +
             "\nAs json rpc\n"
             + HelpExampleRpc("signmessagewithprivkey", "\"privkey\", \"my message\"")
-        );
+        };
 
-    std::string strPrivkey = request.params[0].get_str();
-    std::string strMessage = request.params[1].get_str();
+    const auto& strPrivkey = request.params[0].get_str();
+    const auto& strMessage = request.params[1].get_str();
 
     CPAIcoinSecret vchSecret;
-    bool fGood = vchSecret.SetString(strPrivkey);
-    if (!fGood)
+    if (!vchSecret.SetString(strPrivkey))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key");
-    CKey key = vchSecret.GetKey();
+    const auto key = vchSecret.GetKey();
     if (!key.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
 
-    CHashWriter ss(SER_GETHASH, 0);
+    CHashWriter ss{SER_GETHASH, 0};
     ss << strMessageMagic;
     ss << strMessage;
 
@@ -377,16 +378,16 @@ UniValue signmessagewithprivkey(const JSONRPCRequest& request)
 UniValue setmocktime(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
-        throw std::runtime_error(
+        throw std::runtime_error{
             "setmocktime timestamp\n"
             "\nSet the local time to given timestamp (-regtest only)\n"
             "\nArguments:\n"
             "1. timestamp  (integer, required) Unix seconds-since-epoch timestamp\n"
             "   Pass 0 to go back to using the system time."
-        );
+        };
 
     if (!Params().MineBlocksOnDemand())
-        throw std::runtime_error("setmocktime for regression testing (-regtest mode) only");
+        throw std::runtime_error{"setmocktime for regression testing (-regtest mode) only"};
 
     // For now, don't change mocktime if we're in the middle of validation, as
     // this could have an effect on mempool time-based eviction, as well as
@@ -403,8 +404,8 @@ UniValue setmocktime(const JSONRPCRequest& request)
 
 static UniValue RPCLockedMemoryInfo()
 {
-    LockedPool::Stats stats = LockedPoolManager::Instance().stats();
-    UniValue obj(UniValue::VOBJ);
+    const auto stats = LockedPoolManager::Instance().stats();
+    UniValue obj{UniValue::VOBJ};
     obj.push_back(Pair("used", uint64_t(stats.used)));
     obj.push_back(Pair("free", uint64_t(stats.free)));
     obj.push_back(Pair("total", uint64_t(stats.total)));
@@ -439,7 +440,7 @@ UniValue getmemoryinfo(const JSONRPCRequest& request)
      * as users will undoubtedly confuse it with the other "memory pool"
      */
     if (request.fHelp || request.params.size() > 1)
-        throw std::runtime_error(
+        throw std::runtime_error{
             "getmemoryinfo (\"mode\")\n"
             "Returns an object containing information about memory usage.\n"
             "Arguments:\n"
@@ -462,11 +463,11 @@ UniValue getmemoryinfo(const JSONRPCRequest& request)
             "\nExamples:\n"
             + HelpExampleCli("getmemoryinfo", "")
             + HelpExampleRpc("getmemoryinfo", "")
-        );
+        };
 
-    std::string mode = request.params[0].isNull() ? "stats" : request.params[0].get_str();
+    const std::string mode = request.params[0].isNull() ? "stats" : request.params[0].get_str();
     if (mode == "stats") {
-        UniValue obj(UniValue::VOBJ);
+        UniValue obj{UniValue::VOBJ};
         obj.push_back(Pair("locked", RPCLockedMemoryInfo()));
         return obj;
     } else if (mode == "mallocinfo") {
@@ -480,12 +481,12 @@ UniValue getmemoryinfo(const JSONRPCRequest& request)
     }
 }
 
-uint32_t getCategoryMask(UniValue cats) {
+static uint32_t getCategoryMask(UniValue cats) {
     cats = cats.get_array();
-    uint32_t mask = 0;
-    for (unsigned int i = 0; i < cats.size(); ++i) {
-        uint32_t flag = 0;
-        std::string cat = cats[i].get_str();
+    uint32_t mask{0};
+    for (size_t i{0}; i < cats.size(); ++i) {
+        uint32_t flag{0};
+        const auto& cat = cats[i].get_str();
         if (!GetLogCategory(&flag, &cat)) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "unknown logging category " + cat);
         }
@@ -497,7 +498,7 @@ uint32_t getCategoryMask(UniValue cats) {
 UniValue logging(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() > 2) {
-        throw std::runtime_error(
+        throw std::runtime_error{
             "logging [include,...] <exclude>\n"
             "Gets and sets the logging configuration.\n"
             "When called without an argument, returns the list of categories that are currently being debug logged.\n"
@@ -511,10 +512,10 @@ UniValue logging(const JSONRPCRequest& request)
             "\nExamples:\n"
             + HelpExampleCli("logging", "\"[\\\"all\\\"]\" \"[\\\"http\\\"]\"")
             + HelpExampleRpc("logging", "[\"all\"], \"[libevent]\"")
-        );
+        };
     }
 
-    uint32_t originalLogCategories = logCategories;
+    const auto originalLogCategories = logCategories.load();
     if (request.params[0].isArray()) {
         logCategories |= getCategoryMask(request.params[0]);
     }
@@ -528,7 +529,7 @@ UniValue logging(const JSONRPCRequest& request)
     // in which case we should clear the BCLog::LIBEVENT flag.
     // Throw an error if the user has explicitly asked to change only the libevent
     // flag and it failed.
-    uint32_t changedLogCategories = originalLogCategories ^ logCategories;
+    const auto changedLogCategories = originalLogCategories ^ logCategories;
     if (changedLogCategories & BCLog::LIBEVENT) {
         if (!UpdateHTTPServerLogging(logCategories & BCLog::LIBEVENT)) {
             logCategories &= ~BCLog::LIBEVENT;
@@ -538,8 +539,8 @@ UniValue logging(const JSONRPCRequest& request)
         }
     }
 
-    UniValue result(UniValue::VOBJ);
-    std::vector<CLogCategoryActive> vLogCatActive = ListActiveLogCategories();
+    UniValue result{UniValue::VOBJ};
+    const auto vLogCatActive = ListActiveLogCategories();
     for (const auto& logCatActive : vLogCatActive) {
         result.pushKV(logCatActive.category, logCatActive.active);
     }
@@ -550,12 +551,12 @@ UniValue logging(const JSONRPCRequest& request)
 UniValue echo(const JSONRPCRequest& request)
 {
     if (request.fHelp)
-        throw std::runtime_error(
+        throw std::runtime_error{
             "echo|echojson \"message\" ...\n"
             "\nSimply echo back the input arguments. This command is for testing.\n"
             "\nThe difference between echo and echojson is that echojson has argument conversion enabled in the client-side table in"
             "paicoin-cli and the GUI. There is no server-side difference."
-        );
+        };
 
     return request.params;
 }
@@ -578,6 +579,6 @@ static const CRPCCommand commands[] =
 
 void RegisterMiscRPCCommands(CRPCTable &t)
 {
-    for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
+    for (unsigned int vcidx{0}; vcidx < ARRAYLEN(commands); vcidx++)
         t.appendCommand(commands[vcidx].name, &commands[vcidx]);
 }
