@@ -6,9 +6,9 @@
 
 void ObserveSafeMode()
 {
-    std::string warning = GetWarnings("rpc");
+    const auto warning = GetWarnings("rpc");
     if (warning != "" && !gArgs.GetBoolArg("-disablesafemode", DEFAULT_DISABLE_SAFEMODE)) {
-        throw JSONRPCError(RPC_FORBIDDEN_BY_SAFE_MODE, std::string("Safe mode: ") + warning);
+        throw JSONRPCError(RPC_FORBIDDEN_BY_SAFE_MODE, "Safe mode: " + warning);
     }
 }
 
