@@ -190,6 +190,74 @@ UniValue generatetoaddress(const JSONRPCRequest& request)
     return generateBlocks(coinbaseScript, nGenerate, nMaxTries, false);
 }
 
+UniValue submitusefulwork(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 1)
+        throw std::runtime_error(
+            "submitusefulwork ( SubmitUsefulWorkRequest )\n"
+
+            "\nArguments:\n"
+            "1. submitusefulwork_request         (json object) A json object in the following spec\n"
+            "     {\n"
+            "       \"address\":\"miner_address\"       (string, required) The address to send the newly generated paicoin to.\n"
+            "       \"pow_msg_id\":\"msg_id\"           (string, required) Message ID\n"
+            "       \"pow_next_msg_id\":\"next_msg_id\" (string, required) Next message ID\n"
+            "       \"pow_model_hash\":\"model_hash\"   (string, required) ML model hash\n"
+            "     }\n"
+            "\n"
+
+            "\nResult:\n"
+            "block_added     (boolean) Whether a block has been added.\n"
+        );
+
+    const UniValue& oparam = request.params[0].get_obj();
+    std::string address = find_value(oparam, "address").get_str();
+    std::string pow_msg_id = find_value(oparam, "pow_msg_id").get_str();
+    std::string pow_next_msg_id = find_value(oparam, "pow_next_msg_id").get_str();
+    uint256 pow_model_hash = ParseHashStr(find_value(oparam, "pow_model_hash").get_str(), "pow_model_hash");
+
+    CTxDestination destination = DecodeDestination(address);
+    if (!IsValidDestination(destination)) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error: Invalid address");
+    }
+
+    std::shared_ptr<CReserveScript> coinbaseScript = std::make_shared<CReserveScript>();
+    coinbaseScript->reserveScript = GetScriptForDestination(destination);
+
+    std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
+    if (!pblocktemplate.get())
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
+    CBlock *pblock = &pblocktemplate->block;
+
+    // add coinbase tx and update merkle root
+    {
+        unsigned int nExtraNonce = 0;
+        LOCK(cs_main);
+        IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
+    }
+
+    pblock->powMsgID[0] = '\0';
+    strncat(pblock->powMsgID, pow_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
+    pblock->powNextMsgID[0] = '\0';
+    strncat(pblock->powNextMsgID, pow_next_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
+
+    pblock->powModelHash = pow_model_hash;
+    pblock->nNonce = pblock->DeriveNonceFromML();
+
+    LogPrintf("submitusefulwork: %s\n", pblock->GetHash().GetHex());
+
+    if (!CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus()))
+    {
+        return false;
+    }
+
+    std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
+    if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
+
+    return true; // pblock->GetHash().GetHex();
+}
+
 UniValue getmininginfo(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 0)
@@ -1008,7 +1076,7 @@ static const CRPCCommand commands[] =
     { "mining",             "prioritisetransaction",  &prioritisetransaction,  {"txid","dummy","fee_delta"} },
     { "mining",             "getblocktemplate",       &getblocktemplate,       {"template_request"} },
     { "mining",             "submitblock",            &submitblock,            {"hexdata","dummy"} },
-
+    { "mining",             "submitusefulwork",       &submitusefulwork,       {"submitusefulwork_request"} },
 
     { "generating",         "generatetoaddress",      &generatetoaddress,      {"nblocks","address","maxtries"} },
 
