@@ -1291,7 +1291,7 @@ static UniValue ListReceived(const CWallet * const pwallet, const UniValue& para
             if (!ExtractDestination(txout.scriptPubKey, address))
                 continue;
 
-            isminefilter mine{IsMine(*pwallet, address)};
+            isminefilter mine{static_cast<isminefilter>(IsMine(*pwallet, address))};
             if(!(mine & filter))
                 continue;
 
