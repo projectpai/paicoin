@@ -22,12 +22,7 @@ static const unsigned int DEFAULT_BLOCK_RECONSTRUCTION_EXTRA_TXN = 100;
 static constexpr int64_t HEADERS_DOWNLOAD_TIMEOUT_BASE = 15 * 60 * 1000000; // 15 minutes
 static constexpr int64_t HEADERS_DOWNLOAD_TIMEOUT_PER_HEADER = 1000; // 1ms/header
 
-/** Register with a network node to receive its signals */
-void RegisterNodeSignals(CNodeSignals& nodeSignals);
-/** Unregister a network node */
-void UnregisterNodeSignals(CNodeSignals& nodeSignals);
-
-class PeerLogicValidation : public CValidationInterface {
+class PeerLogicValidation final : public CValidationInterface, public NetEventsInterface {
 private:
     CConnman* connman;
 
@@ -38,6 +33,25 @@ public:
     void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) override;
     void BlockChecked(const CBlock& block, const CValidationState& state) override;
     void NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock>& pblock) override;
+
+    /** Initialize a peer by adding it to mapNodeState and pushing a message requesting its version */
+    void InitializeNode(CNode* pnode) override;
+    /** Handle removal of a peer by updating various state and removing it from mapNodeState */
+    void FinalizeNode(NodeId nodeid, bool& fUpdateConnectionTime) override;
+    /**
+    * Process protocol messages received from a given node
+    *
+    * @param[in]   pfrom           The node which we have received messages from.
+    * @param[in]   interrupt       Interrupt condition for processing threads
+    */
+    bool ProcessMessages(CNode* pfrom, std::atomic<bool>& interrupt) override;
+    /**
+    * Send queued protocol messages to be sent to a give node.
+    *
+    * @param[in]   pto             The node which we are sending messages to.
+    * @return                      True if there is more work to be done
+    */
+    bool SendMessages(CNode* pto) override EXCLUSIVE_LOCKS_REQUIRED(pto->cs_sendProcessing);
 };
 
 struct CNodeStateStats {
