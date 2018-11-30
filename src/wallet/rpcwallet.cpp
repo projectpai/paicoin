@@ -2011,7 +2011,7 @@ UniValue gettransaction(const JSONRPCRequest& request)
     ListTransactions(pwallet, wtx, "*", 0, false, details, filter);
     entry.push_back(Pair("details", details));
 
-    const auto strHex = EncodeHexTx(static_cast<const CTransaction&>(wtx), RPCSerializationFlags());
+    const auto strHex = EncodeHexTx(static_cast<const CTransaction&>(*wtx.tx), RPCSerializationFlags());
     entry.push_back(Pair("hex", strHex));
 
     return entry;
