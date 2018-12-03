@@ -5,15 +5,16 @@
 #include "base58.h"
 
 #include "hash.h"
+#include "script/script.h"
 #include "uint256.h"
 
-#include <assert.h>
-#include <stdint.h>
-#include <string.h>
-#include <vector>
-#include <string>
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/static_visitor.hpp>
+
+#include <algorithm>
+#include <assert.h>
+#include <string.h>
+
 
 /** All alphanumeric characters except for "0", "I", "O", and "l" */
 static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -212,86 +213,55 @@ int CBase58Data::CompareTo(const CBase58Data& b58) const
 
 namespace
 {
-/** base58-encoded PAIcoin addresses.
- * Public-key-hash-addresses have version 44 (or 51 testnet).
- * The data vector contains RIPEMD160(SHA256(pubkey)), where pubkey is the serialized public key.
- * Script-hash-addresses have version 131 (or 180 testnet).
- * The data vector contains RIPEMD160(SHA256(cscript)), where cscript is the serialized redemption script.
- */
-class CPAIcoinAddress : public CBase58Data {
-public:
-    bool Set(const CKeyID &id);
-    bool Set(const CScriptID &id);
-    bool Set(const CTxDestination &dest);
-    bool IsValid() const;
-    bool IsValid(const CChainParams &params) const;
-
-    CPAIcoinAddress() {}
-    CPAIcoinAddress(const CTxDestination &dest) { Set(dest); }
-    CPAIcoinAddress(const std::string& strAddress) { SetString(strAddress); }
-    CPAIcoinAddress(const char* pszAddress) { SetString(pszAddress); }
-
-    CTxDestination Get() const;
-};
-
-class CPAIcoinAddressVisitor : public boost::static_visitor<bool>
+class DestinationEncoder : public boost::static_visitor<std::string>
 {
 private:
-    CPAIcoinAddress* addr;
+    const CChainParams& m_params;
 
 public:
-    explicit CPAIcoinAddressVisitor(CPAIcoinAddress* addrIn) : addr(addrIn) {}
+    DestinationEncoder(const CChainParams& params) : m_params(params) {}
 
-    bool operator()(const CKeyID& id) const { return addr->Set(id); }
-    bool operator()(const CScriptID& id) const { return addr->Set(id); }
-    bool operator()(const CNoDestination& no) const { return false; }
+    std::string operator()(const CKeyID& id) const
+    {
+        std::vector<unsigned char> data = m_params.Base58Prefix(CChainParams::PUBKEY_ADDRESS);
+        data.insert(data.end(), id.begin(), id.end());
+        return EncodeBase58Check(data);
+    }
+
+    std::string operator()(const CScriptID& id) const
+    {
+        std::vector<unsigned char> data = m_params.Base58Prefix(CChainParams::SCRIPT_ADDRESS);
+        data.insert(data.end(), id.begin(), id.end());
+        return EncodeBase58Check(data);
+    }
+
+    std::string operator()(const CNoDestination& no) const { return ""; }
 };
 
+CTxDestination DecodeDestination(const std::string& str, const CChainParams& params)
+{
+    std::vector<unsigned char> data;
+    uint160 hash;
+    if (DecodeBase58Check(str, data)) {
+        // base58-encoded PAIcoin addresses.
+        // Public-key-hash-addresses have version 0 (or 111 testnet).
+        // The data vector contains RIPEMD160(SHA256(pubkey)), where pubkey is the serialized public key.
+        const std::vector<unsigned char>& pubkey_prefix = params.Base58Prefix(CChainParams::PUBKEY_ADDRESS);
+        if (data.size() == hash.size() + pubkey_prefix.size() && std::equal(pubkey_prefix.begin(), pubkey_prefix.end(), data.begin())) {
+            std::copy(data.begin() + pubkey_prefix.size(), data.end(), hash.begin());
+            return CKeyID(hash);
+        }
+        // Script-hash-addresses have version 5 (or 196 testnet).
+        // The data vector contains RIPEMD160(SHA256(cscript)), where cscript is the serialized redemption script.
+        const std::vector<unsigned char>& script_prefix = params.Base58Prefix(CChainParams::SCRIPT_ADDRESS);
+        if (data.size() == hash.size() + script_prefix.size() && std::equal(script_prefix.begin(), script_prefix.end(), data.begin())) {
+            std::copy(data.begin() + script_prefix.size(), data.end(), hash.begin());
+            return CScriptID(hash);
+        }
+    }
+    return CNoDestination();
+}
 } // namespace
-
-bool CPAIcoinAddress::Set(const CKeyID& id)
-{
-    SetData(Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS), &id, 20);
-    return true;
-}
-
-bool CPAIcoinAddress::Set(const CScriptID& id)
-{
-    SetData(Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS), &id, 20);
-    return true;
-}
-
-bool CPAIcoinAddress::Set(const CTxDestination& dest)
-{
-    return boost::apply_visitor(CPAIcoinAddressVisitor(this), dest);
-}
-
-bool CPAIcoinAddress::IsValid() const
-{
-    return IsValid(Params());
-}
-
-bool CPAIcoinAddress::IsValid(const CChainParams& params) const
-{
-    bool fCorrectSize = vchData.size() == 20;
-    bool fKnownVersion = vchVersion == params.Base58Prefix(CChainParams::PUBKEY_ADDRESS) ||
-                         vchVersion == params.Base58Prefix(CChainParams::SCRIPT_ADDRESS);
-    return fCorrectSize && fKnownVersion;
-}
-
-CTxDestination CPAIcoinAddress::Get() const
-{
-    if (!IsValid())
-        return CNoDestination();
-    uint160 id;
-    memcpy(&id, vchData.data(), 20);
-    if (vchVersion == Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS))
-        return CKeyID(id);
-    else if (vchVersion == Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS))
-        return CScriptID(id);
-    else
-        return CNoDestination();
-}
 
 void CPAIcoinSecret::SetKey(const CKey& vchSecret)
 {
@@ -328,22 +298,20 @@ bool CPAIcoinSecret::SetString(const std::string& strSecret)
 
 std::string EncodeDestination(const CTxDestination& dest)
 {
-    CPAIcoinAddress addr(dest);
-    if (!addr.IsValid()) return "";
-    return addr.ToString();
+    return boost::apply_visitor(DestinationEncoder(Params()), dest);
 }
 
 CTxDestination DecodeDestination(const std::string& str)
 {
-    return CPAIcoinAddress(str).Get();
+    return DecodeDestination(str, Params());
 }
 
 bool IsValidDestinationString(const std::string& str, const CChainParams& params)
 {
-    return CPAIcoinAddress(str).IsValid(params);
+    return IsValidDestination(DecodeDestination(str, params));
 }
 
 bool IsValidDestinationString(const std::string& str)
 {
-    return CPAIcoinAddress(str).IsValid();
+    return IsValidDestinationString(str, Params());
 }
