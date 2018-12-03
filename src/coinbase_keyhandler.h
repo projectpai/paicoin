@@ -13,6 +13,9 @@ class CPubKey;
 template <typename T> class vector;
 template <typename T> struct secure_allocator;
 
+/**
+ * Key handler used in coinbase index to load up secret/public keys/addresses.
+ */
 class CoinbaseKeyHandler
 {
 public:

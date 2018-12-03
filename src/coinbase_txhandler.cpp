@@ -282,23 +282,23 @@ std::pair<CTransactionRef, CTransactionRef> CoinbaseTxHandler::CreateCompleteCoi
     }
 
     CAmount txFeePerCbIndexTx = DEFAULT_COINBASE_TX_FEE / 2;
-    auto unspentInputsDataTx = SelectInputs(wallet, txFeePerCbIndexTx);
+    auto unspentInputsDataTx = SelectUnspentInputsFromWallet(wallet, txFeePerCbIndexTx);
     if (unspentInputsDataTx.empty()) {
         CoinbaseIndexLog("%s: could not select inputs for coinbase transaction", __FUNCTION__);
         return {};
     }
-    auto dataTx = CreateCoinbaseTransaction(unspentInputsDataTx, txFeePerCbIndexTx, wallet);
+    auto dataTx = CreateNewCoinbaseAddressTransaction(unspentInputsDataTx, txFeePerCbIndexTx, wallet);
 
     auto payload = FillTransactionWithCoinbaseNewAddress(dataTx, newAddressIndex, targetAddress, maxBlockHeight);
     if (payload.empty()) {
         CoinbaseIndexLog("%s: invalid empty payload", __FUNCTION__);
         return {};
     }
-    if (!SignCoinbaseTransaction(dataTx, wallet)) {
+    if (!SignNewCoinbaseAddressTransaction(dataTx, wallet)) {
         CoinbaseIndexLog("%s: could not sign the coinbase data transaction", __FUNCTION__);
         return {};
     }
-    if (!SendCoinbaseTransactionToMempool(dataTx)) {
+    if (!SendNewCoinbaseAddressTransactionToMempool(dataTx)) {
         CoinbaseIndexLog("%s: could not send the coinbase data transaction to the mempool", __FUNCTION__);
         return {};
     }
@@ -314,7 +314,7 @@ std::pair<CTransactionRef, CTransactionRef> CoinbaseTxHandler::CreateCompleteCoi
     std::unique_ptr<CWalletTx> ptrGuard(new CWalletTx(wallet, MakeTransactionRef(dataTx)));
     UnspentInput unspentInputSigTx{ptrGuard.get(), 1, totalBefore, 1};
 
-    auto sigTx = CreateCoinbaseTransaction({unspentInputSigTx}, txFeePerCbIndexTx, wallet);
+    auto sigTx = CreateNewCoinbaseAddressTransaction({unspentInputSigTx}, txFeePerCbIndexTx, wallet);
     
     CoinbaseKeyHandler cbKeyHandler(GetDataDir());
     auto signKey = cbKeyHandler.GetCoinbaseSigningKey();
@@ -327,11 +327,11 @@ std::pair<CTransactionRef, CTransactionRef> CoinbaseTxHandler::CreateCompleteCoi
         CoinbaseIndexLog("%s: could not generate the coinbase signature transaction", __FUNCTION__);
         return {};
     }
-    if (!SignCoinbaseTransaction(sigTx, wallet)) {
+    if (!SignNewCoinbaseAddressTransaction(sigTx, wallet)) {
         CoinbaseIndexLog("%s: could not sign the coinbase signature transaction", __FUNCTION__);
         return {};
     }
-    if (!SendCoinbaseTransactionToMempool(sigTx)) {
+    if (!SendNewCoinbaseAddressTransactionToMempool(sigTx)) {
         CoinbaseIndexLog("%s: could not send the coinbase signature transaction to the mempool", __FUNCTION__);
         return {};
     }

@@ -10,12 +10,20 @@
 
 #include <string>
 
-
+/**
+ * Represents a coinbase address against which we can create
+ * a coinbase transaction.
+ */
 class CoinbaseAddress
 {
 public:
+    //! The hashed address which is usually represented as a hex-string
     std::string m_hashedAddr;
     CPubKey m_pubKey;
+
+    /** Represents whether this coinbase address is included by default
+     * in all distributions of PAIcoin and known to all the nodes.
+     */
     bool m_isDefault;
     int m_expirationBlockHeight;
 

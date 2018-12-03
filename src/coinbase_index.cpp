@@ -89,17 +89,6 @@ bool CoinbaseIndex::IsNull() const
     return isNull;
 }
 
-bool CoinbaseIndex::IsModified() const
-{
-    bool isModified = false;
-    {
-        LOCK(m_lock);
-        isModified = m_modified;
-    }
-
-    return isModified;
-}
-
 bool CoinbaseIndex::IsInitialized() const
 {
     bool isInitialized = false;

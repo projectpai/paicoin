@@ -21,7 +21,10 @@
 #include <string>
 #include <vector>
 
-
+/**
+ * Indexes all the possible coinbase addresses against which a node
+ * could create coinbase transactions.
+ */
 class CoinbaseIndex
 {
 public:
@@ -30,23 +33,31 @@ public:
     CoinbaseIndex() = default;
     ~CoinbaseIndex() = default;
 
+    //! Build the index from legacy addresses, subject to removal in future releases
     void BuildDefault();
+
+    //! Build the index from newer format with addresses on the disk
     void BuildDefaultFromDisk();
 
     void SetNull();
     bool IsNull() const;
-    bool IsModified() const;
-    bool IsInitialized() const;
 
+    bool IsInitialized() const;
     void SetIsInitialized();
 
     void AddNewAddress(CoinbaseAddress addr, uint256 blockHash);
     boost::optional<CoinbaseAddress> GetCoinbaseWithAddr(const std::string& addr) const;
     uint256 GetBlockHashWithAddr(const std::string& addr) const;
 
+    /**
+     * Prunes the index of addresses which were introduced in some blocks which
+     * are no longer present in the current chain.
+     */
     void PruneAddrsWithBlocks(const BlockMap& blockMap);
 
+    //! Loads up the default coinbase addresses from the disk
     std::vector<CPubKey> GetDefaultCoinbaseKeys() const;
+
     size_t GetNumCoinbaseAddrs() const;
 
 private:
@@ -119,6 +130,12 @@ private:
     CoinbaseIndex& m_index;
 };
 
+/**
+ * This cache is used for the two-tiered architecture of introducing
+ * new coinbase addresses in the network. Once we detect one transaction
+ * in a new block (which introduces a new address to the network), we cache it
+ * and wait for the second complementary transaction to arrive/be mined.
+ */
 class CoinbaseIndexCache
 {
 public:

@@ -14,7 +14,7 @@
 
 #include <vector>
 
-UnspentInputs SelectInputs(const CWallet* wallet, CAmount desiredAmount)
+UnspentInputs SelectUnspentInputsFromWallet(const CWallet* wallet, CAmount desiredAmount)
 {
     if ((wallet == nullptr) || (desiredAmount <= 0)) {
         LogPrintf("%s: wallet not available or the desired amount is invalid", __FUNCTION__);
@@ -63,7 +63,7 @@ UnspentInputs SelectInputs(const CWallet* wallet, CAmount desiredAmount)
     return UnspentInputs(unspentInputs.begin(), unspentInputs.begin() + inputIdx + 1);
 }
 
-CMutableTransaction CreateCoinbaseTransaction(
+CMutableTransaction CreateNewCoinbaseAddressTransaction(
     const UnspentInputs& unspentInputs,
     CAmount txAmount,
     const CWallet* wallet)
@@ -102,7 +102,7 @@ CMutableTransaction CreateCoinbaseTransaction(
     return rawTx;
 }
 
-bool SignCoinbaseTransaction(CMutableTransaction& rawTx, const CWallet* wallet)
+bool SignNewCoinbaseAddressTransaction(CMutableTransaction& rawTx, const CWallet* wallet)
 {
     if (!wallet) {
         CoinbaseIndexLog("%s: wallet must be available in order to sign the coinbase transaction", __FUNCTION__);
@@ -151,7 +151,7 @@ bool SignCoinbaseTransaction(CMutableTransaction& rawTx, const CWallet* wallet)
     return true;
 }
 
-bool SendCoinbaseTransactionToMempool(CMutableTransaction rawTx)
+bool SendNewCoinbaseAddressTransactionToMempool(CMutableTransaction rawTx)
 {
     bool txAccepted = false;
     

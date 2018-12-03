@@ -189,53 +189,53 @@ public:
 
 BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_SelectInputs, CoinbaseIndexWithBalanceToSpendSetup)
 {
-    auto unspentInputs = SelectInputs(dummyWallet.get(), DEFAULT_COINBASE_TX_FEE);
+    auto unspentInputs = SelectUnspentInputsFromWallet(dummyWallet.get(), DEFAULT_COINBASE_TX_FEE);
     BOOST_CHECK(unspentInputs.empty());
 
-    unspentInputs = SelectInputs(wallet.get(), DEFAULT_COINBASE_TX_FEE);
+    unspentInputs = SelectUnspentInputsFromWallet(wallet.get(), DEFAULT_COINBASE_TX_FEE);
     BOOST_CHECK(!unspentInputs.empty());
 }
 
 BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_CreateCoinbaseTransaction, CoinbaseIndexWithBalanceToSpendSetup)
 {
-    auto mutTx = CreateCoinbaseTransaction({}, DEFAULT_COINBASE_TX_FEE, wallet.get());
+    auto mutTx = CreateNewCoinbaseAddressTransaction({}, DEFAULT_COINBASE_TX_FEE, wallet.get());
     BOOST_CHECK(mutTx.vout.empty());
 
-    auto unspentInputs = SelectInputs(wallet.get(), DEFAULT_COINBASE_TX_FEE);
+    auto unspentInputs = SelectUnspentInputsFromWallet(wallet.get(), DEFAULT_COINBASE_TX_FEE);
     BOOST_CHECK(!unspentInputs.empty());
 
-    mutTx = CreateCoinbaseTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, nullptr);
+    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, nullptr);
     BOOST_CHECK(mutTx.vout.empty());
     
-    mutTx = CreateCoinbaseTransaction(unspentInputs, CAmount(0), wallet.get());
+    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, CAmount(0), wallet.get());
     BOOST_CHECK(mutTx.vout.empty());
 
-    mutTx = CreateCoinbaseTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, wallet.get());
+    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, wallet.get());
     BOOST_CHECK(!mutTx.vout.empty());
 
-    mutTx = CreateCoinbaseTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, dummyWallet.get());
+    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, dummyWallet.get());
     BOOST_CHECK(mutTx.vout.empty());
 }
 
 BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_SignCoinbaseTransaction, CoinbaseIndexWithBalanceToSpendSetup)
 {
     CMutableTransaction mutTx;
-    auto result = SignCoinbaseTransaction(mutTx, wallet.get());
+    auto result = SignNewCoinbaseAddressTransaction(mutTx, wallet.get());
     BOOST_CHECK(result);
 
-    result = SignCoinbaseTransaction(mutTx, nullptr);
+    result = SignNewCoinbaseAddressTransaction(mutTx, nullptr);
     BOOST_CHECK(!result);
 
-    auto unspentInputs = SelectInputs(wallet.get(), DEFAULT_COINBASE_TX_FEE);
+    auto unspentInputs = SelectUnspentInputsFromWallet(wallet.get(), DEFAULT_COINBASE_TX_FEE);
     BOOST_CHECK(!unspentInputs.empty());
 
-    mutTx = CreateCoinbaseTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, wallet.get());
+    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, wallet.get());
     BOOST_CHECK(!mutTx.vout.empty());
 
-    result = SignCoinbaseTransaction(mutTx, nullptr);
+    result = SignNewCoinbaseAddressTransaction(mutTx, nullptr);
     BOOST_CHECK(!result);
 
-    result = SignCoinbaseTransaction(mutTx, wallet.get());
+    result = SignNewCoinbaseAddressTransaction(mutTx, wallet.get());
     BOOST_CHECK(result);
 }
 

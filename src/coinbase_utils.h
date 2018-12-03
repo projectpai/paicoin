@@ -22,10 +22,28 @@ struct UnspentInput
 };
 typedef std::vector<UnspentInput> UnspentInputs;
 
-UnspentInputs SelectInputs(const CWallet* wallet, CAmount desiredAmount);
-CMutableTransaction CreateCoinbaseTransaction(const UnspentInputs& unspentInputs, CAmount txAmount, const CWallet* wallet);
-bool SignCoinbaseTransaction(CMutableTransaction& rawTx, const CWallet* wallet);
-bool SendCoinbaseTransactionToMempool(CMutableTransaction rawTx);
+/**
+ * Selects unspent inputs from the wallet which together satisfy
+ * the desired amount
+ */
+UnspentInputs SelectUnspentInputsFromWallet(const CWallet* wallet, CAmount desiredAmount);
+
+/**
+ * Create a new transaction which will advertise to the network
+ * that nodes could create coinbase transactions against a new address.
+ */
+CMutableTransaction CreateNewCoinbaseAddressTransaction(const UnspentInputs& unspentInputs, CAmount txAmount, const CWallet* wallet);
+
+/**
+ * Signs a new coinbase address transaction to be introduced to the network
+ */
+bool SignNewCoinbaseAddressTransaction(CMutableTransaction& rawTx, const CWallet* wallet);
+
+/**
+ * Send a new coinbase address transaction to the mempool. The transaction
+ * is expected to be signed.
+ */
+bool SendNewCoinbaseAddressTransactionToMempool(CMutableTransaction rawTx);
 
 template <typename... Args>
 void CoinbaseIndexLog(Args... params)
