@@ -239,50 +239,104 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_SignCoinbaseTransaction, CoinbaseIndexWith
     BOOST_CHECK(result);
 }
 
-BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_SigningKey, CoinbaseIndexWithBalanceToSpendSetup)
+// Initializes the 'seckeys' file with the following keys in the shown order:
+// - keys passed in keysBefore
+// - an internally-generated valid key
+// - keys passed in keysAfter
+static CKey initSecKeysFile(const std::vector<std::string>& keysBefore = {}, const std::vector<std::string>& keysAfter = {})
 {
     CKey dummyPrivKey;
     dummyPrivKey.MakeNewKey(false);
     BOOST_CHECK(dummyPrivKey.IsValid());
 
-    auto keyHex = HexStr(dummyPrivKey.begin(), dummyPrivKey.end());
-    boost::filesystem::path dirPath = GetDataDir() / "coinbase";
-    boost::filesystem::path savePath = dirPath / "seckeys";
+    const auto keyHex = HexStr(dummyPrivKey);
+    const auto dirPath = GetDataDir() / "coinbase";
+    const auto savePath = dirPath / "seckeys";
 
     boost::filesystem::create_directories(dirPath);
-    std::ofstream outputFile(savePath.string());
+
+    std::ofstream outputFile{savePath.c_str()};
+    for(const auto& k : keysBefore)
+    {
+        outputFile << k << std::endl;
+    }
+
+    // write the generated dummy key
     outputFile << keyHex << std::endl;
+
+    for (const auto& k : keysAfter)
+    {
+        outputFile << k << std::endl;
+    }
     outputFile.close();
 
     BOOST_CHECK(boost::filesystem::exists(savePath));
 
-    CoinbaseKeyHandler keyHandler(GetDataDir());
-    auto loadedPrivKey = keyHandler.GetCoinbaseSigningKey();
+    return dummyPrivKey;
+}
+
+BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_SigningKey, CoinbaseIndexWithBalanceToSpendSetup)
+{
+    const auto dummyPrivKey = initSecKeysFile();
+
+    CoinbaseKeyHandler keyHandler{GetDataDir()};
+    const auto loadedPrivKey = keyHandler.GetCoinbaseSigningKey();
+
     BOOST_CHECK(loadedPrivKey.IsValid());
     BOOST_CHECK(dummyPrivKey == loadedPrivKey);
 }
 
 BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_PublicKeys, CoinbaseIndexWithBalanceToSpendSetup)
 {
-    CKey dummyPrivKey;
-    dummyPrivKey.MakeNewKey(false);
-    BOOST_CHECK(dummyPrivKey.IsValid());
+    const auto dummyPrivKey = initSecKeysFile();
 
-    auto keyHex = HexStr(dummyPrivKey.begin(), dummyPrivKey.end());
-    boost::filesystem::path dirPath = GetDataDir() / "coinbase";
-    boost::filesystem::path savePath = dirPath / "seckeys";
+    CoinbaseKeyHandler keyHandler{GetDataDir()};
+    const auto publicKeys = keyHandler.GetCoinbasePublicKeys();
 
-    boost::filesystem::create_directories(dirPath);
-    std::ofstream outputFile(savePath.string());
-    outputFile << keyHex << std::endl;
-    outputFile.close();
-
-    BOOST_CHECK(boost::filesystem::exists(savePath));
-
-    CoinbaseKeyHandler keyHandler(GetDataDir());
-    auto publicKeys = keyHandler.GetCoinbasePublicKeys();
     BOOST_CHECK(publicKeys.size() == 1);
+    BOOST_CHECK(dummyPrivKey.VerifyPubKey(publicKeys.front()));
+}
 
+static std::vector<std::string> getInvalidSecKeys()
+{
+    CKey validKey;
+    validKey.MakeNewKey(false);
+    BOOST_CHECK(validKey.IsValid());
+
+    const auto validKeyHex = HexStr(validKey);
+
+    return {
+        "  a0" + validKeyHex,
+        "hhINVALID_KEY",
+        "INVALID_KEY",
+        validKeyHex + "  a0  ",
+        {},
+        "7b858e14baae1184da9c1de7ecf46f2bc80bcddfad8ecebfb409271df0383ab",
+        "7b858e14baae1184da9c1de7ecf46f2bc80bcddfad8ecebfb409271df0383a",
+        "7858e14baae1184da9c1de7ecf46f2bc80bcddfad8ecebfb409271df0383ab2",
+        "858e14baae1184da9c1de7ecf46f2bc80bcddfad8ecebfb409271df0383ab2"
+        };
+}
+
+BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_SigningKeyWithInvalid, CoinbaseIndexWithBalanceToSpendSetup)
+{
+    const auto dummyPrivKey = initSecKeysFile(getInvalidSecKeys(), getInvalidSecKeys());
+
+    CoinbaseKeyHandler keyHandler{GetDataDir()};
+    const auto loadedPrivKey = keyHandler.GetCoinbaseSigningKey();
+
+    BOOST_CHECK(loadedPrivKey.IsValid());
+    BOOST_CHECK(dummyPrivKey == loadedPrivKey);
+}
+
+BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_PublicKeysWithInvalid, CoinbaseIndexWithBalanceToSpendSetup)
+{
+    const auto dummyPrivKey = initSecKeysFile(getInvalidSecKeys(), getInvalidSecKeys());
+
+    CoinbaseKeyHandler keyHandler{GetDataDir()};
+    const auto publicKeys = keyHandler.GetCoinbasePublicKeys();
+
+    BOOST_CHECK(publicKeys.size() == 1);
     BOOST_CHECK(dummyPrivKey.VerifyPubKey(publicKeys.front()));
 }
 
