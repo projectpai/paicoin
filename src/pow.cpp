@@ -71,21 +71,32 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
     return bnNew.GetCompact();
 }
 
-bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params)
+bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params)
 {
     bool fNegative;
     bool fOverflow;
     arith_uint256 bnTarget;
 
-    bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
+    bnTarget.SetCompact(block.nBits, &fNegative, &fOverflow);
 
     // Check range
     if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit))
         return false;
 
     // Check proof of work matches claimed amount
-    if (UintToArith256(hash) > bnTarget)
+    if (UintToArith256(block.GetHash()) > bnTarget)
         return false;
+
+    // check that the nonce is derived from ML data
+    if (block.nNonce != block.DeriveNonceFromML())
+        return false;
+
+    /*
+    // TODO: test this with validation server running and fix if necessary
+    VerificationClient client(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+    auto result = client.Verify(std::string(block.powMsgID), block.powModelHash.ToString(), std::string(block.powNextMsgID));
+    int resultCode = int(result.first);
+    return resultCode == pai::pouw::verification::Response::OK;*/
 
     return true;
 }

@@ -132,7 +132,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
         // find a model hash / nonce with which this block satisfies difficulty
         pblock->nNonce = pblock->DeriveNonceFromML();
-        while (nMaxTries > 0 && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus()))
+        while (nMaxTries > 0 && !CheckProofOfWork(*pblock, Params().GetConsensus()))
         {
             pblock->powModelHash = ArithToUint256(UintToArith256(pblock->powModelHash) + 1);
             pblock->nNonce = pblock->DeriveNonceFromML();
@@ -246,7 +246,7 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
 
     LogPrintf("submitusefulwork: %s\n", pblock->GetHash().GetHex());
 
-    if (!CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus()))
+    if (!CheckProofOfWork(*pblock, Params().GetConsensus()))
     {
         return false;
     }
