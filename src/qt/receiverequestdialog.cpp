@@ -10,6 +10,7 @@
 #include "guiutil.h"
 #include "optionsmodel.h"
 #include "walletmodel.h"
+#include "authmanager.h"
 
 #include <QClipboard>
 #include <QDrag>
@@ -40,6 +41,8 @@ ReceiveRequestDialog::ReceiveRequestDialog(QWidget *parent) :
     ui->btnSaveAs->setVisible(false);
     ui->lblQRCode->setVisible(false);
 #endif // USE_QRCODE
+
+    connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), this, SLOT(hide()));
 }
 
 ReceiveRequestDialog::~ReceiveRequestDialog()
