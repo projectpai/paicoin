@@ -112,6 +112,8 @@ UniValue getnetworkhashps(const JSONRPCRequest& request)
 
 UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript)
 {
+    assert(gArgs.GetBoolArg("-regtest", false));
+
     int nHeightEnd = 0;
     int nHeight = 0;
 
@@ -178,8 +180,14 @@ UniValue generatetoaddress(const JSONRPCRequest& request)
             + HelpExampleCli("generatetoaddress", "11 \"myaddress\"")
         };
 
-    const auto nGenerate = request.params[0].get_int();
-    uint64_t nMaxTries{1000000};
+    if (gArgs.GetBoolArg("-regtest", false) == false)
+        throw std::runtime_error(
+            "generatetoaddress can only be called in regtest mode.\n"
+            "To generate blocks in network mode, you must run a miner.\n"
+        );
+
+    int nGenerate = request.params[0].get_int();
+    uint64_t nMaxTries = 1000000;
     if (!request.params[2].isNull()) {
         nMaxTries = request.params[2].get_int();
     }

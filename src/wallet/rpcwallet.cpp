@@ -2981,7 +2981,7 @@ UniValue getstakeinfo(const JSONRPCRequest& request)
 
         if (pwtx->IsCoinBase() || !CheckFinalTx(tx))
             continue;
-        
+
         if (ETxClass::TX_BuyTicket == ParseTxClass(tx)) {
             const auto& depth = pwtx->GetDepthInMainChain();
             if (depth == 0) {
@@ -2990,7 +2990,7 @@ UniValue getstakeinfo(const JSONRPCRequest& request)
             }
             else if (depth >= 1) {
                 // in main chain
-                const auto& txHeight = chainActive.Height() - depth; 
+                const auto& txHeight = chainActive.Height() - depth;
                 if (!ticketMatured(Params().GetConsensus(), txHeight, chainActive.Height())) {
                     ++immature;
                 }
@@ -3591,7 +3591,7 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
         int limit = request.params[8].get_int();
         if (limit < 1)
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The number of tickets must be at least 1.");
-      
+
         cfg.limit = limit;
     }
 
@@ -3603,7 +3603,7 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
         int expiry = request.params[9].get_int();
         if ((expiry < ticketTxExpiryMin) || (expiry > ticketTxExpiryMax))
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The expiration interval must be within the limits.");
-      
+
         cfg.txExpiry = expiry;
     }
 
@@ -4014,7 +4014,7 @@ UniValue generatevote(const JSONRPCRequest& request)
             "3.  tickethash   (string, required)  Hash of the corresponding ticket\n"
             "4.  votebits     (numeric, required) Decimal representation of the 16 bits with the vote intention\n"
             "5.  votebitsext  (string, optional)  The extended vote options in hexadecimal representation. If not specified, the default value will be used (0x00).\n"
-            
+
             "\nResult:\n"
             "{\n"
             " \"hex\": \"value\", (string) Hash of resulting vote transaction\n"
@@ -4072,7 +4072,7 @@ UniValue generatevote(const JSONRPCRequest& request)
     const auto&& r = pwallet->Vote(ticketHash, blockHash, blockHeight, voteBits, extendedVoteBits);
     if (r.first.size() == 0 || r.second.code != CWalletError::SUCCESSFUL)
         throw JSONRPCErrorFromWalletError(r.second);
-    
+
     UniValue result{UniValue::VOBJ};
     result.push_back(Pair("hex", r.first));
 
@@ -4825,8 +4825,14 @@ UniValue generate(const JSONRPCRequest& request)
         };
     }
 
-    const auto num_generate = request.params[0].get_int();
-    uint64_t max_tries{1000000};
+    if (gArgs.GetBoolArg("-regtest", false) == false)
+        throw std::runtime_error(
+            "generate can only be called in regtest mode.\n"
+            "To generate blocks in network mode, you must run a miner.\n"
+        );
+
+    int num_generate = request.params[0].get_int();
+    uint64_t max_tries = 1000000;
     if (!request.params[1].isNull()) {
         max_tries = request.params[1].get_int();
     }
@@ -5358,7 +5364,7 @@ UniValue sendtomultisig(const JSONRPCRequest& request)
     EnsureWalletIsUnlocked(pwallet);
     pwallet->AddCScript(inner);
 
-    const auto& dest = CTxDestination{innerID}; 
+    const auto& dest = CTxDestination{innerID};
 
     // Wallet comments
     CWalletTx wtx;
