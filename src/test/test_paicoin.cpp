@@ -123,10 +123,10 @@ TestChain100Setup::TestChain100Setup(scriptPubKeyType pkType) : TestingSetup(CBa
         scriptPubKey = CScript() <<  ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
         break;
 
-    case scriptPubKeyType::P2PKH: 
+    case scriptPubKeyType::P2PKH:
         scriptPubKey = CScript() << OP_DUP << OP_HASH160 << ToByteVector(coinbaseKey.GetPubKey().GetID()) << OP_EQUALVERIFY << OP_CHECKSIG;
         break;
-    
+
     default:
         assert(!"Unknown scriptPubKeyType");
         break;
@@ -160,7 +160,7 @@ TestChain100Setup::CreateAndProcessBlock(const std::vector<CMutableTransaction>&
     unsigned int extraNonce = 0;
     IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
 
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, block.nVersion, chainparams.GetConsensus())) ++block.nNonce;
+    while (!CheckProofOfWork(block, chainparams.GetConsensus())) ++block.nNonce;
 
     std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
     ProcessNewBlock(chainparams, shared_pblock, true, nullptr);
@@ -235,12 +235,12 @@ CMutableTransaction Generator::CreateTicketPurchaseTx(const SpendableOut& spend,
     mtx.vout.push_back(CTxOut(change, changeScript));
 
     SignTx(mtx, 0, coinbaseScript, coinbaseKey);
-    
+
     boughtTicketHashToPrice[mtx.GetHash()] = ticketPrice;
 
     return mtx;
 }
-    
+
 CMutableTransaction Generator::CreateVoteTx(const uint256& voteBlockHash, int voteBlockHeight, const uint256& ticketTxHash, VoteBits voteBits) const
 {
     CMutableTransaction mtx;
@@ -282,7 +282,7 @@ CMutableTransaction Generator::CreateRevocationTx(const uint256& ticketTxHash) c
     mtx.vout.push_back(CTxOut(0, declScript));
 
     // Create an output which pays back ticket price as a refund
-    const auto& ticketPrice  = boughtTicketHashToPrice.at(ticketTxHash); 
+    const auto& ticketPrice  = boughtTicketHashToPrice.at(ticketTxHash);
     mtx.vout.push_back(CTxOut(ticketPrice, rewardScript));
 
     SignTx(mtx, revocationStakeInputIndex, stakeScript, coinbaseKey);
@@ -297,11 +297,11 @@ CMutableTransaction Generator::CreateSpendTx(const SpendableOut& spend, const CA
     const auto& txin = CTxIn(spend.prevOut.hash, spend.prevOut.n);
     mtx.vin.push_back(txin);
 
-    // create an output that spends all 
+    // create an output that spends all
     mtx.vout.push_back(CTxOut(spend.amount - fee, rewardScript));
 
     SignTx(mtx, spend.prevOut.n, coinbaseScript, coinbaseKey);
-    
+
     return mtx;
 }
 
@@ -322,7 +322,7 @@ CMutableTransaction Generator::CreateSplitSpendTx(const SpendableOut& spend, con
     mtx.vout.push_back(CTxOut(spend.amount - sum - fee, changeScript));
 
     SignTx(mtx, spend.prevOut.n, coinbaseScript, coinbaseKey);
-    
+
     return mtx;
 }
 
@@ -353,7 +353,7 @@ void Generator::SaveAllSpendableOuts(const CBlock& b)
             const auto& txClass = ParseTxClass(*tx);
             switch(txClass){
             case TX_Regular:
-                for (size_t i = 0; i < tx->vout.size(); ++i) { 
+                for (size_t i = 0; i < tx->vout.size(); ++i) {
                     outs.push_back(MakeSpendableOut(*tx, i));
                 }
                 break;
@@ -490,7 +490,7 @@ CBlock Generator::NextBlock(const std::string& blockName
             const auto& revocationTx = CreateRevocationTx(missedHash);
             mempool.addUnchecked(revocationTx.GetHash(), entry.Fee(0LL).SpendsCoinbase(false).FromTx(revocationTx));
         }
-    } 
+    }
 
     if (spend != nullptr)
     {
