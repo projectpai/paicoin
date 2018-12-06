@@ -3158,6 +3158,12 @@ UniValue generate(const JSONRPCRequest& request)
         );
     }
 
+    if (gArgs.GetBoolArg("-regtest", false) == false)
+        throw std::runtime_error(
+            "generate can only be called in regtest mode.\n"
+            "To generate blocks in network mode, you must run a miner.\n"
+        );
+
     int num_generate = request.params[0].get_int();
     uint64_t max_tries = 1000000;
     if (!request.params[1].isNull()) {
