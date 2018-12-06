@@ -7,8 +7,10 @@
 
 #include "arith_uint256.h"
 #include "chain.h"
+#include "util.h"
 #include "primitives/block.h"
 #include "uint256.h"
+#include "verification_client.h"
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {
@@ -91,12 +93,17 @@ bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params
     if (block.nNonce != block.DeriveNonceFromML())
         return false;
 
-    /*
+    // in regtest mode, we don't verify ML proof because it's just random data rather than a product of ML training
+    if (gArgs.GetBoolArg("-regtest", false))
+        return true;
+
+    // if ML proof verification is switched off with a flag, we skip it
+    if (gArgs.GetBoolArg("-skipmlcheck", false))
+        return true;
+
     // TODO: test this with validation server running and fix if necessary
     VerificationClient client(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
     auto result = client.Verify(std::string(block.powMsgID), block.powModelHash.ToString(), std::string(block.powNextMsgID));
     int resultCode = int(result.first);
-    return resultCode == pai::pouw::verification::Response::OK;*/
-
-    return true;
+    return resultCode == pai::pouw::verification::Response::OK;
 }
