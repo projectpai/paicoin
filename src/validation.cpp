@@ -45,7 +45,6 @@
 #include "utilmoneystr.h"
 #include "utilstrencodings.h"
 #include "validationinterface.h"
-#include "verification_client.h"
 #include "versionbits.h"
 #include "warnings.h"
 #include "stake/stakenode.h"
