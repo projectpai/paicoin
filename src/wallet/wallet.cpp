@@ -1843,11 +1843,13 @@ uint64_t CWallet::SecondsUntilHoldingPeriodExpires()
 
 bool CWallet::ShouldUpdateApplication()
 {
+    LOCK(cs_wallet);
     return Investor::GetInstance().ShouldUpdateApplication(*this);
 }
 
 bool CWallet::ShouldUnlockInvestment()
 {
+    LOCK(cs_wallet);
     return Investor::GetInstance().ShouldUnlockInvestment(*this);
 }
 
