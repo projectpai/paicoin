@@ -277,9 +277,14 @@ void ThreadScriptCheck();
 bool IsInitialBlockDownload();
 /** Retrieve a transaction (from memory pool, or from disk, if possible) */
 bool GetTransaction(const uint256 &hash, CTransactionRef &tx, const Consensus::Params& params, uint256 &hashBlock, bool fAllowSlow = false);
+/** Retrieve a ticket transaction */
+CTransactionRef GetTicket(const uint256 &ticketTxHash);
 /** Find the best known block, and make it the tip of the block chain */
 bool ActivateBestChain(CValidationState& state, const CChainParams& chainparams, std::shared_ptr<const CBlock> pblock = std::shared_ptr<const CBlock>());
-CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams);
+CAmount GetTotalBlockSubsidy(int nHeight, const Consensus::Params& consensusParams);
+CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams);
+CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams);
+CAmount CalcContributorRemuneration(CAmount contributedAmount, CAmount totalStake, CAmount subsidy, CAmount contributionSum);
 
 /** Guess verification progress (as a fraction between 0.0=genesis and 1.0=current tip). */
 double GuessVerificationProgress(const ChainTxData& data, CBlockIndex* pindex);

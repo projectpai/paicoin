@@ -55,6 +55,7 @@ void TestSHA1(const std::string &in, const std::string &hexout) { TestVector(CSH
 void TestSHA256(const std::string &in, const std::string &hexout) { TestVector(CSHA256(), in, ParseHex(hexout));}
 void TestSHA512(const std::string &in, const std::string &hexout) { TestVector(CSHA512(), in, ParseHex(hexout));}
 void TestRIPEMD160(const std::string &in, const std::string &hexout) { TestVector(CRIPEMD160(), in, ParseHex(hexout));}
+void TestSHAKE256(const std::string &in, const std::string &hexout) { TestVector(CShake256(), in, ParseHex(hexout));}
 
 void TestHMACSHA256(const std::string &hexkey, const std::string &hexin, const std::string &hexout) {
     std::vector<unsigned char> key = ParseHex(hexkey);
@@ -303,6 +304,10 @@ BOOST_AUTO_TEST_CASE(sha512_testvectors) {
     TestSHA512(test1,
                "40cac46c147e6131c5193dd5f34e9d8bb4951395f27b08c558c65ff4ba2de594"
                "37de8c3ef5459d76a52cedc02dc499a3c9ed9dedbfb3281afd9653b8a112fafc");
+}
+
+BOOST_AUTO_TEST_CASE(shake256_testvectors) {
+    TestSHAKE256("", "AB0BAE316339894304E35877B0C28A9B1FD166C796B9CC258A064A8F57E27F2A");
 }
 
 BOOST_AUTO_TEST_CASE(hmac_sha256_testvectors) {

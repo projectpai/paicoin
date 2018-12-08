@@ -10,11 +10,11 @@
 #include "util.h"
 #include "utilstrencodings.h"
 
-
 typedef std::vector<unsigned char> valtype;
 
 bool fAcceptDatacarrier = DEFAULT_ACCEPT_DATACARRIER;
 unsigned nMaxDatacarrierBytes = MAX_OP_RETURN_RELAY;
+unsigned nMaxStructDatacarrierBytes = MAX_OP_STRUCT_RELAY;
 
 CScriptID::CScriptID(const CScript& in) : uint160(Hash160(in.begin(), in.end())) {}
 
@@ -28,10 +28,81 @@ const char* GetTxnOutputType(txnouttype t)
     case TX_SCRIPTHASH: return "scripthash";
     case TX_MULTISIG: return "multisig";
     case TX_NULL_DATA: return "nulldata";
+    case TX_STRUCT_DATA: return "structdata";
     case TX_WITNESS_V0_KEYHASH: return "witness_v0_keyhash";
     case TX_WITNESS_V0_SCRIPTHASH: return "witness_v0_scripthash";
     }
     return nullptr;
+}
+
+bool ParseDataItem(const CScript& script, CScript::const_iterator& it, std::vector<unsigned char>& item)
+{
+    opcodetype opcode = (opcodetype)*it;
+
+    if (opcode == OP_0)
+    {
+        item.push_back(0);
+        it++;
+        return true;
+    }
+    else if (opcode >= OP_1 && opcode <= OP_16)
+    {
+        item.push_back(opcode - OP_1 + 1);
+        it++;
+        return true;
+    }
+    else if (script.GetOp(it, opcode, item) && opcode <= OP_PUSHDATA4)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool ParseOpReturn(const CScript& scriptPubKey, std::vector<std::vector<unsigned char> >& vSolutionsRet)
+{
+    // double check this is an OP_RETURN script in case someone calls this function from outside Solver()
+    if (scriptPubKey.empty() || scriptPubKey[0] != OP_RETURN)
+        return false;
+
+    // a single OP_RETURN opcode without anything following it is a valid classic format
+    if (scriptPubKey.size() == 1)
+        return true;
+
+    // size is at least 2; check if the second opcode is OP_STRUCT
+    bool isStruct = scriptPubKey[1] == OP_STRUCT;
+    CScript::const_iterator it = scriptPubKey.begin() + (isStruct ? 2 : 1);  // skip OP_RETURN and OP_STRUCT
+
+    // parsed any pushed data items and add them to the solutions vector
+    while (it < scriptPubKey.end())
+    {
+        std::vector<unsigned char> item;
+        if (ParseDataItem(scriptPubKey, it, item))
+            vSolutionsRet.push_back(item);
+        else
+            return false; // Unable to interpret the rest of the script because it isn't organized using push opcodes
+    }
+
+    if (isStruct)
+    {
+        // structured OP_RETURN script must contain at least version and classifier data items
+        if (vSolutionsRet.size() < 2)
+            return false;
+
+        // currently supported version is 1; all it implies is the existence of classifier
+        int version = CScriptNum(vSolutionsRet[0], false).getint();
+        if (version != 1)
+            return false;
+
+        // interpret the classifier and check that it is listed in the global enum
+        int cl = CScriptNum(vSolutionsRet[1], false).getint();
+        return cl >= 0 && cl < (int)NUM_DATA_CLASSES;
+    }
+    else
+    {
+        // unstructured (classic) OP_RETURN script places no conditions on the carried data
+        return true;
+    }
 }
 
 bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::vector<unsigned char> >& vSolutionsRet)
@@ -78,14 +149,22 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
         return false;
     }
 
-    // Provably prunable, data-carrying output
+    // Data-carrying output, also used by PAI Coin for identifying staking transactions;
+    // Unspendable, therefore prunable from UTXO sets
     //
-    // So long as script passes the IsUnspendable() test and all but the first
-    // byte passes the IsPushOnly() test we don't care what exactly is in the
-    // script.
-    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_RETURN && scriptPubKey.IsPushOnly(scriptPubKey.begin()+1)) {
-        typeRet = TX_NULL_DATA;
-        return true;
+    // Two formats of OP_RETURN scripts are recognized:
+    // 1. Classic: OP_RETURN followed by an optional push opcode
+    // 2. Structured: OP_RETURN followed by OP_STRUCT, version, a top-level classifier and pushed data
+    // For both formats, we attempt to extract data items and return them as solutions
+    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_RETURN) {
+        if (scriptPubKey.IsPushOnly(scriptPubKey.begin()+1)) {
+            typeRet = TX_NULL_DATA;
+            ParseOpReturn(scriptPubKey, vSolutionsRet);
+            return true;    // classic OP_RETURN is considered standard regardless if its data was parsed successfully
+        } else if (scriptPubKey.size() >= 2 && scriptPubKey[1] == OP_STRUCT && ParseOpReturn(scriptPubKey, vSolutionsRet)) {
+            typeRet = TX_STRUCT_DATA;
+            return true;    // structured OP_RETURN must be fully parsable, otherwise we consider it nonstandard
+        }
     }
 
     // Scan templates
@@ -210,7 +289,7 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::
     std::vector<valtype> vSolutions;
     if (!Solver(scriptPubKey, typeRet, vSolutions))
         return false;
-    if (typeRet == TX_NULL_DATA){
+    if (typeRet == TX_NULL_DATA || typeRet == TX_STRUCT_DATA){
         // This is data, not addresses
         return false;
     }
@@ -320,4 +399,10 @@ CScript GetScriptForWitness(const CScript& redeemscript)
 
 bool IsValidDestination(const CTxDestination& dest) {
     return dest.which() != 0;
+}
+
+CScript GetScriptForStructuredData(EDataClass eDataClass)
+{
+    int nVersion = 1;
+    return CScript() << OP_RETURN << OP_STRUCT << nVersion << (EDataClass) eDataClass;
 }

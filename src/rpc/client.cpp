@@ -143,6 +143,13 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "txfeeinfo", 2, "rangeend" },
     { "getblocksubsidy", 0, "height" },
     { "getblocksubsidy", 1, "voters" },
+    { "purchaseticket", 1, "spendlimit" },
+    { "purchaseticket", 2, "minconf" },
+    { "purchaseticket", 4, "numtickets" },
+    { "purchaseticket", 6, "poolfees" },
+    { "purchaseticket", 7, "expiry" },
+    { "purchaseticket", 9, "ticketfee" },
+    { "gettickets", 0, "includeimmature"},
     // Echo with conversion (For testing only)
     { "echojson", 0, "arg0" },
     { "echojson", 1, "arg1" },

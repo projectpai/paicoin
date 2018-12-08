@@ -11,6 +11,7 @@
 #include "pow.h"
 #include "tinyformat.h"
 #include "uint256.h"
+#include "stake/stakenode.h"
 
 #include <vector>
 
@@ -160,6 +161,8 @@ enum BlockStatus: uint32_t {
     BLOCK_FAILED_MASK        =   BLOCK_FAILED_VALID | BLOCK_FAILED_CHILD,
 
     BLOCK_OPT_WITNESS       =   128, //!< block data in blk*.data was received with a witness-enforcing client
+
+    BLOCK_HAVE_STAKE        =   256, //!< stake data available in stk*.dat
 };
 
 /** The block chain is a tree shaped structure starting with the
@@ -191,6 +194,9 @@ public:
     //! Byte offset within rev?????.dat where this block's undo data is stored
     unsigned int nUndoPos;
 
+    //! Byte offset within stk?????.dat where this block's stake data is stored
+    unsigned int nStakePos;
+
     //! (memory only) Total amount of work (expected number of hashes) in the chain up to and including this block
     arith_uint256 nChainWork;
 
@@ -219,15 +225,20 @@ public:
     //! (memory only) Maximum nTime in the chain up to and including this block.
     unsigned int nTimeMax;
 
+    const StakeNode* pstakeNode;
+
+
     void SetNull()
     {
         phashBlock = nullptr;
         pprev = nullptr;
         pskip = nullptr;
+        pstakeNode = nullptr;
         nHeight = 0;
         nFile = 0;
         nDataPos = 0;
         nUndoPos = 0;
+        nStakePos = 0;
         nChainWork = arith_uint256();
         nTx = 0;
         nChainTx = 0;
@@ -272,6 +283,15 @@ public:
         if (nStatus & BLOCK_HAVE_UNDO) {
             ret.nFile = nFile;
             ret.nPos  = nUndoPos;
+        }
+        return ret;
+    }
+
+    CDiskBlockPos GetStakePos() const {
+        CDiskBlockPos ret;
+        if (nStatus & BLOCK_HAVE_STAKE) {
+            ret.nFile = nFile;
+            ret.nPos  = nStakePos;
         }
         return ret;
     }

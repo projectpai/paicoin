@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 
     // PAICOIN Note: If the initial block subsidy has been changed,
     // update the subsidy with the correct value
-    const CAmount BLOCKSUBSIDY = 1500 * COIN;
+    const CAmount BLOCKSUBSIDY = chainParams->GetConsensus().nTotalBlockSubsidy * COIN;
     const CAmount LOWFEE = CENT;
     const CAmount HIGHFEE = COIN;
     const CAmount HIGHERFEE = 4*COIN;
