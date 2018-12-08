@@ -70,18 +70,18 @@ static HTTPRPCTimerInterface* httpRPCTimerInterface = nullptr;
 static void JSONErrorReply(HTTPRequest* req, const UniValue& objError, const UniValue& id)
 {
     // Send error reply from json-rpc error object
-    auto nStatus = HTTP_INTERNAL_SERVER_ERROR;
+    auto eStatus = HTTPStatusCode::INTERNAL_SERVER_ERROR;
     const auto code = find_value(objError, "code").get_int();
 
-    if (code == RPC_INVALID_REQUEST)
-        nStatus = HTTP_BAD_REQUEST;
-    else if (code == RPC_METHOD_NOT_FOUND)
-        nStatus = HTTP_NOT_FOUND;
+    if (code == ToUnderlying(RPCErrorCode::INVALID_REQUEST))
+        eStatus = HTTPStatusCode::BAD_REQUEST;
+    else if (code == ToUnderlying(RPCErrorCode::METHOD_NOT_FOUND))
+        eStatus = HTTPStatusCode::NOT_FOUND;
 
     const auto strReply = JSONRPCReply(NullUniValue, objError, id);
 
     req->WriteHeader("Content-Type", "application/json");
-    req->WriteReply(nStatus, strReply);
+    req->WriteReply(eStatus, strReply);
 }
 
 //This function checks username and password against -rpcauth
@@ -146,14 +146,14 @@ static bool HTTPReq_JSONRPC(HTTPRequest* req, const std::string &)
 {
     // JSONRPC handles only POST
     if (req->GetRequestMethod() != HTTPRequest::POST) {
-        req->WriteReply(HTTP_BAD_METHOD, "JSONRPC server handles only POST requests");
+        req->WriteReply(HTTPStatusCode::BAD_METHOD, "JSONRPC server handles only POST requests");
         return false;
     }
     // Check authorization
     const auto authHeader = req->GetHeader("authorization");
     if (!authHeader.first) {
         req->WriteHeader("WWW-Authenticate", WWW_AUTH_HEADER_DATA);
-        req->WriteReply(HTTP_UNAUTHORIZED);
+        req->WriteReply(HTTPStatusCode::UNAUTHORIZED);
         return false;
     }
 
@@ -167,7 +167,7 @@ static bool HTTPReq_JSONRPC(HTTPRequest* req, const std::string &)
         MilliSleep(250);
 
         req->WriteHeader("WWW-Authenticate", WWW_AUTH_HEADER_DATA);
-        req->WriteReply(HTTP_UNAUTHORIZED);
+        req->WriteReply(HTTPStatusCode::UNAUTHORIZED);
         return false;
     }
 
@@ -175,7 +175,7 @@ static bool HTTPReq_JSONRPC(HTTPRequest* req, const std::string &)
         // Parse request
         UniValue valRequest;
         if (!valRequest.read(req->ReadBody()))
-            throw JSONRPCError(RPC_PARSE_ERROR, "Parse error");
+            throw JSONRPCError(RPCErrorCode::PARSE_ERROR, "Parse error");
 
         // Set the URI
         jreq.URI = req->GetURI();
@@ -194,15 +194,15 @@ static bool HTTPReq_JSONRPC(HTTPRequest* req, const std::string &)
         } else if (valRequest.isArray())
             strReply = JSONRPCExecBatch(valRequest.get_array());
         else
-            throw JSONRPCError(RPC_PARSE_ERROR, "Top-level object parse error");
+            throw JSONRPCError(RPCErrorCode::PARSE_ERROR, "Top-level object parse error");
 
         req->WriteHeader("Content-Type", "application/json");
-        req->WriteReply(HTTP_OK, strReply);
+        req->WriteReply(HTTPStatusCode::OK, strReply);
     } catch (const UniValue& objError) {
         JSONErrorReply(req, objError, jreq.id);
         return false;
     } catch (const std::exception& e) {
-        JSONErrorReply(req, JSONRPCError(RPC_PARSE_ERROR, e.what()), jreq.id);
+        JSONErrorReply(req, JSONRPCError(RPCErrorCode::PARSE_ERROR, e.what()), jreq.id);
         return false;
     }
     return true;

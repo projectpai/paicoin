@@ -119,26 +119,26 @@ static bool CheckWarmup(HTTPRequest* req)
 {
     std::string statusmessage;
     if (RPCIsInWarmup(&statusmessage))
-         return RESTERR(req, HTTP_SERVICE_UNAVAILABLE, "Service temporarily unavailable: " + statusmessage);
+         return RESTERR(req, HTTPStatusCode::SERVICE_UNAVAILABLE, "Service temporarily unavailable: " + statusmessage);
     return true;
 }
 
 static void BinaryReply(HTTPRequest* req, const CDataStream& s)
 {
     req->WriteHeader("Content-Type", "application/octet-stream");
-    req->WriteReply(HTTP_OK, s.str());
+    req->WriteReply(HTTPStatusCode::OK, s.str());
 }
 
 static void HexReply(HTTPRequest* req, const CDataStream& s)
 {
     req->WriteHeader("Content-Type", "text/plain");
-    req->WriteReply(HTTP_OK, HexStr(s) + '\n');
+    req->WriteReply(HTTPStatusCode::OK, HexStr(s) + '\n');
 }
 
 static void JsonReply(HTTPRequest* req, const UniValue& v)
 {
     req->WriteHeader("Content-Type", "application/json");
-    req->WriteReply(HTTP_OK, v.write() + '\n');
+    req->WriteReply(HTTPStatusCode::OK, v.write() + '\n');
 }
 
 static bool rest_headers(HTTPRequest* req,
@@ -152,16 +152,16 @@ static bool rest_headers(HTTPRequest* req,
     boost::split(path, param, boost::is_any_of("/"));
 
     if (path.size() != 2)
-        return RESTERR(req, HTTP_BAD_REQUEST, "No header count specified. Use /rest/headers/<count>/<hash>.<ext>.");
+        return RESTERR(req, HTTPStatusCode::BAD_REQUEST, "No header count specified. Use /rest/headers/<count>/<hash>.<ext>.");
 
     const auto count = strtol(path[0].c_str(), nullptr, 10);
     if (count < 1 || count > 2000)
-        return RESTERR(req, HTTP_BAD_REQUEST, "Header count out of range: " + path[0]);
+        return RESTERR(req, HTTPStatusCode::BAD_REQUEST, "Header count out of range: " + path[0]);
 
     const auto hashStr = path[1];
     uint256 hash;
     if (!ParseHashStr(hashStr, hash))
-        return RESTERR(req, HTTP_BAD_REQUEST, "Invalid hash: " + hashStr);
+        return RESTERR(req, HTTPStatusCode::BAD_REQUEST, "Invalid hash: " + hashStr);
 
     std::vector<const CBlockIndex *> headers;
     headers.reserve(count);
@@ -202,7 +202,7 @@ static bool rest_headers(HTTPRequest* req,
         return true;
     }
     default: {
-        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: .bin, .hex)");
+        return RESTERR(req, HTTPStatusCode::NOT_FOUND, "output format not found (available: .bin, .hex)");
     }
     }
 }
@@ -218,21 +218,21 @@ static bool rest_block(HTTPRequest* req,
 
     uint256 hash;
     if (!ParseHashStr(hashStr, hash))
-        return RESTERR(req, HTTP_BAD_REQUEST, "Invalid hash: " + hashStr);
+        return RESTERR(req, HTTPStatusCode::BAD_REQUEST, "Invalid hash: " + hashStr);
 
     CBlock block;
     const CBlockIndex* pblockindex{nullptr};
     {
         LOCK(cs_main);
         if (mapBlockIndex.count(hash) == 0)
-            return RESTERR(req, HTTP_NOT_FOUND, hashStr + " not found");
+            return RESTERR(req, HTTPStatusCode::NOT_FOUND, hashStr + " not found");
 
         pblockindex = mapBlockIndex[hash];
         if (fHavePruned && !(pblockindex->nStatus & BLOCK_HAVE_DATA) && pblockindex->nTx > 0)
-            return RESTERR(req, HTTP_NOT_FOUND, hashStr + " not available (pruned data)");
+            return RESTERR(req, HTTPStatusCode::NOT_FOUND, hashStr + " not available (pruned data)");
 
         if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus()))
-            return RESTERR(req, HTTP_NOT_FOUND, hashStr + " not found");
+            return RESTERR(req, HTTPStatusCode::NOT_FOUND, hashStr + " not found");
     }
 
     CDataStream ssBlock{SER_NETWORK, PROTOCOL_VERSION | RPCSerializationFlags()};
@@ -256,7 +256,7 @@ static bool rest_block(HTTPRequest* req,
     }
 
     default: {
-        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
+        return RESTERR(req, HTTPStatusCode::NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
     }
     }
 }
@@ -290,7 +290,7 @@ static bool rest_chaininfo(HTTPRequest* req, const std::string& strURIPart)
         return true;
     }
     default: {
-        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: json)");
+        return RESTERR(req, HTTPStatusCode::NOT_FOUND, "output format not found (available: json)");
     }
     }
 }
@@ -309,7 +309,7 @@ static bool rest_mempool_info(HTTPRequest* req, const std::string& strURIPart)
         return true;
     }
     default: {
-        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: json)");
+        return RESTERR(req, HTTPStatusCode::NOT_FOUND, "output format not found (available: json)");
     }
     }
 }
@@ -328,7 +328,7 @@ static bool rest_mempool_contents(HTTPRequest* req, const std::string& strURIPar
         return true;
     }
     default: {
-        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: json)");
+        return RESTERR(req, HTTPStatusCode::NOT_FOUND, "output format not found (available: json)");
     }
     }
 }
@@ -342,12 +342,12 @@ static bool rest_tx(HTTPRequest* req, const std::string& strURIPart)
 
     uint256 hash;
     if (!ParseHashStr(hashStr, hash))
-        return RESTERR(req, HTTP_BAD_REQUEST, "Invalid hash: " + hashStr);
+        return RESTERR(req, HTTPStatusCode::BAD_REQUEST, "Invalid hash: " + hashStr);
 
     CTransactionRef tx;
     auto hashBlock = uint256{};
     if (!GetTransaction(hash, tx, Params().GetConsensus(), hashBlock, true))
-        return RESTERR(req, HTTP_NOT_FOUND, hashStr + " not found");
+        return RESTERR(req, HTTPStatusCode::NOT_FOUND, hashStr + " not found");
 
     CDataStream ssTx{SER_NETWORK, PROTOCOL_VERSION | RPCSerializationFlags()};
     ssTx << tx;
@@ -371,7 +371,7 @@ static bool rest_tx(HTTPRequest* req, const std::string& strURIPart)
     }
 
     default: {
-        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
+        return RESTERR(req, HTTPStatusCode::NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
     }
     }
 }
@@ -393,7 +393,7 @@ static bool rest_getutxos(HTTPRequest* req, const std::string& strURIPart)
     // throw exception in case of an empty request
     auto strRequestMutable = req->ReadBody();
     if (strRequestMutable.length() == 0 && uriParts.size() == 0)
-        return RESTERR(req, HTTP_BAD_REQUEST, "Error: empty request");
+        return RESTERR(req, HTTPStatusCode::BAD_REQUEST, "Error: empty request");
 
     auto fInputParsed = false;
     auto fCheckMemPool = false;
@@ -416,7 +416,7 @@ static bool rest_getutxos(HTTPRequest* req, const std::string& strURIPart)
             uint256 txid;
             int32_t nOutput;
             if (!ParseInt32(strOutput, &nOutput) || !IsHex(strTxid))
-                return RESTERR(req, HTTP_BAD_REQUEST, "Parse error");
+                return RESTERR(req, HTTPStatusCode::BAD_REQUEST, "Parse error");
 
             txid.SetHex(strTxid);
             vOutPoints.push_back(COutPoint{txid, static_cast<uint32_t>(nOutput)});
@@ -425,7 +425,7 @@ static bool rest_getutxos(HTTPRequest* req, const std::string& strURIPart)
         if (!vOutPoints.empty())
             fInputParsed = true;
         else
-            return RESTERR(req, HTTP_BAD_REQUEST, "Error: empty request");
+            return RESTERR(req, HTTPStatusCode::BAD_REQUEST, "Error: empty request");
     }
 
     switch (rf) {
@@ -441,7 +441,7 @@ static bool rest_getutxos(HTTPRequest* req, const std::string& strURIPart)
             if (!strRequestMutable.empty())
             {
                 if (fInputParsed) //don't allow sending input over URI and HTTP RAW DATA
-                    return RESTERR(req, HTTP_BAD_REQUEST, "Combination of URI scheme inputs and raw post data is not allowed");
+                    return RESTERR(req, HTTPStatusCode::BAD_REQUEST, "Combination of URI scheme inputs and raw post data is not allowed");
 
                 CDataStream oss{SER_NETWORK, PROTOCOL_VERSION};
                 oss << strRequestMutable;
@@ -450,24 +450,24 @@ static bool rest_getutxos(HTTPRequest* req, const std::string& strURIPart)
             }
         } catch (const std::ios_base::failure& e) {
             // abort in case of unreadable binary data
-            return RESTERR(req, HTTP_BAD_REQUEST, "Parse error");
+            return RESTERR(req, HTTPStatusCode::BAD_REQUEST, "Parse error");
         }
         break;
     }
 
     case RetFormat::JSON: {
         if (!fInputParsed)
-            return RESTERR(req, HTTP_BAD_REQUEST, "Error: empty request");
+            return RESTERR(req, HTTPStatusCode::BAD_REQUEST, "Error: empty request");
         break;
     }
     default: {
-        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
+        return RESTERR(req, HTTPStatusCode::NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
     }
     }
 
     // limit max outpoints
     if (vOutPoints.size() > MAX_GETUTXOS_OUTPOINTS)
-        return RESTERR(req, HTTP_BAD_REQUEST, strprintf("Error: max outpoints exceeded (max: %d, tried: %d)", MAX_GETUTXOS_OUTPOINTS, vOutPoints.size()));
+        return RESTERR(req, HTTPStatusCode::BAD_REQUEST, strprintf("Error: max outpoints exceeded (max: %d, tried: %d)", MAX_GETUTXOS_OUTPOINTS, vOutPoints.size()));
 
     // check spentness and form a bitmap (as well as a JSON capable human-readable string representation)
     std::vector<unsigned char> bitmap;
@@ -547,7 +547,7 @@ static bool rest_getutxos(HTTPRequest* req, const std::string& strURIPart)
         return true;
     }
     default: {
-        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
+        return RESTERR(req, HTTPStatusCode::NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
     }
     }
 }
