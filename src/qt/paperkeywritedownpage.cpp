@@ -73,6 +73,8 @@ void PaperKeyWritedownPage::onNextClicked()
     }
     else
     {
+        currentWordCount = 1;
+        updateCurrentWordAndCount();
         Q_EMIT paperKeyWritten(paperKeyList);
     }
 }

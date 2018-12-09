@@ -1093,6 +1093,8 @@ void PAIcoinGUI::goBackFromSetPinPage()
 {
     if (state == PAIcoinGUIState::RestoreWallet)
         gotoRestoreWalletPage();
+    else if (state == PAIcoinGUIState::PaperKeyCompletion)
+        gotoPaperKeyWritedownPage();
     else
         gotoWalletSelectionPage();
 }

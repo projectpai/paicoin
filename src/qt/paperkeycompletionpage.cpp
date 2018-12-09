@@ -96,7 +96,11 @@ void PaperKeyCompletionPage::SetLineEditState(QLineEdit *lineEdit, bool match)
 void PaperKeyCompletionPage::onSubmitClicked()
 {
     if (firstEquality && secondEquality)
+    {
+        ui->lineEditWordFirst->clear();
+        ui->lineEditWordSecond->clear();
         Q_EMIT paperKeyProven();
+    }
 }
 
 void PaperKeyCompletionPage::onBackClicked()
