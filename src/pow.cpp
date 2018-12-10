@@ -97,6 +97,10 @@ bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params
     if (!checkMLproof)
         return true;
 
+    // for genesis block we don't verify ML proof because it's just random data rather than a product of ML training
+    if (block.GetHash() == params.hashGenesisBlock)
+        return true;
+
     // in regtest mode, we don't verify ML proof because it's just random data rather than a product of ML training
     if (gArgs.GetBoolArg("-regtest", false))
         return true;
