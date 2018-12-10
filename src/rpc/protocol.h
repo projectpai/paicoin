@@ -6,11 +6,6 @@
 #ifndef PAICOIN_RPCPROTOCOL_H
 #define PAICOIN_RPCPROTOCOL_H
 
-#include "fs.h"
-
-#include <list>
-#include <map>
-#include <stdint.h>
 #include <string>
 
 #include <univalue.h>
