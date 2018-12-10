@@ -192,7 +192,7 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
     return bnNew.GetCompact();
 }
 
-bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params)
+bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params, bool checkMLproof)
 {
     bool fNegative;
     bool fOverflow;
@@ -212,6 +212,10 @@ bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params
     if (block.nNonce != block.DeriveNonceFromML())
         return false;
 
+    // if we are asked only to check block hash against difficulty, we are done
+    if (!checkMLproof)
+        return true;
+
     // in regtest mode, we don't verify ML proof because it's just random data rather than a product of ML training
     if (gArgs.GetBoolArg("-regtest", false))
         return true;
@@ -220,7 +224,7 @@ bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params
     if (gArgs.GetBoolArg("-skipmlcheck", false))
         return true;
 
-    // TODO: test this with validation server running and fix if necessary
+    // check ML proof
     VerificationClient client(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
     auto result = client.Verify(std::string(block.powMsgID), block.powModelHash.ToString(), std::string(block.powNextMsgID));
     int resultCode = int(result.first);

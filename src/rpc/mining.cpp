@@ -216,6 +216,7 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
             "       \"pow_msg_id\":\"msg_id\"           (string, required) Message ID\n"
             "       \"pow_next_msg_id\":\"next_msg_id\" (string, required) Next message ID\n"
             "       \"pow_model_hash\":\"model_hash\"   (string, required) ML model hash\n"
+            "       \"publish\":\"publish\"             (boolean, required) Perform full verification and broadcast, or just check hash\n"
             "     }\n"
             "\n"
 
@@ -228,47 +229,77 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
     std::string pow_msg_id = find_value(oparam, "pow_msg_id").get_str();
     std::string pow_next_msg_id = find_value(oparam, "pow_next_msg_id").get_str();
     uint256 pow_model_hash = ParseHashStr(find_value(oparam, "pow_model_hash").get_str(), "pow_model_hash");
+    bool publish = find_value(oparam, "publish").get_bool();
+    static std::unique_ptr<CBlockTemplate> pblocktemplate = nullptr;
+    static std::string storedAddress;
 
-    CTxDestination destination = DecodeDestination(address);
-    if (!IsValidDestination(destination)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error: Invalid address");
-    }
-
-    std::shared_ptr<CReserveScript> coinbaseScript = std::make_shared<CReserveScript>();
-    coinbaseScript->reserveScript = GetScriptForDestination(destination);
-
-    std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
-    if (!pblocktemplate.get())
-        throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
-    CBlock *pblock = &pblocktemplate->block;
-
-    // add coinbase tx and update merkle root
+    if (!publish) // first call to submitusefulwork; we assemble a new block and check if it's hash is lucky
     {
-        unsigned int nExtraNonce = 0;
-        LOCK(cs_main);
-        IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
+        CTxDestination destination = DecodeDestination(address);
+        if (!IsValidDestination(destination)) {
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error: Invalid address");
+        }
+        storedAddress = address;
+
+        std::shared_ptr<CReserveScript> coinbaseScript = std::make_shared<CReserveScript>();
+        coinbaseScript->reserveScript = GetScriptForDestination(destination);
+
+        pblocktemplate = BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript);
+        if (!pblocktemplate.get())
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
+        CBlock *pblock = &pblocktemplate->block;
+
+        // add coinbase tx and update merkle root
+        {
+            unsigned int nExtraNonce = 0;
+            LOCK(cs_main);
+            IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
+        }
+
+        pblock->powMsgID[0] = '\0';
+        strncat(pblock->powMsgID, pow_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
+        pblock->powNextMsgID[0] = '\0';
+        strncat(pblock->powNextMsgID, pow_next_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
+
+        pblock->powModelHash = pow_model_hash;
+        pblock->nNonce = pblock->DeriveNonceFromML();
+
+        LogPrintf("submitusefulwork step 1: %s\n", pblock->GetHash().GetHex());
+
+        return CheckProofOfWork(*pblock, Params().GetConsensus(), false); // just check block hash against difficulty; don't check ML proof
     }
-
-    pblock->powMsgID[0] = '\0';
-    strncat(pblock->powMsgID, pow_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
-    pblock->powNextMsgID[0] = '\0';
-    strncat(pblock->powNextMsgID, pow_next_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
-
-    pblock->powModelHash = pow_model_hash;
-    pblock->nNonce = pblock->DeriveNonceFromML();
-
-    LogPrintf("submitusefulwork: %s\n", pblock->GetHash().GetHex());
-
-    if (!CheckProofOfWork(*pblock, Params().GetConsensus()))
+    else // second call to submituseful work; using the same ML data and same block as in step 1, we perform full validation
     {
-        return false;
+        // check that the second call pertains to the same work as in step 1
+        bool firstStepVerified = false;
+        CBlock* pStoredBlock = nullptr;
+        if (pblocktemplate)
+        {
+            pStoredBlock = &pblocktemplate->block;
+            LogPrintf("submitusefulwork step 2: %s\n", pStoredBlock->GetHash().GetHex());
+
+            if (storedAddress == address &&
+                pStoredBlock->powModelHash == pow_model_hash &&
+                strcmp(pStoredBlock->powMsgID, pow_msg_id.c_str()) == 0 &&
+                strcmp(pStoredBlock->powNextMsgID, pow_next_msg_id.c_str()) == 0)
+            {
+                firstStepVerified = true;
+            }
+        }
+
+        if (!firstStepVerified)
+            throw JSONRPCError(RPC_VERIFY_ERROR, "submitusefulwork: called step 2 (publish=true) without first calling step 1 (publish=false)");
+
+        if (!CheckProofOfWork(*pStoredBlock, Params().GetConsensus(), true)) // this time perform ML check as well
+            return false;
+
+        // lucky block passed the full verification; add it to blockchain
+        std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pStoredBlock);
+        if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
     }
 
-    std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
-    if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
-        throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
-
-    return true; // pblock->GetHash().GetHex();
+    return true;
 }
 
 UniValue getmininginfo(const JSONRPCRequest& request)
