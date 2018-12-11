@@ -4,7 +4,10 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Base class for RPC testing."""
 
+import configparser
+
 from collections import deque
+
 from enum import Enum
 import logging
 import optparse
@@ -90,6 +93,7 @@ class PAIcoinTestFramework(object):
         parser.add_option("--coveragedir", dest="coveragedir",
                           help="Write tested RPC commands into this directory")
         parser.add_option("--configfile", dest="configfile",
+                          default=os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/../../config.ini"),
                           help="Location of the test framework config file")
         parser.add_option("--pdbonfailure", dest="pdbonfailure", default=False, action="store_true",
                           help="Attach a python debugger if test fails")
@@ -441,6 +445,20 @@ class PAIcoinTestFramework(object):
         Useful if a test case wants complete control over initialization."""
         for i in range(self.num_nodes):
             initialize_datadir(self.options.tmpdir, i)
+
+    def is_wallet_compiled(self):
+        """Checks whether the wallet module was compiled."""
+        config = configparser.ConfigParser()
+        config.read_file(open(self.options.configfile))
+
+        return config["components"].getboolean("ENABLE_WALLET")
+
+    def is_zmq_compiled(self):
+        """Checks whether the zmq module was compiled."""
+        config = configparser.ConfigParser()
+        config.read_file(open(self.options.configfile))
+
+        return config["components"].getboolean("ENABLE_ZMQ")
 
 class ComparisonTestFramework(PAIcoinTestFramework):
     """Test framework for doing p2p comparison testing
