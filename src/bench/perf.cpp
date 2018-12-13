@@ -9,8 +9,8 @@
 /* These architectures support querying the cycle counter
  * from user space, no need for any syscall overhead.
  */
-void perf_init(void) { }
-void perf_fini(void) { }
+void perf_init() { }
+void perf_fini() { }
 
 #elif defined(__linux__)
 
@@ -21,21 +21,21 @@ void perf_fini(void) { }
 static int fd = -1;
 static struct perf_event_attr attr;
 
-void perf_init(void)
+void perf_init()
 {
     attr.type = PERF_TYPE_HARDWARE;
     attr.config = PERF_COUNT_HW_CPU_CYCLES;
     fd = syscall(__NR_perf_event_open, &attr, 0, -1, -1, 0);
 }
 
-void perf_fini(void)
+void perf_fini()
 {
     if (fd != -1) {
         close(fd);
     }
 }
 
-uint64_t perf_cpucycles(void)
+uint64_t perf_cpucycles()
 {
     uint64_t result = 0;
     if (fd == -1 || read(fd, &result, sizeof(result)) < (ssize_t)sizeof(result)) {
@@ -46,8 +46,8 @@ uint64_t perf_cpucycles(void)
 
 #else /* Unhandled platform */
 
-void perf_init(void) { }
-void perf_fini(void) { }
-uint64_t perf_cpucycles(void) { return 0; }
+void perf_init() { }
+void perf_fini() { }
+uint64_t perf_cpucycles() { return 0; }
 
 #endif

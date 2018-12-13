@@ -690,7 +690,7 @@ void ThreadImport(std::vector<fs::path> vImportFiles)
  *  Ensure that PAIcoin is running in a usable environment with all
  *  necessary library support.
  */
-bool InitSanityCheck(void)
+static bool InitSanityCheck()
 {
     if(!ECC_InitSanityCheck()) {
         InitError("Elliptic curve cryptography sanity check failure. Aborting.");

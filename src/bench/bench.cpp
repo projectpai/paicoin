@@ -15,7 +15,7 @@ benchmark::BenchRunner::BenchmarkMap &benchmark::BenchRunner::benchmarks() {
     return benchmarks_map;
 }
 
-static double gettimedouble(void) {
+static double gettimedouble() {
     struct timeval tv;
     gettimeofday(&tv, nullptr);
     return tv.tv_usec * 0.000001 + tv.tv_sec;

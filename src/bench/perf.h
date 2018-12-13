@@ -10,7 +10,7 @@
 
 #if defined(__i386__)
 
-static inline uint64_t perf_cpucycles(void)
+static inline uint64_t perf_cpucycles()
 {
     uint64_t x;
     __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
@@ -19,7 +19,7 @@ static inline uint64_t perf_cpucycles(void)
 
 #elif defined(__x86_64__)
 
-static inline uint64_t perf_cpucycles(void)
+static inline uint64_t perf_cpucycles()
 {
     uint32_t hi, lo;
     __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
@@ -27,11 +27,11 @@ static inline uint64_t perf_cpucycles(void)
 }
 #else
 
-uint64_t perf_cpucycles(void);
+uint64_t perf_cpucycles();
 
 #endif
 
-void perf_init(void);
-void perf_fini(void);
+void perf_init();
+void perf_fini();
 
 #endif // H_PERF
