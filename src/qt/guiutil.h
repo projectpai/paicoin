@@ -46,7 +46,7 @@ namespace GUIUtil
     void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent);
     void setupAmountWidget(QLineEdit *widget, QWidget *parent);
 
-    // Parse "paicoin://" URI into recipient object, return true on successful parsing
+    // Parse "paicoin:" URI into recipient object, return true on successful parsing
     bool parsePAIcoinURI(const QUrl &uri, SendCoinsRecipient *out);
     bool parsePAIcoinURI(QString uri, SendCoinsRecipient *out);
     QString formatPAIcoinURI(const SendCoinsRecipient &info);
