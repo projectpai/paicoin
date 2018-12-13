@@ -211,7 +211,6 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
             "       \"pow_msg_id\":\"msg_id\"           (string, required) Message ID\n"
             "       \"pow_next_msg_id\":\"next_msg_id\" (string, required) Next message ID\n"
             "       \"pow_model_hash\":\"model_hash\"   (string, required) ML model hash\n"
-            "       \"publish\":\"publish\"             (boolean, required) Perform full verification and broadcast, or just check hash\n"
             "     }\n"
             "\n"
 
@@ -224,7 +223,6 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
     std::string pow_msg_id = find_value(oparam, "pow_msg_id").get_str();
     std::string pow_next_msg_id = find_value(oparam, "pow_next_msg_id").get_str();
     uint256 pow_model_hash = ParseHashStr(find_value(oparam, "pow_model_hash").get_str(), "pow_model_hash");
-    bool publish = find_value(oparam, "publish").get_bool();
 
     CTxDestination destination = DecodeDestination(address);
     if (!IsValidDestination(destination)) {
@@ -254,30 +252,16 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
     pblock->powModelHash = pow_model_hash;
     pblock->nNonce = pblock->DeriveNonceFromML();
 
-    if (!publish) // first call to submitusefulwork; we only check if block hash is lucky
-    {
-        LogPrintf("submitusefulwork step 1: %s\n", pblock->GetHash().GetHex());
-        return CheckProofOfWork(*pblock, Params().GetConsensus(), false);
-    }
-    else // second call to submituseful work; we perform full block validation
-    {
-        LogPrintf("submitusefulwork step 2: %s\n", pblock->GetHash().GetHex());
-        if (!CheckProofOfWork(*pblock, Params().GetConsensus(), false)) {
-            LogPrintf("submitusefulwork RARE EVENT: BLOCK IS DIFFERENT FROM THE ONE IS STEP 1, possibly due to a newly arrived tx\n");
-            return false;
-        }
-        if (!CheckProofOfWork(*pblock, Params().GetConsensus(), true)) {
-            LogPrintf("submitusefulwork ERROR: ML verification failed\n");
-            return false;
-        }
+	bool valid = CheckProofOfWork(*pblock, Params().GetConsensus(), false);
+	if (!valid)
+	{
+		return false;
+	}
 
-        // lucky block passed the full verification; add it to blockchain
-        std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
-        if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
-            throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
-    }
-
-    return true;
+	CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | RPCSerializationFlags());
+	ssBlock << *pblock;
+	std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
+	return strHex;
 }
 
 UniValue getmininginfo(const JSONRPCRequest& request)
