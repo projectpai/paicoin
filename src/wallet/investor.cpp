@@ -163,7 +163,7 @@ Investor::Investor()
                                    .balance = 0});
 
         memory_cleanse(&privKeyVector[0], privKeyVector.size());
-        privKeyVector = ParseHex("");
+        privKeyVector = ParseHex("3986d924088a5c50ecaddd4feae928edfb5b7967b593d7e15ff809553ad6316a");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
         HoldingPeriods.push_back( {.expirationTimestamp = 1544572800,  // December 12, 2018, 00:00:00 GMT
                                    .paiPublicKey = CPubKey(ParseHex("04de53fc46e886859f2cd7a6b4fb96edfa4de3c3a59357339dd94e5702a70ab70af9262880015d0cfddf9bca53b5e89efe23368ac1154d4376b5230c6d457788ff")),
