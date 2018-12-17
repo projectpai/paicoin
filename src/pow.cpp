@@ -229,7 +229,8 @@ bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params
         return true;
 
     // check ML proof
-    VerificationClient client(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+    std::string verificationServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
+    VerificationClient client(grpc::CreateChannel(verificationServerAddress, grpc::InsecureChannelCredentials()));
     auto result = client.Verify(std::string(block.powMsgID), block.powModelHash.ToString(), std::string(block.powNextMsgID));
     int resultCode = int(result.first);
     return resultCode == pai::pouw::verification::Response::OK;
