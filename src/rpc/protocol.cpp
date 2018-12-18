@@ -52,10 +52,10 @@ std::string JSONRPCReply(const UniValue& result, const UniValue& error, const Un
     return reply.write() + "\n";
 }
 
-UniValue JSONRPCError(int code, const std::string& message)
+UniValue JSONRPCError(RPCErrorCode code, const std::string& message)
 {
     UniValue error{UniValue::VOBJ};
-    error.push_back(Pair("code", code));
+    error.push_back(Pair("code", ToUnderlying(code)));
     error.push_back(Pair("message", message));
     return error;
 }

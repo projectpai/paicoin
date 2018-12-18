@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "amount.h"
-#include "base58.h"
+#include <key_io.h>
 #include "chain.h"
 #include "consensus/validation.h"
 #include "core_io.h"
@@ -45,7 +45,7 @@ CWallet *GetWalletForJSONRPCRequest(const JSONRPCRequest& request)
                 return pwallet;
             }
         }
-        throw JSONRPCError(RPC_WALLET_NOT_FOUND, "Requested wallet does not exist or is not loaded");
+        throw JSONRPCError(RPCErrorCode::WALLET_NOT_FOUND, "Requested wallet does not exist or is not loaded");
     }
     return ::vpwallets.size() == 1 || (request.fHelp && ::vpwallets.size() > 0) ? ::vpwallets[0] : nullptr;
 }
@@ -68,16 +68,16 @@ bool EnsureWalletIsAvailable(const CWallet * const pwallet, bool avoidException)
         // the future that wallet RPC methods might get or remain registered
         // when no wallets are loaded.
         throw JSONRPCError(
-            RPC_METHOD_NOT_FOUND, "Method not found (wallet method is disabled because no wallet is loaded)");
+            RPCErrorCode::METHOD_NOT_FOUND, "Method not found (wallet method is disabled because no wallet is loaded)");
     }
-    throw JSONRPCError(RPC_WALLET_NOT_SPECIFIED,
+    throw JSONRPCError(RPCErrorCode::WALLET_NOT_SPECIFIED,
         "Wallet file not specified (must request wallet RPC through /wallet/<filename> uri-path).");
 }
 
 void EnsureWalletIsUnlocked(const CWallet * const pwallet)
 {
     if (pwallet->IsLocked()) {
-        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+        throw JSONRPCError(RPCErrorCode::WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
     }
 }
 
@@ -125,7 +125,7 @@ std::string AccountFromValue(const UniValue& value)
 {
     const auto& strAccount = value.get_str();
     if (strAccount == "*")
-        throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Invalid account name");
+        throw JSONRPCError(RPCErrorCode::WALLET_INVALID_ACCOUNT_NAME, "Invalid account name");
     return strAccount;
 }
 
@@ -165,7 +165,7 @@ UniValue getnewaddress(const JSONRPCRequest& request)
     // Generate a new key that is added to wallet
     CPubKey newKey;
     if (!pwallet->GetKeyFromPool(newKey)) {
-        throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+        throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
     }
     const auto keyID = newKey.GetID();
 
@@ -178,7 +178,7 @@ CTxDestination GetAccountAddress(CWallet* const pwallet, std::string strAccount,
 {
     CPubKey pubKey;
     if (!pwallet->GetAccountPubkey(pubKey, strAccount, bForceNew)) {
-        throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+        throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
     }
 
     return pubKey.GetID();
@@ -243,7 +243,7 @@ UniValue getrawchangeaddress(const JSONRPCRequest& request)
     CReserveKey reservekey{pwallet};
     CPubKey vchPubKey;
     if (!reservekey.GetReservedKey(vchPubKey, true))
-        throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+        throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
 
     reservekey.KeepKey();
 
@@ -276,7 +276,7 @@ UniValue setaccount(const JSONRPCRequest& request)
 
     const auto dest = DecodeDestination(request.params[0].get_str());
     if (!IsValidDestination(dest)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
     }
 
     std::string strAccount;
@@ -295,7 +295,7 @@ UniValue setaccount(const JSONRPCRequest& request)
         pwallet->SetAddressBook(dest, strAccount, "receive");
     }
     else
-        throw JSONRPCError(RPC_MISC_ERROR, "setaccount can only be used with own address");
+        throw JSONRPCError(RPCErrorCode::MISC_ERROR, "setaccount can only be used with own address");
 
     return NullUniValue;
 }
@@ -325,7 +325,7 @@ UniValue getaccount(const JSONRPCRequest& request)
 
     const auto dest = DecodeDestination(request.params[0].get_str());
     if (!IsValidDestination(dest)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
     }
 
     std::string strAccount;
@@ -382,13 +382,13 @@ static void SendMoney(CWallet * const pwallet, const CTxDestination &address, CA
 
     // Check amount
     if (nValue <= 0)
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid amount");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid amount");
 
     if (nValue > curBalance)
-        throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Insufficient funds");
+        throw JSONRPCError(RPCErrorCode::WALLET_INSUFFICIENT_FUNDS, "Insufficient funds");
 
     if (pwallet->GetBroadcastTransactions() && !g_connman) {
-        throw JSONRPCError(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
+        throw JSONRPCError(RPCErrorCode::CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
     }
 
     // Parse PAIcoin address
@@ -405,12 +405,12 @@ static void SendMoney(CWallet * const pwallet, const CTxDestination &address, CA
     if (!pwallet->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError, coin_control)) {
         if (!fSubtractFeeFromAmount && nValue + nFeeRequired > curBalance)
             strError = strprintf("Error: This transaction requires a transaction fee of at least %s", FormatMoney(nFeeRequired));
-        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, strError);
     }
     CValidationState state;
     if (!pwallet->CommitTransaction(wtxNew, reservekey, g_connman.get(), state)) {
         strError = strprintf("Error: The transaction was rejected! Reason given: %s", state.GetRejectReason());
-        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, strError);
     }
 }
 
@@ -456,13 +456,13 @@ UniValue sendtoaddress(const JSONRPCRequest& request)
 
     const auto dest = DecodeDestination(request.params[0].get_str());
     if (!IsValidDestination(dest)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid address");
     }
 
     // Amount
     const auto nAmount = AmountFromValue(request.params[1]);
     if (nAmount <= 0)
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for send");
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid amount for send");
 
     // Wallet comments
     CWalletTx wtx;
@@ -487,7 +487,7 @@ UniValue sendtoaddress(const JSONRPCRequest& request)
 
     if (!request.params[7].isNull()) {
         if (!FeeModeFromString(request.params[7].get_str(), coin_control.m_fee_mode)) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid estimate_mode parameter");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid estimate_mode parameter");
         }
     }
 
@@ -590,17 +590,17 @@ UniValue signmessage(const JSONRPCRequest& request)
 
     const auto dest = DecodeDestination(strAddress);
     if (!IsValidDestination(dest)) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid address");
     }
 
     const auto * const keyID = boost::get<CKeyID>(&dest);
     if (!keyID) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to key");
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Address does not refer to key");
     }
 
     CKey key;
     if (!pwallet->GetKey(*keyID, key)) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "Private key not available");
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, "Private key not available");
     }
 
     CHashWriter ss{SER_GETHASH, 0};
@@ -609,7 +609,7 @@ UniValue signmessage(const JSONRPCRequest& request)
 
     std::vector<unsigned char> vchSig;
     if (!key.SignCompact(ss.GetHash(), vchSig))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Sign failed");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Sign failed");
 
     return EncodeBase64(vchSig.data(), vchSig.size());
 }
@@ -647,7 +647,7 @@ UniValue getreceivedbyaddress(const JSONRPCRequest& request)
     // PAIcoin address
     const auto dest = DecodeDestination(request.params[0].get_str());
     if (!IsValidDestination(dest)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
     }
     const auto scriptPubKey = GetScriptForDestination(dest);
     if (!IsMine(*pwallet, scriptPubKey)) {
@@ -785,11 +785,11 @@ UniValue getbalance(const JSONRPCRequest& request)
 
     if (account_value.isNull()) {
         if (!minconf.isNull()) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER,
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER,
                 "getbalance minconf option is only currently supported if an account is specified");
         }
         if (!include_watchonly.isNull()) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER,
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER,
                 "getbalance include_watchonly option is only currently supported if an account is specified");
         }
         return ValueFromAmount(pwallet->GetBalance());
@@ -863,7 +863,7 @@ UniValue movecmd(const JSONRPCRequest& request)
     const auto strTo = AccountFromValue(request.params[1]);
     const auto nAmount = AmountFromValue(request.params[2]);
     if (nAmount <= 0)
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for send");
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid amount for send");
     if (!request.params[3].isNull())
         // unused parameter, used to be nMinDepth, keep type-checking it though
         (void)request.params[3].get_int();
@@ -872,7 +872,7 @@ UniValue movecmd(const JSONRPCRequest& request)
         strComment = request.params[4].get_str();
 
     if (!pwallet->AccountMove(strFrom, strTo, nAmount, strComment)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "database error");
+        throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "database error");
     }
 
     return true;
@@ -920,11 +920,11 @@ UniValue sendfrom(const JSONRPCRequest& request)
     const auto strAccount = AccountFromValue(request.params[0]);
     const auto dest = DecodeDestination(request.params[1].get_str());
     if (!IsValidDestination(dest)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
     }
     const auto nAmount = AmountFromValue(request.params[2]);
     if (nAmount <= 0)
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for send");
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid amount for send");
     int nMinDepth{1};
     if (!request.params[3].isNull())
         nMinDepth = request.params[3].get_int();
@@ -941,7 +941,7 @@ UniValue sendfrom(const JSONRPCRequest& request)
     // Check funds
     const auto nBalance = pwallet->GetLegacyBalance(ISMINE_SPENDABLE, nMinDepth, &strAccount);
     if (nAmount > nBalance)
-        throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Account has insufficient funds");
+        throw JSONRPCError(RPCErrorCode::WALLET_INSUFFICIENT_FUNDS, "Account has insufficient funds");
 
     SendMoney(pwallet, dest, nAmount, false, wtx, CCoinControl{}); // This is a deprecated API
 
@@ -1001,7 +1001,7 @@ UniValue sendmany(const JSONRPCRequest& request)
     LOCK2(cs_main, pwallet->cs_wallet);
 
     if (pwallet->GetBroadcastTransactions() && !g_connman) {
-        throw JSONRPCError(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
+        throw JSONRPCError(RPCErrorCode::CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
     }
 
     std::string strAccount = AccountFromValue(request.params[0]);
@@ -1030,7 +1030,7 @@ UniValue sendmany(const JSONRPCRequest& request)
 
     if (!request.params[7].isNull()) {
         if (!FeeModeFromString(request.params[7].get_str(), coin_control.m_fee_mode)) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid estimate_mode parameter");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid estimate_mode parameter");
         }
     }
 
@@ -1041,18 +1041,18 @@ UniValue sendmany(const JSONRPCRequest& request)
     for (const auto& name_ : sendTo.getKeys()) {
         const auto dest = DecodeDestination(name_);
         if (!IsValidDestination(dest)) {
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid PAIcoin address: ") + name_);
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, std::string("Invalid PAIcoin address: ") + name_);
         }
 
         if (destinations.count(dest)) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid parameter, duplicated address: ") + name_);
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Invalid parameter, duplicated address: ") + name_);
         }
         destinations.insert(dest);
 
         const auto scriptPubKey = GetScriptForDestination(dest);
         const auto nAmount = AmountFromValue(sendTo[name_]);
         if (nAmount <= 0)
-            throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for send");
+            throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid amount for send");
         totalAmount += nAmount;
 
         auto fSubtractFeeFromAmount = false;
@@ -1071,7 +1071,7 @@ UniValue sendmany(const JSONRPCRequest& request)
     // Check funds
     const auto nBalance = pwallet->GetLegacyBalance(ISMINE_SPENDABLE, nMinDepth, &strAccount);
     if (totalAmount > nBalance)
-        throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Account has insufficient funds");
+        throw JSONRPCError(RPCErrorCode::WALLET_INSUFFICIENT_FUNDS, "Account has insufficient funds");
 
     // Send
     CReserveKey keyChange{pwallet};
@@ -1080,11 +1080,11 @@ UniValue sendmany(const JSONRPCRequest& request)
     std::string strFailReason;
     const auto fCreated = pwallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, nChangePosRet, strFailReason, coin_control);
     if (!fCreated)
-        throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, strFailReason);
+        throw JSONRPCError(RPCErrorCode::WALLET_INSUFFICIENT_FUNDS, strFailReason);
     CValidationState state;
     if (!pwallet->CommitTransaction(wtx, keyChange, g_connman.get(), state)) {
         strFailReason = strprintf("Transaction commit failed:: %s", state.GetRejectReason());
-        throw JSONRPCError(RPC_WALLET_ERROR, strFailReason);
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, strFailReason);
     }
 
     return wtx.GetHash().GetHex();
@@ -1223,18 +1223,18 @@ UniValue addwitnessaddress(const JSONRPCRequest& request)
     {
         LOCK(cs_main);
         if (!IsWitnessEnabled(chainActive.Tip(), Params().GetConsensus()) && !gArgs.GetBoolArg("-walletprematurewitness", false)) {
-            throw JSONRPCError(RPC_WALLET_ERROR, "Segregated witness not enabled on network");
+            throw JSONRPCError(RPCErrorCode::WALLET_ERROR, "Segregated witness not enabled on network");
         }
     }
 
     const auto dest = DecodeDestination(request.params[0].get_str());
     if (!IsValidDestination(dest)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
     }
 
     Witnessifier w{pwallet};
     if (!boost::apply_visitor(w, dest)) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "Public key or redeemscript not known to wallet, or the key is uncompressed");
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, "Public key or redeemscript not known to wallet, or the key is uncompressed");
     }
 
     pwallet->SetAddressBook(w.result, "", "receive");
@@ -1661,9 +1661,9 @@ UniValue listtransactions(const JSONRPCRequest& request)
             filter = filter | ISMINE_WATCH_ONLY;
 
     if (nCount < 0)
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative count");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Negative count");
     if (nFrom < 0)
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative from");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Negative from");
 
     UniValue ret{UniValue::VARR};
 
@@ -1874,7 +1874,7 @@ UniValue listsinceblock(const JSONRPCRequest& request)
         target_confirms = request.params[1].get_int();
 
         if (target_confirms < 1) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter");
         }
     }
 
@@ -1902,7 +1902,7 @@ UniValue listsinceblock(const JSONRPCRequest& request)
     while (include_removed && paltindex && paltindex != pindex) {
         CBlock block;
         if (!ReadBlockFromDisk(block, paltindex, Params().GetConsensus())) {
-            throw JSONRPCError(RPC_INTERNAL_ERROR, "Can't read block from disk");
+            throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Can't read block from disk");
         }
         for (const auto& tx : block.vtx) {
             auto it = pwallet->mapWallet.find(tx->GetHash());
@@ -1992,7 +1992,7 @@ UniValue gettransaction(const JSONRPCRequest& request)
     UniValue entry{UniValue::VOBJ};
     auto it = pwallet->mapWallet.find(hash);
     if (it == pwallet->mapWallet.end()) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
     }
     const auto& wtx = it->second;
 
@@ -2047,10 +2047,10 @@ UniValue abandontransaction(const JSONRPCRequest& request)
     hash.SetHex(request.params[0].get_str());
 
     if (!pwallet->mapWallet.count(hash)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
     }
     if (!pwallet->AbandonTransaction(hash)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not eligible for abandonment");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Transaction not eligible for abandonment");
     }
 
     return NullUniValue;
@@ -2077,7 +2077,7 @@ UniValue backupwallet(const JSONRPCRequest& request)
     LOCK2(cs_main, pwallet->cs_wallet);
 
     if (!pwallet->BackupWallet(request.params[0].get_str())) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "Error: Wallet backup failed!");
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, "Error: Wallet backup failed!");
     }
 
     return NullUniValue;
@@ -2108,7 +2108,7 @@ UniValue keypoolrefill(const JSONRPCRequest& request)
     unsigned int kpSize{0};
     if (!request.params[0].isNull()) {
         if (request.params[0].get_int() < 0)
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, expected valid size.");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter, expected valid size.");
         kpSize = request.params[0].get_int();
     }
 
@@ -2116,7 +2116,7 @@ UniValue keypoolrefill(const JSONRPCRequest& request)
     pwallet->TopUpKeyPool(kpSize);
 
     if (pwallet->GetKeyPoolSize() < kpSize) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "Error refreshing keypool.");
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, "Error refreshing keypool.");
     }
 
     return NullUniValue;
@@ -2162,7 +2162,7 @@ UniValue walletpassphrase(const JSONRPCRequest& request)
     if (request.fHelp)
         return true;
     if (!pwallet->IsCrypted()) {
-        throw JSONRPCError(RPC_WALLET_WRONG_ENC_STATE, "Error: running with an unencrypted wallet, but walletpassphrase was called.");
+        throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Error: running with an unencrypted wallet, but walletpassphrase was called.");
     }
 
     // Note that the walletpassphrase is stored in request.params[0] which is not mlock()ed
@@ -2175,7 +2175,7 @@ UniValue walletpassphrase(const JSONRPCRequest& request)
     if (strWalletPass.length() > 0)
     {
         if (!pwallet->Unlock(strWalletPass)) {
-            throw JSONRPCError(RPC_WALLET_PASSPHRASE_INCORRECT, "Error: The wallet passphrase entered was incorrect.");
+            throw JSONRPCError(RPCErrorCode::WALLET_PASSPHRASE_INCORRECT, "Error: The wallet passphrase entered was incorrect.");
         }
     }
     else
@@ -2217,7 +2217,7 @@ UniValue walletpassphrasechange(const JSONRPCRequest& request)
     if (request.fHelp)
         return true;
     if (!pwallet->IsCrypted()) {
-        throw JSONRPCError(RPC_WALLET_WRONG_ENC_STATE, "Error: running with an unencrypted wallet, but walletpassphrasechange was called.");
+        throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Error: running with an unencrypted wallet, but walletpassphrasechange was called.");
     }
 
     // TODO: get rid of these .c_str() calls by implementing SecureString::operator=(std::string)
@@ -2236,7 +2236,7 @@ UniValue walletpassphrasechange(const JSONRPCRequest& request)
             "Changes the wallet passphrase from <oldpassphrase> to <newpassphrase>.");
 
     if (!pwallet->ChangeWalletPassphrase(strOldWalletPass, strNewWalletPass)) {
-        throw JSONRPCError(RPC_WALLET_PASSPHRASE_INCORRECT, "Error: The wallet passphrase entered was incorrect.");
+        throw JSONRPCError(RPCErrorCode::WALLET_PASSPHRASE_INCORRECT, "Error: The wallet passphrase entered was incorrect.");
     }
 
     return NullUniValue;
@@ -2272,7 +2272,7 @@ UniValue walletlock(const JSONRPCRequest& request)
     if (request.fHelp)
         return true;
     if (!pwallet->IsCrypted()) {
-        throw JSONRPCError(RPC_WALLET_WRONG_ENC_STATE, "Error: running with an unencrypted wallet, but walletlock was called.");
+        throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Error: running with an unencrypted wallet, but walletlock was called.");
     }
 
     pwallet->Lock();
@@ -2319,7 +2319,7 @@ UniValue encryptwallet(const JSONRPCRequest& request)
     if (request.fHelp)
         return true;
     if (pwallet->IsCrypted()) {
-        throw JSONRPCError(RPC_WALLET_WRONG_ENC_STATE, "Error: running with an encrypted wallet, but encryptwallet was called.");
+        throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Error: running with an encrypted wallet, but encryptwallet was called.");
     }
 
     // TODO: get rid of this .c_str() by implementing SecureString::operator=(std::string)
@@ -2334,7 +2334,7 @@ UniValue encryptwallet(const JSONRPCRequest& request)
             "Encrypts the wallet with <passphrase>.");
 
     if (!pwallet->EncryptWallet(strWalletPass)) {
-        throw JSONRPCError(RPC_WALLET_ENCRYPTION_FAILED, "Error: Failed to encrypt the wallet.");
+        throw JSONRPCError(RPCErrorCode::WALLET_ENCRYPTION_FAILED, "Error: Failed to encrypt the wallet.");
     }
 
     // BDB seems to have a bad habit of writing old data into
@@ -2406,7 +2406,7 @@ UniValue lockunspent(const JSONRPCRequest& request)
     for (size_t idx{0}; idx < outputs.size(); ++idx) {
         const auto& output = outputs[idx];
         if (!output.isObject())
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, expected object");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter, expected object");
         const auto& o = output.get_obj();
 
         RPCTypeCheckObj(o,
@@ -2417,11 +2417,11 @@ UniValue lockunspent(const JSONRPCRequest& request)
 
         const auto& txid = find_value(o, "txid").get_str();
         if (!IsHex(txid))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, expected hex txid");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter, expected hex txid");
 
         const auto nOutput = find_value(o, "vout").get_int();
         if (nOutput < 0)
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, vout must be positive");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter, vout must be positive");
 
         const COutPoint outpt{uint256S(txid), static_cast<uint32_t>(nOutput)};
 
@@ -2621,12 +2621,12 @@ UniValue resendwallettransactions(const JSONRPCRequest& request)
             );
 
     if (!g_connman)
-        throw JSONRPCError(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
+        throw JSONRPCError(RPCErrorCode::CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
 
     LOCK2(cs_main, pwallet->cs_wallet);
 
     if (!pwallet->GetBroadcastTransactions()) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "Error: Wallet transaction broadcasting is disabled with -walletbroadcast");
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, "Error: Wallet transaction broadcasting is disabled with -walletbroadcast");
     }
 
     const auto txids = pwallet->ResendWalletTransactionsBefore(GetTime(), g_connman.get());
@@ -2718,10 +2718,10 @@ UniValue listunspent(const JSONRPCRequest& request)
             const auto& input = inputs[idx];
             const auto dest = DecodeDestination(input.get_str());
             if (!IsValidDestination(dest)) {
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid PAIcoin address: ") + input.get_str());
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, std::string("Invalid PAIcoin address: ") + input.get_str());
             }
             if (!destinations.insert(dest).second) {
-                throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid parameter, duplicated address: ") + input.get_str());
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Invalid parameter, duplicated address: ") + input.get_str());
             }
         }
     }
@@ -2898,7 +2898,7 @@ UniValue fundrawtransaction(const JSONRPCRequest& request)
             const auto dest = DecodeDestination(options["changeAddress"].get_str());
 
             if (!IsValidDestination(dest)) {
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "changeAddress must be a valid paicoin address");
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "changeAddress must be a valid paicoin address");
             }
 
             coinControl.destChange = dest;
@@ -2927,16 +2927,16 @@ UniValue fundrawtransaction(const JSONRPCRequest& request)
         }
         if (options.exists("conf_target")) {
             if (options.exists("feeRate")) {
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "Cannot specify both conf_target and feeRate");
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Cannot specify both conf_target and feeRate");
             }
             coinControl.m_confirm_target = ParseConfirmTarget(options["conf_target"]);
         }
         if (options.exists("estimate_mode")) {
             if (options.exists("feeRate")) {
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "Cannot specify both estimate_mode and feeRate");
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Cannot specify both estimate_mode and feeRate");
             }
             if (!FeeModeFromString(options["estimate_mode"].get_str(), coinControl.m_fee_mode)) {
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid estimate_mode parameter");
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid estimate_mode parameter");
             }
         }
       }
@@ -2945,22 +2945,22 @@ UniValue fundrawtransaction(const JSONRPCRequest& request)
     // parse hex string from parameter
     CMutableTransaction tx;
     if (!DecodeHexTx(tx, request.params[0].get_str(), true))
-        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
+        throw JSONRPCError(RPCErrorCode::DESERIALIZATION_ERROR, "TX decode failed");
 
     if (tx.vout.size() == 0)
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "TX must have at least one output");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "TX must have at least one output");
 
     if (changePosition != -1 && (changePosition < 0 || static_cast<unsigned int>(changePosition) > tx.vout.size()))
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "changePosition out of bounds");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "changePosition out of bounds");
 
     for (size_t idx{0}; idx < subtractFeeFromOutputs.size(); ++idx) {
         const int pos{subtractFeeFromOutputs[idx].get_int()};
         if (setSubtractFeeFromOutputs.count(pos))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid parameter, duplicated position: %d", pos));
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, strprintf("Invalid parameter, duplicated position: %d", pos));
         if (pos < 0)
-            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid parameter, negative position: %d", pos));
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, strprintf("Invalid parameter, negative position: %d", pos));
         if (pos >= int(tx.vout.size()))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid parameter, position too large: %d", pos));
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, strprintf("Invalid parameter, position too large: %d", pos));
         setSubtractFeeFromOutputs.insert(pos);
     }
 
@@ -2968,7 +2968,7 @@ UniValue fundrawtransaction(const JSONRPCRequest& request)
     std::string strFailReason;
 
     if (!pwallet->FundTransaction(tx, nFeeOut, changePosition, strFailReason, lockUnspents, setSubtractFeeFromOutputs, coinControl)) {
-        throw JSONRPCError(RPC_WALLET_ERROR, strFailReason);
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, strFailReason);
     }
 
     UniValue result{UniValue::VOBJ};
@@ -3054,13 +3054,13 @@ UniValue bumpfee(const JSONRPCRequest& request)
             true, true);
 
         if (options.exists("confTarget") && options.exists("totalFee")) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "confTarget and totalFee options should not both be set. Please provide either a confirmation target for fee estimation or an explicit total fee for the transaction.");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "confTarget and totalFee options should not both be set. Please provide either a confirmation target for fee estimation or an explicit total fee for the transaction.");
         } else if (options.exists("confTarget")) { // TODO: alias this to conf_target
             coin_control.m_confirm_target = ParseConfirmTarget(options["confTarget"]);
         } else if (options.exists("totalFee")) {
             totalFee = options["totalFee"].get_int64();
             if (totalFee <= 0) {
-                throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid totalFee %s (must be greater than 0)", FormatMoney(totalFee)));
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, strprintf("Invalid totalFee %s (must be greater than 0)", FormatMoney(totalFee)));
             }
         }
 
@@ -3069,7 +3069,7 @@ UniValue bumpfee(const JSONRPCRequest& request)
         }
         if (options.exists("estimate_mode")) {
             if (!FeeModeFromString(options["estimate_mode"].get_str(), coin_control.m_fee_mode)) {
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid estimate_mode parameter");
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid estimate_mode parameter");
             }
         }
     }
@@ -3083,30 +3083,30 @@ UniValue bumpfee(const JSONRPCRequest& request)
     {
         switch(res) {
             case BumpFeeResult::INVALID_ADDRESS_OR_KEY:
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, feeBump.getErrors()[0]);
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, feeBump.getErrors()[0]);
                 break;
             case BumpFeeResult::INVALID_REQUEST:
-                throw JSONRPCError(RPC_INVALID_REQUEST, feeBump.getErrors()[0]);
+                throw JSONRPCError(RPCErrorCode::INVALID_REQUEST, feeBump.getErrors()[0]);
                 break;
             case BumpFeeResult::INVALID_PARAMETER:
-                throw JSONRPCError(RPC_INVALID_PARAMETER, feeBump.getErrors()[0]);
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, feeBump.getErrors()[0]);
                 break;
             case BumpFeeResult::WALLET_ERROR:
-                throw JSONRPCError(RPC_WALLET_ERROR, feeBump.getErrors()[0]);
+                throw JSONRPCError(RPCErrorCode::WALLET_ERROR, feeBump.getErrors()[0]);
                 break;
             default:
-                throw JSONRPCError(RPC_MISC_ERROR, feeBump.getErrors()[0]);
+                throw JSONRPCError(RPCErrorCode::MISC_ERROR, feeBump.getErrors()[0]);
                 break;
         }
     }
 
     // sign bumped transaction
     if (!feeBump.signTransaction(pwallet)) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "Can't sign transaction.");
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, "Can't sign transaction.");
     }
     // commit the bumped transaction
     if(!feeBump.commit(pwallet)) {
-        throw JSONRPCError(RPC_WALLET_ERROR, feeBump.getErrors()[0]);
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, feeBump.getErrors()[0]);
     }
     UniValue result{UniValue::VOBJ};
     result.push_back(Pair("txid", feeBump.getBumpedTxId().GetHex()));
@@ -3154,12 +3154,12 @@ UniValue generate(const JSONRPCRequest& request)
 
     // If the keypool is exhausted, no script is returned at all.  Catch this.
     if (!coinbase_script) {
-        throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+        throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
     }
 
     //throw an error if no script was provided
     if (coinbase_script->reserveScript.empty()) {
-        throw JSONRPCError(RPC_INTERNAL_ERROR, "No coinbase script available");
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "No coinbase script available");
     }
 
     return generateBlocks(coinbase_script, num_generate, max_tries, true);

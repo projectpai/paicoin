@@ -14,7 +14,7 @@
 #include "sendcoinsdialog.h"
 #include "transactiontablemodel.h"
 
-#include "base58.h"
+#include <key_io.h>
 #include "chain.h"
 #include "keystore.h"
 #include "validation.h"
