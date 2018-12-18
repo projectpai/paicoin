@@ -143,38 +143,42 @@ inline uint160 Hash160(const prevector<N, unsigned char>& vch)
 }
 
 /** A writer stream (for serialization) that computes a 256-bit hash. */
-class CHashWriter
+template<class Hasher>
+class THashWriter
 {
 private:
-    CSha256D ctx;
+    Hasher hasher;
 
     const int nType;
     const int nVersion;
 public:
 
-    CHashWriter(int nTypeIn, int nVersionIn) : nType(nTypeIn), nVersion(nVersionIn) {}
+    THashWriter(int nTypeIn, int nVersionIn) : nType(nTypeIn), nVersion(nVersionIn) {}
 
     int GetType() const { return nType; }
     int GetVersion() const { return nVersion; }
 
     void write(const char *pch, size_t size) {
-        ctx.Write((const unsigned char*)pch, size);
+        hasher.Write((const unsigned char*)pch, size);
     }
 
     // invalidates the object
     uint256 GetHash() {
         uint256 result;
-        ctx.Finalize((unsigned char*)&result);
+        hasher.Finalize((unsigned char*)&result);
         return result;
     }
 
     template<typename T>
-    CHashWriter& operator<<(const T& obj) {
+    THashWriter& operator<<(const T& obj) {
         // Serialize to this stream
         ::Serialize(*this, obj);
         return (*this);
     }
 };
+
+typedef THashWriter<CSha256D> CHashWriter;
+typedef THashWriter<CShake256> CBlockHashWriter;
 
 /** Reads data from an underlying stream, while hashing the read data. */
 template<typename Source>
@@ -212,10 +216,10 @@ public:
 };
 
 /** Compute the 256-bit hash of an object's serialization. */
-template<typename T>
+template<class HashWriter, typename T>
 uint256 SerializeHash(const T& obj, int nType=SER_GETHASH, int nVersion=PROTOCOL_VERSION)
 {
-    CHashWriter ss(nType, nVersion);
+    HashWriter ss(nType, nVersion);
     ss << obj;
     return ss.GetHash();
 }
