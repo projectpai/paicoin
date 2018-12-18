@@ -2,19 +2,19 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "httprpc.h"
+#include <httprpc.h>
 
-#include "base58.h"
-#include "chainparams.h"
-#include "httpserver.h"
-#include "rpc/protocol.h"
-#include "rpc/server.h"
-#include "random.h"
-#include "sync.h"
-#include "util.h"
-#include "utilstrencodings.h"
-#include "ui_interface.h"
-#include "crypto/hmac_sha256.h"
+#include <chainparams.h>
+#include <httpserver.h>
+#include <key_io.h>
+#include <rpc/protocol.h>
+#include <rpc/server.h>
+#include <random.h>
+#include <sync.h>
+#include <util.h>
+#include <utilstrencodings.h>
+#include <ui_interface.h>
+#include <crypto/hmac_sha256.h>
 #include <stdio.h>
 
 #include <boost/algorithm/string.hpp> // boost::trim
@@ -31,7 +31,7 @@ static const char* const WWW_AUTH_HEADER_DATA = "Basic realm=\"jsonrpc\"";
 class HTTPRPCTimer : public RPCTimerBase
 {
 public:
-    HTTPRPCTimer(struct event_base* eventBase, std::function<void(void)>& func, int64_t millis) :
+    HTTPRPCTimer(struct event_base* eventBase, std::function<void()>& func, int64_t millis) :
         ev(eventBase, false, func)
     {
         struct timeval tv;
@@ -53,7 +53,7 @@ public:
     {
         return "HTTP";
     }
-    RPCTimerBase* NewTimer(std::function<void(void)>& func, int64_t millis) override
+    RPCTimerBase* NewTimer(std::function<void()>& func, int64_t millis) override
     {
         return new HTTPRPCTimer(base, func, millis);
     }

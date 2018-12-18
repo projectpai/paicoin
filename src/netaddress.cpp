@@ -92,6 +92,16 @@ unsigned int CNetAddr::GetByte(int n) const
     return ip[15-n];
 }
 
+bool CNetAddr::IsBindAny() const
+{
+    const int cmplen = IsIPv4() ? 4 : 16;
+    for (int i = 0; i < cmplen; ++i) {
+        if (GetByte(i)) return false;
+    }
+
+    return true;
+}
+
 bool CNetAddr::IsIPv4() const
 {
     return (memcmp(ip, pchIPv4, sizeof(pchIPv4)) == 0);
@@ -526,17 +536,17 @@ unsigned short CService::GetPort() const
 
 bool operator==(const CService& a, const CService& b)
 {
-    return (CNetAddr)a == (CNetAddr)b && a.port == b.port;
+    return static_cast<CNetAddr>(a) == static_cast<CNetAddr>(b) && a.port == b.port;
 }
 
 bool operator!=(const CService& a, const CService& b)
 {
-    return (CNetAddr)a != (CNetAddr)b || a.port != b.port;
+    return static_cast<CNetAddr>(a) != static_cast<CNetAddr>(b) || a.port != b.port;
 }
 
 bool operator<(const CService& a, const CService& b)
 {
-    return (CNetAddr)a < (CNetAddr)b || ((CNetAddr)a == (CNetAddr)b && a.port < b.port);
+    return static_cast<CNetAddr>(a) < static_cast<CNetAddr>(b) || (static_cast<CNetAddr>(a) == static_cast<CNetAddr>(b) && a.port < b.port);
 }
 
 bool CService::GetSockAddr(struct sockaddr* paddr, socklen_t *addrlen) const

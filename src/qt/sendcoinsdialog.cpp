@@ -15,7 +15,7 @@
 #include "sendcoinsentry.h"
 #include "walletmodel.h"
 
-#include "base58.h"
+#include <key_io.h>
 #include "chainparams.h"
 #include "wallet/coincontrol.h"
 #include "validation.h" // mempool and minRelayTxFee
@@ -352,7 +352,7 @@ void SendCoinsDialog::on_sendButton_clicked()
     SendConfirmationDialog confirmationDialog(tr("Confirm send coins"),
         questionString.arg(formatted.join("<br />")), SEND_CONFIRM_DELAY, this);
     confirmationDialog.exec();
-    QMessageBox::StandardButton retval = (QMessageBox::StandardButton)confirmationDialog.result();
+    QMessageBox::StandardButton retval = static_cast<QMessageBox::StandardButton>(confirmationDialog.result());
 
     if(retval != QMessageBox::Yes)
     {

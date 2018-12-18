@@ -64,6 +64,8 @@ removing transactions from their block template directly.
 Low-level RPC changes
 ----------------------
 - The "currentblocksize" value in getmininginfo has been removed.
+- `dumpwallet` no longer allows overwriting files. This is a security measure
+  as well as prevents dangerous user mistakes.
 
 Credits
 =======

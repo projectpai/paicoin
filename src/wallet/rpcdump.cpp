@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "base58.h"
+#include <key_io.h>
 #include "chain.h"
 #include "rpc/safemode.h"
 #include "rpc/server.h"
@@ -63,7 +63,7 @@ std::string DecodeDumpString(const std::string &str) {
     for (std::string::size_type pos{0}; pos < str.length(); ++pos) {
         unsigned char c = str[pos];
         if (c == '%' && pos+2 < str.length()) {
-            c = (((str[pos+1]>>6)*9+((str[pos+1]-'0')&15)) << 4) | 
+            c = (((str[pos+1]>>6)*9+((str[pos+1]-'0')&15)) << 4) |
                 ((str[pos+2]>>6)*9+((str[pos+2]-'0')&15));
             pos += 2;
         }
@@ -118,13 +118,8 @@ UniValue importprivkey(const JSONRPCRequest& request)
     if (fRescan && fPruneMode)
         throw JSONRPCError(RPCErrorCode::WALLET_ERROR, "Rescan is disabled in pruned mode");
 
-    CPAIcoinSecret vchSecret;
-    bool fGood = vchSecret.SetString(strSecret);
-
-    if (!fGood) throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
-
-    const auto key = vchSecret.GetKey();
-    if (!key.IsValid()) throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+    CKey key = DecodeSecret(strSecret);
+    if (!key.IsValid()) throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
 
     const auto pubkey = key.GetPubKey();
     assert(key.VerifyPubKey(pubkey));
@@ -497,10 +492,10 @@ UniValue importwallet(const JSONRPCRequest& request)
         boost::split(vstr, line, boost::is_any_of(" "));
         if (vstr.size() < 2)
             continue;
-        CPAIcoinSecret vchSecret;
-        if (!vchSecret.SetString(vstr[0]))
+        CKey key = DecodeSecret(vstr[0]);
+        if (!key.IsValid())
             continue;
-        const auto key = vchSecret.GetKey();
+
         const auto pubkey = key.GetPubKey();
         assert(key.VerifyPubKey(pubkey));
         const auto keyid = pubkey.GetID();
@@ -584,7 +579,7 @@ UniValue dumpprivkey(const JSONRPCRequest& request)
     if (!pwallet->GetKey(*keyID, vchSecret)) {
         throw JSONRPCError(RPCErrorCode::WALLET_ERROR, "Private key for address " + strAddress + " is not known");
     }
-    return CPAIcoinSecret(vchSecret).ToString();
+    return EncodeSecret(vchSecret);
 }
 
 UniValue dumpwallet(const JSONRPCRequest& request)
@@ -597,7 +592,7 @@ UniValue dumpwallet(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
             "dumpwallet \"filename\"\n"
-            "\nDumps all wallet keys in a human-readable format.\n"
+            "\nDumps all wallet keys in a human-readable format to a server-side file. This does not allow overwriting existing files.\n"
             "\nArguments:\n"
             "1. \"filename\"    (string, required) The filename with path (either absolute or relative to paicoind)\n"
             "\nResult:\n"
@@ -613,9 +608,19 @@ UniValue dumpwallet(const JSONRPCRequest& request)
 
     EnsureWalletIsUnlocked(pwallet);
 
-    std::ofstream file;
-    boost::filesystem::path filepath{request.params[0].get_str()};
+    boost::filesystem::path filepath = request.params[0].get_str();
     filepath = boost::filesystem::absolute(filepath);
+
+    /* Prevent arbitrary files from being overwritten. There have been reports
+     * that users have overwritten wallet files this way:
+     * https://github.com/bitcoin/bitcoin/issues/9934
+     * It may also avoid other security issues.
+     */
+    if (boost::filesystem::exists(filepath)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, filepath.string() + " already exists. If you are sure this is what you want, move it out of the way first");
+    }
+
+    std::ofstream file;
     file.open(filepath.string().c_str());
     if (!file.is_open())
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Cannot open wallet dump file");
@@ -641,7 +646,7 @@ UniValue dumpwallet(const JSONRPCRequest& request)
     file << strprintf("#   mined on %s\n", EncodeDumpTime(chainActive.Tip()->GetBlockTime()));
     file << "\n";
 
-    // add the base58check encoded extended master if the wallet uses HD 
+    // add the base58check encoded extended master if the wallet uses HD
     const auto masterKeyID = pwallet->GetHDChain().masterKeyID;
     if (!masterKeyID.IsNull())
     {
@@ -650,10 +655,7 @@ UniValue dumpwallet(const JSONRPCRequest& request)
             CExtKey masterKey;
             masterKey.SetMaster(key.begin(), key.size());
 
-            CPAIcoinExtKey b58extkey;
-            b58extkey.SetKey(masterKey);
-
-            file << "# extended private masterkey: " << b58extkey.ToString() << "\n\n";
+            file << "# extended private masterkey: " << EncodeExtKey(masterKey) << "\n\n";
         }
     }
 
@@ -663,7 +665,7 @@ UniValue dumpwallet(const JSONRPCRequest& request)
         const auto strAddr = EncodeDestination(keyid);
         CKey key;
         if (pwallet->GetKey(keyid, key)) {
-            file << strprintf("%s %s ", CPAIcoinSecret(key).ToString(), strTime);
+            file << strprintf("%s %s ", EncodeSecret(key), strTime);
             if (pwallet->mapAddressBook.count(keyid)) {
                 file << strprintf("label=%s", EncodeDumpString(pwallet->mapAddressBook[keyid].name));
             } else if (keyid == masterKeyID) {
@@ -803,17 +805,10 @@ UniValue ProcessImport(CWallet * const pwallet, const UniValue& data, const int6
                 for (size_t i{0}; i < keys.size(); ++i) {
                     const auto& privkey = keys[i].get_str();
 
-                    CPAIcoinSecret vchSecret;
-                    const auto fGood = vchSecret.SetString(privkey);
-
-                    if (!fGood) {
-                        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
-                    }
-
-                    const auto key = vchSecret.GetKey();
+                    CKey key = DecodeSecret(privkey);
 
                     if (!key.IsValid()) {
-                        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+                        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
                     }
 
                     const auto pubkey = key.GetPubKey();
@@ -910,16 +905,10 @@ UniValue ProcessImport(CWallet * const pwallet, const UniValue& data, const int6
                 const auto& strPrivkey = keys[0].get_str();
 
                 // Checks.
-                CPAIcoinSecret vchSecret;
-                const auto fGood = vchSecret.SetString(strPrivkey);
+                CKey key = DecodeSecret(strPrivkey);
 
-                if (!fGood) {
-                    throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
-                }
-
-                const auto key = vchSecret.GetKey();
                 if (!key.IsValid()) {
-                    throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+                    throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
                 }
 
                 const auto pubKey = key.GetPubKey();
