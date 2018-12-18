@@ -3,28 +3,28 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "base58.h"
-#include "amount.h"
-#include "chain.h"
-#include "chainparams.h"
-#include "consensus/consensus.h"
-#include "consensus/params.h"
-#include "consensus/validation.h"
-#include "core_io.h"
-#include "init.h"
-#include "validation.h"
-#include "miner.h"
-#include "net.h"
-#include "policy/fees.h"
-#include "pow.h"
-#include "rpc/blockchain.h"
-#include "rpc/mining.h"
-#include "rpc/server.h"
-#include "txmempool.h"
-#include "util.h"
-#include "utilstrencodings.h"
-#include "validationinterface.h"
-#include "warnings.h"
+#include <amount.h>
+#include <chain.h>
+#include <chainparams.h>
+#include <consensus/consensus.h>
+#include <consensus/params.h>
+#include <consensus/validation.h>
+#include <core_io.h>
+#include <init.h>
+#include <validation.h>
+#include <key_io.h>
+#include <miner.h>
+#include <net.h>
+#include <policy/fees.h>
+#include <pow.h>
+#include <rpc/blockchain.h>
+#include <rpc/mining.h>
+#include <rpc/server.h>
+#include <txmempool.h>
+#include <util.h>
+#include <utilstrencodings.h>
+#include <validationinterface.h>
+#include <warnings.h>
 
 #include <memory>
 #include <stdint.h>
@@ -36,7 +36,7 @@ unsigned int ParseConfirmTarget(const UniValue& value)
     const auto target = value.get_int();
     const unsigned int max_target{::feeEstimator.HighestTargetTracked(FeeEstimateHorizon::LONG_HALFLIFE)};
     if (target < 1 || static_cast<unsigned int>(target) > max_target) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid conf_target, must be between %u - %u", 1, max_target));
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, strprintf("Invalid conf_target, must be between %u - %u", 1, max_target));
     }
     return static_cast<unsigned int>(target);
 }
@@ -122,7 +122,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     {
         auto pblocktemplate = BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript);
         if (!pblocktemplate.get())
-            throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
+            throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Couldn't create new block");
 
         auto * const pblock = &pblocktemplate->block;
         {
@@ -141,7 +141,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         }
         const auto shared_pblock = std::make_shared<const CBlock>(*pblock);
         if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
-            throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
+            throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
         ++nHeight;
         blockHashes.push_back(pblock->GetHash().GetHex());
 
@@ -179,7 +179,7 @@ UniValue generatetoaddress(const JSONRPCRequest& request)
 
     const auto destination = DecodeDestination(request.params[1].get_str());
     if (!IsValidDestination(destination)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error: Invalid address");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Error: Invalid address");
     }
 
     const auto coinbaseScript = std::make_shared<CReserveScript>();
@@ -252,7 +252,7 @@ UniValue prioritisetransaction(const JSONRPCRequest& request)
     const CAmount nAmount{request.params[2].get_int64()};
 
     if (!(request.params[1].isNull() || request.params[1].get_real() == 0)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Priority is no longer supported, dummy argument to prioritisetransaction must be 0.");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Priority is no longer supported, dummy argument to prioritisetransaction must be 0.");
     }
 
     mempool.PrioritiseTransaction(hash, nAmount);
@@ -268,7 +268,7 @@ static UniValue BIP22ValidationResult(const CValidationState& state)
 
     const auto strRejectReason = state.GetRejectReason();
     if (state.IsError())
-        throw JSONRPCError(RPC_VERIFY_ERROR, strRejectReason);
+        throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, strRejectReason);
     if (state.IsInvalid())
     {
         if (strRejectReason.empty())
@@ -384,18 +384,18 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             /* Do nothing */
         }
         else
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid mode");
         lpval = find_value(oparam, "longpollid");
 
         if (strMode == "proposal")
         {
             const auto& dataval = find_value(oparam, "data");
             if (!dataval.isStr())
-                throw JSONRPCError(RPC_TYPE_ERROR, "Missing data String key for proposal");
+                throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Missing data String key for proposal");
 
             CBlock block;
             if (!DecodeHexBlk(block, dataval.get_str()))
-                throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
+                throw JSONRPCError(RPCErrorCode::DESERIALIZATION_ERROR, "Block decode failed");
 
             const auto hash = block.GetHash();
             auto mi = mapBlockIndex.find(hash);
@@ -433,16 +433,16 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     }
 
     if (strMode != "template")
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid mode");
 
     if(!g_connman)
-        throw JSONRPCError(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
+        throw JSONRPCError(RPCErrorCode::CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
 
     if (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0)
-        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "PAIcoin is not connected!");
+        throw JSONRPCError(RPCErrorCode::CLIENT_NOT_CONNECTED, "PAIcoin is not connected!");
 
     if (IsInitialBlockDownload())
-        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "PAIcoin is downloading blocks...");
+        throw JSONRPCError(RPCErrorCode::CLIENT_IN_INITIAL_DOWNLOAD, "PAIcoin is downloading blocks...");
 
     static unsigned int nTransactionsUpdatedLast;
 
@@ -488,7 +488,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         ENTER_CRITICAL_SECTION(cs_main);
 
         if (!IsRPCRunning())
-            throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Shutting down");
+            throw JSONRPCError(RPCErrorCode::CLIENT_NOT_CONNECTED, "Shutting down");
         // TODO: Maybe recheck connections/IBD and (if something wrong) send an expires-immediately template to stop miners?
     }
 
@@ -522,7 +522,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         CScript scriptDummy = CScript() << OP_TRUE;
         pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
         if (!pblocktemplate)
-            throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
+            throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Out of memory");
 
         // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
@@ -626,7 +626,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                     // Not supported by the client; make sure it's safe to proceed
                     if (!vbinfo.gbt_force) {
                         // If we do anything other than throw an exception here, be sure version/force isn't sent to old clients
-                        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Support for '%s' rule requires explicit client support", vbinfo.name));
+                        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, strprintf("Support for '%s' rule requires explicit client support", vbinfo.name));
                     }
                 }
                 break;
@@ -718,11 +718,11 @@ UniValue submitblock(const JSONRPCRequest& request)
 
     const auto blockptr = std::make_shared<CBlock>();
     if (!DecodeHexBlk(*blockptr, request.params[0].get_str())) {
-        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
+        throw JSONRPCError(RPCErrorCode::DESERIALIZATION_ERROR, "Block decode failed");
     }
 
     if (blockptr->vtx.empty() || !blockptr->vtx[0]->IsCoinBase()) {
-        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block does not start with a coinbase");
+        throw JSONRPCError(RPCErrorCode::DESERIALIZATION_ERROR, "Block does not start with a coinbase");
     }
 
     const auto hash = blockptr->GetHash();
@@ -844,7 +844,7 @@ UniValue estimatesmartfee(const JSONRPCRequest& request)
     if (!request.params[1].isNull()) {
         FeeEstimateMode fee_mode;
         if (!FeeModeFromString(request.params[1].get_str(), fee_mode)) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid estimate_mode parameter");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid estimate_mode parameter");
         }
         if (fee_mode == FeeEstimateMode::ECONOMICAL) conservative = false;
     }
@@ -914,7 +914,7 @@ UniValue estimaterawfee(const JSONRPCRequest& request)
         threshold = request.params[1].get_real();
     }
     if (threshold < 0 || threshold > 1) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid threshold");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid threshold");
     }
 
     UniValue result{UniValue::VOBJ};

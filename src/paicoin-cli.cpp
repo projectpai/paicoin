@@ -14,6 +14,7 @@
 #include "rpc/protocol.h"
 #include "util.h"
 #include "utilstrencodings.h"
+#include "http.h"
 
 #include <stdio.h>
 
@@ -263,9 +264,9 @@ static UniValue CallRPC(const std::string& strMethod, const UniValue& params)
 
     if (response.status == 0)
         throw CConnectionFailed{strprintf("couldn't connect to server: %s (code %d)\n(make sure server is running and you are connecting to the correct RPC port)", http_errorstring(response.error), response.error)};
-    else if (response.status == HTTP_UNAUTHORIZED)
+    else if (response.status == ToUnderlying(HTTPStatusCode::UNAUTHORIZED))
         throw std::runtime_error{"incorrect rpcuser or rpcpassword (authorization failed)"};
-    else if (response.status >= 400 && response.status != HTTP_BAD_REQUEST && response.status != HTTP_NOT_FOUND && response.status != HTTP_INTERNAL_SERVER_ERROR)
+    else if (response.status >= 400 && response.status != ToUnderlying(HTTPStatusCode::BAD_REQUEST) && response.status != ToUnderlying(HTTPStatusCode::NOT_FOUND) && response.status != ToUnderlying(HTTPStatusCode::INTERNAL_SERVER_ERROR))
         throw std::runtime_error{strprintf("server returned HTTP error %d", response.status)};
     else if (response.body.empty())
         throw std::runtime_error{"no response from server"};
@@ -332,7 +333,7 @@ static int CommandLineRPC(int argc, char *argv[])
                 if (!error.isNull()) {
                     // Error
                     const auto code = error["code"].get_int();
-                    if (fWait && code == RPC_IN_WARMUP)
+                    if (fWait && code == ToUnderlying(RPCErrorCode::IN_WARMUP))
                         throw CConnectionFailed{"server in warmup"};
                     strPrint = "error: " + error.write();
                     nRet = abs(code);
@@ -345,7 +346,7 @@ static int CommandLineRPC(int argc, char *argv[])
                         if (errMsg.isStr())
                             strPrint += "error message:\n"+errMsg.get_str();
 
-                        if (errCode.isNum() && errCode.get_int() == RPC_WALLET_NOT_SPECIFIED) {
+                        if (errCode.isNum() && errCode.get_int() == ToUnderlying(RPCErrorCode::WALLET_NOT_SPECIFIED)) {
                             strPrint += "\nTry adding \"-rpcwallet=<filename>\" option to paicoin-cli command line.";
                         }
                     }

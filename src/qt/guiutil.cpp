@@ -2,21 +2,23 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "guiutil.h"
+#include <qt/guiutil.h>
 
-#include "paicoinaddressvalidator.h"
-#include "paicoinunits.h"
-#include "qvalidatedlineedit.h"
-#include "walletmodel.h"
+#include <qt/paicoinaddressvalidator.h>
+#include <qt/paicoinunits.h>
+#include <qt/qvalidatedlineedit.h>
+#include <qt/walletmodel.h>
 
-#include "fs.h"
-#include "primitives/transaction.h"
-#include "init.h"
-#include "policy/policy.h"
-#include "protocol.h"
-#include "script/script.h"
-#include "script/standard.h"
-#include "util.h"
+#include <base58.h>
+#include <chainparams.h>
+#include <primitives/transaction.h>
+#include <key_io.h>
+#include <init.h>
+#include <policy/policy.h>
+#include <protocol.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <util.h>
 
 #ifdef WIN32
 #ifdef _WIN32_WINNT
@@ -422,12 +424,12 @@ bool openPAIcoinConf()
 
     /* Create the file */
     boost::filesystem::ofstream configFile(pathConfig, std::ios_base::app);
-    
+
     if (!configFile.good())
         return false;
-    
+
     configFile.close();
-    
+
     /* Open paicoin.conf with the associated application */
     return QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathConfig)));
 }
@@ -744,9 +746,10 @@ bool SetStartOnSystemStartup(bool fAutoStart)
     else
     {
         char pszExePath[MAX_PATH+1];
-        memset(pszExePath, 0, sizeof(pszExePath));
-        if (readlink("/proc/self/exe", pszExePath, sizeof(pszExePath)-1) == -1)
+        ssize_t r = readlink("/proc/self/exe", pszExePath, sizeof(pszExePath) - 1);
+        if (r == -1)
             return false;
+        pszExePath[r] = '\0';
 
         fs::create_directories(GetAutostartDir());
 
@@ -785,7 +788,7 @@ LSSharedFileListItemRef findStartupItemInList(LSSharedFileListRef list, CFURLRef
     if (listSnapshot == nullptr) {
         return nullptr;
     }
-    
+
     // loop through the list of startup items and try to find the paicoin app
     for(int i = 0; i < CFArrayGetCount(listSnapshot); i++) {
         LSSharedFileListItemRef item = (LSSharedFileListItemRef)CFArrayGetValueAtIndex(listSnapshot, i);
@@ -813,7 +816,7 @@ LSSharedFileListItemRef findStartupItemInList(LSSharedFileListRef list, CFURLRef
             CFRelease(currentItemURL);
         }
     }
-    
+
     CFRelease(listSnapshot);
     return nullptr;
 }
@@ -824,7 +827,7 @@ bool GetStartOnSystemStartup()
     if (paicoinAppUrl == nullptr) {
         return false;
     }
-    
+
     LSSharedFileListRef loginItems = LSSharedFileListCreate(nullptr, kLSSharedFileListSessionLoginItems, nullptr);
     LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, paicoinAppUrl);
 
@@ -838,7 +841,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
     if (paicoinAppUrl == nullptr) {
         return false;
     }
-    
+
     LSSharedFileListRef loginItems = LSSharedFileListCreate(nullptr, kLSSharedFileListSessionLoginItems, nullptr);
     LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, paicoinAppUrl);
 
@@ -850,7 +853,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
         // remove item
         LSSharedFileListItemRemove(loginItems, foundItem);
     }
-    
+
     CFRelease(paicoinAppUrl);
     return true;
 }
@@ -1013,7 +1016,7 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_EMIT clicked(event->pos());
 }
-    
+
 void ClickableProgressBar::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_EMIT clicked(event->pos());

@@ -246,13 +246,13 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
 
     // Early address-based allow check
     if (!ClientAllowed(hreq->GetPeer())) {
-        hreq->WriteReply(HTTP_FORBIDDEN);
+        hreq->WriteReply(HTTPStatusCode::FORBIDDEN);
         return;
     }
 
     // Early reject unknown HTTP methods
     if (hreq->GetRequestMethod() == HTTPRequest::UNKNOWN) {
-        hreq->WriteReply(HTTP_BADMETHOD);
+        hreq->WriteReply(HTTPStatusCode::BAD_METHOD);
         return;
     }
 
@@ -281,10 +281,10 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
             item.release(); /* if true, queue took ownership */
         else {
             LogPrintf("WARNING: request rejected because http work queue depth exceeded, it can be increased with the -rpcworkqueue= setting\n");
-            item->req->WriteReply(HTTP_INTERNAL, "Work queue depth exceeded");
+            item->req->WriteReply(HTTPStatusCode::INTERNAL_SERVER_ERROR, "Work queue depth exceeded");
         }
     } else {
-        hreq->WriteReply(HTTP_NOTFOUND);
+        hreq->WriteReply(HTTPStatusCode::NOT_FOUND);
     }
 }
 
@@ -522,7 +522,7 @@ static void httpevent_callback_fn(evutil_socket_t, short, void* data)
         delete self;
 }
 
-HTTPEvent::HTTPEvent(struct event_base* base, bool _deleteWhenTriggered, const std::function<void(void)>& _handler):
+HTTPEvent::HTTPEvent(struct event_base* base, bool _deleteWhenTriggered, const std::function<void()>& _handler):
     deleteWhenTriggered(_deleteWhenTriggered), handler(_handler)
 {
     ev = event_new(base, -1, 0, httpevent_callback_fn, this);
@@ -548,7 +548,7 @@ HTTPRequest::~HTTPRequest()
     if (!replySent) {
         // Keep track of whether reply was sent to avoid request leaks
         LogPrintf("%s: Unhandled request\n", __func__);
-        WriteReply(HTTP_INTERNAL, "Unhandled request");
+        WriteReply(HTTPStatusCode::INTERNAL_SERVER_ERROR, "Unhandled request");
     }
     // evhttpd cleans up the request, as long as a reply was sent.
 }
@@ -596,7 +596,7 @@ void HTTPRequest::WriteHeader(const std::string& hdr, const std::string& value)
  * Replies must be sent in the main loop in the main http thread,
  * this cannot be done from worker threads.
  */
-void HTTPRequest::WriteReply(int nStatus, const std::string& strReply)
+void HTTPRequest::WriteReply(HTTPStatusCode eStatus, const std::string& strReply)
 {
     assert(!replySent && req);
     // Send event to main http thread to send reply message
@@ -604,7 +604,7 @@ void HTTPRequest::WriteReply(int nStatus, const std::string& strReply)
     assert(evb);
     evbuffer_add(evb, strReply.data(), strReply.size());
     HTTPEvent* ev = new HTTPEvent(eventBase, true,
-        std::bind(evhttp_send_reply, req, nStatus, (const char*)nullptr, (struct evbuffer *)nullptr));
+        std::bind(evhttp_send_reply, req, ToUnderlying(eStatus), (const char*)nullptr, (struct evbuffer *)nullptr));
     ev->trigger(nullptr);
     replySent = true;
     req = nullptr; // transferred back to main thread

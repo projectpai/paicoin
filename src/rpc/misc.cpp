@@ -3,26 +3,26 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "base58.h"
-#include "chain.h"
-#include "clientversion.h"
-#include "core_io.h"
-#include "init.h"
-#include "validation.h"
-#include "httpserver.h"
-#include "net.h"
-#include "netbase.h"
-#include "rpc/blockchain.h"
-#include "rpc/server.h"
-#include "timedata.h"
-#include "util.h"
-#include "utilstrencodings.h"
+#include <chain.h>
+#include <clientversion.h>
+#include <core_io.h>
+#include <init.h>
+#include <key_io.h>
+#include <validation.h>
+#include <httpserver.h>
+#include <net.h>
+#include <netbase.h>
+#include <rpc/blockchain.h>
+#include <rpc/server.h>
+#include <timedata.h>
+#include <util.h>
+#include <utilstrencodings.h>
 #ifdef ENABLE_WALLET
-#include "wallet/rpcwallet.h"
-#include "wallet/wallet.h"
-#include "wallet/walletdb.h"
+#include <wallet/rpcwallet.h>
+#include <wallet/wallet.h>
+#include <wallet/walletdb.h>
 #endif
-#include "warnings.h"
+#include <warnings.h>
 
 #include <stdint.h>
 #include <iterator>
@@ -309,19 +309,19 @@ UniValue verifymessage(const JSONRPCRequest& request)
 
     const auto destination = DecodeDestination(strAddress);
     if (!IsValidDestination(destination)) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid address");
     }
 
     const auto * const keyID = boost::get<CKeyID>(&destination);
     if (!keyID) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to key");
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Address does not refer to key");
     }
 
     auto fInvalid = false;
     const auto vchSig = DecodeBase64(strSign.c_str(), &fInvalid);
 
     if (fInvalid)
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Malformed base64 encoding");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Malformed base64 encoding");
 
     CHashWriter ss{SER_GETHASH, 0};
     ss << strMessageMagic;
@@ -357,12 +357,10 @@ UniValue signmessagewithprivkey(const JSONRPCRequest& request)
     const auto& strPrivkey = request.params[0].get_str();
     const auto& strMessage = request.params[1].get_str();
 
-    CPAIcoinSecret vchSecret;
-    if (!vchSecret.SetString(strPrivkey))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key");
-    const auto key = vchSecret.GetKey();
-    if (!key.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+    CKey key = DecodeSecret(strPrivkey);
+    if (!key.IsValid()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid private key");
+    }
 
     CHashWriter ss{SER_GETHASH, 0};
     ss << strMessageMagic;
@@ -370,7 +368,7 @@ UniValue signmessagewithprivkey(const JSONRPCRequest& request)
 
     std::vector<unsigned char> vchSig;
     if (!key.SignCompact(ss.GetHash(), vchSig))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Sign failed");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Sign failed");
 
     return EncodeBase64(vchSig.data(), vchSig.size());
 }
@@ -474,10 +472,10 @@ UniValue getmemoryinfo(const JSONRPCRequest& request)
 #ifdef HAVE_MALLOC_INFO
         return RPCMallocInfo();
 #else
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "mallocinfo is only available when compiled with glibc 2.10+");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "mallocinfo is only available when compiled with glibc 2.10+");
 #endif
     } else {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "unknown mode " + mode);
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "unknown mode " + mode);
     }
 }
 
@@ -488,7 +486,7 @@ static uint32_t getCategoryMask(UniValue cats) {
         uint32_t flag{0};
         const auto& cat = cats[i].get_str();
         if (!GetLogCategory(&flag, &cat)) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "unknown logging category " + cat);
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "unknown logging category " + cat);
         }
         mask |= flag;
     }
@@ -534,7 +532,7 @@ UniValue logging(const JSONRPCRequest& request)
         if (!UpdateHTTPServerLogging(logCategories & BCLog::LIBEVENT)) {
             logCategories &= ~BCLog::LIBEVENT;
             if (changedLogCategories == BCLog::LIBEVENT) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "libevent logging cannot be updated when using libevent before v2.1.1.");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "libevent logging cannot be updated when using libevent before v2.1.1.");
             }
         }
     }
