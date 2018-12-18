@@ -272,7 +272,9 @@ crypto_libpaicoin_crypto_a_SOURCES = \
   crypto/sha256.cpp \
   crypto/sha256.h \
   crypto/sha512.cpp \
-  crypto/sha512.h
+  crypto/sha512.h \
+  crypto/tiny_sha3.c \
+  crypto/tiny_sha3.h
 
 if USE_ASM
 crypto_libpaicoin_crypto_a_SOURCES += crypto/sha256_sse4.cpp
