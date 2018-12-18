@@ -1518,7 +1518,7 @@ UniValue getchaintxstats(const JSONRPCRequest& request)
         blockcount = request.params[0].get_int();
 
         if (blockcount < 0 || (blockcount > 0 && blockcount >= pindex->nHeight)) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid block count: should be between 0 and the block's height - 1");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid block count: should be between 0 and the block's height - 1");
         }
     }
 
