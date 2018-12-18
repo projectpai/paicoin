@@ -6,7 +6,7 @@
 #define PAICOIN_QT_PAYMENTSERVER_H
 
 // This class handles payment requests from clicking on
-// paicoin:// URIs
+// paicoin: URIs
 //
 // This is somewhat tricky, because we have to deal with
 // the situation where the user clicks on a link during

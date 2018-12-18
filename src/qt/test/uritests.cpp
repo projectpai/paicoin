@@ -12,36 +12,35 @@
 void URITests::uriTests()
 {
     SendCoinsRecipient rv;
-    QVERIFY(!GUIUtil::parsePAIcoinURI("paicoin://175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?req-dontexist=", &rv));
 
-    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin://175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?dontexist=", &rv));
+    QVERIFY(!GUIUtil::parsePAIcoinURI("paicoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?req-dontexist=", &rv));
+
+    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?dontexist=", &rv));
     QVERIFY(rv.address == QString("175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W"));
     QVERIFY(rv.label == QString());
     QVERIFY(rv.amount == 0);
 
-    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin://175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?label=Wikipedia Example Address", &rv));
+    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?label=Wikipedia Example Address", &rv));
     QVERIFY(rv.address == QString("175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W"));
     QVERIFY(rv.label == QString("Wikipedia Example Address"));
     QVERIFY(rv.amount == 0);
 
-    QVERIFY(!GUIUtil::parsePAIcoinURI("paicoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=0.001", &rv));
-
-    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin://175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=0.001", &rv));
+    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=0.001", &rv));
     QVERIFY(rv.address == QString("175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W"));
     QVERIFY(rv.label == QString());
     QVERIFY(rv.amount == 100000);
 
-    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin://175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=1.001", &rv));
+    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=1.001", &rv));
     QVERIFY(rv.address == QString("175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W"));
     QVERIFY(rv.label == QString());
     QVERIFY(rv.amount == 100100000);
 
-    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin://175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=100&label=Wikipedia Example", &rv));
+    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=100&label=Wikipedia Example", &rv));
     QVERIFY(rv.address == QString("175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W"));
     QVERIFY(rv.amount == 10000000000LL);
     QVERIFY(rv.label == QString("Wikipedia Example"));
 
-    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin://175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?message=Wikipedia Example Address", &rv));
+    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?message=Wikipedia Example Address", &rv));
     QVERIFY(rv.address == QString("175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W"));
     QVERIFY(rv.label == QString());
 
@@ -49,9 +48,9 @@ void URITests::uriTests()
     QVERIFY(rv.address == QString("175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W"));
     QVERIFY(rv.label == QString());
 
-    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin://175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?req-message=Wikipedia Example Address", &rv));
+    QVERIFY(GUIUtil::parsePAIcoinURI("paicoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?req-message=Wikipedia Example Address", &rv));
 
-    QVERIFY(!GUIUtil::parsePAIcoinURI("paicoin://175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=1,000&label=Wikipedia Example", &rv));
+    QVERIFY(!GUIUtil::parsePAIcoinURI("paicoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=1,000&label=Wikipedia Example", &rv));
 
-    QVERIFY(!GUIUtil::parsePAIcoinURI("paicoin://175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=1,000.0&label=Wikipedia Example", &rv));
+    QVERIFY(!GUIUtil::parsePAIcoinURI("paicoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=1,000.0&label=Wikipedia Example", &rv));
 }
