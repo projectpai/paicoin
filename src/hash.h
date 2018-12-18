@@ -8,6 +8,9 @@
 
 #include "crypto/ripemd160.h"
 #include "crypto/sha256.h"
+extern "C" {
+#include "crypto/tiny_sha3.h"
+}
 #include "prevector.h"
 #include "serialize.h"
 #include "uint256.h"
@@ -16,6 +19,33 @@
 #include <vector>
 
 typedef uint256 ChainCode;
+
+class CShake256
+{
+private:
+    sha3_ctx_t sha3;
+
+public:
+    static const size_t OUTPUT_SIZE = 32;
+
+    CShake256() { Reset(); }
+
+    void Finalize(unsigned char hash[]) {
+        shake_xof(&sha3);               // switch to extensible output
+        for (int j = 0; j < 512; j += OUTPUT_SIZE)   // output. discard bytes 0..479
+            shake_out(&sha3, hash, OUTPUT_SIZE);
+    }
+
+    CShake256& Write(const unsigned char *data, size_t len) {
+        sha3_update(&sha3, data, len);
+        return *this;
+    }
+
+    CShake256& Reset() {
+        sha3_init(&sha3, OUTPUT_SIZE); // output length is specified in bytes
+        return *this;
+    }
+};
 
 /** A hasher class for PAIcoin's 256-bit hash (double SHA-256). */
 class CHash256 {
