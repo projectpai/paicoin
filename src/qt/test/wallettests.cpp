@@ -14,6 +14,10 @@
 #include <test/test_paicoin.h>
 #include <validation.h>
 #include <wallet/wallet.h>
+#include <qt/overviewpage.h>
+#include <qt/receivecoinsdialog.h>
+#include <qt/recentrequeststablemodel.h>
+#include <qt/receiverequestdialog.h>
 
 #include <QAbstractButton>
 #include <QAction>
