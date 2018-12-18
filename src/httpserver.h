@@ -5,6 +5,8 @@
 #ifndef PAICOIN_HTTPSERVER_H
 #define PAICOIN_HTTPSERVER_H
 
+#include "http.h"
+
 #include <string>
 #include <stdint.h>
 #include <functional>
@@ -107,13 +109,13 @@ public:
 
     /**
      * Write HTTP reply.
-     * nStatus is the HTTP status code to send.
+     * eStatus is the HTTP status code to send.
      * strReply is the body of the reply. Keep it empty to send a standard message.
      *
      * @note Can be called only once. As this will give the request back to the
      * main thread, do not call any other HTTPRequest methods after calling this.
      */
-    void WriteReply(int nStatus, const std::string& strReply = "");
+    void WriteReply(HTTPStatusCode eStatus, const std::string& strReply = "");
 };
 
 /** Event handler closure.

@@ -73,7 +73,7 @@ void RPCTypeCheck(const UniValue& params,
 void RPCTypeCheckArgument(const UniValue& value, UniValue::VType typeExpected)
 {
     if (value.type() != typeExpected) {
-        throw JSONRPCError(RPC_TYPE_ERROR, strprintf("Expected type %s, got %s", uvTypeName(typeExpected), uvTypeName(value.type())));
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, strprintf("Expected type %s, got %s", uvTypeName(typeExpected), uvTypeName(value.type())));
     }
 }
 
@@ -85,12 +85,12 @@ void RPCTypeCheckObj(const UniValue& o,
     for (const auto& t : typesExpected) {
         const auto& v = find_value(o, t.first);
         if (!fAllowNull && v.isNull())
-            throw JSONRPCError(RPC_TYPE_ERROR, strprintf("Missing %s", t.first));
+            throw JSONRPCError(RPCErrorCode::TYPE_ERROR, strprintf("Missing %s", t.first));
 
         if (!(t.second.typeAny || v.type() == t.second.type || (fAllowNull && v.isNull()))) {
             const auto err = strprintf("Expected type %s for %s, got %s",
                 uvTypeName(t.second.type), t.first, uvTypeName(v.type()));
-            throw JSONRPCError(RPC_TYPE_ERROR, err);
+            throw JSONRPCError(RPCErrorCode::TYPE_ERROR, err);
         }
     }
 
@@ -101,7 +101,7 @@ void RPCTypeCheckObj(const UniValue& o,
             if (typesExpected.count(k) == 0)
             {
                 const auto err = strprintf("Unexpected key %s", k);
-                throw JSONRPCError(RPC_TYPE_ERROR, err);
+                throw JSONRPCError(RPCErrorCode::TYPE_ERROR, err);
             }
         }
     }
@@ -110,12 +110,12 @@ void RPCTypeCheckObj(const UniValue& o,
 CAmount AmountFromValue(const UniValue& value)
 {
     if (!value.isNum() && !value.isStr())
-        throw JSONRPCError(RPC_TYPE_ERROR, "Amount is not a number or string");
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Amount is not a number or string");
     CAmount amount;
     if (!ParseFixedPoint(value.getValStr(), 8, &amount))
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid amount");
     if (!MoneyRange(amount))
-        throw JSONRPCError(RPC_TYPE_ERROR, "Amount out of range");
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Amount out of range");
     return amount;
 }
 
@@ -125,9 +125,9 @@ uint256 ParseHashV(const UniValue& v, std::string strName)
     if (v.isStr())
         strHex = v.get_str();
     if (!IsHex(strHex)) // Note: IsHex("") is false
-        throw JSONRPCError(RPC_INVALID_PARAMETER, strName+" must be hexadecimal string (not '"+strHex+"')");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, strName+" must be hexadecimal string (not '"+strHex+"')");
     if (64 != strHex.length())
-        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("%s must be of length %d (not %d)", strName, 64, strHex.length()));
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, strprintf("%s must be of length %d (not %d)", strName, 64, strHex.length()));
     uint256 result;
     result.SetHex(strHex);
     return result;
@@ -142,7 +142,7 @@ std::vector<unsigned char> ParseHexV(const UniValue& v, std::string strName)
     if (v.isStr())
         strHex = v.get_str();
     if (!IsHex(strHex))
-        throw JSONRPCError(RPC_INVALID_PARAMETER, strName+" must be hexadecimal string (not '"+strHex+"')");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, strName+" must be hexadecimal string (not '"+strHex+"')");
     return ParseHex(strHex);
 }
 std::vector<unsigned char> ParseHexO(const UniValue& o, std::string strKey)
@@ -359,7 +359,7 @@ void JSONRPCRequest::parse(const UniValue& valRequest)
 {
     // Parse request
     if (!valRequest.isObject())
-        throw JSONRPCError(RPC_INVALID_REQUEST, "Invalid Request object");
+        throw JSONRPCError(RPCErrorCode::INVALID_REQUEST, "Invalid Request object");
     const auto& request = valRequest.get_obj();
 
     // Parse id now so errors from here on will have the id
@@ -368,9 +368,9 @@ void JSONRPCRequest::parse(const UniValue& valRequest)
     // Parse method
     const auto& valMethod = find_value(request, "method");
     if (valMethod.isNull())
-        throw JSONRPCError(RPC_INVALID_REQUEST, "Missing method");
+        throw JSONRPCError(RPCErrorCode::INVALID_REQUEST, "Missing method");
     if (!valMethod.isStr())
-        throw JSONRPCError(RPC_INVALID_REQUEST, "Method must be a string");
+        throw JSONRPCError(RPCErrorCode::INVALID_REQUEST, "Method must be a string");
     strMethod = valMethod.get_str();
     LogPrint(BCLog::RPC, "ThreadRPCServer method=%s\n", SanitizeString(strMethod));
 
@@ -381,7 +381,7 @@ void JSONRPCRequest::parse(const UniValue& valRequest)
     else if (valParams.isNull())
         params = UniValue{UniValue::VARR};
     else
-        throw JSONRPCError(RPC_INVALID_REQUEST, "Params must be an array or object");
+        throw JSONRPCError(RPCErrorCode::INVALID_REQUEST, "Params must be an array or object");
 }
 
 static UniValue JSONRPCExecOne(const UniValue& req)
@@ -402,7 +402,7 @@ static UniValue JSONRPCExecOne(const UniValue& req)
     catch (const std::exception& e)
     {
         rpc_result = JSONRPCReplyObj(NullUniValue,
-                                     JSONRPCError(RPC_PARSE_ERROR, e.what()), jreq.id);
+                                     JSONRPCError(RPCErrorCode::PARSE_ERROR, e.what()), jreq.id);
     }
 
     return rpc_result;
@@ -461,7 +461,7 @@ static inline JSONRPCRequest transformNamedArguments(const JSONRPCRequest& in, c
     }
     // If there are still arguments in the argsIn map, this is an error.
     if (!argsIn.empty()) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Unknown named parameter " + argsIn.begin()->first);
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Unknown named parameter " + argsIn.begin()->first);
     }
     // Return request with named arguments transformed to positional arguments
     return out;
@@ -473,13 +473,13 @@ UniValue CRPCTable::execute(const JSONRPCRequest &request) const
     {
         LOCK(cs_rpcWarmup);
         if (fRPCInWarmup)
-            throw JSONRPCError(RPC_IN_WARMUP, rpcWarmupStatus);
+            throw JSONRPCError(RPCErrorCode::IN_WARMUP, rpcWarmupStatus);
     }
 
     // Find method
     const auto pcmd = tableRPC[request.strMethod];
     if (!pcmd)
-        throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Method not found");
+        throw JSONRPCError(RPCErrorCode::METHOD_NOT_FOUND, "Method not found");
 
     g_rpcSignals.PreCommand(*pcmd);
 
@@ -494,7 +494,7 @@ UniValue CRPCTable::execute(const JSONRPCRequest &request) const
     }
     catch (const std::exception& e)
     {
-        throw JSONRPCError(RPC_MISC_ERROR, e.what());
+        throw JSONRPCError(RPCErrorCode::MISC_ERROR, e.what());
     }
 }
 
@@ -540,7 +540,7 @@ void RPCUnsetTimerInterface(RPCTimerInterface *iface)
 void RPCRunLater(const std::string& name, std::function<void()> func, int64_t nSeconds)
 {
     if (!timerInterface)
-        throw JSONRPCError(RPC_INTERNAL_ERROR, "No timer handler registered for RPC");
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "No timer handler registered for RPC");
     deadlineTimers.erase(name);
     LogPrint(BCLog::RPC, "queue run of timer %s in %i seconds (using %s)\n", name, nSeconds, timerInterface->Name());
     deadlineTimers.emplace(name, std::unique_ptr<RPCTimerBase>(timerInterface->NewTimer(func, nSeconds*1000)));

@@ -479,7 +479,7 @@ UniValue getmempoolancestors(const JSONRPCRequest& request)
 
     CTxMemPool::txiter it{mempool.mapTx.find(hash)};
     if (it == mempool.mapTx.end()) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
     }
 
     CTxMemPool::setEntries setAncestors;
@@ -543,7 +543,7 @@ UniValue getmempooldescendants(const JSONRPCRequest& request)
 
     CTxMemPool::txiter it{mempool.mapTx.find(hash)};
     if (it == mempool.mapTx.end()) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
     }
 
     CTxMemPool::setEntries setDescendants;
@@ -595,7 +595,7 @@ UniValue getmempoolentry(const JSONRPCRequest& request)
 
     CTxMemPool::txiter it{mempool.mapTx.find(hash)};
     if (it == mempool.mapTx.end()) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
     }
 
     const CTxMemPoolEntry &e{*it};
@@ -623,7 +623,7 @@ UniValue getblockhash(const JSONRPCRequest& request)
 
     const auto nHeight = request.params[0].get_int();
     if (nHeight < 0 || nHeight > chainActive.Height())
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Block height out of range");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Block height out of range");
 
     const auto * const pblockindex = chainActive[nHeight];
     return pblockindex->GetBlockHash().GetHex();
@@ -673,7 +673,7 @@ UniValue getblockheader(const JSONRPCRequest& request)
         fVerbose = request.params[1].get_bool();
 
     if (mapBlockIndex.count(hash) == 0)
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Block not found");
 
     const auto * const pblockindex = mapBlockIndex[hash];
 
@@ -751,12 +751,12 @@ UniValue getblock(const JSONRPCRequest& request)
     }
 
     if (mapBlockIndex.count(hash) == 0)
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Block not found");
 
     const auto * const pblockindex = mapBlockIndex[hash];
 
     if (fHavePruned && !(pblockindex->nStatus & BLOCK_HAVE_DATA) && pblockindex->nTx > 0)
-        throw JSONRPCError(RPC_MISC_ERROR, "Block not available (pruned data)");
+        throw JSONRPCError(RPCErrorCode::MISC_ERROR, "Block not available (pruned data)");
 
     CBlock block;
     if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus()))
@@ -765,7 +765,7 @@ UniValue getblock(const JSONRPCRequest& request)
         // non-whitelisted node sends us an unrequested long chain of valid
         // blocks, we add the headers to our index, but don't accept the
         // block).
-        throw JSONRPCError(RPC_MISC_ERROR, "Block not found on disk");
+        throw JSONRPCError(RPCErrorCode::MISC_ERROR, "Block not found on disk");
 
     if (verbosity <= 0)
     {
@@ -862,13 +862,13 @@ UniValue pruneblockchain(const JSONRPCRequest& request)
         };
 
     if (!fPruneMode)
-        throw JSONRPCError(RPC_MISC_ERROR, "Cannot prune blocks because node is not in prune mode.");
+        throw JSONRPCError(RPCErrorCode::MISC_ERROR, "Cannot prune blocks because node is not in prune mode.");
 
     LOCK(cs_main);
 
     auto heightParam = request.params[0].get_int();
     if (heightParam < 0)
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative block height.");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Negative block height.");
 
     // Height value more than a billion is too high to be a block height, and
     // too low to be a block time (corresponds to timestamp from Sep 2001).
@@ -876,7 +876,7 @@ UniValue pruneblockchain(const JSONRPCRequest& request)
         // Add a 2 hour buffer to include blocks which might have had old timestamps
         auto* const pindex = chainActive.FindEarliestAtLeast(heightParam - TIMESTAMP_WINDOW);
         if (!pindex) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Could not find block with at least the specified timestamp.");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Could not find block with at least the specified timestamp.");
         }
         heightParam = pindex->nHeight;
     }
@@ -884,9 +884,9 @@ UniValue pruneblockchain(const JSONRPCRequest& request)
     auto height = static_cast<unsigned int>(heightParam);
     auto chainHeight = static_cast<unsigned int>(chainActive.Height());
     if (chainHeight < Params().PruneAfterHeight())
-        throw JSONRPCError(RPC_MISC_ERROR, "Blockchain is too short for pruning.");
+        throw JSONRPCError(RPCErrorCode::MISC_ERROR, "Blockchain is too short for pruning.");
     else if (height > chainHeight)
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Blockchain is shorter than the attempted prune height.");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Blockchain is shorter than the attempted prune height.");
     else if (height > chainHeight - MIN_BLOCKS_TO_KEEP) {
         LogPrint(BCLog::RPC, "Attempt to prune blocks close to the tip.  Retaining the minimum number of blocks.");
         height = chainHeight - MIN_BLOCKS_TO_KEEP;
@@ -933,7 +933,7 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
         ret.push_back(Pair("disk_size", stats.nDiskSize));
         ret.push_back(Pair("total_amount", ValueFromAmount(stats.nTotalAmount)));
     } else {
-        throw JSONRPCError(RPC_INTERNAL_ERROR, "Unable to read UTXO set");
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Unable to read UTXO set");
     }
     return ret;
 }
@@ -1376,7 +1376,7 @@ UniValue preciousblock(const JSONRPCRequest& request)
     {
         LOCK(cs_main);
         if (mapBlockIndex.count(hash) == 0)
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Block not found");
 
         pblockindex = mapBlockIndex[hash];
     }
@@ -1385,7 +1385,7 @@ UniValue preciousblock(const JSONRPCRequest& request)
     PreciousBlock(state, Params(), pblockindex);
 
     if (!state.IsValid()) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, state.GetRejectReason());
+        throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
     }
 
     return NullUniValue;
@@ -1411,7 +1411,7 @@ UniValue invalidateblock(const JSONRPCRequest& request)
     {
         LOCK(cs_main);
         if (mapBlockIndex.count(hash) == 0)
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Block not found");
 
         InvalidateBlock(state, Params(), mapBlockIndex[hash]);
     }
@@ -1421,7 +1421,7 @@ UniValue invalidateblock(const JSONRPCRequest& request)
     }
 
     if (!state.IsValid()) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, state.GetRejectReason());
+        throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
     }
 
     return NullUniValue;
@@ -1447,7 +1447,7 @@ UniValue reconsiderblock(const JSONRPCRequest& request)
     {
         LOCK(cs_main);
         if (mapBlockIndex.count(hash) == 0)
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Block not found");
 
         ResetBlockFailureFlags(mapBlockIndex[hash]);
     }
@@ -1456,7 +1456,7 @@ UniValue reconsiderblock(const JSONRPCRequest& request)
     ActivateBestChain(state, Params());
 
     if (!state.IsValid()) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, state.GetRejectReason());
+        throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
     }
 
     return NullUniValue;
@@ -1500,11 +1500,11 @@ UniValue getchaintxstats(const JSONRPCRequest& request)
         if (havehash) {
             auto it = mapBlockIndex.find(hash);
             if (it == mapBlockIndex.end()) {
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Block not found");
             }
             pindex = it->second;
             if (!chainActive.Contains(pindex)) {
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "Block is not in main chain");
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Block is not in main chain");
             }
         } else {
             pindex = chainActive.Tip();
@@ -1514,7 +1514,7 @@ UniValue getchaintxstats(const JSONRPCRequest& request)
     assert(pindex != nullptr);
 
     if (blockcount < 1 || blockcount >= pindex->nHeight) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid block count: should be between 1 and the block's height");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid block count: should be between 1 and the block's height");
     }
 
     const auto pindexPast = pindex->GetAncestor(pindex->nHeight - blockcount);
@@ -1542,7 +1542,7 @@ UniValue savemempool(const JSONRPCRequest& request)
     }
 
     if (!DumpMempool()) {
-        throw JSONRPCError(RPC_MISC_ERROR, "Unable to dump mempool to disk");
+        throw JSONRPCError(RPCErrorCode::MISC_ERROR, "Unable to dump mempool to disk");
     }
 
     return NullUniValue;
