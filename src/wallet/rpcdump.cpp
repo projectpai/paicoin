@@ -617,7 +617,7 @@ UniValue dumpwallet(const JSONRPCRequest& request)
      * It may also avoid other security issues.
      */
     if (boost::filesystem::exists(filepath)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, filepath.string() + " already exists. If you are sure this is what you want, move it out of the way first");
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, filepath.string() + " already exists. If you are sure this is what you want, move it out of the way first");
     }
 
     std::ofstream file;

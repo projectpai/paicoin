@@ -55,7 +55,7 @@ bool IsRPCRunning();
 
 /**
  * Set the RPC warmup status.  When this is done, all RPC calls will error out
- * immediately with RPC_IN_WARMUP.
+ * immediately with RPCErrorCode::IN_WARMUP.
  */
 void SetRPCWarmupStatus(const std::string& newStatus);
 /* Mark warmup as done.  RPC calls will be processed from now on.  */
