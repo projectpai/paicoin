@@ -155,6 +155,13 @@ CDBWrapper::~CDBWrapper()
     options.env = nullptr;
 }
 
+void CDBWrapper::Destroy(const fs::path& path)
+{
+    leveldb::Status status = leveldb::DestroyDB(path.string(), leveldb::Options());
+    dbwrapper_private::HandleError(status);
+    LogPrintf("LevelDB destroyed successfully\n");
+}
+
 bool CDBWrapper::WriteBatch(CDBBatch& batch, bool fSync)
 {
     leveldb::Status status = pdb->Write(fSync ? syncoptions : writeoptions, &batch.batch);

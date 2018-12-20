@@ -219,7 +219,13 @@ public:
      *                        with a zero'd byte array.
      */
     CDBWrapper(const fs::path& path, size_t nCacheSize, bool fMemory = false, bool fWipe = false, bool obfuscate = false);
-    ~CDBWrapper();
+    virtual ~CDBWrapper();
+
+    /**
+     * @brief Destroy   Utility method for explicit LevelDB destruction
+     * @param path      Location in the filesystem where leveldb data resides
+     */
+    static void Destroy(const fs::path& path);
 
     template <typename K, typename V>
     bool Read(const K& key, V& value) const
