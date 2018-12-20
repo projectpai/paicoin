@@ -143,7 +143,7 @@ Investor::Investor()
         memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("7760ffef727b70c1db9213ee83c3c1bfe127159ab99701bb555b554b96cd325c");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
-        HoldingPeriods.push_back( {.expirationTimestamp = 1524268800,  // April 21, 2018, 00:00:00 GMT
+        HoldingPeriods.push_back( {.expirationTimestamp = 1546387200,  // Jan 2, 2019, 00:00:00 GMT
                                    .paiPublicKey = CPubKey(ParseHex("047f588c84ca36d37a4144b766414d72b32439661b03d59b575476aec59696379eb48dfa0b787be359987503b74719a2eeb32a482d115bd4bd6c2b760a592656e0")),
                                    .paiPrivateKey = privKey,
                                    .investorPublicKey = CPubKey(),
@@ -154,7 +154,7 @@ Investor::Investor()
         memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("2875a8955b7b24bacac8074bb34e7dd5114f18bcaea8ac99ee2b3b3e3fe291f5");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
-        HoldingPeriods.push_back( {.expirationTimestamp = 1529452800,  // June 20, 2018, 00:00:00 GMT
+        HoldingPeriods.push_back( {.expirationTimestamp = 1546387200,  // Jan 2, 2019, 00:00:00 GMT
                                    .paiPublicKey = CPubKey(ParseHex("048a4c20d780afc2e482fff89932bb3a84843ff04fce0a537a98926f215f1138c60b446001eb532770deb9309fde543cb86dc7a98fb36eb767f5fae811a63981f4")),
                                    .paiPrivateKey = privKey,
                                    .investorPublicKey = CPubKey(),
@@ -165,7 +165,7 @@ Investor::Investor()
         memory_cleanse(&privKeyVector[0], privKeyVector.size());
         privKeyVector = ParseHex("3986d924088a5c50ecaddd4feae928edfb5b7967b593d7e15ff809553ad6316a");
         privKey.Set(privKeyVector.begin(), privKeyVector.end(), false);
-        HoldingPeriods.push_back( {.expirationTimestamp = 1544572800,  // December 12, 2018, 00:00:00 GMT
+        HoldingPeriods.push_back( {.expirationTimestamp = 1546387200,  // Jan 2, 2019, 00:00:00 GMT
                                    .paiPublicKey = CPubKey(ParseHex("04de53fc46e886859f2cd7a6b4fb96edfa4de3c3a59357339dd94e5702a70ab70af9262880015d0cfddf9bca53b5e89efe23368ac1154d4376b5230c6d457788ff")),
                                    .paiPrivateKey = privKey,
                                    .investorPublicKey = CPubKey(),
