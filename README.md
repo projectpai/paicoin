@@ -1,8 +1,7 @@
-# :heavy_exclamation_mark: Update :heavy_exclamation_mark:
+Proposed PoW/PoS Hybrid Consensus Mechanism
+===========================================
 
-Project PAI will be releasing an assessment of the 2018 Tech Roadmap on December 13, as well as projections for the 2019 Roadmap, with outlines of what the Core Contributing Team will be working on. As always, feedback is welcome. On December 20, the Contributing Team will post a white paper for a proposed PoW/PoS hybrid consensus protocol. The community is welcome to share input and thoughts on this white paper, which when implemented, will provide a path towards safe, open mining that mitigates vulnerabilities of SHA-256 based protocols.
-
-* * *
+The contributing developers of Project PAI have released a white paper proposing a Hybrid PoW/PoS consensus mechanism. Read the white paper [here](https://projectpai.com/assets/files/whitepaper/Prospective-Hybrid-Consensus-for-Project-PAI.pdf).
 
 PAI Coin Core integration/staging tree
 =====================================
