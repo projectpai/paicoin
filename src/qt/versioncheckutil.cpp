@@ -53,7 +53,7 @@ void VersionCheckUtil::ProcessNetworkReply(QNetworkReply *networkReply)
             if (jsonObjectStatus["status"].toString() == QString("SUCCESS"))
             {
                 QString version = jsonObject["content"].toString();
-                LogPrintf("Version received: %s", version.toStdString());
+                LogPrintf("Version received: %s\n", version.toStdString());
                 if (ToClientVersion(version.toStdString()) > CLIENT_VERSION)
                 {
                     Q_EMIT UpdateNeeded();
