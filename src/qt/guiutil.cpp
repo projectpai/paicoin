@@ -163,7 +163,7 @@ bool parsePAIcoinURI(const QUrl &uri, SendCoinsRecipient *out)
     QList<QPair<QString, QString> > items = uri.queryItems();
 #else
     QUrlQuery uriQuery(uri);
-    QList<QPair<QString, QString> > items = uriQuery.queryItems();
+    QList<QPair<QString, QString> > items = uriQuery.queryItems(QUrl::ComponentFormattingOption::FullyDecoded);
 #endif
     for (QList<QPair<QString, QString> >::iterator i = items.begin(); i != items.end(); i++)
     {
