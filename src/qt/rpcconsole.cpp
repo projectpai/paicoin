@@ -419,13 +419,13 @@ void RPCExecutor::request(const QString &command)
 }
 
 RPCConsole::RPCConsole(const PlatformStyle *_platformStyle, QWidget *parent) :
-    QWidget(parent),
+    PaicoinDialog(parent),
     ui(new Ui::RPCConsole),
-    clientModel(0),
+    clientModel(nullptr),
     historyPtr(0),
     platformStyle(_platformStyle),
-    peersTableContextMenu(0),
-    banTableContextMenu(0),
+    peersTableContextMenu(nullptr),
+    banTableContextMenu(nullptr),
     consoleFontSize(0)
 {
     ui->setupUi(this);
@@ -521,7 +521,7 @@ bool RPCConsole::eventFilter(QObject* obj, QEvent *event)
             }
         }
     }
-    return QWidget::eventFilter(obj, event);
+    return PaicoinDialog::eventFilter(obj, event);
 }
 
 void RPCConsole::setClientModel(ClientModel *model)

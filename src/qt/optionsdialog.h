@@ -5,7 +5,8 @@
 #ifndef PAICOIN_QT_OPTIONSDIALOG_H
 #define PAICOIN_QT_OPTIONSDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
+
 #include <QValidator>
 
 class OptionsModel;
@@ -32,13 +33,13 @@ public:
 };
 
 /** Preferences dialog. */
-class OptionsDialog : public QDialog
+class OptionsDialog : public PaicoinDialog
 {
     Q_OBJECT
 
 public:
     explicit OptionsDialog(QWidget *parent, bool enableWallet);
-    ~OptionsDialog();
+    virtual ~OptionsDialog();
 
     void setModel(OptionsModel *model);
     void setMapper();

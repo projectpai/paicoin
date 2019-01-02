@@ -6,6 +6,7 @@
 #define PAICOIN_QT_RPCCONSOLE_H
 
 #include "guiutil.h"
+#include "paicoindialog.h"
 #include "peertablemodel.h"
 
 #include "net.h"
@@ -28,13 +29,13 @@ class QItemSelection;
 QT_END_NAMESPACE
 
 /** Local PAI Coin RPC console. */
-class RPCConsole: public QWidget
+class RPCConsole: public PaicoinDialog
 {
     Q_OBJECT
 
 public:
     explicit RPCConsole(const PlatformStyle *platformStyle, QWidget *parent);
-    ~RPCConsole();
+    virtual ~RPCConsole() override;
 
     static bool RPCParseCommandLine(std::string &strResult, const std::string &strCommand, bool fExecute, std::string * const pstrFilteredOut = nullptr);
     static bool RPCExecuteCommandLine(std::string &strResult, const std::string &strCommand, std::string * const pstrFilteredOut = nullptr) {
@@ -59,8 +60,8 @@ public:
     };
 
 protected:
-    virtual bool eventFilter(QObject* obj, QEvent *event);
-    void keyPressEvent(QKeyEvent *);
+    virtual bool eventFilter(QObject* obj, QEvent *event) override;
+    virtual void keyPressEvent(QKeyEvent *) override;
 
 private Q_SLOTS:
     void on_lineEdit_returnPressed();
@@ -71,9 +72,9 @@ private Q_SLOTS:
     void on_sldGraphRange_valueChanged(int value);
     /** update traffic statistics */
     void updateTrafficStats(quint64 totalBytesIn, quint64 totalBytesOut);
-    void resizeEvent(QResizeEvent *event);
-    void showEvent(QShowEvent *event);
-    void hideEvent(QHideEvent *event);
+    virtual void resizeEvent(QResizeEvent *event) override;
+    virtual void showEvent(QShowEvent *event) override;
+    virtual void hideEvent(QHideEvent *event) override;
     /** Show custom context menu on Peers tab */
     void showPeersTableContextMenu(const QPoint& point);
     /** Show custom context menu on Bans tab */

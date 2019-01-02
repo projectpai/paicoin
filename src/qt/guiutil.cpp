@@ -408,6 +408,22 @@ bool isObscured(QWidget *w)
         && checkPoint(QPoint(w->width() / 2, w->height() / 2), w));
 }
 
+bool isInteractionEvent(const QEvent* event)
+{
+    return event != nullptr && (
+                event->type() == QEvent::KeyPress
+                || event->type() == QEvent::KeyRelease
+                || event->type() == QEvent::MouseButtonPress
+                || event->type() == QEvent::MouseButtonRelease
+                || event->type() == QEvent::Enter
+                || event->type() == QEvent::Leave
+                || event->type() == QEvent::Hide                // Fired when dialog is closed
+                || event->type() == QEvent::HideToParent        // Fired when dialog is closed
+                || event->type() == QEvent::WindowActivate
+                || event->type() == QEvent::ActivationChange
+                || event->type() == QEvent::CursorChange);
+}
+
 void openDebugLogfile()
 {
     fs::path pathDebug = GetDataDir() / "debug.log";

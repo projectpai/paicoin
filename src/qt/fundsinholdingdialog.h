@@ -5,19 +5,20 @@
 #ifndef FUNDSINHOLDINGDIALOG_H
 #define FUNDSINHOLDINGDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
+
 #include <QCloseEvent>
 
 namespace Ui {
 class FundsInHoldingDialog;
 }
 
-class FundsInHoldingDialog : public QDialog
+class FundsInHoldingDialog : public PaicoinDialog
 {
     Q_OBJECT
 
 public:
-    explicit FundsInHoldingDialog(QWidget *parent = 0);
+    explicit FundsInHoldingDialog(QWidget *parent = nullptr);
     ~FundsInHoldingDialog();
 
 public Q_SLOTS:

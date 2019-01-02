@@ -49,6 +49,10 @@ bool ModalOverlay::eventFilter(QObject * obj, QEvent * ev) {
             raise();
         }
     }
+
+    if (GUIUtil::isInteractionEvent(ev))
+        AuthManager::getInstance().RetriggerTimer();
+
     return QWidget::eventFilter(obj, ev);
 }
 

@@ -32,7 +32,7 @@
 
 /** "Help message" or "About" dialog box */
 HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about) :
-    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
+    PaicoinDialog(parent),
     ui(new Ui::HelpMessageDialog)
 {
     ui->setupUi(this);

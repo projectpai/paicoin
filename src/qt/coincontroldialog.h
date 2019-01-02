@@ -6,10 +6,10 @@
 #define PAICOIN_QT_COINCONTROLDIALOG_H
 
 #include "amount.h"
+#include "paicoindialog.h"
 
 #include <QAbstractButton>
 #include <QAction>
-#include <QDialog>
 #include <QList>
 #include <QMenu>
 #include <QPoint>
@@ -38,7 +38,7 @@ public:
 };
 
 
-class CoinControlDialog : public QDialog
+class CoinControlDialog : public PaicoinDialog
 {
     Q_OBJECT
 

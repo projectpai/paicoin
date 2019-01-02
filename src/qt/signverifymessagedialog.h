@@ -5,7 +5,7 @@
 #ifndef PAICOIN_QT_SIGNVERIFYMESSAGEDIALOG_H
 #define PAICOIN_QT_SIGNVERIFYMESSAGEDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
 
 class PlatformStyle;
 class WalletModel;
@@ -14,13 +14,13 @@ namespace Ui {
     class SignVerifyMessageDialog;
 }
 
-class SignVerifyMessageDialog : public QDialog
+class SignVerifyMessageDialog : public PaicoinDialog
 {
     Q_OBJECT
 
 public:
     explicit SignVerifyMessageDialog(const PlatformStyle *platformStyle, QWidget *parent);
-    ~SignVerifyMessageDialog();
+    virtual ~SignVerifyMessageDialog() override;
 
     void setModel(WalletModel *model);
     void setAddress_SM(const QString &address);
@@ -30,7 +30,7 @@ public:
     void showTab_VM(bool fShow);
 
 protected:
-    bool eventFilter(QObject *object, QEvent *event);
+    virtual bool eventFilter(QObject *object, QEvent *event) override;
 
 private:
     Ui::SignVerifyMessageDialog *ui;

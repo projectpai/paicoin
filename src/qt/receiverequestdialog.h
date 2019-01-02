@@ -7,6 +7,7 @@
 
 #include "walletmodel.h"
 #include "qrimagewidget.h"
+#include "paicoindialog.h"
 
 #include <QDialog>
 #include <QImage>
@@ -23,12 +24,12 @@ QT_BEGIN_NAMESPACE
 class QMenu;
 QT_END_NAMESPACE
 
-class ReceiveRequestDialog : public QDialog
+class ReceiveRequestDialog : public PaicoinDialog
 {
     Q_OBJECT
 
 public:
-    explicit ReceiveRequestDialog(QWidget *parent = 0);
+    explicit ReceiveRequestDialog(QWidget *parent = nullptr);
     ~ReceiveRequestDialog();
 
     void setModel(OptionsModel *model);

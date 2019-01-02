@@ -49,7 +49,6 @@
 #include "ui_interface.h"
 #include "util.h"
 
-#include <iostream>
 #include <memory>
 
 #include <QAction>
@@ -183,7 +182,7 @@ PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     setUnifiedTitleAndToolBarOnMac(true);
 #endif
 
-    rpcConsole = new RPCConsole(_platformStyle, 0);
+    rpcConsole = new RPCConsole(_platformStyle, nullptr);
     helpMessageDialog = new HelpMessageDialog(this, false);
 #ifdef ENABLE_WALLET
     if (enableWallet)
@@ -550,7 +549,7 @@ void PAIcoinGUI::updateMenuBar(bool locked)
     {
         if (walletFrame)
         {
-            // Remove sensitive items from File menu
+            // Remove items from File menu
             fileMenu->removeAction(openAction);
             fileMenu->removeAction(backupWalletAction);
             fileMenu->removeAction(signMessageAction);
@@ -558,13 +557,19 @@ void PAIcoinGUI::updateMenuBar(bool locked)
             fileMenu->removeAction(usedSendingAddressesAction);
             fileMenu->removeAction(usedReceivingAddressesAction);
 
-            // Remove sensitive items from Help menu
+            // Remove items from Help menu
             helpMenu->removeAction(openRPCConsoleAction);
+
+            // Remove items from Settings menu
+#ifdef ENABLE_ENCRYPT_WALLET
+            settingsMenu->removeAction(encryptWalletAction);
+            settingsMenu->removeAction(changePassphraseAction);
+#endif // ENABLE_ENCRYPT_WALLET
+            settingsMenu->removeAction(viewInvestorKeyAction);
+            settingsMenu->removeAction(reviewPaperKeyAction);
         }
 
-        // Delete Settings menu (a workaround for Qt menu misbehaving on Unity and OSX environments)
-        delete settingsMenu;
-        settingsMenu = nullptr;
+        settingsMenu->removeAction(optionsAction);
 
         // Hide application menu from main window
         appMenuBar->hide();
@@ -831,7 +836,6 @@ void PAIcoinGUI::optionsClicked()
 {
     if(!clientModel || !clientModel->getOptionsModel())
         return;
-
 
     OptionsDialog dlg(this, enableWallet);
     dlg.setModel(clientModel->getOptionsModel());
@@ -1479,6 +1483,10 @@ bool PAIcoinGUI::eventFilter(QObject *object, QEvent *event)
         if (progressBarLabel->isVisible() || progressBar->isVisible())
             return true;
     }
+
+    if (GUIUtil::isInteractionEvent(event))
+        AuthManager::getInstance().RetriggerTimer();
+
     return QMainWindow::eventFilter(object, event);
 }
 

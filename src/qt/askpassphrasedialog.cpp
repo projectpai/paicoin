@@ -19,10 +19,10 @@
 #include <QPushButton>
 
 AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
-    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
+    PaicoinDialog(parent),
     ui(new Ui::AskPassphraseDialog),
     mode(_mode),
-    model(0),
+    model(nullptr),
     fCapsLock(false)
 {
     ui->setupUi(this);
@@ -257,7 +257,7 @@ bool AskPassphraseDialog::eventFilter(QObject *object, QEvent *event)
             }
         }
     }
-    return QDialog::eventFilter(object, event);
+    return PaicoinDialog::eventFilter(object, event);
 }
 
 static void SecureClearQLineEdit(QLineEdit* edit)

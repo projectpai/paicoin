@@ -188,7 +188,8 @@ QT_MOC_CPP = \
   qt/moc_confirmationdialog.cpp \
   qt/moc_versioncheckutil.cpp \
   qt/moc_updateavailabledialog.cpp \
-  qt/moc_reviewpaperkeydialog.cpp
+  qt/moc_reviewpaperkeydialog.cpp \
+  qt/moc_paicoindialog.cpp
 
 PAICOIN_MM = \
   qt/macdockiconhandler.mm \
@@ -281,7 +282,8 @@ PAICOIN_QT_H = \
   qt/confirmationdialog.h \
   qt/versioncheckutil.h \
   qt/updateavailabledialog.h \
-  qt/reviewpaperkeydialog.h
+  qt/reviewpaperkeydialog.h \
+  qt/paicoindialog.h
 
 RES_ICONS = \
   qt/res/icons/about.png \
@@ -381,7 +383,8 @@ PAICOIN_QT_BASE_CPP = \
   qt/viewinvestorkeydialog.cpp \
   qt/holdingperiodcompletedialog.cpp \
   qt/confirmationdialog.cpp \
-  qt/reviewpaperkeydialog.cpp
+  qt/reviewpaperkeydialog.cpp \
+  qt/paicoindialog.cpp
 
 PAICOIN_QT_WINDOWS_CPP = qt/winshutdownmonitor.cpp
 

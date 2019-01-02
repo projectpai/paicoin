@@ -1,12 +1,13 @@
 #include "reviewpaperkeydialog.h"
 #include "ui_reviewpaperkeydialog.h"
-#include "walletmodel.h"
+
 #include "authmanager.h"
+#include "walletmodel.h"
 
 #include <sstream>
 
 ReviewPaperKeyDialog::ReviewPaperKeyDialog(QWidget *parent) :
-    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
+    PaicoinDialog(parent),
     ui(new Ui::ReviewPaperKeyDialog)
 {
     ui->setupUi(this);

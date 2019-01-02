@@ -6,7 +6,7 @@
 #include <QUrl>
 
 UpdateAvailableDialog::UpdateAvailableDialog(QWidget *parent) :
-    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
+    PaicoinDialog(parent),
     ui(new Ui::UpdateAvailableDialog)
 {
     ui->setupUi(this);

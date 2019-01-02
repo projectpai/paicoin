@@ -1,14 +1,14 @@
 #include "viewinvestorkeydialog.h"
 #include "ui_viewinvestorkeydialog.h"
-#include "walletmodel.h"
-#include "authmanager.h"
 
+#include "authmanager.h"
 #include "guiutil.h"
+#include "walletmodel.h"
 
 static constexpr int PUBKEY_SPLIT_INDEX = 33;
 
 ViewInvestorKeyDialog::ViewInvestorKeyDialog(QWidget *parent) :
-    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
+    PaicoinDialog(parent),
     ui(new Ui::ViewInvestorKeyDialog)
 {
     ui->setupUi(this);

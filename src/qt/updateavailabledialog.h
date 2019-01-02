@@ -1,13 +1,13 @@
 #ifndef UPDATEAVAILABLEDIALOG_H
 #define UPDATEAVAILABLEDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
 
 namespace Ui {
 class UpdateAvailableDialog;
 }
 
-class UpdateAvailableDialog : public QDialog
+class UpdateAvailableDialog : public PaicoinDialog
 {
     Q_OBJECT
 

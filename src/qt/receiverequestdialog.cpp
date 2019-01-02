@@ -31,7 +31,7 @@
 #endif
 
 ReceiveRequestDialog::ReceiveRequestDialog(QWidget *parent) :
-    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
+    PaicoinDialog(parent),
     ui(new Ui::ReceiveRequestDialog),
     model(nullptr)
 {
@@ -41,8 +41,6 @@ ReceiveRequestDialog::ReceiveRequestDialog(QWidget *parent) :
     ui->btnSaveAs->setVisible(false);
     ui->lblQRCode->setVisible(false);
 #endif // USE_QRCODE
-
-    connect(&AuthManager::getInstance(), SIGNAL(Authenticate()), this, SLOT(hide()));
 }
 
 ReceiveRequestDialog::~ReceiveRequestDialog()

@@ -21,7 +21,7 @@
 #include <QClipboard>
 
 SignVerifyMessageDialog::SignVerifyMessageDialog(const PlatformStyle *_platformStyle, QWidget *parent) :
-    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
+    PaicoinDialog(parent),
     ui(new Ui::SignVerifyMessageDialog),
     model(0),
     platformStyle(_platformStyle)
@@ -274,5 +274,5 @@ bool SignVerifyMessageDialog::eventFilter(QObject *object, QEvent *event)
             ui->statusLabel_VM->clear();
         }
     }
-    return QDialog::eventFilter(object, event);
+    return PaicoinDialog::eventFilter(object, event);
 }
