@@ -1231,7 +1231,7 @@ If you do not update the application, your investment will remain in holding.</t
     <message>
         <location line="+5"/>
         <source>Error</source>
-        <translation type="unfinished">Error</translation>
+        <translation>Error</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -1690,7 +1690,7 @@ If you do not update the application, your investment will remain in holding.</t
     <message>
         <location line="+232"/>
         <source>Invalid PIN, please try again</source>
-        <translation type="unfinished">Invalid PIN, please try again</translation>
+        <translation>Invalid PIN, please try again</translation>
     </message>
     <message>
         <location line="+242"/>
@@ -2131,17 +2131,17 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+13"/>
         <source>Error</source>
-        <translation type="unfinished">Error</translation>
+        <translation>Error</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Warning</source>
-        <translation type="unfinished">Warning</translation>
+        <translation>Warning</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Information</source>
-        <translation type="unfinished">Information</translation>
+        <translation>Information</translation>
     </message>
     <message>
         <location filename="../paicoin.cpp" line="+179"/>

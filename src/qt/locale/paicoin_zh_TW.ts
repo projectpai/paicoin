@@ -284,14 +284,6 @@
     </message>
 </context>
 <context>
-    <name>AuthManager</name>
-    <message>
-        <location filename="../authmanager.cpp" line="+40"/>
-        <source>Invalid PIN, please try again</source>
-        <translation>PIN碼無效，請重試</translation>
-    </message>
-</context>
-<context>
     <name>BanTableModel</name>
     <message>
         <location filename="../bantablemodel.cpp" line="+89"/>
@@ -497,7 +489,7 @@
 <context>
     <name>ConfirmationDialog</name>
     <message>
-        <location filename="../forms/confirmationdialog.ui" line="+26"/>
+        <location filename="../forms/confirmationdialog.ui" line="+33"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1247,7 +1239,7 @@ If you do not update the application, your investment will remain in holding.</s
     <message>
         <location line="+5"/>
         <source>Error</source>
-        <translation type="unfinished">錯誤</translation>
+        <translation>錯誤</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -1367,27 +1359,27 @@ If you do not update the application, your investment will remain in holding.</s
 <context>
     <name>PAIcoinGUI</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+450"/>
+        <location filename="../paicoingui.cpp" line="+454"/>
         <source>Sign &amp;message...</source>
         <translation>簽署訊息...</translation>
     </message>
     <message>
-        <location line="+744"/>
+        <location line="+743"/>
         <source>Synchronizing with network...</source>
         <translation>正在跟網路進行同步...</translation>
     </message>
     <message>
-        <location line="-824"/>
+        <location line="-823"/>
         <source>&amp;Overview</source>
         <translation>總覽</translation>
     </message>
     <message>
-        <location line="-202"/>
+        <location line="-205"/>
         <source>Node</source>
         <translation>節點</translation>
     </message>
     <message>
-        <location line="+203"/>
+        <location line="+206"/>
         <source>Show general overview of wallet</source>
         <translation>顯示錢包一般總覽</translation>
     </message>
@@ -1472,7 +1464,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>開啓 URI...</translation>
     </message>
     <message>
-        <location line="+655"/>
+        <location line="+654"/>
         <source>Click to disable network activity.</source>
         <translation>按一下就會不使用網路。</translation>
     </message>
@@ -1497,7 +1489,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>正在為磁碟裡的區塊重建索引...</translation>
     </message>
     <message>
-        <location line="-827"/>
+        <location line="-826"/>
         <source>Send coins to a PAI Coin address</source>
         <translation>付錢給一個 PAI Coin 位址</translation>
     </message>
@@ -1562,7 +1554,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>驗證訊息是用來確定訊息是用指定的 PAI Coin 位址簽署的</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+52"/>
         <source>&amp;File</source>
         <translation>檔案</translation>
     </message>
@@ -1583,7 +1575,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>分頁工具列</translation>
     </message>
     <message>
-        <location line="-164"/>
+        <location line="-146"/>
         <source>Show the list of used sending addresses and labels</source>
         <translation>顯示已使用過的付款位址和標記的清單</translation>
     </message>
@@ -1598,7 +1590,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>命令列選項</translation>
     </message>
     <message numerus="yes">
-        <location line="+652"/>
+        <location line="+651"/>
         <source>%n active connection(s) to PAI Coin network</source>
         <translation>
             <numerusform>%n 個運作中的 PAI Coin 網路連線</numerusform>
@@ -1642,17 +1634,32 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>最新狀態</translation>
     </message>
     <message>
-        <location line="-749"/>
+        <location line="-835"/>
+        <source>Request payments (generates QR codes and paicoin: URIs)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+83"/>
+        <source>Open a paicoin: URI or payment request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
         <translation>顯示 %1 的說明訊息，來取得可用命令列選項的列表</translation>
     </message>
     <message>
-        <location line="+279"/>
+        <location line="+260"/>
         <source>%1 client</source>
         <translation>%1 客戶端軟體</translation>
     </message>
     <message>
-        <location line="+456"/>
+        <location line="+232"/>
+        <source>Invalid PIN, please try again</source>
+        <translation>PIN碼無效，請重試</translation>
+    </message>
+    <message>
+        <location line="+242"/>
         <source>Connecting to peers...</source>
         <translation>正在跟其他節點連線中...</translation>
     </message>
@@ -1662,7 +1669,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>正在趕進度...</translation>
     </message>
     <message>
-        <location line="+105"/>
+        <location line="+104"/>
         <source>Date: %1
 </source>
         <translation>日期: %1
@@ -1707,7 +1714,7 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>收款交易</translation>
     </message>
     <message>
-        <location line="+121"/>
+        <location line="+138"/>
         <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
         <translation>產生 HD 金鑰&lt;b&gt;已經啟用&lt;/b&gt;</translation>
     </message>
@@ -1727,17 +1734,12 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>錢包&lt;b&gt;已加密&lt;/b&gt;並且&lt;b&gt;上鎖中&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+708"/>
+        <location filename="../paicoin.cpp" line="+712"/>
         <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
         <translation>發生了致命的錯誤。PAI Coin 軟體沒辦法再繼續安全執行，只好結束。</translation>
     </message>
     <message>
-        <location filename="../paicoingui.cpp" line="-1121"/>
-        <source>Request payments (generates QR codes and paicoin:// URIs)</source>
-        <translation>請求付款（生成二維碼和PAI幣：// URIs）</translation>
-    </message>
-    <message>
-        <location line="+66"/>
+        <location filename="../paicoingui.cpp" line="-1070"/>
         <source>&amp;View Investor Key</source>
         <translation>＆查看投資人密鑰</translation>
     </message>
@@ -1747,27 +1749,22 @@ If you do not update the application, your investment will remain in holding.</s
         <translation>查看投資人密鑰</translation>
     </message>
     <message>
-        <location line="+16"/>
-        <source>Open a paicoin:// URI or payment request</source>
-        <translation>打開paicoin：// URI或付款請求</translation>
-    </message>
-    <message>
-        <location line="+418"/>
+        <location line="+413"/>
         <source>PIN Set</source>
         <translation>PIN碼已設置</translation>
     </message>
     <message>
-        <location line="+172"/>
+        <location line="+190"/>
         <source>Paper Key Complete</source>
         <translation>助記詞完成</translation>
     </message>
     <message>
-        <location line="+312"/>
+        <location line="+313"/>
         <source>Wallet Restored</source>
         <translation>錢包已恢復</translation>
     </message>
     <message>
-        <location line="-916"/>
+        <location line="-914"/>
         <source>&amp;Review Paper Key</source>
         <translation>查看密鑰</translation>
     </message>
@@ -1866,7 +1863,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>下一步</translation>
     </message>
     <message>
-        <location filename="../paperkeywritedownpage.cpp" line="+92"/>
+        <location filename="../paperkeywritedownpage.cpp" line="+94"/>
         <source>%1 of %2</source>
         <translation>%1 / %2</translation>
     </message>
@@ -1884,7 +1881,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>要求付款時發生錯誤</translation>
     </message>
     <message>
-        <location line="-298"/>
+        <location line="-401"/>
+        <source>Cannot start paicoin: click-to-pay handler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+103"/>
         <location line="+13"/>
         <location line="+7"/>
         <source>URI handling</source>
@@ -1991,11 +1993,6 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <source>Payment acknowledged</source>
         <translation>付款已確認</translation>
     </message>
-    <message>
-        <location line="-430"/>
-        <source>Cannot start paicoin:// click-to-pay handler</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>PeerTableModel</name>
@@ -2033,7 +2030,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>輸入 PAI Coin 位址 (比如說 %1)</translation>
     </message>
     <message>
-        <location line="+777"/>
+        <location line="+785"/>
         <source>%1 d</source>
         <translation>%1 天</translation>
     </message>
@@ -2124,7 +2121,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location filename="../modaloverlay.cpp" line="-29"/>
         <source>unknown</source>
-        <translation type="unfinished">未知</translation>
+        <translation>未知</translation>
     </message>
     <message>
         <location filename="../guiutil.cpp" line="+63"/>
@@ -2134,23 +2131,23 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+13"/>
         <source>Error</source>
-        <translation type="unfinished">錯誤</translation>
+        <translation>錯誤</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Warning</source>
-        <translation type="unfinished">警告</translation>
+        <translation>警告</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Information</source>
-        <translation type="unfinished">資訊</translation>
+        <translation>資訊</translation>
     </message>
 </context>
 <context>
     <name>QObject::QObject</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+463"/>
+        <location filename="../paicoingui.cpp" line="+443"/>
         <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
         <translation>錯誤: 不存在指定的資料目錄 &quot;%1&quot; 。</translation>
     </message>
@@ -2738,7 +2735,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>儲存圖片...</translation>
     </message>
     <message>
-        <location filename="../receiverequestdialog.cpp" line="+76"/>
+        <location filename="../receiverequestdialog.cpp" line="+77"/>
         <source>Request payment to %1</source>
         <translation>付款給 %1 的要求</translation>
     </message>
@@ -3304,7 +3301,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>訊息:</translation>
     </message>
     <message>
-        <location line="+443"/>
+        <location line="+10"/>
+        <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+433"/>
         <source>This is an unauthenticated payment request.</source>
         <translation>這是個沒有驗證過身份的付款要求。</translation>
     </message>
@@ -3336,12 +3338,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>請輸入這個位址的標記來把它加進位址簿中</translation>
     </message>
     <message>
-        <location filename="../forms/sendcoinsentry.ui" line="-1015"/>
-        <source>A message that was attached to the paicoin:// URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-22"/>
+        <location filename="../forms/sendcoinsentry.ui" line="-1037"/>
         <source>The fee will be deducted from the amount being sent. The recipient will receive less PAI Coins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3876,7 +3873,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message numerus="yes">
         <location line="+58"/>
         <source>Open for %n more block(s)</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>到下 %n 個區塊生出來前可修改</numerusform>
         </translation>
     </message>
@@ -4209,7 +4206,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+675"/>
+        <location filename="../paicoingui.cpp" line="+710"/>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation>金額顯示單位。可以點選其他單位。</translation>
     </message>
@@ -4409,7 +4406,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location filename="../forms/welcomepage.ui" line="+14"/>
         <source>Form</source>
-        <translation type="unfinished">表單</translation>
+        <translation>表單</translation>
     </message>
     <message>
         <location line="+81"/>

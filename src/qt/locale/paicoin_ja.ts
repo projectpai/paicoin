@@ -284,14 +284,6 @@
     </message>
 </context>
 <context>
-    <name>AuthManager</name>
-    <message>
-        <location filename="../authmanager.cpp" line="+40"/>
-        <source>Invalid PIN, please try again</source>
-        <translation>PINが無効です。もう一度入力してください</translation>
-    </message>
-</context>
-<context>
     <name>BanTableModel</name>
     <message>
         <location filename="../bantablemodel.cpp" line="+89"/>
@@ -497,7 +489,7 @@
 <context>
     <name>ConfirmationDialog</name>
     <message>
-        <location filename="../forms/confirmationdialog.ui" line="+26"/>
+        <location filename="../forms/confirmationdialog.ui" line="+33"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1247,7 +1239,7 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
     <message>
         <location line="+5"/>
         <source>Error</source>
-        <translation type="unfinished">エラー</translation>
+        <translation>エラー</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -1367,27 +1359,27 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
 <context>
     <name>PAIcoinGUI</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+450"/>
+        <location filename="../paicoingui.cpp" line="+454"/>
         <source>Sign &amp;message...</source>
         <translation>メッセージの署名... (&amp;m)</translation>
     </message>
     <message>
-        <location line="+744"/>
+        <location line="+743"/>
         <source>Synchronizing with network...</source>
         <translation>ネットワークに同期中……</translation>
     </message>
     <message>
-        <location line="-824"/>
+        <location line="-823"/>
         <source>&amp;Overview</source>
         <translation>概要(&amp;O)</translation>
     </message>
     <message>
-        <location line="-202"/>
+        <location line="-205"/>
         <source>Node</source>
         <translation>ノード</translation>
     </message>
     <message>
-        <location line="+203"/>
+        <location line="+206"/>
         <source>Show general overview of wallet</source>
         <translation>ウォレットの概要を見る</translation>
     </message>
@@ -1472,7 +1464,7 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
         <translation>URI を開く (&amp;U)...</translation>
     </message>
     <message>
-        <location line="+655"/>
+        <location line="+654"/>
         <source>Click to disable network activity.</source>
         <translation>クリックするとネットワーク活動を無効化します。</translation>
     </message>
@@ -1497,7 +1489,7 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
         <translation>ディスク上のブロックのインデックスを再作成中...</translation>
     </message>
     <message>
-        <location line="-827"/>
+        <location line="-826"/>
         <source>Send coins to a PAI Coin address</source>
         <translation>PAI Coin アドレスにコインを送る</translation>
     </message>
@@ -1562,7 +1554,7 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
         <translation>指定された PAI Coin アドレスで署名されたことを確認するためにメッセージを検証します</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+52"/>
         <source>&amp;File</source>
         <translation>ファイル(&amp;F)</translation>
     </message>
@@ -1583,7 +1575,7 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
         <translation>タブツールバー</translation>
     </message>
     <message>
-        <location line="-164"/>
+        <location line="-146"/>
         <source>Show the list of used sending addresses and labels</source>
         <translation>使用済みの送金用アドレスとラベルの一覧を表示する</translation>
     </message>
@@ -1598,7 +1590,7 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
         <translation>コマンドラインオプション (&amp;C)</translation>
     </message>
     <message numerus="yes">
-        <location line="+652"/>
+        <location line="+651"/>
         <source>%n active connection(s) to PAI Coin network</source>
         <translation>
             <numerusform>%n の PAI Coin ネットワークへのアクティブな接続</numerusform>
@@ -1642,17 +1634,32 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
         <translation>バージョンは最新です</translation>
     </message>
     <message>
-        <location line="-749"/>
+        <location line="-835"/>
+        <source>Request payments (generates QR codes and paicoin: URIs)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+83"/>
+        <source>Open a paicoin: URI or payment request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
         <translation>有効な PAI Coin のコマンドライン オプションを見るために %1 のヘルプメッセージを表示します。</translation>
     </message>
     <message>
-        <location line="+279"/>
+        <location line="+260"/>
         <source>%1 client</source>
         <translation>%1 クライアント</translation>
     </message>
     <message>
-        <location line="+456"/>
+        <location line="+232"/>
+        <source>Invalid PIN, please try again</source>
+        <translation>PINが無効です。もう一度入力してください</translation>
+    </message>
+    <message>
+        <location line="+242"/>
         <source>Connecting to peers...</source>
         <translation>ピアに接続しています...</translation>
     </message>
@@ -1662,7 +1669,7 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
         <translation>追跡中...</translation>
     </message>
     <message>
-        <location line="+105"/>
+        <location line="+104"/>
         <source>Date: %1
 </source>
         <translation>日付: %1
@@ -1707,7 +1714,7 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
         <translation>着金取引</translation>
     </message>
     <message>
-        <location line="+121"/>
+        <location line="+138"/>
         <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
         <translation>HD鍵生成は&lt;b&gt;有効化&lt;/b&gt;されています</translation>
     </message>
@@ -1727,17 +1734,12 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
         <translation>ウォレットは&lt;b&gt;暗号化されて、ロックされています&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+708"/>
+        <location filename="../paicoin.cpp" line="+712"/>
         <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
         <translation>致命的なエラーが発生しました。PAI Coin は安全に継続することができず終了するでしょう。</translation>
     </message>
     <message>
-        <location filename="../paicoingui.cpp" line="-1121"/>
-        <source>Request payments (generates QR codes and paicoin:// URIs)</source>
-        <translation>お支払いをリクエストする（QRコードとpaicoin：// URIを生成する）</translation>
-    </message>
-    <message>
-        <location line="+66"/>
+        <location filename="../paicoingui.cpp" line="-1070"/>
         <source>&amp;View Investor Key</source>
         <translation>投資家キーを見る</translation>
     </message>
@@ -1747,29 +1749,24 @@ Lanier.aiから最新バージョンをダウンロードしてアップデー�
         <translation>投資家キーを見る</translation>
     </message>
     <message>
-        <location line="+16"/>
-        <source>Open a paicoin:// URI or payment request</source>
-        <translation>PAIコインを開く:// URIとお支払いリクエスト</translation>
-    </message>
-    <message>
-        <location line="+418"/>
+        <location line="+413"/>
         <source>PIN Set</source>
         <translation>PINコードが準備されました。</translation>
     </message>
     <message>
-        <location line="+172"/>
+        <location line="+190"/>
         <source>Paper Key Complete</source>
         <translation>復元フレーズ完了</translation>
     </message>
     <message>
-        <location line="+312"/>
+        <location line="+313"/>
         <source>Wallet Restored</source>
         <translation>ウォレット復元</translation>
     </message>
     <message>
-        <location line="-916"/>
+        <location line="-914"/>
         <source>&amp;Review Paper Key</source>
-        <translation type="unfinished">&amp;復元フレーズを確認する</translation>
+        <translation>&amp;復元フレーズを確認する</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1866,7 +1863,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>次へ</translation>
     </message>
     <message>
-        <location filename="../paperkeywritedownpage.cpp" line="+92"/>
+        <location filename="../paperkeywritedownpage.cpp" line="+94"/>
         <source>%1 of %2</source>
         <translation>%1の%2</translation>
     </message>
@@ -1884,7 +1881,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>支払いのリクエストのエラーです</translation>
     </message>
     <message>
-        <location line="-298"/>
+        <location line="-401"/>
+        <source>Cannot start paicoin: click-to-pay handler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+103"/>
         <location line="+13"/>
         <location line="+7"/>
         <source>URI handling</source>
@@ -1991,11 +1993,6 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <source>Payment acknowledged</source>
         <translation>支払いは確認しました</translation>
     </message>
-    <message>
-        <location line="-430"/>
-        <source>Cannot start paicoin:// click-to-pay handler</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>PeerTableModel</name>
@@ -2033,7 +2030,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>PAIcoinアドレスを入力してください (例 %1)</translation>
     </message>
     <message>
-        <location line="+777"/>
+        <location line="+785"/>
         <source>%1 d</source>
         <translation>%1日</translation>
     </message>
@@ -2124,7 +2121,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location filename="../modaloverlay.cpp" line="-29"/>
         <source>unknown</source>
-        <translation type="unfinished">未確認</translation>
+        <translation>未確認</translation>
     </message>
     <message>
         <location filename="../guiutil.cpp" line="+63"/>
@@ -2134,23 +2131,23 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+13"/>
         <source>Error</source>
-        <translation type="unfinished">エラー</translation>
+        <translation>エラー</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Warning</source>
-        <translation type="unfinished">警告</translation>
+        <translation>警告</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Information</source>
-        <translation type="unfinished">情報</translation>
+        <translation>情報</translation>
     </message>
 </context>
 <context>
     <name>QObject::QObject</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+463"/>
+        <location filename="../paicoingui.cpp" line="+443"/>
         <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
         <translation>エラー: 指定のデータ ディレクトリ &quot;%1&quot; は存在しません。</translation>
     </message>
@@ -2738,7 +2735,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>画像を保存(&amp;S)</translation>
     </message>
     <message>
-        <location filename="../receiverequestdialog.cpp" line="+76"/>
+        <location filename="../receiverequestdialog.cpp" line="+77"/>
         <source>Request payment to %1</source>
         <translation>%1 への支払いリクエストを行う</translation>
     </message>
@@ -3304,7 +3301,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>メッセージ:</translation>
     </message>
     <message>
-        <location line="+443"/>
+        <location line="+10"/>
+        <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+433"/>
         <source>This is an unauthenticated payment request.</source>
         <translation>これは未認証の支払いリクエストです。</translation>
     </message>
@@ -3336,12 +3338,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>アドレス帳に追加するには、このアドレスのラベルを入力します</translation>
     </message>
     <message>
-        <location filename="../forms/sendcoinsentry.ui" line="-1015"/>
-        <source>A message that was attached to the paicoin:// URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-22"/>
+        <location filename="../forms/sendcoinsentry.ui" line="-1037"/>
         <source>The fee will be deducted from the amount being sent. The recipient will receive less PAI Coins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4209,7 +4206,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+675"/>
+        <location filename="../paicoingui.cpp" line="+710"/>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation>金額を表示する際の単位。クリックすることで他の単位を選択します。</translation>
     </message>

@@ -284,14 +284,6 @@
     </message>
 </context>
 <context>
-    <name>AuthManager</name>
-    <message>
-        <location filename="../authmanager.cpp" line="+40"/>
-        <source>Invalid PIN, please try again</source>
-        <translation>잘못된 PIN코드, 다시 시도해 주세요</translation>
-    </message>
-</context>
-<context>
     <name>BanTableModel</name>
     <message>
         <location filename="../bantablemodel.cpp" line="+89"/>
@@ -497,7 +489,7 @@
 <context>
     <name>ConfirmationDialog</name>
     <message>
-        <location filename="../forms/confirmationdialog.ui" line="+26"/>
+        <location filename="../forms/confirmationdialog.ui" line="+33"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1249,7 +1241,7 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
     <message>
         <location line="+5"/>
         <source>Error</source>
-        <translation type="unfinished">오류</translation>
+        <translation>오류</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -1369,27 +1361,27 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
 <context>
     <name>PAIcoinGUI</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+450"/>
+        <location filename="../paicoingui.cpp" line="+454"/>
         <source>Sign &amp;message...</source>
         <translation>메시지 서명(&amp;M)...</translation>
     </message>
     <message>
-        <location line="+744"/>
+        <location line="+743"/>
         <source>Synchronizing with network...</source>
         <translation>네트워크와 동기화중...</translation>
     </message>
     <message>
-        <location line="-824"/>
+        <location line="-823"/>
         <source>&amp;Overview</source>
         <translation>개요(&amp;O)</translation>
     </message>
     <message>
-        <location line="-202"/>
+        <location line="-205"/>
         <source>Node</source>
         <translation>노드</translation>
     </message>
     <message>
-        <location line="+203"/>
+        <location line="+206"/>
         <source>Show general overview of wallet</source>
         <translation>지갑의 일반적 개요를 보여줍니다.</translation>
     </message>
@@ -1474,7 +1466,7 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
         <translation>&amp;URI 열기...</translation>
     </message>
     <message>
-        <location line="+655"/>
+        <location line="+654"/>
         <source>Click to disable network activity.</source>
         <translation>네트워크 활동을 중지하려면 클릭.</translation>
     </message>
@@ -1499,7 +1491,7 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
         <translation>디스크에서 블록 다시 색인중...</translation>
     </message>
     <message>
-        <location line="-827"/>
+        <location line="-826"/>
         <source>Send coins to a PAI Coin address</source>
         <translation>비트코인 주소로 코인 전송</translation>
     </message>
@@ -1564,7 +1556,7 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
         <translation>비트코인 주소의 전자 서명 확인을 위해 첨부된 메시지가 있을 경우 이를 검증할 수 있습니다.</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+52"/>
         <source>&amp;File</source>
         <translation>파일(&amp;F)</translation>
     </message>
@@ -1585,7 +1577,7 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
         <translation>툴바 색인표</translation>
     </message>
     <message>
-        <location line="-164"/>
+        <location line="-146"/>
         <source>Show the list of used sending addresses and labels</source>
         <translation>한번 이상 사용된 보내는 주소와 주소 제목의 목록을 보여줍니다.</translation>
     </message>
@@ -1600,7 +1592,7 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
         <translation>명령줄 옵션(&amp;C)</translation>
     </message>
     <message numerus="yes">
-        <location line="+652"/>
+        <location line="+651"/>
         <source>%n active connection(s) to PAI Coin network</source>
         <translation>
             <numerusform>비트코인 네트워크에 %n개의 연결이 활성화되어 있습니다.</numerusform>
@@ -1644,17 +1636,32 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
         <translation>현재까지</translation>
     </message>
     <message>
-        <location line="-749"/>
+        <location line="-835"/>
+        <source>Request payments (generates QR codes and paicoin: URIs)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+83"/>
+        <source>Open a paicoin: URI or payment request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
         <translation>사용할 수 있는 비트코인 명령줄 옵션 목록을 가져오기 위해 %1 도움말 메시지를 표시합니다.</translation>
     </message>
     <message>
-        <location line="+279"/>
+        <location line="+260"/>
         <source>%1 client</source>
         <translation>%1 클라이언트</translation>
     </message>
     <message>
-        <location line="+456"/>
+        <location line="+232"/>
+        <source>Invalid PIN, please try again</source>
+        <translation>잘못된 PIN코드, 다시 시도해 주세요</translation>
+    </message>
+    <message>
+        <location line="+242"/>
         <source>Connecting to peers...</source>
         <translation>피어에 연결중...</translation>
     </message>
@@ -1664,7 +1671,7 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
         <translation>블록 따라잡기...</translation>
     </message>
     <message>
-        <location line="+105"/>
+        <location line="+104"/>
         <source>Date: %1
 </source>
         <translation>날짜: %1
@@ -1709,7 +1716,7 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
         <translation>들어오고 있는 거래</translation>
     </message>
     <message>
-        <location line="+121"/>
+        <location line="+138"/>
         <source>HD key generation is &lt;b&gt;enabled&lt;/b&gt;</source>
         <translation>HD 키 생성이 &lt;b&gt;활성화되었습니다&lt;/b&gt;</translation>
     </message>
@@ -1729,17 +1736,12 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
         <translation>지갑이 &lt;b&gt;암호화&lt;/b&gt; 되었고 현재 &lt;b&gt;잠겨져&lt;/b&gt; 있습니다</translation>
     </message>
     <message>
-        <location filename="../paicoin.cpp" line="+708"/>
+        <location filename="../paicoin.cpp" line="+712"/>
         <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
         <translation>치명적인 오류가 발생했습니다. 비트코인을 더이상 안전하게 진행할 수 없어 곧 종료합니다.</translation>
     </message>
     <message>
-        <location filename="../paicoingui.cpp" line="-1121"/>
-        <source>Request payments (generates QR codes and paicoin:// URIs)</source>
-        <translation>지불 요청(QR코드와 PAI 코인: // URI를 생성</translation>
-    </message>
-    <message>
-        <location line="+66"/>
+        <location filename="../paicoingui.cpp" line="-1070"/>
         <source>&amp;View Investor Key</source>
         <translation>&amp;투자자키 보기</translation>
     </message>
@@ -1749,27 +1751,22 @@ Lanier.ai에서 최신버전을 다운로드하시면 됩니다.
         <translation>투자자키 보기</translation>
     </message>
     <message>
-        <location line="+16"/>
-        <source>Open a paicoin:// URI or payment request</source>
-        <translation>PAI코인을 열기:// URI나 지불 요청</translation>
-    </message>
-    <message>
-        <location line="+418"/>
+        <location line="+413"/>
         <source>PIN Set</source>
         <translation>PIN 준비</translation>
     </message>
     <message>
-        <location line="+172"/>
+        <location line="+190"/>
         <source>Paper Key Complete</source>
         <translation>종이 키 완료</translation>
     </message>
     <message>
-        <location line="+312"/>
+        <location line="+313"/>
         <source>Wallet Restored</source>
         <translation>월렛 복구</translation>
     </message>
     <message>
-        <location line="-916"/>
+        <location line="-914"/>
         <source>&amp;Review Paper Key</source>
         <translation>&amp;종이 키 확인하기</translation>
     </message>
@@ -1868,7 +1865,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>다음</translation>
     </message>
     <message>
-        <location filename="../paperkeywritedownpage.cpp" line="+92"/>
+        <location filename="../paperkeywritedownpage.cpp" line="+94"/>
         <source>%1 of %2</source>
         <translation>%1의%2</translation>
     </message>
@@ -1886,7 +1883,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>지불 요청 오류</translation>
     </message>
     <message>
-        <location line="-298"/>
+        <location line="-401"/>
+        <source>Cannot start paicoin: click-to-pay handler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+103"/>
         <location line="+13"/>
         <location line="+7"/>
         <source>URI handling</source>
@@ -1993,11 +1995,6 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <source>Payment acknowledged</source>
         <translation>지불이 승인됨</translation>
     </message>
-    <message>
-        <location line="-430"/>
-        <source>Cannot start paicoin:// click-to-pay handler</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>PeerTableModel</name>
@@ -2035,7 +2032,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>비트코인 주소를 입력하기 (예. %1)</translation>
     </message>
     <message>
-        <location line="+777"/>
+        <location line="+785"/>
         <source>%1 d</source>
         <translation>%1 일</translation>
     </message>
@@ -2126,17 +2123,17 @@ We will show you a list of words to write down on a piece of paper and keep safe
     <message>
         <location line="+13"/>
         <source>Error</source>
-        <translation type="unfinished">오류</translation>
+        <translation>오류</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Warning</source>
-        <translation type="unfinished">경고</translation>
+        <translation>경고</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Information</source>
-        <translation type="unfinished">정보</translation>
+        <translation>정보</translation>
     </message>
     <message>
         <location filename="../paicoin.cpp" line="+179"/>
@@ -2152,7 +2149,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>QObject::QObject</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+463"/>
+        <location filename="../paicoingui.cpp" line="+443"/>
         <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
         <translation>에러: 지정한 데이터 폴더 &quot;%1&quot;은 존재하지 않습니다.</translation>
     </message>
@@ -2740,7 +2737,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>이미지 저장(&amp;S)...</translation>
     </message>
     <message>
-        <location filename="../receiverequestdialog.cpp" line="+76"/>
+        <location filename="../receiverequestdialog.cpp" line="+77"/>
         <source>Request payment to %1</source>
         <translation>%1에 지불을 요청했습니다</translation>
     </message>
@@ -3311,7 +3308,12 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <translation>메시지:</translation>
     </message>
     <message>
-        <location line="+443"/>
+        <location line="+10"/>
+        <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+433"/>
         <source>This is an unauthenticated payment request.</source>
         <translation>인증 되지 않은 지급 요청입니다.</translation>
     </message>
@@ -3341,11 +3343,6 @@ We will show you a list of words to write down on a piece of paper and keep safe
         <location filename="../sendcoinsentry.cpp" line="+37"/>
         <source>Enter a label for this address to add it to your address book</source>
         <translation>주소록에 추가하려면 라벨을 입력하세요</translation>
-    </message>
-    <message>
-        <location filename="../forms/sendcoinsentry.ui" line="-1015"/>
-        <source>A message that was attached to the paicoin:// URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4211,7 +4208,7 @@ We will show you a list of words to write down on a piece of paper and keep safe
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
-        <location filename="../paicoingui.cpp" line="+675"/>
+        <location filename="../paicoingui.cpp" line="+710"/>
         <source>Unit to show amounts in. Click to select another unit.</source>
         <translation>거래액을 표시하는 단위. 클릭해서 다른 단위를 선택할 수 있습니다.</translation>
     </message>
