@@ -27,7 +27,7 @@ class QModelIndex;
 QT_END_NAMESPACE
 
 /** Dialog for requesting payment of paicoins */
-class ReceiveCoinsDialog : public QDialog
+class ReceiveCoinsDialog : public QWidget
 {
     Q_OBJECT
 

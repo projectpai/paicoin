@@ -26,7 +26,7 @@ class QUrl;
 QT_END_NAMESPACE
 
 /** Dialog for sending paicoins */
-class SendCoinsDialog : public QDialog
+class SendCoinsDialog : public QWidget
 {
     Q_OBJECT
 
