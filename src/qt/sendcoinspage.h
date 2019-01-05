@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef PAICOIN_QT_SENDCOINSDIALOG_H
-#define PAICOIN_QT_SENDCOINSDIALOG_H
+#ifndef PAICOIN_QT_SENDCOINSPAGE_H
+#define PAICOIN_QT_SENDCOINSPAGE_H
 
 #include "walletmodel.h"
 
@@ -18,7 +18,7 @@ class SendCoinsEntry;
 class SendCoinsRecipient;
 
 namespace Ui {
-    class SendCoinsDialog;
+    class SendCoinsPage;
 }
 
 QT_BEGIN_NAMESPACE
@@ -26,13 +26,13 @@ class QUrl;
 QT_END_NAMESPACE
 
 /** Dialog for sending paicoins */
-class SendCoinsDialog : public QWidget
+class SendCoinsPage : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit SendCoinsDialog(const PlatformStyle *platformStyle, QWidget *parent = 0);
-    ~SendCoinsDialog();
+    explicit SendCoinsPage(const PlatformStyle *platformStyle, QWidget *parent = nullptr);
+    ~SendCoinsPage();
 
     void setClientModel(ClientModel *clientModel);
     void setModel(WalletModel *model);
@@ -59,7 +59,7 @@ protected:
     void showEvent(QShowEvent *event);
 
 private:
-    Ui::SendCoinsDialog *ui;
+    Ui::SendCoinsPage *ui;
     ClientModel *clientModel;
     WalletModel *model;
     bool fNewRecipientAllowed;
@@ -136,4 +136,4 @@ private:
     int secDelay;
 };
 
-#endif // PAICOIN_QT_SENDCOINSDIALOG_H
+#endif // PAICOIN_QT_SENDCOINSPAGE_H

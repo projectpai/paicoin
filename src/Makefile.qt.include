@@ -105,10 +105,10 @@ QT_FORMS_UI = \
   qt/forms/openuridialog.ui \
   qt/forms/optionsdialog.ui \
   qt/forms/overviewpage.ui \
-  qt/forms/receivecoinsdialog.ui \
+  qt/forms/receivecoinspage.ui \
   qt/forms/receiverequestdialog.ui \
   qt/forms/debugwindow.ui \
-  qt/forms/sendcoinsdialog.ui \
+  qt/forms/sendcoinspage.ui \
   qt/forms/sendcoinsentry.ui \
   qt/forms/signverifymessagedialog.ui \
   qt/forms/transactiondescdialog.ui \
@@ -157,11 +157,11 @@ QT_MOC_CPP = \
   qt/moc_qvalidatedlineedit.cpp \
   qt/moc_qvaluecombobox.cpp \
   qt/moc_qrimagewidget.cpp \
-  qt/moc_receivecoinsdialog.cpp \
+  qt/moc_receivecoinspage.cpp \
   qt/moc_receiverequestdialog.cpp \
   qt/moc_recentrequeststablemodel.cpp \
   qt/moc_rpcconsole.cpp \
-  qt/moc_sendcoinsdialog.cpp \
+  qt/moc_sendcoinspage.cpp \
   qt/moc_sendcoinsentry.cpp \
   qt/moc_signverifymessagedialog.cpp \
   qt/moc_splashscreen.cpp \
@@ -247,11 +247,11 @@ PAICOIN_QT_H = \
   qt/qrimagewidget.h \
   qt/qvalidatedlineedit.h \
   qt/qvaluecombobox.h \
-  qt/receivecoinsdialog.h \
+  qt/receivecoinspage.h \
   qt/receiverequestdialog.h \
   qt/recentrequeststablemodel.h \
   qt/rpcconsole.h \
-  qt/sendcoinsdialog.h \
+  qt/sendcoinspage.h \
   qt/sendcoinsentry.h \
   qt/signverifymessagedialog.h \
   qt/splashscreen.h \
@@ -399,10 +399,10 @@ PAICOIN_QT_WALLET_CPP = \
   qt/paymentrequestplus.cpp \
   qt/paymentserver.cpp \
   qt/qrimagewidget.cpp \
-  qt/receivecoinsdialog.cpp \
+  qt/receivecoinspage.cpp \
   qt/receiverequestdialog.cpp \
   qt/recentrequeststablemodel.cpp \
-  qt/sendcoinsdialog.cpp \
+  qt/sendcoinspage.cpp \
   qt/sendcoinsentry.cpp \
   qt/signverifymessagedialog.cpp \
   qt/transactiondesc.cpp \

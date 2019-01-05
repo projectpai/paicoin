@@ -177,11 +177,9 @@ SOURCES += \
     ../src/qt/qvalidatedlineedit.cpp \
     ../src/qt/qvaluecombobox.cpp \
     ../src/qt/qrc_paicoin_locale.cpp \
-    ../src/qt/receivecoinsdialog.cpp \
     ../src/qt/receiverequestdialog.cpp \
     ../src/qt/recentrequeststablemodel.cpp \
     ../src/qt/rpcconsole.cpp \
-    ../src/qt/sendcoinsdialog.cpp \
     ../src/qt/sendcoinsentry.cpp \
     ../src/qt/signverifymessagedialog.cpp \
     ../src/qt/splashscreen.cpp \
@@ -211,7 +209,9 @@ SOURCES += \
     ../src/qt/holdingperiodcompletedialog.cpp \
     ../src/qt/versioncheckutil.cpp \
     ../src/qt/updateavailabledialog.cpp \
-    ../src/qt/reviewpaperkeydialog.cpp
+    ../src/qt/reviewpaperkeydialog.cpp \
+    ../src/qt/sendcoinspage.cpp \
+    ../src/qt/receivecoinspage.cpp
 
 HEADERS += \
     ../src/qt/authmanager.h \
@@ -249,11 +249,9 @@ HEADERS += \
     ../src/qt/qrimagewidget.h \
     ../src/qt/qvalidatedlineedit.h \
     ../src/qt/qvaluecombobox.h \
-    ../src/qt/receivecoinsdialog.h \
     ../src/qt/receiverequestdialog.h \
     ../src/qt/recentrequeststablemodel.h \
     ../src/qt/rpcconsole.h \
-    ../src/qt/sendcoinsdialog.h \
     ../src/qt/sendcoinsentry.h \
     ../src/qt/signverifymessagedialog.h \
     ../src/qt/splashscreen.h \
@@ -283,7 +281,9 @@ HEADERS += \
     ../src/coinbase_addresses.h \
     ../src/qt/versioncheckutil.h \
     ../src/qt/updateavailabledialog.h \
-    ../src/qt/reviewpaperkeydialog.h
+    ../src/qt/reviewpaperkeydialog.h \
+    ../src/qt/sendcoinspage.h \
+    ../src/qt/receivecoinspage.h
 
 UI_DIR = ../src/qt/forms
 
@@ -298,10 +298,8 @@ FORMS += \
     ../src/qt/forms/optionsdialog.ui \
     ../src/qt/forms/overviewpage.ui \
     ../src/qt/forms/modaloverlay.ui \
-    ../src/qt/forms/receivecoinsdialog.ui \
     ../src/qt/forms/receiverequestdialog.ui \
     ../src/qt/forms/debugwindow.ui \
-    ../src/qt/forms/sendcoinsdialog.ui \
     ../src/qt/forms/sendcoinsentry.ui \
     ../src/qt/forms/signverifymessagedialog.ui \
     ../src/qt/forms/transactiondescdialog.ui \
@@ -317,7 +315,9 @@ FORMS += \
     ../src/qt/forms/holdingperiodcompletedialog.ui \
     ../src/qt/forms/confirmationdialog.ui \
     ../src/qt/forms/updateavailabledialog.ui \
-    ../src/qt/forms/reviewpaperkeydialog.ui
+    ../src/qt/forms/reviewpaperkeydialog.ui \
+    ../src/qt/forms/sendcoinspage.ui \
+    ../src/qt/forms/receivecoinspage.ui
 
 RESOURCES += \
     ../src/qt/paicoin.qrc

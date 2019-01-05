@@ -11,7 +11,7 @@
 #include "optionsmodel.h"
 #include "paymentserver.h"
 #include "recentrequeststablemodel.h"
-#include "sendcoinsdialog.h"
+#include "sendcoinspage.h"
 #include "transactiontablemodel.h"
 
 #include "base58.h"
