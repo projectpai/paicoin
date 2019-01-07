@@ -175,9 +175,8 @@ bool SendNewCoinbaseAddressTransactionToMempool(CMutableTransaction rawTx)
         // push to local node and sync with wallets
         CValidationState state;
         bool areMissingInputs = false;
-        bool isLimitFree = true;
 
-        txAccepted = AcceptToMemoryPool(mempool, state, std::move(tx), isLimitFree, &areMissingInputs, nullptr, false, nMaxRawTxFee);
+        txAccepted = AcceptToMemoryPool(mempool, state, std::move(tx), &areMissingInputs, nullptr, false, nMaxRawTxFee);
     }
 
     if (!txAccepted) {

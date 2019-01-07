@@ -10,6 +10,7 @@
 #include "coinbase_keyhandler.h"
 #include "coinbase_txhandler.h"
 #include "coinbase_utils.h"
+#include "key_io.h"
 #include "util.h"
 
 CoinbaseIndex gCoinbaseIndex;

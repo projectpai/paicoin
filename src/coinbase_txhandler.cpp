@@ -13,6 +13,7 @@
 #include "coinbase_txhandler.h"
 #include "coinbase_utils.h"
 #include "key.h"
+#include "key_io.h"
 #include "pubkey.h"
 #include "serialize.h"
 #include "streams.h"

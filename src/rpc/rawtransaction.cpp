@@ -991,25 +991,25 @@ UniValue createcoinbasetransaction(const JSONRPCRequest& request)
 
     auto keyHex = request.params[0].get_str();
     if (!IsHex(keyHex))
-        throw JSONRPCError(RPC_PARSE_ERROR, "Invalid hex string for the target address/public key");
+        throw JSONRPCError(RPCErrorCode::PARSE_ERROR, "Invalid hex string for the target address/public key");
     auto keyData = ParseHex(keyHex);
     if (keyData.empty())
-        throw JSONRPCError(RPC_INTERNAL_ERROR, "Could not parse the target address hex string");
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Could not parse the target address hex string");
     
     CPubKey pubKey(keyData);
     if (!pubKey.IsFullyValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "The provided target address/key is not valid");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "The provided target address/key is not valid");
     
     int32_t maxBlockHeight = -1;
     if (!request.params[1].isNull()) {
         int32_t paramBlockHeight = -1;
         auto convertedParam = ParseInt32(request.params[1].get_str(), &paramBlockHeight);
         if (!convertedParam)
-            throw JSONRPCError(RPC_PARSE_ERROR, "Invalid integer format for block height");
+            throw JSONRPCError(RPCErrorCode::PARSE_ERROR, "Invalid integer format for block height");
         if ((paramBlockHeight < 0) && (paramBlockHeight != -1))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid integer value for block height");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid integer value for block height");
         if ((paramBlockHeight >= 0) && (paramBlockHeight <= static_cast<int>(mapBlockIndex.size())))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Expiration block height cannot be less than (or equal to) the current height");
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Expiration block height cannot be less than (or equal to) the current height");
         
         maxBlockHeight = paramBlockHeight;
     }
@@ -1017,7 +1017,7 @@ UniValue createcoinbasetransaction(const JSONRPCRequest& request)
     CoinbaseTxHandler cbTxHandler;
     auto createdCoinbaseTx = cbTxHandler.CreateCompleteCoinbaseTransaction(pwallet, pubKey.GetID(), maxBlockHeight);
     if (!createdCoinbaseTx.first || !createdCoinbaseTx.second)
-        throw JSONRPCError(RPC_INTERNAL_ERROR, "Could not create the coinbase transaction");
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Could not create the coinbase transaction");
     
     UniValue result(UniValue::VOBJ);
     result.push_back(Pair("data_txid", createdCoinbaseTx.first->GetHash().ToString()));
