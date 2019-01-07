@@ -1988,9 +1988,6 @@ bool static FlushStateToDisk(const CChainParams& chainparams, CValidationState &
             if (!CoinbaseIndexDisk(gCoinbaseIndex).SaveToDisk()) {
                 return state.Error("Unable to save coinbase index to disk");
             }
-            if (!CoinbaseIndexCacheDisk(gCoinbaseIndexCache).SaveToDisk()) {
-                return state.Error("Unable to save coinbase index cache to disk");
-            }
         }
     }
     } catch (const std::runtime_error& e) {
@@ -3228,7 +3225,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
         if (!ReceivedBlockTransactions(block, state, pindex, blockPos, chainparams.GetConsensus()))
             return error("AcceptBlock(): ReceivedBlockTransactions failed");
 
-        gCoinbaseIndexCache.ScanNewBlockForCoinbaseTxs(pblock);
+        gCoinbaseIndex.ScanBlockForNewCoinbaseAddrTxs(pblock);
     } catch (const std::runtime_error& e) {
         return AbortNode(state, std::string("System error: ") + e.what());
     }

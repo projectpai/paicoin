@@ -106,13 +106,10 @@ class CoinbaseIndexTest(PAIcoinTestFramework):
 
         block_count = int(chain_node.getblockcount())
         result = chain_node.createcoinbasetransaction(pub_key, str(block_count + 100))
-
-        assert(os.path.getsize(self.datadir + '/regtest/coinbase/cache') < 2)
+        assert result is not None
 
         chain_node.generate(3)
         self.sync_all()
-
-        assert(os.path.getsize(self.datadir + '/regtest/coinbase/cache') > 1)
 
         block_count = int(chain_node.getblockcount())
         block_template = chain_node.getblocktemplate()

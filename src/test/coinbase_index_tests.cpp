@@ -198,22 +198,19 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_SelectInputs, CoinbaseIndexWithBalanceToSp
 
 BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_CreateCoinbaseTransaction, CoinbaseIndexWithBalanceToSpendSetup)
 {
-    auto mutTx = CreateNewCoinbaseAddressTransaction({}, DEFAULT_COINBASE_TX_FEE, wallet.get());
+    auto mutTx = CreateNewCoinbaseAddressTransaction({}, wallet.get());
     BOOST_CHECK(mutTx.vout.empty());
 
     auto unspentInputs = SelectUnspentInputsFromWallet(wallet.get(), DEFAULT_COINBASE_TX_FEE);
     BOOST_CHECK(!unspentInputs.empty());
 
-    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, nullptr);
+    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, nullptr);
     BOOST_CHECK(mutTx.vout.empty());
     
-    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, CAmount(0), wallet.get());
-    BOOST_CHECK(mutTx.vout.empty());
-
-    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, wallet.get());
+    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, wallet.get());
     BOOST_CHECK(!mutTx.vout.empty());
 
-    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, dummyWallet.get());
+    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, dummyWallet.get());
     BOOST_CHECK(mutTx.vout.empty());
 }
 
@@ -229,7 +226,7 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseUtils_SignCoinbaseTransaction, CoinbaseIndexWith
     auto unspentInputs = SelectUnspentInputsFromWallet(wallet.get(), DEFAULT_COINBASE_TX_FEE);
     BOOST_CHECK(!unspentInputs.empty());
 
-    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, DEFAULT_COINBASE_TX_FEE, wallet.get());
+    mutTx = CreateNewCoinbaseAddressTransaction(unspentInputs, wallet.get());
     BOOST_CHECK(!mutTx.vout.empty());
 
     result = SignNewCoinbaseAddressTransaction(mutTx, nullptr);
@@ -279,8 +276,8 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_SigningKey, CoinbaseIndexWithBalanceT
 {
     const auto dummyPrivKey = initSecKeysFile();
 
-    CoinbaseKeyHandler keyHandler{GetDataDir()};
-    const auto loadedPrivKey = keyHandler.GetCoinbaseSigningKey();
+    CoinbaseIndexKeyHandler keyHandler{GetDataDir()};
+    const auto loadedPrivKey = keyHandler.GetSigningKey();
 
     BOOST_CHECK(loadedPrivKey.IsValid());
     BOOST_CHECK(dummyPrivKey == loadedPrivKey);
@@ -290,8 +287,8 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_PublicKeys, CoinbaseIndexWithBalanceT
 {
     const auto dummyPrivKey = initSecKeysFile();
 
-    CoinbaseKeyHandler keyHandler{GetDataDir()};
-    const auto publicKeys = keyHandler.GetCoinbasePublicKeys();
+    CoinbaseIndexKeyHandler keyHandler{GetDataDir()};
+    const auto publicKeys = keyHandler.GetPublicKeys();
 
     BOOST_CHECK(publicKeys.size() == 1);
     BOOST_CHECK(dummyPrivKey.VerifyPubKey(publicKeys.front()));
@@ -322,8 +319,8 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_SigningKeyWithInvalid, CoinbaseIndexW
 {
     const auto dummyPrivKey = initSecKeysFile(getInvalidSecKeys(), getInvalidSecKeys());
 
-    CoinbaseKeyHandler keyHandler{GetDataDir()};
-    const auto loadedPrivKey = keyHandler.GetCoinbaseSigningKey();
+    CoinbaseIndexKeyHandler keyHandler{GetDataDir()};
+    const auto loadedPrivKey = keyHandler.GetSigningKey();
 
     BOOST_CHECK(loadedPrivKey.IsValid());
     BOOST_CHECK(dummyPrivKey == loadedPrivKey);
@@ -333,8 +330,8 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseKeyHandler_PublicKeysWithInvalid, CoinbaseIndexW
 {
     const auto dummyPrivKey = initSecKeysFile(getInvalidSecKeys(), getInvalidSecKeys());
 
-    CoinbaseKeyHandler keyHandler{GetDataDir()};
-    const auto publicKeys = keyHandler.GetCoinbasePublicKeys();
+    CoinbaseIndexKeyHandler keyHandler{GetDataDir()};
+    const auto publicKeys = keyHandler.GetPublicKeys();
 
     BOOST_CHECK(publicKeys.size() == 1);
     BOOST_CHECK(dummyPrivKey.VerifyPubKey(publicKeys.front()));
@@ -346,28 +343,24 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseTxHandler_CreateCoinbaseTxInvalidArgs, CoinbaseI
     insertionKey.MakeNewKey(false);
     int maxBlockHeight = static_cast<int>(mapBlockIndex.size()) + 100;
 
-    CoinbaseTxHandler txHandler;
+    CoinbaseIndexTxHandler txHandler;
 
     // Try a series of calls with invalid parameters
-    auto createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(nullptr,
+    auto createdTransactions = txHandler.CreateNewCoinbaseAddrTransaction(nullptr,
         insertionKey.GetPubKey().GetID(), maxBlockHeight);
-    BOOST_CHECK(!createdTransactions.first);
-    BOOST_CHECK(!createdTransactions.second);
+    BOOST_CHECK(!createdTransactions);
 
-    createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(wallet.get(),
+    createdTransactions = txHandler.CreateNewCoinbaseAddrTransaction(wallet.get(),
         uint160(), maxBlockHeight);
-    BOOST_CHECK(!createdTransactions.first);
-    BOOST_CHECK(!createdTransactions.second);
+    BOOST_CHECK(!createdTransactions);
 
-    createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(wallet.get(),
+    createdTransactions = txHandler.CreateNewCoinbaseAddrTransaction(wallet.get(),
         insertionKey.GetPubKey().GetID(), 0);
-    BOOST_CHECK(!createdTransactions.first);
-    BOOST_CHECK(!createdTransactions.second);
+    BOOST_CHECK(!createdTransactions);
 
-    createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(wallet.get(),
+    createdTransactions = txHandler.CreateNewCoinbaseAddrTransaction(wallet.get(),
         insertionKey.GetPubKey().GetID(), static_cast<int>(mapBlockIndex.size()));
-    BOOST_CHECK(!createdTransactions.first);
-    BOOST_CHECK(!createdTransactions.second);
+    BOOST_CHECK(!createdTransactions);
 }
 
 BOOST_FIXTURE_TEST_CASE(CoinbaseTxHandler_ClosedLoopTest, CoinbaseIndexWithBalanceToSpendSetup)
@@ -394,17 +387,15 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseTxHandler_ClosedLoopTest, CoinbaseIndexWithBalan
     int maxBlockHeight = static_cast<int>(mapBlockIndex.size()) + 3;
     auto oldBlockSize = mapBlockIndex.size();
 
-    CoinbaseTxHandler txHandler;
+    CoinbaseIndexTxHandler txHandler;
 
     // Try a good parameter combination
-    auto createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(wallet.get(),
+    auto createdTransactions = txHandler.CreateNewCoinbaseAddrTransaction(wallet.get(),
         insertionKey.GetPubKey().GetID(), maxBlockHeight);
-    BOOST_CHECK(createdTransactions.first.get() != nullptr);
-    BOOST_CHECK(createdTransactions.second.get() != nullptr);
+    BOOST_CHECK(createdTransactions.get() != nullptr);
 
     std::vector<CMutableTransaction> transactions{
-        CMutableTransaction(*(createdTransactions.first.get())),
-        CMutableTransaction(*(createdTransactions.second.get()))
+        CMutableTransaction(*(createdTransactions.get())),
     };
     CreateAndProcessBlock(transactions, GetScriptPubKey());
 
@@ -443,29 +434,57 @@ BOOST_FIXTURE_TEST_CASE(CoinbaseTxHandler_ClosedLoopTest_SeparateBlockTxs, Coinb
     int maxBlockHeight = static_cast<int>(mapBlockIndex.size()) + 3;
     auto oldBlockSize = mapBlockIndex.size();
 
-    CoinbaseTxHandler txHandler;
+    CoinbaseIndexTxHandler txHandler;
 
-    auto createdTransactions = txHandler.CreateCompleteCoinbaseTransaction(wallet.get(),
+    auto createdTransactions = txHandler.CreateNewCoinbaseAddrTransaction(wallet.get(),
         insertionKey.GetPubKey().GetID(), maxBlockHeight);
-    BOOST_CHECK(!!createdTransactions.first);
-    BOOST_CHECK(!!createdTransactions.second);
+    BOOST_CHECK(!!createdTransactions);
 
     std::vector<CMutableTransaction> transactions{
-        CMutableTransaction(*(createdTransactions.first)),
+        CMutableTransaction(*(createdTransactions)),
     };
     CreateAndProcessBlock(transactions, GetScriptPubKey());
 
     auto newBlockSize = mapBlockIndex.size();
     BOOST_CHECK(newBlockSize == (oldBlockSize + 1));
 
-    BOOST_CHECK(gCoinbaseIndex.GetNumCoinbaseAddrs() == 1);
-
-    transactions = {
-        CMutableTransaction(*(createdTransactions.second))
-    };
-
-    CreateAndProcessBlock(transactions, GetScriptPubKey());
     BOOST_CHECK(gCoinbaseIndex.GetNumCoinbaseAddrs() == 2);
+}
+
+BOOST_AUTO_TEST_CASE(PartitionDataBlockTest)
+{
+    auto partitionedData = PartitionDataBlock({}, {1});
+    BOOST_CHECK(partitionedData.empty());
+
+    std::vector<unsigned char> dataBlock{1u, 2u, 3u, 4u};
+    partitionedData = PartitionDataBlock(dataBlock, {});
+    BOOST_CHECK_EQUAL(partitionedData.size(), 1u);
+    BOOST_CHECK(partitionedData[0] == dataBlock);
+
+    partitionedData = PartitionDataBlock(dataBlock, {1u, 1u, 1u, 1u, 1u});
+    BOOST_CHECK_EQUAL(partitionedData.size(), 1u);
+    BOOST_CHECK(partitionedData[0] == dataBlock);
+
+    partitionedData = PartitionDataBlock(dataBlock, {1u, 1u, 1u, 2u});
+    BOOST_CHECK(partitionedData.empty());
+
+    dataBlock = std::vector<unsigned char>{3u, 1u};
+    partitionedData = PartitionDataBlock(dataBlock, {0u, 1u});
+    BOOST_CHECK_EQUAL(partitionedData.size(), 3u);
+    BOOST_CHECK(partitionedData[0].empty());
+    BOOST_CHECK_EQUAL(partitionedData[1].size(), 1u);
+    BOOST_CHECK_EQUAL(partitionedData[1][0], 3u);
+    BOOST_CHECK_EQUAL(partitionedData[2].size(), 1u);
+    BOOST_CHECK_EQUAL(partitionedData[2][0], 1u);
+
+    dataBlock = std::vector<unsigned char>{3u, 1u, 4u, 5u, 6u, 2u, 7u};
+    partitionedData = PartitionDataBlock(dataBlock, {1u, 0u, 3u, 2u});
+    BOOST_CHECK_EQUAL(partitionedData.size(), 5u);
+    BOOST_CHECK_EQUAL(partitionedData[0].size(), 1u);
+    BOOST_CHECK(partitionedData[1].empty());
+    BOOST_CHECK_EQUAL(partitionedData[2].size(), 3u);
+    BOOST_CHECK_EQUAL(partitionedData[3].size(), 2u);
+    BOOST_CHECK_EQUAL(partitionedData[4].size(), 1u);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

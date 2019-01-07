@@ -14,7 +14,6 @@
 #include "util.h"
 
 CoinbaseIndex gCoinbaseIndex;
-CoinbaseIndexCache gCoinbaseIndexCache;
 
 void CoinbaseIndex::BuildDefault()
 {
@@ -44,8 +43,8 @@ void CoinbaseIndex::BuildDefaultFromDisk()
 {
     SetNull();
 
-    auto keyLoader = CoinbaseKeyHandler(GetDataDir());
-    auto pubKeys = keyLoader.GetCoinbasePublicKeys();
+    auto keyLoader = CoinbaseIndexKeyHandler(GetDataDir());
+    auto pubKeys = keyLoader.GetPublicKeys();
     if (pubKeys.empty()) {
         return;
     }
@@ -214,6 +213,43 @@ size_t CoinbaseIndex::GetNumCoinbaseAddrs() const
     return numAddrs;
 }
 
+void CoinbaseIndex::ScanBlockForNewCoinbaseAddrTxs(const std::shared_ptr<const CBlock>& block)
+{
+    if (!block) {
+        return;
+    }
+
+    CoinbaseIndexTxHandler txHandler;
+    for (auto& tx : block->vtx) {
+        if (txHandler.HasTransactionNewCoinbaseAddress(tx)) {
+            AddNewCoinbaseAddressTransactionToIndex(tx, block->GetHash());
+        }
+    }
+}
+
+bool CoinbaseIndex::AddNewCoinbaseAddressTransactionToIndex(CTransactionRef txToAdd, uint256 hashBlock)
+{
+    if (!txToAdd) {
+        return false;
+    }
+
+    CoinbaseIndexTxHandler txHandler;
+    auto coinbaseAddr = txHandler.ExtractNewCoinbaseAddrFromTransaction(txToAdd, *this);
+    if (!coinbaseAddr) {
+        return false;
+    }
+
+    if (hashBlock.IsNull()) {
+        auto tip = chainActive.Tip();
+        if (tip != nullptr) {
+            hashBlock = *(tip->phashBlock);
+        }
+    }
+
+    AddNewAddress(*coinbaseAddr, std::move(hashBlock));
+    return true;
+}
+
 CAutoFile OpenDiskFile(fs::path path, bool fReadOnly)
 {
     if (!fReadOnly) {
@@ -258,102 +294,5 @@ bool CoinbaseIndexDisk::SaveToDisk()
 CAutoFile CoinbaseIndexDisk::OpenIndexFile(bool fReadOnly)
 {
     fs::path path = GetDataDir() / "coinbase" / "index";
-    return OpenDiskFile(path, fReadOnly);
-}
-
-void CoinbaseIndexCache::ScanNewBlockForCoinbaseTxs(const std::shared_ptr<const CBlock>& block)
-{
-    if (!block) {
-        return;
-    }
-
-    CoinbaseTxHandler txHandler;
-    for (auto& tx : block->vtx) {
-        if (txHandler.IsTransactionCoinbaseAddress(tx)) {
-            AddTransactionToCache(tx);
-        }
-    }
-}
-
-bool CoinbaseIndexCache::AddTransactionToCache(CTransactionRef txToCache)
-{
-    if (!txToCache) {
-        return false;
-    }
-
-    if (!m_cachedTx) {
-        m_cachedTx = std::move(txToCache);
-        return true;
-    }
-
-    // verify if the previously cached tx is still valid
-    CTransactionRef txSentinel(nullptr);
-    uint256 hashBlock;
-    auto txFound = GetTransaction(m_cachedTx->GetHash(), txSentinel, Params().GetConsensus(), hashBlock, true);
-    if (!txFound) {
-        // the old cached tx is no longer present, maybe it was evicted?
-        m_cachedTx = std::move(txToCache);
-        return true;
-    } else {
-        CoinbaseTxHandler txHandler;
-
-        CoinbaseOperationType cachedOpType = COT_INVALID;
-        CoinbaseOperationType candidateOpType = COT_INVALID;
-        auto coinbaseAddr = txHandler.GetCoinbaseAddrFromTransactions(m_cachedTx, txToCache, gCoinbaseIndex, cachedOpType, candidateOpType);
-        if (!coinbaseAddr) {
-            return false;
-        }
-
-        if (candidateOpType == COT_ADD) {
-            txFound = GetTransaction(txToCache->GetHash(), txSentinel, Params().GetConsensus(), hashBlock, true);
-            if (!txFound) {
-                return false;
-            }
-        }
-
-        if (hashBlock.IsNull()) {
-            auto tip = chainActive.Tip();
-            if (tip != nullptr) {
-                hashBlock = *(tip->phashBlock);
-            }
-        }
-        gCoinbaseIndex.AddNewAddress(*coinbaseAddr, std::move(hashBlock));
-
-        m_cachedTx.reset();
-        return true;
-    }
-
-    return false;
-}
-
-bool CoinbaseIndexCacheDisk::LoadFromDisk()
-{
-    m_indexCache.SetNull();
-
-    CAutoFile indexFile = OpenCacheFile(true);
-    if (indexFile.IsNull()) {
-        LogPrintf("%s: coinbase index cache does not (yet) exist", __FUNCTION__);
-        return false;
-    }
-
-    indexFile >> *this;
-    return true;
-}
-
-bool CoinbaseIndexCacheDisk::SaveToDisk()
-{
-    CAutoFile indexFile = OpenCacheFile(false);
-    if (indexFile.IsNull()) {
-        LogPrintf("%s: coinbase index cache could not be written to disk", __FUNCTION__);
-        return false;
-    }
-
-    indexFile << *this;
-    return true;
-}
-
-CAutoFile CoinbaseIndexCacheDisk::OpenCacheFile(bool fReadOnly)
-{
-    fs::path path = GetDataDir() / "coinbase" / "cache";
     return OpenDiskFile(path, fReadOnly);
 }
