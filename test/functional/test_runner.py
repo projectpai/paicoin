@@ -122,6 +122,7 @@ BASE_SCRIPTS= [
     'uptime.py',
     'resendwallettransactions.py',
     'minchainwork.py',
+    'rpc_help.py',
 ]
 
 EXTENDED_SCRIPTS = [

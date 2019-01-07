@@ -5,7 +5,7 @@
 
 #include "wallet/walletdb.h"
 
-#include "base58.h"
+#include <key_io.h>
 #include "consensus/tx_verify.h"
 #include "consensus/validation.h"
 #include "fs.h"
@@ -41,9 +41,9 @@ bool CWalletDB::WritePurpose(const std::string& strAddress, const std::string& s
     return WriteIC(std::make_pair(std::string("purpose"), strAddress), strPurpose);
 }
 
-bool CWalletDB::ErasePurpose(const std::string& strPurpose)
+bool CWalletDB::ErasePurpose(const std::string& strAddress)
 {
-    return EraseIC(std::make_pair(std::string("purpose"), strPurpose));
+    return EraseIC(std::make_pair(std::string("purpose"), strAddress));
 }
 
 bool CWalletDB::WriteTx(const CWalletTx& wtx)
@@ -268,7 +268,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             CWalletTx wtx;
             ssValue >> wtx;
             CValidationState state;
-            if (!(CheckTransaction(wtx, state) && (wtx.GetHash() == hash) && state.IsValid()))
+            if (!(CheckTransaction(*wtx.tx, state) && (wtx.GetHash() == hash) && state.IsValid()))
                 return false;
 
             // Undo serialize changes in 31600

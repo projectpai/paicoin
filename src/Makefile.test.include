@@ -9,13 +9,13 @@ TEST_SRCDIR = test
 TEST_BINARY=test/test_paicoin$(EXEEXT)
 
 JSON_TEST_FILES = \
-  test/data/script_tests.json \
-  test/data/base58_keys_valid.json \
   test/data/base58_encode_decode.json \
-  test/data/base58_keys_invalid.json \
+  test/data/key_io_valid.json \
+  test/data/key_io_invalid.json \
+  test/data/script_tests.json \
+  test/data/sighash.json \
   test/data/tx_invalid.json \
-  test/data/tx_valid.json \
-  test/data/sighash.json
+  test/data/tx_valid.json
 
 RAW_TEST_FILES =
 
@@ -43,12 +43,14 @@ PAICOIN_TESTS =\
   test/DoS_tests.cpp \
   test/getarg_tests.cpp \
   test/hash_tests.cpp \
+  test/key_io_tests.cpp \
   test/key_tests.cpp \
   test/limitedmap_tests.cpp \
   test/dbwrapper_tests.cpp \
   test/main_tests.cpp \
   test/mempool_tests.cpp \
   test/merkle_tests.cpp \
+  test/merkleblock_tests.cpp \
   test/miner_tests.cpp \
   test/multisig_tests.cpp \
   test/net_tests.cpp \
@@ -65,6 +67,7 @@ PAICOIN_TESTS =\
   test/scheduler_tests.cpp \
   test/script_P2SH_tests.cpp \
   test/script_tests.cpp \
+  test/script_standard_tests.cpp \
   test/scriptnum_tests.cpp \
   test/serialize_tests.cpp \
   test/sighash_tests.cpp \
@@ -147,7 +150,7 @@ paicoin_test_clean : FORCE
 
 check-local:
 	@echo "Running test/util/paicoin-util-test.py..."
-	$(top_builddir)/test/util/paicoin-util-test.py
+	$(PYTHON) $(top_builddir)/test/util/paicoin-util-test.py
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C secp256k1 check
 if EMBEDDED_UNIVALUE
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C univalue check

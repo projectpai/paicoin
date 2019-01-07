@@ -103,7 +103,7 @@ class P2PLeakTest(PAIcoinTestFramework):
         unsupported_service_bit5_node = CLazyNode()
         unsupported_service_bit7_node = CLazyNode()
 
-        self.nodes[0].setmocktime(1501545600)  # August 1st 2017
+        self.nodes[0].setmocktime(1533078000)  # August 1st 2018
         connections = []
         connections.append(NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], no_version_bannode, send_version=False))
         connections.append(NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], no_version_idlenode, send_version=False))
@@ -147,7 +147,7 @@ class P2PLeakTest(PAIcoinTestFramework):
         assert not unsupported_service_bit7_node.unexpected_msg
 
         self.log.info("Service bits 5 and 7 are allowed after August 1st 2018")
-        self.nodes[0].setmocktime(1533168000)  # August 2nd 2018
+        self.nodes[0].setmocktime(1564700400)  # August 2nd 2019
 
         allowed_service_bit5_node = NodeConnCB()
         allowed_service_bit7_node = NodeConnCB()

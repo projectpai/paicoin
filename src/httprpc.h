@@ -5,9 +5,6 @@
 #ifndef PAICOIN_HTTPRPC_H
 #define PAICOIN_HTTPRPC_H
 
-#include <string>
-#include <map>
-
 /** Start HTTP RPC subsystem.
  * Precondition; HTTP and RPC has been started.
  */
