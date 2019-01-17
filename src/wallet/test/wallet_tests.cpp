@@ -64,7 +64,7 @@ static void add_coin(const CAmount& nValue, int nAge = 6*24, bool fIsFromMe = fa
     wtxn.emplace_back(std::move(wtx));
 }
 
-static void empty_wallet(void)
+static void empty_wallet()
 {
     vCoins.clear();
     wtxn.clear();

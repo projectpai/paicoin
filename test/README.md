@@ -98,7 +98,7 @@ pkill -9 paicoind
 
 ##### Data directory cache
 
-A pre-mined blockchain with 200 blocks is generated the first time a
+A pre-mined blockchain with 201 blocks is generated the first time a
 functional test is run and is stored in test/cache. This speeds up
 test startup times since new blockchains don't need to be generated for
 each test. However, the cache may get into a bad state, in which case

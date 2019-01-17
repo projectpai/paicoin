@@ -56,11 +56,6 @@ public:
         keydata.resize(32);
     }
 
-    //! Destructor (again necessary because of memlocking).
-    ~CKey()
-    {
-    }
-
     friend bool operator==(const CKey& a, const CKey& b)
     {
         return a.fCompressed == b.fCompressed &&
@@ -180,12 +175,12 @@ struct CExtKey {
 };
 
 /** Initialize the elliptic curve support. May not be called twice without calling ECC_Stop first. */
-void ECC_Start(void);
+void ECC_Start();
 
 /** Deinitialize the elliptic curve support. No-op if ECC_Start wasn't called first. */
-void ECC_Stop(void);
+void ECC_Stop();
 
 /** Check that required EC support is available at runtime. */
-bool ECC_InitSanityCheck(void);
+bool ECC_InitSanityCheck();
 
 #endif // PAICOIN_KEY_H

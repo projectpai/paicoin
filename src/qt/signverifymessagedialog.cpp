@@ -10,7 +10,7 @@
 #include "platformstyle.h"
 #include "walletmodel.h"
 
-#include "base58.h"
+#include <key_io.h>
 #include "init.h"
 #include "validation.h" // For strMessageMagic
 #include "wallet/wallet.h"
@@ -162,7 +162,7 @@ void SignVerifyMessageDialog::on_signMessageButton_SM_clicked()
     ui->statusLabel_SM->setStyleSheet("QLabel { color: green; }");
     ui->statusLabel_SM->setText(QString("<nobr>") + tr("Message signed.") + QString("</nobr>"));
 
-    ui->signatureOut_SM->setText(QString::fromStdString(EncodeBase64(&vchSig[0], vchSig.size())));
+    ui->signatureOut_SM->setText(QString::fromStdString(EncodeBase64(vchSig.data(), vchSig.size())));
 }
 
 void SignVerifyMessageDialog::on_copySignatureButton_SM_clicked()

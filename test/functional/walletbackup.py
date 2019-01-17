@@ -105,9 +105,9 @@ class WalletBackupTest(PAIcoinTestFramework):
         self.nodes[3].generate(100)
         sync_blocks(self.nodes)
 
-        assert_equal(self.nodes[0].getbalance(), 50)
-        assert_equal(self.nodes[1].getbalance(), 50)
-        assert_equal(self.nodes[2].getbalance(), 50)
+        assert_equal(self.nodes[0].getbalance(), 1500)
+        assert_equal(self.nodes[1].getbalance(), 1500)
+        assert_equal(self.nodes[2].getbalance(), 1500)
         assert_equal(self.nodes[3].getbalance(), 0)
 
         self.log.info("Creating transactions")
@@ -139,8 +139,8 @@ class WalletBackupTest(PAIcoinTestFramework):
         total = balance0 + balance1 + balance2 + balance3
 
         # At this point, there are 214 blocks (103 for setup, then 10 rounds, then 101.)
-        # 114 are mature, so the sum of all wallets should be 114 * 50 = 5700.
-        assert_equal(total, 5700)
+        # 114 are mature, so the sum of all wallets should be 114 * 1500 = 171000.
+        assert_equal(total, 171000)
 
         ##
         # Test restoring spender wallets from backups

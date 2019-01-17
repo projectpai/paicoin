@@ -14,10 +14,11 @@
 #include <map>
 #include <stdint.h>
 #include <string>
+#include <functional>
 
 #include <univalue.h>
 
-static const unsigned int DEFAULT_RPC_SERIALIZE_VERSION = 1;
+static const unsigned int DEFAULT_RPC_SERIALIZE_VERSION{1};
 
 class CRPCCommand;
 
@@ -30,8 +31,8 @@ namespace RPCServer
 /** Wrapper for UniValue::VType, which includes typeAny:
  * Used to denote don't care type. Only used by RPCTypeCheckObj */
 struct UniValueType {
-    explicit UniValueType(UniValue::VType _type) : typeAny(false), type(_type) {}
-    UniValueType() : typeAny(true) {}
+    explicit UniValueType(UniValue::VType _type) : typeAny{false}, type{_type} {}
+    UniValueType() : typeAny{true} {}
     bool typeAny;
     UniValue::VType type;
 };
@@ -39,14 +40,13 @@ struct UniValueType {
 class JSONRPCRequest
 {
 public:
-    UniValue id;
+    UniValue id{NullUniValue};
     std::string strMethod;
-    UniValue params;
-    bool fHelp;
+    UniValue params{NullUniValue};
+    bool fHelp{false};
     std::string URI;
     std::string authUser;
 
-    JSONRPCRequest() : id(NullUniValue), params(NullUniValue), fHelp(false) {}
     void parse(const UniValue& valRequest);
 };
 
@@ -55,7 +55,7 @@ bool IsRPCRunning();
 
 /**
  * Set the RPC warmup status.  When this is done, all RPC calls will error out
- * immediately with RPC_IN_WARMUP.
+ * immediately with RPCErrorCode::IN_WARMUP.
  */
 void SetRPCWarmupStatus(const std::string& newStatus);
 /* Mark warmup as done.  RPC calls will be processed from now on.  */
@@ -100,16 +100,16 @@ public:
 class RPCTimerInterface
 {
 public:
-    virtual ~RPCTimerInterface() {}
+    virtual ~RPCTimerInterface() = default;
     /** Implementation name */
-    virtual const char *Name() = 0;
+    virtual const char *Name() const = 0;
     /** Factory function for timers.
      * RPC will call the function to create a timer that will call func in *millis* milliseconds.
      * @note As the RPC mechanism is backend-neutral, it can use different implementations of timers.
      * This is needed to cope with the case in which there is no HTTP server, but
      * only GUI RPC console, and to break the dependency of pcserver on httprpc.
      */
-    virtual RPCTimerBase* NewTimer(std::function<void(void)>& func, int64_t millis) = 0;
+    virtual RPCTimerBase* NewTimer(std::function<void()>& func, int64_t millis) = 0;
 };
 
 /** Set the factory function for timers */
@@ -123,7 +123,7 @@ void RPCUnsetTimerInterface(RPCTimerInterface *iface);
  * Run func nSeconds from now.
  * Overrides previous timer <name> (if any).
  */
-void RPCRunLater(const std::string& name, std::function<void(void)> func, int64_t nSeconds);
+void RPCRunLater(const std::string& name, std::function<void()> func, int64_t nSeconds);
 
 typedef UniValue(*rpcfn_type)(const JSONRPCRequest& jsonRequest);
 
