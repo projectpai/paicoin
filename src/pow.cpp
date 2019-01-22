@@ -60,7 +60,7 @@ static unsigned int GetNextLegacyWorkRequired(const CBlockIndex* pindexLast, con
     const CBlockIndex* pindexFirst = pindexLast->GetAncestor(nHeightFirst);
     assert(pindexFirst);
 
-    return CalculateNextWorkRequired(pindexLast, pindexFirst->GetBlockTime(), params);
+    return CalculateNextWorkRequired(pindexFirst, pindexLast, params);
 }
 
 /**
@@ -167,13 +167,36 @@ unsigned int GetNextWorkRequired(const CBlockIndex *pindexPrev, const CBlockHead
     return GetNextLegacyWorkRequired(pindexPrev, pblock, params);
 }
 
-unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nFirstBlockTime, const Consensus::Params& params)
+unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexFirst, const CBlockIndex* pindexLast, const Consensus::Params& params)
 {
     if (params.fPowNoRetargeting)
         return pindexLast->nBits;
 
+    // TODO: Before PoUW deployment, revert this calculation to the original one of nActualTimeSpan = pindexLast->time - pindexFirst->time
+    // If it's not reverted, PAI won't work because the whole PAI blockchain prior to deployment of this change will be seen as invalid
+    int64_t nActualTimespan = 0;
+    const CBlockIndex* pCur = pindexLast;
+    const CBlockIndex* pPrev = pCur->pprev;
+    while (pPrev != pindexFirst && pPrev != nullptr)
+    {
+        int64_t blockTimespan = pCur->GetBlockTime() - pPrev->GetBlockTime();
+        if (blockTimespan > params.nPowTargetSpacing * 4)
+            blockTimespan = params.nPowTargetSpacing;
+        nActualTimespan += blockTimespan;
+        pPrev = pPrev->pprev;
+        pCur = pCur->pprev;
+    }
+    assert(pPrev);
+    if (pPrev == nullptr)
+        return pindexLast->nBits;
+
+    int64_t nExpectedTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
+    if (nActualTimespan != nExpectedTimespan) {
+        int64_t discarded = (nExpectedTimespan - nActualTimespan) / 60;
+        LogPrintf("Difficulty retargetting: some block time(s) were too big, possibly due to a pause in mining; we exclude %lld minutes from difficulty calculation.\n", discarded);
+    }
+
     // Limit adjustment step
-    int64_t nActualTimespan = pindexLast->GetBlockTime() - nFirstBlockTime;
     if (nActualTimespan < params.nPowTargetTimespan/4)
         nActualTimespan = params.nPowTargetTimespan/4;
     if (nActualTimespan > params.nPowTargetTimespan*4)
