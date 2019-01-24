@@ -5,7 +5,7 @@
 """Test RPC help output."""
 
 from test_framework.test_framework import PAIcoinTestFramework
-from test_framework.util import assert_equal, assert_raises_jsonrpc
+from test_framework.util import assert_equal, assert_raises_rpc_error
 
 import os
 
@@ -21,10 +21,10 @@ class HelpRpcTest(PAIcoinTestFramework):
         node = self.nodes[0]
 
         # wrong argument count
-        assert_raises_jsonrpc(-1, 'help', node.help, 'foo', 'bar')
+        assert_raises_rpc_error(-1, 'help', node.help, 'foo', 'bar')
 
         # invalid argument
-        assert_raises_jsonrpc(-1, 'JSON value is not a string as expected', node.help, 0)
+        assert_raises_rpc_error(-1, 'JSON value is not a string as expected', node.help, 0)
 
         # help of unknown command
         assert_equal(node.help('foo'), 'help: unknown command: foo')
