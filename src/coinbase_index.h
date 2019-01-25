@@ -60,6 +60,11 @@ public:
 
     size_t GetNumCoinbaseAddrs() const;
 
+    void ScanBlockForNewCoinbaseAddrTxs(const std::shared_ptr<const CBlock>& block);
+
+private:
+    bool AddNewCoinbaseAddressTransactionToIndex(CTransactionRef txToAdd, uint256 hashBlock);
+
 private:
     std::vector<CoinbaseAddress> m_coinbaseAddrs;
     std::vector<uint256> m_coinbaseBlockHashes;
@@ -130,77 +135,6 @@ private:
     CoinbaseIndex& m_index;
 };
 
-/**
- * This cache is used for the two-tiered architecture of introducing
- * new coinbase addresses in the network. Once we detect one transaction
- * in a new block (which introduces a new address to the network), we cache it
- * and wait for the second complementary transaction to arrive/be mined.
- */
-class CoinbaseIndexCache
-{
-public:
-    friend class CoinbaseIndexCacheDisk;
-
-    CoinbaseIndexCache() = default;
-
-    // This also adds the coinbase address to the coinbase index once
-    // a transaction pair is supplied
-    void ScanNewBlockForCoinbaseTxs(const std::shared_ptr<const CBlock>& block);
-    bool AddTransactionToCache(CTransactionRef txToCache);
-    void SetNull() { m_cachedTx.reset(); }
-
-private:
-    CTransactionRef m_cachedTx;
-};
-
-class CoinbaseIndexCacheDisk
-{
-public:
-    explicit CoinbaseIndexCacheDisk(CoinbaseIndexCache& wrappedIndexCache) : m_indexCache(wrappedIndexCache) {}
-    CoinbaseIndexCacheDisk() = delete;
-
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
-    {
-        if (ser_action.ForRead()) {
-            bool hasTx = false;
-            READWRITE(hasTx);
-            if (hasTx) {
-                CMutableTransaction mutTx;
-                UnserializeTransaction(mutTx, s);
-
-                LOCK(m_lock);
-                m_indexCache.SetNull();
-                CTransactionRef txRead = MakeTransactionRef(mutTx);
-
-                m_indexCache.AddTransactionToCache(txRead);
-            }
-        } else {
-            LOCK(m_lock);
-
-            bool hasTx = m_indexCache.m_cachedTx != nullptr;
-            READWRITE(hasTx);
-
-            if (hasTx) {
-                SerializeTransaction(CMutableTransaction(*(m_indexCache.m_cachedTx.get())), s);
-            }
-        }
-    }
-
-    bool LoadFromDisk();
-    bool SaveToDisk();
-
-private:
-    CAutoFile OpenCacheFile(bool fReadOnly);
-
-private:
-    CoinbaseIndexCache& m_indexCache;
-    CCriticalSection m_lock;
-};
-
 extern CoinbaseIndex gCoinbaseIndex;
-extern CoinbaseIndexCache gCoinbaseIndexCache;
 
 #endif // PAICOIN_COINBASE_INDEX_H

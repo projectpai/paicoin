@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "coinbase_utils.h"
+#include "coinbase_txhandler.h"
 #include "amount.h"
 #include "coins.h"
 #include "consensus/validation.h"
@@ -12,6 +13,7 @@
 #include "validation.h"
 #include "wallet/wallet.h"
 
+#include <numeric>
 #include <vector>
 
 UnspentInputs SelectUnspentInputsFromWallet(const CWallet* wallet, CAmount desiredAmount)
@@ -65,23 +67,19 @@ UnspentInputs SelectUnspentInputsFromWallet(const CWallet* wallet, CAmount desir
 
 CMutableTransaction CreateNewCoinbaseAddressTransaction(
     const UnspentInputs& unspentInputs,
-    CAmount txAmount,
     const CWallet* wallet)
 {
-    if (!wallet || unspentInputs.empty() || (txAmount < CAmount(1))) {
+    if (!wallet || unspentInputs.empty()) {
         CoinbaseIndexLog("%s: wallet not available or no available funds", __FUNCTION__);
         return {};
     }
 
     CMutableTransaction rawTx;
-    CAmount totalAvailableAmount = 0;
-
     for (auto const& unspentInput: unspentInputs) {
         uint32_t nSequence = std::numeric_limits<uint32_t>::max();
         CTxIn txIn(COutPoint(unspentInput.out->tx->GetHash(), unspentInput.outputNumber), CScript(), nSequence);
 
         rawTx.vin.push_back(txIn);
-        totalAvailableAmount += unspentInput.amount;
     }
 
     auto keys = wallet->GetKeys();
@@ -93,13 +91,69 @@ CMutableTransaction CreateNewCoinbaseAddressTransaction(
     auto firstKey = *(keys.begin());
     CScript ownDestinationScript = GetScriptForDestination(firstKey);
 
-    CTxOut oprOut(txAmount, CScript());
-    CTxOut restOut(totalAvailableAmount - txAmount - DEFAULT_MIN_RELAY_TX_FEE, ownDestinationScript);
+    CTxOut oprOut(0, CScript());
+    CTxOut restOut(0, ownDestinationScript);
+    std::vector<CTxOut> fakeOuts{
+        CTxOut(0, CScript()),
+        CTxOut(0, CScript())
+    };
 
     rawTx.vout.push_back(oprOut);
     rawTx.vout.push_back(restOut);
+    rawTx.vout.insert(rawTx.vout.end(), fakeOuts.cbegin(), fakeOuts.cend());
 
     return rawTx;
+}
+
+bool UpdateNewCoinbaseAddressTransactionFees(
+    CMutableTransaction& rawTx,
+    const UnspentInputs& unspentInputs)
+{
+    if (unspentInputs.empty()) {
+        CoinbaseIndexLog("%s: no available funds", __FUNCTION__);
+        return false;
+    }
+
+    CAmount totalAvailable(0);
+    for (auto const& unspentInput: unspentInputs) {
+        totalAvailable += unspentInput.amount;
+    }
+
+    if (totalAvailable < DEFAULT_COINBASE_TX_FEE) {
+        CoinbaseIndexLog("%s: insufficient funds", __FUNCTION__);
+        return false;
+    }
+
+    auto& vout = rawTx.vout;
+    if (vout.size() != NUMBER_OF_CBINDEX_VOUTS) {
+        CoinbaseIndexLog("%s: incorrect number of outputs", __FUNCTION__);
+        return false;
+    }
+
+    // first, compute the fees for the fake outputs
+    CAmount sumFakeFees(0);
+    std::vector<CAmount> fakeFees;
+    for (auto outIdx = 2u; outIdx < vout.size(); ++outIdx) {
+        auto outDustFee = GetDustThreshold(vout[outIdx], ::dustRelayFee);
+
+        // make non-dust and update
+        outDustFee += 1;
+        fakeFees.push_back(outDustFee);
+
+        sumFakeFees += outDustFee;
+    }
+
+    CAmount oprFee(DEFAULT_COINBASE_TX_FEE - sumFakeFees);
+    CAmount restFee(totalAvailable - DEFAULT_COINBASE_TX_FEE - DEFAULT_MIN_RELAY_TX_FEE);
+
+    // update all outputs with fees
+    vout[0].nValue = oprFee;
+    vout[1].nValue = restFee;
+    for (auto outIdx = 2u, feeIdx = 0u; outIdx < vout.size(); ++outIdx, ++feeIdx) {
+        vout[outIdx].nValue = fakeFees[feeIdx];
+    }
+
+    return true;
 }
 
 bool SignNewCoinbaseAddressTransaction(CMutableTransaction& rawTx, const CWallet* wallet)
@@ -175,9 +229,8 @@ bool SendNewCoinbaseAddressTransactionToMempool(CMutableTransaction rawTx)
         // push to local node and sync with wallets
         CValidationState state;
         bool areMissingInputs = false;
-        bool isLimitFree = true;
 
-        txAccepted = AcceptToMemoryPool(mempool, state, std::move(tx), isLimitFree, &areMissingInputs, nullptr, false, nMaxRawTxFee);
+        txAccepted = AcceptToMemoryPool(mempool, state, std::move(tx), &areMissingInputs, nullptr, false, nMaxRawTxFee);
     }
 
     if (!txAccepted) {
@@ -194,4 +247,73 @@ bool SendNewCoinbaseAddressTransactionToMempool(CMutableTransaction rawTx)
     });
 
     return txAccepted;
+}
+
+std::vector<std::vector<unsigned char>> PartitionDataBlock(
+    std::vector<unsigned char> const& inputBlock,
+    std::vector<size_t> const& sizes
+)
+{
+    if (inputBlock.empty()) {
+        CoinbaseIndexLog("%s: input block empty, returning empty output", __FUNCTION__);
+        return {};
+    }
+    if (sizes.empty()) {
+        CoinbaseIndexLog("%s: no sizes provided, returning input", __FUNCTION__);
+        return {inputBlock};
+    }
+    if (sizes.size() > inputBlock.size()) {
+        CoinbaseIndexLog("%s: more blocks requested than the input block could provide", __FUNCTION__);
+        return {inputBlock};
+    }
+
+    auto numRequestedData = std::accumulate(sizes.cbegin(), sizes.cend(), 0u);
+    if (numRequestedData > inputBlock.size()) {
+        CoinbaseIndexLog("%s: too much data requested and not existing in input block", __FUNCTION__);
+        return {};
+    }
+
+    std::vector<std::vector<unsigned char>> partitionedData;
+    auto currDataCursor = inputBlock.cbegin();
+    for (auto const& currSize : sizes) {
+        if (currSize < 1) {
+            partitionedData.emplace_back(std::vector<unsigned char>{});
+            continue;
+        }
+
+        partitionedData.emplace_back(std::vector<unsigned char>(currDataCursor, currDataCursor + currSize));
+        std::advance(currDataCursor, currSize);
+    }
+
+    if (currDataCursor != inputBlock.cend()) {
+        partitionedData.emplace_back(std::vector<unsigned char>(currDataCursor, inputBlock.cend()));
+    }
+
+    return partitionedData;
+}
+
+std::vector<size_t> ComputeCoinbaseAddressPayloadBlockSizes(std::vector<unsigned char> const& payload)
+{
+    if (payload.size() <= 75) {
+        return {payload.size()};
+    }
+
+    std::vector<size_t> blockSizes;
+    auto payloadSize = payload.size();
+
+    // first block will be stored in OP_RETURN vout, we can safely store 75 bytes here
+    blockSizes.push_back(75);
+    payloadSize -= 75;
+
+    // compute how many fake addresses (blocks of 20 bytes) we need
+    // add a residual, even if we will not use the full 20 bytes of them
+    uint16_t numFakeAddresses = static_cast<uint16_t>(payloadSize / 20);
+    uint16_t paddingFakeAddressesSize = payloadSize % 20;
+
+    blockSizes.insert(blockSizes.end(), numFakeAddresses, 20);
+    if (paddingFakeAddressesSize > 0) {
+        blockSizes.push_back(paddingFakeAddressesSize);
+    }
+
+    return blockSizes;
 }

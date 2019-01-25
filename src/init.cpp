@@ -1659,15 +1659,11 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
             // The rest of it will be added when reindexing the chain
             // through scanning and accepting each block to the block index
             gCoinbaseIndex.BuildDefaultFromDisk();
-            gCoinbaseIndexCache.SetNull();
         } else {
             CoinbaseIndexDisk cbIndexDisk(gCoinbaseIndex);
             if (!cbIndexDisk.LoadFromDisk()) {
                 gCoinbaseIndex.BuildDefaultFromDisk();
             }
-
-            CoinbaseIndexCacheDisk cbIndexCacheDisk(gCoinbaseIndexCache);
-            cbIndexCacheDisk.LoadFromDisk();
         }
 
         gCoinbaseIndex.SetIsInitialized();

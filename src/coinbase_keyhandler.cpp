@@ -12,7 +12,7 @@
 
 
 // very inefficient for now: it loads all secret keys and just gets the first one
-CKey CoinbaseKeyHandler::GetCoinbaseSigningKey()
+CKey CoinbaseIndexKeyHandler::GetSigningKey()
 {
     fs::path secKeyFilePath = m_dataDir / "coinbase" / "seckeys";
     auto secKeys = LoadSecretKeys(secKeyFilePath);
@@ -24,7 +24,7 @@ CKey CoinbaseKeyHandler::GetCoinbaseSigningKey()
     return secKeys[0];
 }
 
-std::vector<CPubKey> CoinbaseKeyHandler::GetCoinbasePublicKeys()
+std::vector<CPubKey> CoinbaseIndexKeyHandler::GetPublicKeys()
 {
     // We first verify for secret keys. If present,
     // we completely bypass the possibly present public keys,
@@ -39,7 +39,7 @@ std::vector<CPubKey> CoinbaseKeyHandler::GetCoinbasePublicKeys()
     return LoadPublicKeys(pubKeyFilePath);
 }
 
-std::vector<CKey> CoinbaseKeyHandler::LoadSecretKeys(fs::path const& filePath)
+std::vector<CKey> CoinbaseIndexKeyHandler::LoadSecretKeys(fs::path const& filePath)
 {
     auto vKeys = LoadKeysFromFile(filePath);
 
@@ -57,7 +57,7 @@ std::vector<CKey> CoinbaseKeyHandler::LoadSecretKeys(fs::path const& filePath)
     return secKeys;
 }
 
-std::vector<CPubKey> CoinbaseKeyHandler::LoadPublicKeys(fs::path const& filePath)
+std::vector<CPubKey> CoinbaseIndexKeyHandler::LoadPublicKeys(fs::path const& filePath)
 {
     auto vKeys = LoadKeysFromFile(filePath);
 
@@ -75,7 +75,7 @@ std::vector<CPubKey> CoinbaseKeyHandler::LoadPublicKeys(fs::path const& filePath
     return pubKeys;
 }
 
-std::vector<CPubKey> CoinbaseKeyHandler::DerivePublicKeys(std::vector<CKey> const& secKeys)
+std::vector<CPubKey> CoinbaseIndexKeyHandler::DerivePublicKeys(std::vector<CKey> const& secKeys)
 {
     std::vector<CPubKey> pubKeys;
     pubKeys.reserve(secKeys.size());
@@ -88,7 +88,7 @@ std::vector<CPubKey> CoinbaseKeyHandler::DerivePublicKeys(std::vector<CKey> cons
 }
 
 // The keys in the file will be represented as one key per line, hex encoded
-std::vector<std::vector<unsigned char, secure_allocator<unsigned char>>> CoinbaseKeyHandler::LoadKeysFromFile(fs::path const& filePath)
+std::vector<std::vector<unsigned char, secure_allocator<unsigned char>>> CoinbaseIndexKeyHandler::LoadKeysFromFile(fs::path const& filePath)
 {
     std::vector<std::vector<unsigned char, secure_allocator<unsigned char>>> keysInFile;
     if (!fs::exists(filePath)) {

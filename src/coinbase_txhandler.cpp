@@ -13,6 +13,7 @@
 #include "coinbase_txhandler.h"
 #include "coinbase_utils.h"
 #include "key.h"
+#include "key_io.h"
 #include "pubkey.h"
 #include "serialize.h"
 #include "streams.h"
@@ -30,66 +31,86 @@
 
 CAmount DEFAULT_COINBASE_TX_FEE(CENT);
 
-uint16_t DataToCRC16(std::vector<unsigned char> const& data)
+/**
+ * 1 rest output
+ * 1 OP_RETURN
+ * 2 fake addresses
+ */
+const unsigned NUMBER_OF_CBINDEX_VOUTS = 4;
+
+uint32_t DataToCRC32(std::vector<unsigned char> const& data)
 {
-    boost::crc_16_type result;
+    boost::crc_32_type result;
     result.process_bytes(data.data(), data.size());
     return result.checksum();
 }
 
-bool IsValidCoinbaseOperationType(unsigned char operationType)
+bool CoinbaseIndexTxHandler::HasTransactionNewCoinbaseAddress(CTransactionRef const& tx)
 {
-    return (operationType > COT_INVALID && operationType < COT_LAST);
+    auto payload = GetCoinbaseAddressTransactionPayload(tx);
+    return !payload.empty();
 }
 
-CoinbaseOprPayload CoinbaseTxHandler::BuildNewAddressPayload(uint16_t newAddressIndex, uint160 const& targetAddress, int maxBlockHeight)
+std::vector<unsigned char> CoinbaseIndexTxHandler::BuildNewCoinbaseAddressPayload(
+    uint160 const& newTargetAddress,
+    int maxBlockHeight,
+    CKey const& signPrivKey)
 {
-    CDataStream dataStream(SER_DISK, CLIENT_VERSION);
-    dataStream << newAddressIndex;
-    dataStream << targetAddress;
-    dataStream << maxBlockHeight;
+    CDataStream signatureStream(SER_DISK, CLIENT_VERSION);
+    signatureStream << newTargetAddress << maxBlockHeight;
+    uint256 hashForSigning = Hash(signatureStream.begin(), signatureStream.end());
 
-    return CoinbaseOprPayload(dataStream.begin(), dataStream.end());
+    std::vector<unsigned char> dataSignature;
+    signPrivKey.Sign(hashForSigning, dataSignature);
+
+    CDataStream payloadDataStream(SER_DISK, CLIENT_VERSION);
+    payloadDataStream << newTargetAddress;
+    payloadDataStream << maxBlockHeight;
+    payloadDataStream << dataSignature;
+    auto payloadCrc32 = DataToCRC32(std::vector<unsigned char>(payloadDataStream.begin(), payloadDataStream.end()));
+    payloadDataStream << payloadCrc32;
+
+    std::vector<unsigned char> assembledData(_preHeader.cbegin(), _preHeader.cend());
+    assembledData.insert(assembledData.end(), payloadDataStream.begin(), payloadDataStream.end());
+
+    return assembledData;
 }
 
-CoinbaseOprPayload CoinbaseTxHandler::BuildSignedPayload(CKey const& signPrivKey, uint16_t newAddressIndex, CoinbaseOprPayload const& clearPayload)
-{
-    uint256 payloadToSignHash = Hash(clearPayload.begin(), clearPayload.end());
-    CoinbaseOprPayload signedPayloadHash;
-    signPrivKey.Sign(payloadToSignHash, signedPayloadHash);
-
-    CDataStream dataStream(SER_DISK, CLIENT_VERSION);
-    dataStream << newAddressIndex;
-    std::vector<char> signedPayloadHashChar(signedPayloadHash.begin(), signedPayloadHash.end());
-    dataStream << signedPayloadHashChar;
-
-    return CoinbaseOprPayload(dataStream.begin(), dataStream.end());
-}
-
-bool CoinbaseTxHandler::ExtractPayloadFields(CoinbaseOprPayload const& payload,
-    CoinbaseOperationType& operationType,
-    uint16_t& newAddressIndex,
+bool CoinbaseIndexTxHandler::ExtractPayloadFields(std::vector<unsigned char> const& payload,
     uint160& targetAddress,
     int& maxBlockHeight,
     std::vector<unsigned char>& dataSignature)
 {
-    if (payload.size() < 27) {
-        operationType = COT_ADD;
-    } else {
-        operationType = COT_SIGN;
+    if (payload.empty()) {
+        return false;
+    }
+
+    std::decay<decltype(payload)>::type intendedHeader(payload.cbegin(), payload.cbegin() + _preHeader.size());
+    if (intendedHeader != _preHeader) {
+        return false;
     }
 
     try {
-        CDataStream dataStream(payload, SER_DISK, CLIENT_VERSION);
+        uint160 xTargetAddress;
+        int xMaxBlockHeight = -1;
+        std::vector<unsigned char> xDataSignature;
+        uint32_t xCrc = 0;
 
-        if (operationType == COT_ADD) {
-            dataStream >> newAddressIndex;
-            dataStream >> targetAddress;
-            dataStream >> maxBlockHeight;
-        } else if (operationType == COT_SIGN) {
-            dataStream >> newAddressIndex;
-            dataStream >> dataSignature;
+        std::decay<decltype(payload)>::type payloadNoHeader(payload.cbegin() + _preHeader.size(), payload.cend());
+        CDataStream dataStream(payloadNoHeader, SER_DISK, CLIENT_VERSION);
+        dataStream >> xTargetAddress >> xMaxBlockHeight >> xDataSignature >> xCrc;
+
+        CDataStream verifyingStream(SER_DISK, CLIENT_VERSION);
+        verifyingStream << xTargetAddress << xMaxBlockHeight << xDataSignature;
+        uint32_t verifyingCrc = DataToCRC32(std::vector<unsigned char>(verifyingStream.begin(), verifyingStream.end()));
+        if (verifyingCrc != xCrc) {
+            CoinbaseIndexLog("%s: CRC32 failed while trying to extract payload fields", __FUNCTION__);
+            return false;
         }
+
+        targetAddress = std::move(xTargetAddress);
+        maxBlockHeight = xMaxBlockHeight;
+        dataSignature = std::move(xDataSignature);
     } catch (const std::exception& e) {
         CoinbaseIndexLog("%s: could not extract payload fields; %s", __FUNCTION__, e.what());
         return false;
@@ -98,15 +119,13 @@ bool CoinbaseTxHandler::ExtractPayloadFields(CoinbaseOprPayload const& payload,
     return true;
 }
 
-bool CoinbaseTxHandler::VerifyPayloadFieldsSignature(
-    uint16_t const& newAddressIndex,
+bool CoinbaseIndexTxHandler::VerifyPayloadFieldsSignature(
     uint160 const& targetAddress,
-    std::vector<unsigned char> const& dataSignature,
     int const& maxBlockHeight,
+    std::vector<unsigned char> const& dataSignature,
     std::vector<CPubKey> candidateKeys)
 {
     CDataStream signStream(SER_DISK, CLIENT_VERSION);
-    signStream << newAddressIndex;
     signStream << targetAddress;
     signStream << maxBlockHeight;
     uint256 payloadToSignHash = Hash(signStream.begin(), signStream.end());
@@ -120,141 +139,46 @@ bool CoinbaseTxHandler::VerifyPayloadFieldsSignature(
     return false;
 }
 
-void CoinbaseTxHandler::GetAssembledHeader(std::vector<unsigned char> const& payload,
-    unsigned char operationType,
-    std::vector<unsigned char>& preHeader,
-    std::vector<unsigned char>& postHeader)
-{
-    preHeader = _preHeader;
-
-    std::vector<unsigned char> dataToCRC(preHeader.begin(), preHeader.end());
-    dataToCRC.insert(dataToCRC.end(), payload.begin(), payload.end());
-
-    CDataStream dataStream(SER_DISK, CLIENT_VERSION);
-    dataStream << DataToCRC16(dataToCRC);
-
-    postHeader.assign(dataStream.begin(), dataStream.end());
-}
-
-bool CoinbaseTxHandler::GetPayloadFromTrimmedHeader(std::vector<unsigned char> const& payloadWithHeader,
-    std::vector<unsigned char>& payload,
-    unsigned char& operationType)
-{
-    if (payloadWithHeader.size() < 33) {
-        return false;
-    }
-
-    try {
-        if (payloadWithHeader.size() > 33) {
-            operationType = COT_SIGN;
-        } else {
-            operationType = COT_ADD;
-        }
-
-        std::vector<unsigned char> extrPreHeader;
-        std::vector<unsigned char> extrPayload;
-        std::vector<unsigned char> extrPostHeader;
-
-        auto itInput = payloadWithHeader.begin();
-
-        auto extrPreHeaderSize = *itInput++;
-        extrPreHeader.reserve(extrPreHeaderSize);
-        extrPreHeader.insert(extrPreHeader.end(), itInput, itInput + extrPreHeaderSize);
-        std::advance(itInput, extrPreHeaderSize);
-
-        for (size_t idx = 0; idx < _preHeader.size(); ++idx) {
-            if (extrPreHeader[idx] != _preHeader[idx]) {
-                CoinbaseIndexLog("%s: invalid payload header", __FUNCTION__);
-                return false;
-            }
-        }
-
-        auto extrPayloadSize = *itInput++;
-        extrPayload.reserve(extrPayloadSize);
-        extrPayload.insert(extrPayload.end(), itInput, itInput + extrPayloadSize);
-        std::advance(itInput, extrPayloadSize);
-
-        auto extrPostHeaderSize = *itInput++;
-        extrPostHeader.reserve(extrPostHeaderSize);
-        extrPostHeader.insert(extrPostHeader.end(), itInput, itInput + extrPostHeaderSize);
-        std::advance(itInput, extrPostHeaderSize);
-
-        CDataStream dataStream(SER_DISK, CLIENT_VERSION);
-        dataStream.insert(dataStream.begin(),
-            reinterpret_cast<const char*>(extrPostHeader.data()),
-            reinterpret_cast<const char*>(extrPostHeader.data()) + extrPostHeader.size());
-
-        uint16_t checksum = 0;
-        dataStream >> checksum;
-
-        std::vector<unsigned char> payloadWithPreHeader(extrPreHeader);
-        payloadWithPreHeader.insert(payloadWithPreHeader.end(), extrPayload.begin(), extrPayload.end());
-        uint16_t computedChecksum = DataToCRC16(payloadWithPreHeader);
-
-        if (checksum != computedChecksum) {
-            CoinbaseIndexLog("%s: payload fails checksum", __FUNCTION__);
-            return false;
-        }
-
-        payload = std::move(extrPayload);
-    } catch (const std::exception& e) {
-        CoinbaseIndexLog("%s: could not extract payload and header; %s", __FUNCTION__, e.what());
-        return false;
-    }
-
-    return true;
-}
-
-CoinbaseOprPayload CoinbaseTxHandler::FillTransactionWithCoinbaseNewAddress(CMutableTransaction& tx,
-    uint16_t newAddressIndex,
+bool CoinbaseIndexTxHandler::FillTransactionWithCoinbaseNewAddress(CMutableTransaction& tx,
     uint160 const& targetAddress,
-    int maxBlockHeight)
+    int maxBlockHeight,
+    const CKey& signKey)
 {
-    auto payload = BuildNewAddressPayload(newAddressIndex, targetAddress, maxBlockHeight);
+    auto payload = BuildNewCoinbaseAddressPayload(targetAddress, maxBlockHeight, signKey);
+    if (payload.empty()) {
+        CoinbaseIndexLog("%s: payload empty.", __FUNCTION__);
+        return false;
+    }
+    auto payloadBlockSizes = ComputeCoinbaseAddressPayloadBlockSizes(payload);
+    if (payloadBlockSizes.empty()) {
+        CoinbaseIndexLog("%s: payload block sizes empty.", __FUNCTION__);
+        return false;
+    }
+    auto dataBlocks = PartitionDataBlock(payload, payloadBlockSizes);
+    if (dataBlocks.empty()) {
+        CoinbaseIndexLog("%s: no data blocks partitioned.", __FUNCTION__);
+        return false;
+    }
 
-    CoinbaseOprHeader preHeader;
-    CoinbaseOprHeader postHeader;
-    GetAssembledHeader(payload, COT_ADD, preHeader, postHeader);
+    tx.vout[0].scriptPubKey << OP_RETURN << dataBlocks[0];
+    for (auto i = 1u; i < dataBlocks.size(); ++i) {
 
-    tx.vout[0].scriptPubKey << OP_RETURN << preHeader << payload << postHeader;
-    return payload;
-}
+        // pad data, otherwise uint160 will assert
+        if (dataBlocks[i].size() < 20) {
+            dataBlocks[i].insert(dataBlocks[i].end(), 20 - dataBlocks[i].size(), 0x00);
+        }
 
-bool CoinbaseTxHandler::FillTransactionWithCoinbaseSignature(CMutableTransaction& tx,
-    const CKey& signKey,
-    uint16_t newAddressIndex,
-    CoinbaseOprPayload const& payload)
-{
-    auto signedPayload = BuildSignedPayload(signKey, newAddressIndex, payload);
+        uint160 dataBlockAsBlob(dataBlocks[i]);
+        CKeyID fakeKey(dataBlockAsBlob);
+        CScript fakeScript = GetScriptForDestination(fakeKey);
 
-    CoinbaseOprHeader preHeader;
-    CoinbaseOprHeader postHeader;
-    GetAssembledHeader(signedPayload, COT_SIGN, preHeader, postHeader);
+        tx.vout[i + 1].scriptPubKey = fakeScript;
+    }
 
-    tx.vout[0].scriptPubKey << OP_RETURN << preHeader << signedPayload << postHeader;
     return true;
 }
 
-struct CoinbaseMempoolTxDeleter
-{
-    std::unique_ptr<CMutableTransaction> tx;
-
-    explicit CoinbaseMempoolTxDeleter(CMutableTransaction* _tx): tx(_tx) {}
-    ~CoinbaseMempoolTxDeleter()
-    {
-        if (tx != nullptr)
-        {
-            mempool.removeRecursive(CTransaction(*tx));
-        }
-    }
-
-    void reset()
-    {
-        tx.reset();
-    }
-};
-
-std::pair<CTransactionRef, CTransactionRef> CoinbaseTxHandler::CreateCompleteCoinbaseTransaction(
+CTransactionRef CoinbaseIndexTxHandler::CreateNewCoinbaseAddrTransaction(
     const CWallet* wallet,
     uint160 const& targetAddress,
     int maxBlockHeight)
@@ -275,25 +199,32 @@ std::pair<CTransactionRef, CTransactionRef> CoinbaseTxHandler::CreateCompleteCoi
         return {};
     }
 
-    uint16_t newAddressIndex = static_cast<uint16_t>(gCoinbaseIndex.GetNumCoinbaseAddrs()) + 1;
-    if (newAddressIndex < 1) {
-        CoinbaseIndexLog("%s: invalid new coinbase address index", __FUNCTION__);
-        return {};
-    }
-
-    CAmount txFeePerCbIndexTx = DEFAULT_COINBASE_TX_FEE / 2;
-    auto unspentInputsDataTx = SelectUnspentInputsFromWallet(wallet, txFeePerCbIndexTx);
+    auto unspentInputsDataTx = SelectUnspentInputsFromWallet(wallet, DEFAULT_COINBASE_TX_FEE);
     if (unspentInputsDataTx.empty()) {
         CoinbaseIndexLog("%s: could not select inputs for coinbase transaction", __FUNCTION__);
         return {};
     }
-    auto dataTx = CreateNewCoinbaseAddressTransaction(unspentInputsDataTx, txFeePerCbIndexTx, wallet);
+    auto dataTx = CreateNewCoinbaseAddressTransaction(unspentInputsDataTx, wallet);
 
-    auto payload = FillTransactionWithCoinbaseNewAddress(dataTx, newAddressIndex, targetAddress, maxBlockHeight);
-    if (payload.empty()) {
-        CoinbaseIndexLog("%s: invalid empty payload", __FUNCTION__);
+    CoinbaseIndexKeyHandler cbKeyHandler(GetDataDir());
+    auto signKey = cbKeyHandler.GetSigningKey();
+    if (!signKey.IsValid()) {
+        CoinbaseIndexLog("%s: could not get the private key to generate the coinbase signature transaction", __FUNCTION__);
         return {};
     }
+
+    auto result = FillTransactionWithCoinbaseNewAddress(dataTx, targetAddress, maxBlockHeight, signKey);
+    if (!result) {
+        CoinbaseIndexLog("%s: could not fill transaction with new coinbase address data", __FUNCTION__);
+        return {};
+    }
+
+    result = UpdateNewCoinbaseAddressTransactionFees(dataTx, unspentInputsDataTx);
+    if (!result) {
+        CoinbaseIndexLog("%s: could not update transaction fees", __FUNCTION__);
+        return {};
+    }
+
     if (!SignNewCoinbaseAddressTransaction(dataTx, wallet)) {
         CoinbaseIndexLog("%s: could not sign the coinbase data transaction", __FUNCTION__);
         return {};
@@ -303,139 +234,105 @@ std::pair<CTransactionRef, CTransactionRef> CoinbaseTxHandler::CreateCompleteCoi
         return {};
     }
 
-    // Make sure if we fail to add the second transaction, we undo the first transaction as well
-    CoinbaseMempoolTxDeleter dataTxMempoolDeleter(new CMutableTransaction(dataTx));
-
-    CAmount totalBefore = -txFeePerCbIndexTx - DEFAULT_MIN_RELAY_TX_FEE;
-    for (auto const& u : unspentInputsDataTx) {
-        totalBefore += u.amount;
-    }
-
-    std::unique_ptr<CWalletTx> ptrGuard(new CWalletTx(wallet, MakeTransactionRef(dataTx)));
-    UnspentInput unspentInputSigTx{ptrGuard.get(), 1, totalBefore, 1};
-
-    auto sigTx = CreateNewCoinbaseAddressTransaction({unspentInputSigTx}, txFeePerCbIndexTx, wallet);
-    
-    CoinbaseKeyHandler cbKeyHandler(GetDataDir());
-    auto signKey = cbKeyHandler.GetCoinbaseSigningKey();
-    if (!signKey.IsValid()) {
-        CoinbaseIndexLog("%s: could not get the private key to generate the coinbase signature transaction", __FUNCTION__);
-        return {};
-    }
-
-    if (!FillTransactionWithCoinbaseSignature(sigTx, signKey, newAddressIndex, payload)) {
-        CoinbaseIndexLog("%s: could not generate the coinbase signature transaction", __FUNCTION__);
-        return {};
-    }
-    if (!SignNewCoinbaseAddressTransaction(sigTx, wallet)) {
-        CoinbaseIndexLog("%s: could not sign the coinbase signature transaction", __FUNCTION__);
-        return {};
-    }
-    if (!SendNewCoinbaseAddressTransactionToMempool(sigTx)) {
-        CoinbaseIndexLog("%s: could not send the coinbase signature transaction to the mempool", __FUNCTION__);
-        return {};
-    }
-
-    // Safe to release the first transaction deleter here, we submitted successfully
-    // both transactions
-    dataTxMempoolDeleter.reset();
-
-    return std::make_pair(MakeTransactionRef(dataTx), MakeTransactionRef(sigTx));
+    return MakeTransactionRef(dataTx);
 }
 
-bool CoinbaseTxHandler::IsTransactionCoinbaseAddress(CTransactionRef const& tx)
+bool CoinbaseIndexTxHandler::HasTransactionNewCoinbaseAddressBasic(CTransactionRef const& tx)
 {
-    auto payload = GetCoinbaseAddressTransactionPayload(tx);
-    return !payload.empty();
+    if (tx->vout.size() != NUMBER_OF_CBINDEX_VOUTS) {
+        return false;
+    }
+
+    if (tx->vout[0].scriptPubKey.front() != OP_RETURN) {
+        return false;
+    }
+
+    std::vector<unsigned char> scriptHeader(tx->vout[0].scriptPubKey.begin() + 2,
+        tx->vout[0].scriptPubKey.begin() + 2 + _preHeader.size());
+    if (scriptHeader != _preHeader) {
+        return false;
+    }
+
+    return true;
 }
 
-std::vector<unsigned char> CoinbaseTxHandler::GetCoinbaseAddressTransactionPayload(CTransactionRef const& tx)
-{
-    std::vector<unsigned char> payload;
-    unsigned char operationType;
 
-    for (auto const& out : tx->vout) {
-        auto scriptPubKey = out.scriptPubKey;
+namespace
+{
+    class FakeAddressDestinationDecoder : public boost::static_visitor<std::vector<unsigned char>>
+    {
+    public:
+        FakeAddressDestinationDecoder() {}
+        std::vector<unsigned char> operator()(const CKeyID& id) const
+        {
+            return std::vector<unsigned char>(id.begin(), id.end());
+        }
+
+        std::vector<unsigned char> operator()(const CScriptID& id) const { return {}; }
+        std::vector<unsigned char> operator()(const CNoDestination& no) const { return {}; }
+    };
+}
+
+std::vector<unsigned char> CoinbaseIndexTxHandler::GetCoinbaseAddressTransactionPayload(CTransactionRef const& tx)
+{
+    if (!HasTransactionNewCoinbaseAddressBasic(tx)) {
+        return {};
+    }
+
+    std::vector<unsigned char> payload(tx->vout[0].scriptPubKey.begin() + 2, tx->vout[0].scriptPubKey.end());
+
+    auto numVouts = tx->vout.size();
+    for (auto outIdx = 2u; outIdx < numVouts; ++outIdx) {
+        const auto& out = tx->vout[outIdx];
+
+        auto const& scriptPubKey = out.scriptPubKey;
         if (scriptPubKey.empty()) {
             continue;
         }
 
-        std::vector<unsigned char> pubKeyData(scriptPubKey.begin() + 1, scriptPubKey.end());
-        auto payloadExtracted = GetPayloadFromTrimmedHeader(pubKeyData, payload, operationType);
-        if (!payloadExtracted) {
+        CTxDestination outFakeDest;
+        auto destValid = ExtractDestination(scriptPubKey, outFakeDest);
+        if (!destValid) {
             continue;
         }
 
-        if (IsValidCoinbaseOperationType(operationType) && !payload.empty()) {
-            return payload;
+        std::vector<unsigned char> fakeDestData;
+        fakeDestData = boost::apply_visitor(FakeAddressDestinationDecoder(), outFakeDest);
+        if (fakeDestData.empty()) {
+            continue;
         }
+        // sanity check, we should have exactly 20 bytes
+        if (fakeDestData.size() != 20) {
+            continue;
+        }
+
+        payload.insert(payload.end(), fakeDestData.cbegin(), fakeDestData.cend());
     }
 
-    return {};
+    return payload;
 }
 
-std::unique_ptr<CoinbaseAddress> CoinbaseTxHandler::GetCoinbaseAddrFromTransactions(
-    CTransactionRef const& tx1,
-    CTransactionRef const& tx2,
-    CoinbaseIndex const& coinbaseIndex,
-    CoinbaseOperationType& tx1OpType,
-    CoinbaseOperationType& tx2OpType)
+std::unique_ptr<CoinbaseAddress> CoinbaseIndexTxHandler::ExtractNewCoinbaseAddrFromTransaction(
+    CTransactionRef const& tx,
+    CoinbaseIndex const& coinbaseIndex)
 {
-    if (!tx1 || !tx2) {
-        CoinbaseIndexLog("%s: invalid input transactions", __FUNCTION__);
+    if (!tx) {
+        CoinbaseIndexLog("%s: invalid input transaction", __FUNCTION__);
         return nullptr;
     }
 
-    auto tx1Payload = GetCoinbaseAddressTransactionPayload(tx1);
-    if (tx1Payload.empty()) {
-        CoinbaseIndexLog("%s: invalid payload for first transaction", __FUNCTION__);
+    auto txPayload = GetCoinbaseAddressTransactionPayload(tx);
+    if (txPayload.empty()) {
+        CoinbaseIndexLog("%s: invalid payload for transaction", __FUNCTION__);
         return nullptr;
     }
 
-    auto tx2Payload = GetCoinbaseAddressTransactionPayload(tx2);
-    if (tx2Payload.empty()) {
-        CoinbaseIndexLog("%s: invalid payload for second transaction", __FUNCTION__);
-        return nullptr;
-    }
-
-    tx1OpType = COT_INVALID;
-    uint16_t txNewAddressIndex = 0;
     uint160 txTargetAddress;
     int txMaxBlockHeight = -1;
     std::vector<unsigned char> txDataSignature;
-    auto result = ExtractPayloadFields(tx1Payload, tx1OpType, txNewAddressIndex,
-        txTargetAddress, txMaxBlockHeight, txDataSignature);
+    auto result = ExtractPayloadFields(txPayload, txTargetAddress, txMaxBlockHeight, txDataSignature);
     if (!result) {
-        CoinbaseIndexLog("%s: could not extract payload data from first transaction", __FUNCTION__);
-        return nullptr;
-    }
-    if (!IsValidCoinbaseOperationType(tx1OpType)) {
-        CoinbaseIndexLog("%s: invalid coinbase operation type for first transaction", __FUNCTION__);
-        return nullptr;
-    }
-
-    tx2OpType = COT_INVALID;
-    uint16_t txNewAddressIndex2 = 0;
-    result = ExtractPayloadFields(tx2Payload, tx2OpType, txNewAddressIndex2,
-        txTargetAddress, txMaxBlockHeight, txDataSignature);
-    if (!result) {
-        CoinbaseIndexLog("%s: could not extract payload data from second transaction", __FUNCTION__);
-        return nullptr;
-    }
-
-    bool areTxsPaired = (tx1OpType == COT_ADD && tx2OpType == COT_SIGN) ||
-                        (tx1OpType == COT_SIGN && tx2OpType == COT_ADD);
-    if (!areTxsPaired) {
-        CoinbaseIndexLog("%s: the input transactions are not complementary", __FUNCTION__);
-        return nullptr;
-    }
-
-    if (txNewAddressIndex != (coinbaseIndex.GetNumCoinbaseAddrs() + 1)) {
-        CoinbaseIndexLog("%s: the intended coinbase transaction index value is invalid", __FUNCTION__);
-        return nullptr;
-    }
-    if (txNewAddressIndex != txNewAddressIndex2) {
-        CoinbaseIndexLog("%s: the input transactions have different coinbase transaction index value", __FUNCTION__);
+        CoinbaseIndexLog("%s: could not extract payload data from transaction", __FUNCTION__);
         return nullptr;
     }
 
@@ -450,10 +347,10 @@ std::unique_ptr<CoinbaseAddress> CoinbaseTxHandler::GetCoinbaseAddrFromTransacti
         return nullptr;
     }
 
-    auto verifiedSignature = VerifyPayloadFieldsSignature(txNewAddressIndex, txTargetAddress,
-        txDataSignature, txMaxBlockHeight, defaultCoinbaseKeys);
+    auto verifiedSignature = VerifyPayloadFieldsSignature(txTargetAddress,
+        txMaxBlockHeight, txDataSignature, defaultCoinbaseKeys);
     if (!verifiedSignature) {
-        CoinbaseIndexLog("%s: the signature is invalid", __FUNCTION__);
+        CoinbaseIndexLog("%s: the transaction data signature is invalid", __FUNCTION__);
         return nullptr;
     }
 

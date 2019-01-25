@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef PAICOIN_COINBASE_KEYHANDLER_H
-#define PAICOIN_COINBASE_KEYHANDLER_H
+#ifndef PAICOIN_COINBASEINDEX_KEYHANDLER_H
+#define PAICOIN_COINBASEINDEX_KEYHANDLER_H
 
 #include "util.h"
 
@@ -16,14 +16,14 @@ template <typename T> struct secure_allocator;
 /**
  * Key handler used in coinbase index to load up secret/public keys/addresses.
  */
-class CoinbaseKeyHandler
+class CoinbaseIndexKeyHandler
 {
 public:
-    explicit CoinbaseKeyHandler(fs::path dataDir) : m_dataDir(dataDir) {}
-    CoinbaseKeyHandler() = delete;
+    explicit CoinbaseIndexKeyHandler(fs::path dataDir) : m_dataDir(dataDir) {}
+    CoinbaseIndexKeyHandler() = delete;
 
-    CKey GetCoinbaseSigningKey();
-    std::vector<CPubKey> GetCoinbasePublicKeys();
+    CKey GetSigningKey();
+    std::vector<CPubKey> GetPublicKeys();
 
 private:
     std::vector<CKey> LoadSecretKeys(fs::path const& filePath);
@@ -38,4 +38,4 @@ private:
     fs::path m_dataDir;
 };
 
-#endif // PAICOIN_COINBASE_KEYHANDLER_H
+#endif // PAICOIN_COINBASEINDEX_KEYHANDLER_H
