@@ -88,17 +88,17 @@ class CoinbaseIndexTest(PAIcoinTestFramework):
     def test_invalidHeight(self):
         chain_node = self.nodes[0]
 
-        util.assert_raises_jsonrpc(-8, None, chain_node.createcoinbasetransaction, self.public_key, str(-2))
-        util.assert_raises_jsonrpc(-8, None, chain_node.createcoinbasetransaction, self.public_key, str(1))
+        util.assert_raises_rpc_error(-8, None, chain_node.createcoinbasetransaction, self.public_key, str(-2))
+        util.assert_raises_rpc_error(-8, None, chain_node.createcoinbasetransaction, self.public_key, str(1))
 
         block_count = int(chain_node.getblockcount())
-        util.assert_raises_jsonrpc(-8, None, chain_node.createcoinbasetransaction, self.public_key, str(block_count))
-        util.assert_raises_jsonrpc(-32700, None, chain_node.createcoinbasetransaction, self.public_key, "aa")
+        util.assert_raises_rpc_error(-8, None, chain_node.createcoinbasetransaction, self.public_key, str(block_count))
+        util.assert_raises_rpc_error(-32700, None, chain_node.createcoinbasetransaction, self.public_key, "aa")
     
     def test_invalidPubKey(self):
         chain_node = self.nodes[0]
 
-        util.assert_raises_jsonrpc(-5, None, chain_node.createcoinbasetransaction, "aa", str(10000))
+        util.assert_raises_rpc_error(-5, None, chain_node.createcoinbasetransaction, "aa", str(10000))
     
     def test_createNewCoinbaseAndSubmitNewBlock(self):
         chain_node = self.nodes[0]
