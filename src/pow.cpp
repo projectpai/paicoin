@@ -87,8 +87,27 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexFirst, const CBl
     const arith_uint256 bnPowLimit = UintToArith256(params.powLimit);
     arith_uint256 bnNew;
     bnNew.SetCompact(pindexLast->nBits);
-    bnNew *= nActualTimespan;
-    bnNew /= params.nPowTargetTimespan;
+
+    arith_uint256 bnMaxCanMultiply = ~arith_uint256() / nActualTimespan;
+    if (bnNew > bnMaxCanMultiply)
+    {
+        // perform division firstly to avoid an overflow
+        bnNew /= params.nPowTargetTimespan;
+        if (bnNew > bnMaxCanMultiply)
+        {
+            // still cannot multiply - use pow limit
+            bnNew = bnPowLimit;
+        }
+        else
+        {
+            bnNew *= nActualTimespan;
+        }
+    }
+    else
+    {
+        bnNew *= nActualTimespan;
+        bnNew /= params.nPowTargetTimespan;
+    }
 
     if (bnNew > bnPowLimit)
         bnNew = bnPowLimit;
