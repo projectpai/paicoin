@@ -10,6 +10,7 @@
 #include "util.h"
 
 #include "chainparamsbase.h"
+#include "dbwrapper.h"
 #include "fs.h"
 #include "random.h"
 #include "serialize.h"
@@ -589,32 +590,30 @@ void ClearDatadirCache()
 
 bool RemoveDataDirectory()
 {
-    LOCK(csPathCached);
+    const fs::path &path = GetDataDir();
+    if (path.empty())
+        return false;
 
-    fs::path &path = pathCached;
+    // Due to an issue on Windows where LevelDB is not releasing its files during shutdown, invoke
+    // explicit LevelDB instance deletion to ensure that database files are properly released before
+    // starting data files enumeration and deletion.
+    CDBWrapper::Destroy(path / "blocks" / "index");
 
-    if (path.empty()) {
-        if (gArgs.IsArgSet("-datadir")) {
-            path = fs::system_complete(gArgs.GetArg("-datadir", ""));
-            if (!fs::is_directory(path)) {
-                return false;
-            }
-        } else {
-            path = GetDefaultDataDir();
-        }
-    }
     boost::uintmax_t count = 0;
     if (fs::exists(path)) {
         std::vector<fs::path> files_to_remove;
         boost::system::error_code errcode;
         for(auto& p : fs::recursive_directory_iterator(path)) {
-            if (p.path().extension() == ".log")
+            // Keep plain log files only
+            if (p.path().extension() == ".log" && p.path().string().find("blocks/index") == std::string::npos)
                 continue;
             files_to_remove.push_back(p.path());
         }
-        for (auto& path : files_to_remove) {
-            if (fs::remove(path, errcode) && (errcode.value() == boost::system::errc::success))
+        for (std::vector<fs::path>::reverse_iterator path_rev_iter = files_to_remove.rbegin();
+                path_rev_iter != files_to_remove.rend(); ++path_rev_iter) {
+            if (fs::remove((*path_rev_iter), errcode) && (errcode.value() == boost::system::errc::success)) {
                 count++;
+            }
         }
     }
     return count > 0;

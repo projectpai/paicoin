@@ -348,6 +348,7 @@ libpaicoin_util_a_SOURCES = \
   support/lockedpool.cpp \
   chainparamsbase.cpp \
   clientversion.cpp \
+  dbwrapper.cpp \
   compat/glibc_sanity.cpp \
   compat/glibcxx_sanity.cpp \
   compat/strnlen.cpp \
@@ -396,10 +397,10 @@ paicoind_LDADD = \
   $(LIBPAICOIN_ZMQ) \
   $(LIBPAICOIN_CONSENSUS) \
   $(LIBPAICOIN_CRYPTO) \
+  $(LIBSECP256K1) \
   $(LIBLEVELDB) \
   $(LIBLEVELDB_SSE42) \
-  $(LIBMEMENV) \
-  $(LIBSECP256K1)
+  $(LIBMEMENV)
 
 paicoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
@@ -417,7 +418,10 @@ paicoin_cli_LDADD = \
   $(LIBPAICOIN_CLI) \
   $(LIBUNIVALUE) \
   $(LIBPAICOIN_UTIL) \
-  $(LIBPAICOIN_CRYPTO)
+  $(LIBPAICOIN_CRYPTO) \
+  $(LIBLEVELDB) \
+  $(LIBLEVELDB_SSE42) \
+  $(LIBMEMENV)
 
 paicoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
@@ -436,7 +440,10 @@ paicoin_block_generator_LDADD = \
   $(LIBPAICOIN_CLI) \
   $(LIBUNIVALUE) \
   $(LIBPAICOIN_UTIL) \
-  $(LIBPAICOIN_CRYPTO)
+  $(LIBPAICOIN_CRYPTO) \
+  $(LIBLEVELDB) \
+  $(LIBLEVELDB_SSE42) \
+  $(LIBMEMENV)
 
 paicoin_block_generator_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
@@ -457,7 +464,10 @@ paicoin_tx_LDADD = \
   $(LIBPAICOIN_UTIL) \
   $(LIBPAICOIN_CONSENSUS) \
   $(LIBPAICOIN_CRYPTO) \
-  $(LIBSECP256K1)
+  $(LIBSECP256K1) \
+  $(LIBLEVELDB) \
+  $(LIBLEVELDB_SSE42) \
+  $(LIBMEMENV)
 
 paicoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
