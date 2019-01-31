@@ -123,6 +123,7 @@ BASE_SCRIPTS= [
     'resendwallettransactions.py',
     'minchainwork.py',
     'rpc_help.py',
+    'wallet_balance.py'
 ]
 
 EXTENDED_SCRIPTS = [
