@@ -5,24 +5,24 @@
 #ifndef PAICOIN_QT_OPENURIDIALOG_H
 #define PAICOIN_QT_OPENURIDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
 
 namespace Ui {
     class OpenURIDialog;
 }
 
-class OpenURIDialog : public QDialog
+class OpenURIDialog : public PaicoinDialog
 {
     Q_OBJECT
 
 public:
     explicit OpenURIDialog(QWidget *parent);
-    ~OpenURIDialog();
+    virtual ~OpenURIDialog() override;
 
     QString getURI();
 
 protected Q_SLOTS:
-    void accept();
+    void accept() override;
 
 private Q_SLOTS:
     void on_selectFileButton_clicked();

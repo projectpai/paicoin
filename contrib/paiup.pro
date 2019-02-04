@@ -211,7 +211,8 @@ SOURCES += \
     ../src/qt/holdingperiodcompletedialog.cpp \
     ../src/qt/versioncheckutil.cpp \
     ../src/qt/updateavailabledialog.cpp \
-    ../src/qt/reviewpaperkeydialog.cpp
+    ../src/qt/reviewpaperkeydialog.cpp \
+    ../src/qt/paicoindialog.cpp
 
 HEADERS += \
     ../src/qt/authmanager.h \
@@ -283,7 +284,8 @@ HEADERS += \
     ../src/coinbase_addresses.h \
     ../src/qt/versioncheckutil.h \
     ../src/qt/updateavailabledialog.h \
-    ../src/qt/reviewpaperkeydialog.h
+    ../src/qt/reviewpaperkeydialog.h \
+    ../src/qt/paicoindialog.h
 
 UI_DIR = ../src/qt/forms
 

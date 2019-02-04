@@ -5,7 +5,7 @@
 #ifndef PAICOIN_QT_EDITADDRESSDIALOG_H
 #define PAICOIN_QT_EDITADDRESSDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
 
 class AddressTableModel;
 
@@ -17,9 +17,8 @@ QT_BEGIN_NAMESPACE
 class QDataWidgetMapper;
 QT_END_NAMESPACE
 
-/** Dialog for editing an address and associated information.
- */
-class EditAddressDialog : public QDialog
+/** Dialog for editing an address and associated information. */
+class EditAddressDialog : public PaicoinDialog
 {
     Q_OBJECT
 

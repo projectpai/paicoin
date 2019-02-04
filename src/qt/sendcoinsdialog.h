@@ -5,9 +5,9 @@
 #ifndef PAICOIN_QT_SENDCOINSDIALOG_H
 #define PAICOIN_QT_SENDCOINSDIALOG_H
 
+#include "paicoindialog.h"
 #include "walletmodel.h"
 
-#include <QDialog>
 #include <QMessageBox>
 #include <QString>
 #include <QTimer>
@@ -26,12 +26,12 @@ class QUrl;
 QT_END_NAMESPACE
 
 /** Dialog for sending paicoins */
-class SendCoinsDialog : public QDialog
+class SendCoinsDialog : public PaicoinDialog
 {
     Q_OBJECT
 
 public:
-    explicit SendCoinsDialog(const PlatformStyle *platformStyle, QWidget *parent = 0);
+    explicit SendCoinsDialog(const PlatformStyle *platformStyle, QWidget *parent = nullptr);
     ~SendCoinsDialog();
 
     void setClientModel(ClientModel *clientModel);
@@ -123,7 +123,7 @@ class SendConfirmationDialog : public QMessageBox
     Q_OBJECT
 
 public:
-    SendConfirmationDialog(const QString &title, const QString &text, int secDelay = SEND_CONFIRM_DELAY, QWidget *parent = 0);
+    SendConfirmationDialog(const QString &title, const QString &text, int secDelay = SEND_CONFIRM_DELAY, QWidget *parent = nullptr);
     int exec();
 
 private Q_SLOTS:

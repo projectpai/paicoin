@@ -5,7 +5,7 @@
 #ifndef PAICOIN_QT_ASKPASSPHRASEDIALOG_H
 #define PAICOIN_QT_ASKPASSPHRASEDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
 
 class WalletModel;
 
@@ -15,7 +15,7 @@ namespace Ui {
 
 /** Multifunctional dialog to ask for passphrases. Used for encryption, unlocking, and changing the passphrase.
  */
-class AskPassphraseDialog : public QDialog
+class AskPassphraseDialog : public PaicoinDialog
 {
     Q_OBJECT
 

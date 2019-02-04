@@ -6,8 +6,8 @@
 #define PAICOIN_QT_RECEIVECOINSDIALOG_H
 
 #include "guiutil.h"
+#include "paicoindialog.h"
 
-#include <QDialog>
 #include <QHeaderView>
 #include <QItemSelection>
 #include <QKeyEvent>
@@ -27,7 +27,7 @@ class QModelIndex;
 QT_END_NAMESPACE
 
 /** Dialog for requesting payment of paicoins */
-class ReceiveCoinsDialog : public QDialog
+class ReceiveCoinsDialog : public PaicoinDialog
 {
     Q_OBJECT
 
@@ -39,7 +39,7 @@ public:
         MINIMUM_COLUMN_WIDTH = 130
     };
 
-    explicit ReceiveCoinsDialog(const PlatformStyle *platformStyle, QWidget *parent = 0);
+    explicit ReceiveCoinsDialog(const PlatformStyle *platformStyle, QWidget *parent = nullptr);
     ~ReceiveCoinsDialog();
 
     void setModel(WalletModel *model);

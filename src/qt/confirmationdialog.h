@@ -1,18 +1,18 @@
 #ifndef CONFIRMATIONDIALOG_H
 #define CONFIRMATIONDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
 
 namespace Ui {
 class ConfirmationDialog;
 }
 
-class ConfirmationDialog : public QDialog
+class ConfirmationDialog : public PaicoinDialog
 {
     Q_OBJECT
 
 public:
-    explicit ConfirmationDialog(const QString &title, QWidget *parent = 0);
+    explicit ConfirmationDialog(const QString &title, QWidget *parent = nullptr);
     ~ConfirmationDialog();
 
 private:

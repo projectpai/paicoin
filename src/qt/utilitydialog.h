@@ -5,7 +5,8 @@
 #ifndef PAICOIN_QT_UTILITYDIALOG_H
 #define PAICOIN_QT_UTILITYDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
+
 #include <QObject>
 
 class PAIcoinGUI;
@@ -15,7 +16,7 @@ namespace Ui {
 }
 
 /** "Help message" dialog box */
-class HelpMessageDialog : public QDialog
+class HelpMessageDialog : public PaicoinDialog
 {
     Q_OBJECT
 
@@ -41,7 +42,7 @@ class ShutdownWindow : public QWidget
     Q_OBJECT
 
 public:
-    explicit ShutdownWindow(QWidget *parent=0, Qt::WindowFlags f=0);
+    explicit ShutdownWindow(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
     static QWidget *showShutdownWindow(PAIcoinGUI *window);
 
 protected:

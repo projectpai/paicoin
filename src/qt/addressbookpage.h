@@ -5,7 +5,7 @@
 #ifndef PAICOIN_QT_ADDRESSBOOKPAGE_H
 #define PAICOIN_QT_ADDRESSBOOKPAGE_H
 
-#include <QDialog>
+#include "paicoindialog.h"
 
 class AddressTableModel;
 class PlatformStyle;
@@ -23,7 +23,7 @@ QT_END_NAMESPACE
 
 /** Widget that shows a list of sending or receiving addresses.
   */
-class AddressBookPage : public QDialog
+class AddressBookPage : public PaicoinDialog
 {
     Q_OBJECT
 

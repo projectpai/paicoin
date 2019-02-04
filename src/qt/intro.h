@@ -5,7 +5,8 @@
 #ifndef PAICOIN_QT_INTRO_H
 #define PAICOIN_QT_INTRO_H
 
-#include <QDialog>
+#include "paicoindialog.h"
+
 #include <QMutex>
 #include <QThread>
 
@@ -21,12 +22,12 @@ namespace Ui {
   Allows the user to choose a data directory,
   in which the wallet and block chain will be stored.
  */
-class Intro : public QDialog
+class Intro : public PaicoinDialog
 {
     Q_OBJECT
 
 public:
-    explicit Intro(QWidget *parent = 0);
+    explicit Intro(QWidget *parent = nullptr);
     ~Intro();
 
     QString getDataDirectory();

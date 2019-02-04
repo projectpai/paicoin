@@ -9,9 +9,9 @@
 #include "optionsdialog.h"
 #include "ui_optionsdialog.h"
 
-#include "paicoinunits.h"
 #include "guiutil.h"
 #include "optionsmodel.h"
+#include "paicoinunits.h"
 
 #include "validation.h" // for DEFAULT_SCRIPTCHECK_THREADS and MAX_SCRIPTCHECK_THREADS
 #include "netbase.h"
@@ -25,10 +25,10 @@
 #include <QTimer>
 
 OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
-    QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint),
+    PaicoinDialog(parent),
     ui(new Ui::OptionsDialog),
-    model(0),
-    mapper(0)
+    model(nullptr),
+    mapper(nullptr)
 {
     ui->setupUi(this);
 

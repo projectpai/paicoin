@@ -5,7 +5,7 @@
 #ifndef PAICOIN_QT_TRANSACTIONDESCDIALOG_H
 #define PAICOIN_QT_TRANSACTIONDESCDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
 
 namespace Ui {
     class TransactionDescDialog;
@@ -16,12 +16,12 @@ class QModelIndex;
 QT_END_NAMESPACE
 
 /** Dialog showing transaction details. */
-class TransactionDescDialog : public QDialog
+class TransactionDescDialog : public PaicoinDialog
 {
     Q_OBJECT
 
 public:
-    explicit TransactionDescDialog(const QModelIndex &idx, QWidget *parent = 0);
+    explicit TransactionDescDialog(const QModelIndex &idx, QWidget *parent = nullptr);
     ~TransactionDescDialog();
 
 private:

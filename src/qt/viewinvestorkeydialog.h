@@ -1,7 +1,7 @@
 #ifndef VIEWINVESTORKEYDIALOG_H
 #define VIEWINVESTORKEYDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
 
 class WalletModel;
 
@@ -9,13 +9,14 @@ namespace Ui {
 class ViewInvestorKeyDialog;
 }
 
-class ViewInvestorKeyDialog : public QDialog
+class ViewInvestorKeyDialog : public PaicoinDialog
 {
     Q_OBJECT
 
 public:
     explicit ViewInvestorKeyDialog(QWidget *parent);
     ~ViewInvestorKeyDialog();
+
     void setModel(WalletModel *model);
 
 private Q_SLOTS:

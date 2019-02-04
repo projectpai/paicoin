@@ -1,19 +1,19 @@
 #ifndef HOLDINGPERIODCOMPLETEDIALOG_H
 #define HOLDINGPERIODCOMPLETEDIALOG_H
 
-#include <QDialog>
+#include "paicoindialog.h"
 
 namespace Ui {
 class HoldingPeriodCompleteDialog;
 const QString UpdateLink = "https://paiup.com";
 }
 
-class HoldingPeriodCompleteDialog : public QDialog
+class HoldingPeriodCompleteDialog : public PaicoinDialog
 {
     Q_OBJECT
 
 public:
-    explicit HoldingPeriodCompleteDialog(bool needsUpdate = false, QWidget *parent = 0);
+    explicit HoldingPeriodCompleteDialog(bool needsUpdate = false, QWidget *parent = nullptr);
     ~HoldingPeriodCompleteDialog();
 
 public Q_SLOTS:

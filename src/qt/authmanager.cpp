@@ -1,8 +1,14 @@
 #include "authmanager.h"
 #include "settingshelper.h"
 
-#include <QTimer>
 #include <confirmationdialog.h>
+
+AuthManager::AuthManager(QObject *parent) : QObject(parent), wallet(nullptr)
+{
+    timer = new QTimer(this);
+    timer->setInterval(kTimeout);
+    connect(timer, SIGNAL(timeout()), this, SLOT(RequestAuthenticate()));
+}
 
 AuthManager& AuthManager::getInstance()
 {
@@ -97,7 +103,19 @@ bool AuthManager::ShouldSet()
 
 void AuthManager::TriggerTimer()
 {
-    QTimer::singleShot(5 * 60 * 1000, this, SLOT(RequestAuthenticate()));
+    timer->setSingleShot(true);
+    timer->start();
+}
+
+void AuthManager::RetriggerTimer()
+{
+    // Avoid timer retrigger for too frequent UI interaction events
+    const int remainingTime = timer->remainingTime();
+    if (remainingTime >= 0 && remainingTime < 0.9 * kTimeout)
+    {
+        timer->stop();
+        TriggerTimer();
+    }
 }
 
 void AuthManager::RequestCheck(const std::string &pin)

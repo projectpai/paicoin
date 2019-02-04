@@ -5,6 +5,7 @@
 
 #include <string>
 #include <QObject>
+#include <QTimer>
 
 class AuthManager : public QObject
 {
@@ -14,8 +15,10 @@ public:
     AuthManager(AuthManager const&)     = delete;
     void operator=(AuthManager const&)  = delete;
 private:
-    AuthManager(QObject *parent) : QObject(parent), wallet(nullptr) {}
+    AuthManager(QObject *parent);
     CWallet* wallet;
+    QTimer* timer;
+    static const int kTimeout = 5 * 60 * 1000;
 public:
     void ConnectWallet(CWallet* wallet);
     bool Check(const std::string& pin);
@@ -24,6 +27,7 @@ public:
     void Reset();
     bool ShouldSet();
     void TriggerTimer();
+    void RetriggerTimer();
 Q_SIGNALS:
     void Authenticate(bool enteredPinInvalid = false);
     void Authenticated();
