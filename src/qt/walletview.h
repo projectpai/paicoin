@@ -14,8 +14,8 @@ class PAIcoinGUI;
 class ClientModel;
 class OverviewPage;
 class PlatformStyle;
-class ReceiveCoinsDialog;
-class SendCoinsDialog;
+class ReceiveCoinsPage;
+class SendCoinsPage;
 class SendCoinsRecipient;
 class TransactionView;
 class WalletModel;
@@ -61,8 +61,8 @@ private:
 
     OverviewPage *overviewPage;
     QWidget *transactionsPage;
-    ReceiveCoinsDialog *receiveCoinsPage;
-    SendCoinsDialog *sendCoinsPage;
+    ReceiveCoinsPage *receiveCoinsPage;
+    SendCoinsPage *sendCoinsPage;
     AddressBookPage *usedSendingAddressesPage;
     AddressBookPage *usedReceivingAddressesPage;
 

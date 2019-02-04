@@ -5,7 +5,7 @@
 #include "qt/optionsmodel.h"
 #include "qt/platformstyle.h"
 #include "qt/qvalidatedlineedit.h"
-#include "qt/sendcoinsdialog.h"
+#include "qt/sendcoinspage.h"
 #include "qt/sendcoinsentry.h"
 #include "qt/transactiontablemodel.h"
 #include "qt/transactionview.h"
@@ -57,13 +57,13 @@ void ConfirmSend(QString* text = nullptr, bool cancel = false)
 }
 
 //! Send coins to address and return txid.
-uint256 SendCoins(CWallet& wallet, SendCoinsDialog& sendCoinsDialog, const CTxDestination& address, CAmount amount, bool rbf)
+uint256 SendCoins(CWallet& wallet, SendCoinsPage& sendCoinsPage, const CTxDestination& address, CAmount amount, bool rbf)
 {
-    QVBoxLayout* entries = sendCoinsDialog.findChild<QVBoxLayout*>("entries");
+    QVBoxLayout* entries = sendCoinsPage.findChild<QVBoxLayout*>("entries");
     SendCoinsEntry* entry = qobject_cast<SendCoinsEntry*>(entries->itemAt(0)->widget());
     entry->findChild<QValidatedLineEdit*>("payTo")->setText(QString::fromStdString(EncodeDestination(address)));
     entry->findChild<PAIcoinAmountField*>("payAmount")->setValue(amount);
-    sendCoinsDialog.findChild<QFrame*>("frameFee")
+    sendCoinsPage.findChild<QFrame*>("frameFee")
         ->findChild<QFrame*>("frameFeeSelection")
         ->findChild<QCheckBox*>("optInRBF")
         ->setCheckState(rbf ? Qt::Checked : Qt::Unchecked);
@@ -72,7 +72,7 @@ uint256 SendCoins(CWallet& wallet, SendCoinsDialog& sendCoinsDialog, const CTxDe
         if (status == CT_NEW) txid = hash;
     }));
     ConfirmSend();
-    QMetaObject::invokeMethod(&sendCoinsDialog, "on_sendButton_clicked");
+    QMetaObject::invokeMethod(&sendCoinsPage, "on_sendButton_clicked");
     return txid;
 }
 
@@ -132,7 +132,7 @@ void BumpFee(TransactionView& view, const uint256& txid, bool expectDisabled, st
 // Test widgets can be debugged interactively calling show() on them and
 // manually running the event loop, e.g.:
 //
-//     sendCoinsDialog.show();
+//     sendCoinsPage.show();
 //     QEventLoop().exec();
 //
 // This also requires overriding the default minimal Qt platform:
@@ -162,18 +162,18 @@ void TestSendCoins()
 
     // Create widgets for sending coins and listing transactions.
     std::unique_ptr<const PlatformStyle> platformStyle(PlatformStyle::instantiate("other"));
-    SendCoinsDialog sendCoinsDialog(platformStyle.get());
+    SendCoinsPage sendCoinsPage(platformStyle.get());
     TransactionView transactionView(platformStyle.get());
     OptionsModel optionsModel;
     WalletModel walletModel(platformStyle.get(), &wallet, &optionsModel);
-    sendCoinsDialog.setModel(&walletModel);
+    sendCoinsPage.setModel(&walletModel);
     transactionView.setModel(&walletModel);
 
     // Send two transactions, and verify they are added to transaction list.
     TransactionTableModel* transactionTableModel = walletModel.getTransactionTableModel();
     QCOMPARE(transactionTableModel->rowCount({}), 105);
-    uint256 txid1 = SendCoins(wallet, sendCoinsDialog, CKeyID(), 5 * COIN, false /* rbf */);
-    uint256 txid2 = SendCoins(wallet, sendCoinsDialog, CKeyID(), 10 * COIN, true /* rbf */);
+    uint256 txid1 = SendCoins(wallet, sendCoinsPage, CKeyID(), 5 * COIN, false /* rbf */);
+    uint256 txid2 = SendCoins(wallet, sendCoinsPage, CKeyID(), 10 * COIN, true /* rbf */);
     QCOMPARE(transactionTableModel->rowCount({}), 107);
     QVERIFY(FindTx(*transactionTableModel, txid1).isValid());
     QVERIFY(FindTx(*transactionTableModel, txid2).isValid());

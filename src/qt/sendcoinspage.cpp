@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "sendcoinsdialog.h"
-#include "ui_sendcoinsdialog.h"
+#include "sendcoinspage.h"
+#include "ui_sendcoinspage.h"
 
 #include "addresstablemodel.h"
 #include "paicoinunits.h"
@@ -57,9 +57,9 @@ int getIndexForConfTarget(int target) {
     return confTargets.size() - 1;
 }
 
-SendCoinsDialog::SendCoinsDialog(const PlatformStyle *_platformStyle, QWidget *parent) :
-    PaicoinDialog(parent),
-    ui(new Ui::SendCoinsDialog),
+SendCoinsPage::SendCoinsPage(const PlatformStyle *_platformStyle, QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::SendCoinsPage),
     clientModel(nullptr),
     model(nullptr),
     fNewRecipientAllowed(true),
@@ -142,7 +142,7 @@ SendCoinsDialog::SendCoinsDialog(const PlatformStyle *_platformStyle, QWidget *p
     minimizeFeeSection(settings.value("fFeeSectionMinimized").toBool());
 }
 
-void SendCoinsDialog::setClientModel(ClientModel *_clientModel)
+void SendCoinsPage::setClientModel(ClientModel *_clientModel)
 {
     this->clientModel = _clientModel;
 
@@ -152,7 +152,7 @@ void SendCoinsDialog::setClientModel(ClientModel *_clientModel)
     }
 }
 
-void SendCoinsDialog::setModel(WalletModel *_model)
+void SendCoinsPage::setModel(WalletModel *_model)
 {
     this->model = _model;
 
@@ -219,7 +219,7 @@ void SendCoinsDialog::setModel(WalletModel *_model)
     }
 }
 
-SendCoinsDialog::~SendCoinsDialog()
+SendCoinsPage::~SendCoinsPage()
 {
     QSettings settings;
     settings.setValue("fFeeSectionMinimized", fFeeMinimized);
@@ -232,7 +232,7 @@ SendCoinsDialog::~SendCoinsDialog()
     delete ui;
 }
 
-void SendCoinsDialog::on_sendButton_clicked()
+void SendCoinsPage::on_sendButton_clicked()
 {
     if(!model || !model->getOptionsModel())
         return;
@@ -389,7 +389,7 @@ void SendCoinsDialog::on_sendButton_clicked()
     fNewRecipientAllowed = true;
 }
 
-void SendCoinsDialog::clear()
+void SendCoinsPage::clear()
 {
     // Remove entries until only one left
     while(ui->entries->count())
@@ -401,17 +401,17 @@ void SendCoinsDialog::clear()
     updateTabsAndLabels();
 }
 
-void SendCoinsDialog::reject()
+void SendCoinsPage::reject()
 {
     clear();
 }
 
-void SendCoinsDialog::accept()
+void SendCoinsPage::accept()
 {
     clear();
 }
 
-SendCoinsEntry *SendCoinsDialog::addEntry()
+SendCoinsEntry *SendCoinsPage::addEntry()
 {
     SendCoinsEntry *entry = new SendCoinsEntry(platformStyle, this);
     entry->setModel(model);
@@ -433,13 +433,13 @@ SendCoinsEntry *SendCoinsDialog::addEntry()
     return entry;
 }
 
-void SendCoinsDialog::updateTabsAndLabels()
+void SendCoinsPage::updateTabsAndLabels()
 {
     setupTabChain(0);
     coinControlUpdateLabels();
 }
 
-void SendCoinsDialog::removeEntry(SendCoinsEntry* entry)
+void SendCoinsPage::removeEntry(SendCoinsEntry* entry)
 {
     entry->hide();
 
@@ -452,7 +452,7 @@ void SendCoinsDialog::removeEntry(SendCoinsEntry* entry)
     updateTabsAndLabels();
 }
 
-QWidget *SendCoinsDialog::setupTabChain(QWidget *prev)
+QWidget *SendCoinsPage::setupTabChain(QWidget *prev)
 {
     for(int i = 0; i < ui->entries->count(); ++i)
     {
@@ -468,7 +468,7 @@ QWidget *SendCoinsDialog::setupTabChain(QWidget *prev)
     return ui->addButton;
 }
 
-void SendCoinsDialog::setAddress(const QString &address)
+void SendCoinsPage::setAddress(const QString &address)
 {
     SendCoinsEntry *entry = 0;
     // Replace the first entry if it is still unused
@@ -488,7 +488,7 @@ void SendCoinsDialog::setAddress(const QString &address)
     entry->setAddress(address);
 }
 
-void SendCoinsDialog::pasteEntry(const SendCoinsRecipient &rv)
+void SendCoinsPage::pasteEntry(const SendCoinsRecipient &rv)
 {
     if(!fNewRecipientAllowed)
         return;
@@ -512,7 +512,7 @@ void SendCoinsDialog::pasteEntry(const SendCoinsRecipient &rv)
     updateTabsAndLabels();
 }
 
-bool SendCoinsDialog::handlePaymentRequest(const SendCoinsRecipient &rv)
+bool SendCoinsPage::handlePaymentRequest(const SendCoinsRecipient &rv)
 {
     // Just paste the entry, all pre-checks
     // are done in paymentserver.cpp.
@@ -520,7 +520,7 @@ bool SendCoinsDialog::handlePaymentRequest(const SendCoinsRecipient &rv)
     return true;
 }
 
-void SendCoinsDialog::setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& investorBalance,
+void SendCoinsPage::setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& investorBalance,
                                  const CAmount& watchBalance, const CAmount& watchUnconfirmedBalance, const CAmount& watchImmatureBalance)
 {
     Q_UNUSED(unconfirmedBalance);
@@ -536,7 +536,7 @@ void SendCoinsDialog::setBalance(const CAmount& balance, const CAmount& unconfir
     }
 }
 
-void SendCoinsDialog::checkHolding()
+void SendCoinsPage::checkHolding()
 {
     if (shouldShowHoldingUpdateDialog())
     {
@@ -548,7 +548,7 @@ void SendCoinsDialog::checkHolding()
     }
 }
 
-void SendCoinsDialog::showEvent(QShowEvent *event)
+void SendCoinsPage::showEvent(QShowEvent *event)
 {
     if (shouldShowHoldingDialog())
     {
@@ -556,7 +556,7 @@ void SendCoinsDialog::showEvent(QShowEvent *event)
     }
 }
 
-void SendCoinsDialog::updateDisplayUnit()
+void SendCoinsPage::updateDisplayUnit()
 {
     setBalance(model->getBalance(), 0, 0, 0, 0, 0, 0);
     ui->customFee->setDisplayUnit(model->getOptionsModel()->getDisplayUnit());
@@ -564,13 +564,13 @@ void SendCoinsDialog::updateDisplayUnit()
     updateSmartFeeLabel();
 }
 
-void SendCoinsDialog::processSendCoinsReturn(const WalletModel::SendCoinsReturn &sendCoinsReturn, const QString &msgArg)
+void SendCoinsPage::processSendCoinsReturn(const WalletModel::SendCoinsReturn &sendCoinsReturn, const QString &msgArg)
 {
     QPair<QString, CClientUIInterface::MessageBoxFlags> msgParams;
     // Default to a warning message, override if error message is needed
     msgParams.second = CClientUIInterface::MSG_WARNING;
 
-    // This comment is specific to SendCoinsDialog usage of WalletModel::SendCoinsReturn.
+    // This comment is specific to SendCoinsPage usage of WalletModel::SendCoinsReturn.
     // WalletModel::TransactionCommitFailed is used only in WalletModel::sendCoins()
     // all others are used only in WalletModel::prepareTransaction()
     switch(sendCoinsReturn.status)
@@ -614,7 +614,7 @@ void SendCoinsDialog::processSendCoinsReturn(const WalletModel::SendCoinsReturn 
     Q_EMIT message(tr("Send Coins"), msgParams.first, msgParams.second);
 }
 
-void SendCoinsDialog::minimizeFeeSection(bool fMinimize)
+void SendCoinsPage::minimizeFeeSection(bool fMinimize)
 {
     ui->labelFeeMinimized->setVisible(fMinimize);
     ui->buttonChooseFee  ->setVisible(fMinimize);
@@ -624,24 +624,24 @@ void SendCoinsDialog::minimizeFeeSection(bool fMinimize)
     fFeeMinimized = fMinimize;
 }
 
-void SendCoinsDialog::on_buttonChooseFee_clicked()
+void SendCoinsPage::on_buttonChooseFee_clicked()
 {
     minimizeFeeSection(false);
 }
 
-void SendCoinsDialog::on_buttonMinimizeFee_clicked()
+void SendCoinsPage::on_buttonMinimizeFee_clicked()
 {
     updateFeeMinimizedLabel();
     minimizeFeeSection(true);
 }
 
-void SendCoinsDialog::setMinimumFee()
+void SendCoinsPage::setMinimumFee()
 {
     ui->radioCustomPerKilobyte->setChecked(true);
     ui->customFee->setValue(GetRequiredFee(1000));
 }
 
-void SendCoinsDialog::updateFeeSectionControls()
+void SendCoinsPage::updateFeeSectionControls()
 {
     ui->confTargetSelector      ->setEnabled(ui->radioSmartFee->isChecked());
     ui->labelSmartFee           ->setEnabled(ui->radioSmartFee->isChecked());
@@ -654,7 +654,7 @@ void SendCoinsDialog::updateFeeSectionControls()
     ui->customFee               ->setEnabled(ui->radioCustomFee->isChecked() && !ui->checkBoxMinimumFee->isChecked());
 }
 
-void SendCoinsDialog::updateFeeMinimizedLabel()
+void SendCoinsPage::updateFeeMinimizedLabel()
 {
     if(!model || !model->getOptionsModel())
         return;
@@ -667,7 +667,7 @@ void SendCoinsDialog::updateFeeMinimizedLabel()
     }
 }
 
-void SendCoinsDialog::updateMinFeeLabel()
+void SendCoinsPage::updateMinFeeLabel()
 {
     if (model && model->getOptionsModel())
         ui->checkBoxMinimumFee->setText(tr("Pay only the required fee of %1").arg(
@@ -675,7 +675,7 @@ void SendCoinsDialog::updateMinFeeLabel()
         );
 }
 
-void SendCoinsDialog::updateCoinControlState(CCoinControl& ctrl)
+void SendCoinsPage::updateCoinControlState(CCoinControl& ctrl)
 {
     if (ui->radioCustomFee->isChecked()) {
         ctrl.m_feerate = CFeeRate(ui->customFee->value());
@@ -688,42 +688,42 @@ void SendCoinsDialog::updateCoinControlState(CCoinControl& ctrl)
     ctrl.signalRbf = ui->optInRBF->isChecked();
 }
 
-bool SendCoinsDialog::shouldShowHoldingDialog()
+bool SendCoinsPage::shouldShowHoldingDialog()
 {
     QSettings settings;
     return model->getInvestorBalance() != 0 && !(settings.contains("nDontShowFundsInHolding") && settings.value("nDontShowFundsInHolding").toBool());
 }
 
-bool SendCoinsDialog::shouldShowHoldingCompleteDialog()
+bool SendCoinsPage::shouldShowHoldingCompleteDialog()
 {
     return fSynced && model->getInvestorBalance() !=0 && model->shouldUnlockInvestment();
 }
 
-bool SendCoinsDialog::shouldShowHoldingUpdateDialog()
+bool SendCoinsPage::shouldShowHoldingUpdateDialog()
 {
     return fSynced && model->shouldUpdateApplication();
 }
 
-void SendCoinsDialog::showHoldingDialog()
+void SendCoinsPage::showHoldingDialog()
 {
     FundsInHoldingDialog *fundsInHoldingDialog = new FundsInHoldingDialog();
     fundsInHoldingDialog->exec();
 }
 
-void SendCoinsDialog::showHoldingCompleteDialog()
+void SendCoinsPage::showHoldingCompleteDialog()
 {
     HoldingPeriodCompleteDialog *holdingPeriodCompleteDialog = new HoldingPeriodCompleteDialog();
     connect(holdingPeriodCompleteDialog, SIGNAL(unlockInvestment()), this, SLOT(unlockInvestment()));
     holdingPeriodCompleteDialog->exec();
 }
 
-void SendCoinsDialog::showHoldingUpdateDialog()
+void SendCoinsPage::showHoldingUpdateDialog()
 {
     HoldingPeriodCompleteDialog *holdingPeriodCompleteDialog = new HoldingPeriodCompleteDialog(true);
     holdingPeriodCompleteDialog->exec();
 }
 
-void SendCoinsDialog::updateSmartFeeLabel()
+void SendCoinsPage::updateSmartFeeLabel()
 {
     if(!model || !model->getOptionsModel())
         return;
@@ -754,7 +754,7 @@ void SendCoinsDialog::updateSmartFeeLabel()
     updateFeeMinimizedLabel();
 }
 
-void SendCoinsDialog::setNumBlocks(int count, const QDateTime& blockDate, double nVerificationProgress, bool headers)
+void SendCoinsPage::setNumBlocks(int count, const QDateTime& blockDate, double nVerificationProgress, bool headers)
 {
     QDateTime currentDate = QDateTime::currentDateTime();
     qint64 secs = blockDate.secsTo(currentDate);
@@ -763,7 +763,7 @@ void SendCoinsDialog::setNumBlocks(int count, const QDateTime& blockDate, double
     updateSmartFeeLabel();
 }
 
-void SendCoinsDialog::unlockInvestment()
+void SendCoinsPage::unlockInvestment()
 {
     if (!model->unlockInvestment())
     {
@@ -773,49 +773,49 @@ void SendCoinsDialog::unlockInvestment()
 }
 
 // Coin Control: copy label "Quantity" to clipboard
-void SendCoinsDialog::coinControlClipboardQuantity()
+void SendCoinsPage::coinControlClipboardQuantity()
 {
     GUIUtil::setClipboard(ui->labelCoinControlQuantity->text());
 }
 
 // Coin Control: copy label "Amount" to clipboard
-void SendCoinsDialog::coinControlClipboardAmount()
+void SendCoinsPage::coinControlClipboardAmount()
 {
     GUIUtil::setClipboard(ui->labelCoinControlAmount->text().left(ui->labelCoinControlAmount->text().indexOf(" ")));
 }
 
 // Coin Control: copy label "Fee" to clipboard
-void SendCoinsDialog::coinControlClipboardFee()
+void SendCoinsPage::coinControlClipboardFee()
 {
     GUIUtil::setClipboard(ui->labelCoinControlFee->text().left(ui->labelCoinControlFee->text().indexOf(" ")).replace(ASYMP_UTF8, ""));
 }
 
 // Coin Control: copy label "After fee" to clipboard
-void SendCoinsDialog::coinControlClipboardAfterFee()
+void SendCoinsPage::coinControlClipboardAfterFee()
 {
     GUIUtil::setClipboard(ui->labelCoinControlAfterFee->text().left(ui->labelCoinControlAfterFee->text().indexOf(" ")).replace(ASYMP_UTF8, ""));
 }
 
 // Coin Control: copy label "Bytes" to clipboard
-void SendCoinsDialog::coinControlClipboardBytes()
+void SendCoinsPage::coinControlClipboardBytes()
 {
     GUIUtil::setClipboard(ui->labelCoinControlBytes->text().replace(ASYMP_UTF8, ""));
 }
 
 // Coin Control: copy label "Dust" to clipboard
-void SendCoinsDialog::coinControlClipboardLowOutput()
+void SendCoinsPage::coinControlClipboardLowOutput()
 {
     GUIUtil::setClipboard(ui->labelCoinControlLowOutput->text());
 }
 
 // Coin Control: copy label "Change" to clipboard
-void SendCoinsDialog::coinControlClipboardChange()
+void SendCoinsPage::coinControlClipboardChange()
 {
     GUIUtil::setClipboard(ui->labelCoinControlChange->text().left(ui->labelCoinControlChange->text().indexOf(" ")).replace(ASYMP_UTF8, ""));
 }
 
 // Coin Control: settings menu - coin control enabled/disabled by user
-void SendCoinsDialog::coinControlFeatureChanged(bool checked)
+void SendCoinsPage::coinControlFeatureChanged(bool checked)
 {
     ui->frameCoinControl->setVisible(checked);
 
@@ -826,7 +826,7 @@ void SendCoinsDialog::coinControlFeatureChanged(bool checked)
 }
 
 // Coin Control: button inputs -> show actual coin control dialog
-void SendCoinsDialog::coinControlButtonClicked()
+void SendCoinsPage::coinControlButtonClicked()
 {
     CoinControlDialog dlg(platformStyle);
     dlg.setModel(model);
@@ -835,7 +835,7 @@ void SendCoinsDialog::coinControlButtonClicked()
 }
 
 // Coin Control: checkbox custom change address
-void SendCoinsDialog::coinControlChangeChecked(int state)
+void SendCoinsPage::coinControlChangeChecked(int state)
 {
     if (state == Qt::Unchecked)
     {
@@ -850,7 +850,7 @@ void SendCoinsDialog::coinControlChangeChecked(int state)
 }
 
 // Coin Control: custom change address changed
-void SendCoinsDialog::coinControlChangeEdited(const QString& text)
+void SendCoinsPage::coinControlChangeEdited(const QString& text)
 {
     if (model && model->getAddressTableModel())
     {
@@ -904,7 +904,7 @@ void SendCoinsDialog::coinControlChangeEdited(const QString& text)
 }
 
 // Coin Control: update labels
-void SendCoinsDialog::coinControlUpdateLabels()
+void SendCoinsPage::coinControlUpdateLabels()
 {
     if (!model || !model->getOptionsModel())
         return;

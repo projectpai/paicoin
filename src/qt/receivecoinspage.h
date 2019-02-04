@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef PAICOIN_QT_RECEIVECOINSDIALOG_H
-#define PAICOIN_QT_RECEIVECOINSDIALOG_H
+#ifndef PAICOIN_QT_RECEIVECOINSPAGE_H
+#define PAICOIN_QT_RECEIVECOINSPAGE_H
 
 #include "guiutil.h"
 #include "paicoindialog.h"
@@ -19,7 +19,7 @@ class PlatformStyle;
 class WalletModel;
 
 namespace Ui {
-    class ReceiveCoinsDialog;
+    class ReceiveCoinsPage;
 }
 
 QT_BEGIN_NAMESPACE
@@ -27,7 +27,7 @@ class QModelIndex;
 QT_END_NAMESPACE
 
 /** Dialog for requesting payment of paicoins */
-class ReceiveCoinsDialog : public PaicoinDialog
+class ReceiveCoinsPage : public QWidget
 {
     Q_OBJECT
 
@@ -39,8 +39,8 @@ public:
         MINIMUM_COLUMN_WIDTH = 130
     };
 
-    explicit ReceiveCoinsDialog(const PlatformStyle *platformStyle, QWidget *parent = nullptr);
-    ~ReceiveCoinsDialog();
+    explicit ReceiveCoinsPage(const PlatformStyle *platformStyle, QWidget *parent = nullptr);
+    ~ReceiveCoinsPage();
 
     void setModel(WalletModel *model);
 
@@ -53,7 +53,7 @@ protected:
     virtual void keyPressEvent(QKeyEvent *event);
 
 private:
-    Ui::ReceiveCoinsDialog *ui;
+    Ui::ReceiveCoinsPage *ui;
     GUIUtil::TableViewLastColumnResizingFixer *columnResizingFixer;
     WalletModel *model;
     QMenu *contextMenu;
@@ -77,4 +77,4 @@ private Q_SLOTS:
     void copyAmount();
 };
 
-#endif // PAICOIN_QT_RECEIVECOINSDIALOG_H
+#endif // PAICOIN_QT_RECEIVECOINSPAGE_H
