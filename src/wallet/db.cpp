@@ -437,7 +437,7 @@ CDB::CDB(CWalletDBWrapper& dbw, const char* pszMode, bool fFlushOnCloseIn) : pdb
             if (ret != 0) {
                 throw std::runtime_error(strprintf("CDB: Error %d, can't open database %s", ret, strFilename));
             }
-            CheckUniqueFileid(*env, strFilename, *pdb);
+            CheckUniqueFileid(*env, strFilename, *pdb_temp);
 
             pdb = pdb_temp.release();
             env->mapDb[strFilename] = pdb;
