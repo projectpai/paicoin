@@ -176,6 +176,7 @@ public:
     CMainParams(): CChainParams(fCoinbaseAddrs) {
         bool mineGenesisBlock = gArgs.IsArgSet("-genesisblocknbits") && !gArgs.IsArgSet("-testnet") && !gArgs.IsArgSet("-regtest");
         bool loadGenesisBlock = gArgs.IsArgSet("-loadgenesisblock") && !gArgs.IsArgSet("-testnet") && !gArgs.IsArgSet("-regtest");
+        bool testEnvironment = mineGenesisBlock || loadGenesisBlock;
         uint32_t genesisBlockNbits = static_cast<uint32_t>(strtoul(gArgs.GetArg("-genesisblocknbits", "").c_str(), NULL, 0));
         if (genesisBlockNbits == 0)
             genesisBlockNbits = MAINNET_GENESIS_BLOCK_NBITS;
@@ -207,7 +208,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
-        if (mineGenesisBlock || loadGenesisBlock)
+        if (testEnvironment)
             consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
         else
             consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000058dbc3b60ba2df18");
@@ -261,7 +262,7 @@ public:
         consensus.BIP34Hash = consensus.hashGenesisBlock;
         consensus.powLimit = (gDidMineGenesisBlock || gDidLoadGenesisBlock ? ArithToUint256(arith_uint256().SetCompact(genesis.nBits)) : MAINNET_CONSENSUS_POW_LIMIT);
 
-        if (!gDidMineGenesisBlock && !gDidLoadGenesisBlock)
+        if (!testEnvironment)
         {
             assert(consensus.hashGenesisBlock == MAINNET_CONSENSUS_HASH_GENESIS_BLOCK);
             assert(genesis.hashMerkleRoot == MAINNET_GENESIS_HASH_MERKLE_ROOT);
@@ -276,7 +277,7 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
 
-        if (!mineGenesisBlock)
+        if (!testEnvironment)
         {
             // Note that of those with the service bits flag, most only support a subset of possible options
             vSeeds.emplace_back("34.215.125.66", false);
@@ -297,7 +298,7 @@ public:
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
 
-        if (mineGenesisBlock)
+        if (testEnvironment)
         {
             checkpointData = (CCheckpointData) {
                 {
@@ -318,7 +319,7 @@ public:
             };
         }
 
-        if (mineGenesisBlock)
+        if (testEnvironment)
         {
             chainTxData = ChainTxData{
                 MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP,
@@ -352,6 +353,7 @@ public:
     CTestNetParams(): CChainParams(fCoinbaseAddrs) {
         bool mineGenesisBlock = gArgs.IsArgSet("-genesisblocknbits") && gArgs.IsArgSet("-testnet");
         bool loadGenesisBlock = gArgs.IsArgSet("-loadgenesisblock") && gArgs.IsArgSet("-testnet");
+        bool testEnvironment = mineGenesisBlock || loadGenesisBlock;
         uint32_t genesisBlockNbits = static_cast<uint32_t>(strtoul(gArgs.GetArg("-genesisblocknbits", "").c_str(), NULL, 0));
         if (genesisBlockNbits == 0)
             genesisBlockNbits = TESTNET_GENESIS_BLOCK_NBITS;
@@ -383,7 +385,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
-        if (mineGenesisBlock)
+        if (testEnvironment)
             consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
         else
             consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000c886e8450964");
@@ -432,7 +434,7 @@ public:
         consensus.BIP34Hash = consensus.hashGenesisBlock;
         consensus.powLimit = (gDidMineGenesisBlock || gDidLoadGenesisBlock ? ArithToUint256(arith_uint256().SetCompact(genesis.nBits)) : TESTNET_CONSENSUS_POW_LIMIT);
 
-        if (!gDidMineGenesisBlock && !gDidLoadGenesisBlock)
+        if (!testEnvironment)
         {
             assert(consensus.hashGenesisBlock == TESTNET_CONSENSUS_HASH_GENESIS_BLOCK);
             assert(genesis.hashMerkleRoot == TESTNET_GENESIS_HASH_MERKLE_ROOT);
@@ -447,7 +449,7 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
 
-        if (!mineGenesisBlock)
+        if (!testEnvironment)
         {
             // nodes with support for servicebits filtering should be at the top
             vSeeds.emplace_back("52.37.189.65", false);
@@ -469,7 +471,7 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
 
-        if (mineGenesisBlock)
+        if (testEnvironment)
         {
             checkpointData = (CCheckpointData) {
                 {
@@ -491,7 +493,7 @@ public:
             };
         }
 
-        if (mineGenesisBlock)
+        if (testEnvironment)
         {
             chainTxData = ChainTxData{
                 TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP,
@@ -525,6 +527,7 @@ public:
     CRegTestParams() {
         bool mineGenesisBlock = gArgs.IsArgSet("-genesisblocknbits") && gArgs.IsArgSet("-regtest");
         bool loadGenesisBlock = gArgs.IsArgSet("-loadgenesisblock") && gArgs.IsArgSet("-regtest");
+        bool testEnvironment = mineGenesisBlock || loadGenesisBlock;
         uint32_t genesisBlockNbits = static_cast<uint32_t>(strtoul(gArgs.GetArg("-genesisblocknbits", "").c_str(), NULL, 0));
         if (genesisBlockNbits == 0)
             genesisBlockNbits = REGTEST_GENESIS_BLOCK_NBITS;
@@ -628,7 +631,7 @@ public:
         base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xE3, 0xC5, 0x26};  // ptpu
         base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xE3, 0xC5, 0x2D};  // ptpv
 
-        if (mineGenesisBlock)
+        if (testEnvironment)
         {
             checkpointData = (CCheckpointData) {
                 {
