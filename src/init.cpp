@@ -328,7 +328,8 @@ std::string HelpMessage(HelpMessageMode mode)
     std::string strUsage = HelpMessageGroup(_("Options:"));
     strUsage += HelpMessageOpt("-?", _("Print this help message and exit"));
     strUsage += HelpMessageOpt("-version", _("Print version and exit"));
-    strUsage += HelpMessageOpt("-genesisblocknbits", _("Generate a new genesis block with the specified difficulty in compact format (e.g. 0x1d00ffff)"));
+    strUsage += HelpMessageOpt("-genesisblocknbits", _("Generate a new genesis block with the specified difficulty in compact format (e.g. 0x1d00ffff). If this block has to be used by other instances, use the -savegenesisblock flag to export the block to genesis.block file into the datadir, copy this file to the other instances and use -loadgenesisblock to load it when starting."));
+    strUsage += HelpMessageOpt("-loadgenesisblock", _("Loads the genesis block from the genesis.block file into the datadir"));
     strUsage += HelpMessageOpt("-savegenesisblock", _("Saves the current genesis block to the genesis.block file into the datadir"));
     strUsage += HelpMessageOpt("-alertnotify=<cmd>", _("Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)"));
     strUsage += HelpMessageOpt("-blocknotify=<cmd>", _("Execute command when the best block changes (%s in cmd is replaced by block hash)"));

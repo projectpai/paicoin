@@ -101,9 +101,11 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
 
 bool gDidMineGenesisBlock = false;
 bool gDidSaveGenesisBlock = false;
-uint32_t gMinedGenesisBlockNonce = 0;
+bool gDidLoadGenesisBlock = false;
+CBlock gMinedGenesisBlock;  // only valid if mined
+CBlock gLoadedGenesisBlock; // only valid if loaded from file
 
-CBlock MineGenesisBlock(uint32_t nTime, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const char* signature)
+static CBlock MineGenesisBlock(uint32_t nTime, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const char* signature)
 {
     CBlock genesis;
 
@@ -126,7 +128,7 @@ CBlock MineGenesisBlock(uint32_t nTime, uint32_t nBits, int32_t nVersion, const 
 }
 
 // save the genesis block to genesis.block file in datadir
-void SaveGenesisBlock(CBlock genesis)
+static void SaveGenesisBlock(CBlock genesis)
 {
     CDataStream ds(SER_NETWORK, PROTOCOL_VERSION);
     ds << genesis;
@@ -138,8 +140,24 @@ void SaveGenesisBlock(CBlock genesis)
     file.open(path.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
     file << gh;
     file.close();
+}
 
-    gDidSaveGenesisBlock = true;
+// laod the genesis block from the genesis.block file in datadir
+static bool LoadGenesisBlock(CBlock& genesis)
+{
+    fs::path path = GetDataDir();
+    path /= "genesis.block";
+
+    std::ifstream file;
+    file.open(path.c_str(), std::ios::in | std::ios::binary);
+    if (file.fail())
+        return false;
+
+    std::string gh;
+    file >> gh;
+    file.close();
+
+    return DecodeHexBlk(genesis, gh);
 }
 
 /**
@@ -157,6 +175,7 @@ class CMainParams : public CChainParams {
 public:
     CMainParams(): CChainParams(fCoinbaseAddrs) {
         bool mineGenesisBlock = gArgs.IsArgSet("-genesisblocknbits") && !gArgs.IsArgSet("-testnet") && !gArgs.IsArgSet("-regtest");
+        bool loadGenesisBlock = gArgs.IsArgSet("-loadgenesisblock") && !gArgs.IsArgSet("-testnet") && !gArgs.IsArgSet("-regtest");
         uint32_t genesisBlockNbits = static_cast<uint32_t>(strtoul(gArgs.GetArg("-genesisblocknbits", "").c_str(), NULL, 0));
         if (genesisBlockNbits == 0)
             genesisBlockNbits = MAINNET_GENESIS_BLOCK_NBITS;
@@ -166,7 +185,6 @@ public:
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
-        consensus.powLimit = (mineGenesisBlock ? ArithToUint256(arith_uint256().SetCompact(genesisBlockNbits)) : MAINNET_CONSENSUS_POW_LIMIT);
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = false;
@@ -189,7 +207,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
-        if (mineGenesisBlock)
+        if (mineGenesisBlock || loadGenesisBlock)
             consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000");
         else
             consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000058dbc3b60ba2df18");
@@ -210,32 +228,50 @@ public:
         nDefaultPort = 8567;
         nPruneAfterHeight = 100000;
 
-        if (mineGenesisBlock && !gDidMineGenesisBlock)
+        // Load
+        if (loadGenesisBlock)
         {
-            genesis = MineGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
-
-            gMinedGenesisBlockNonce = genesis.nNonce;
-            gDidMineGenesisBlock = true;
-
-            consensus.hashGenesisBlock = genesis.GetHash();
-            consensus.BIP34Hash = consensus.hashGenesisBlock;
-        }
-        else
-        {
-            genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, (gDidMineGenesisBlock ? gMinedGenesisBlockNonce : MAINNET_GENESIS_BLOCK_NONCE), MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
-
-            consensus.hashGenesisBlock = genesis.GetHash();
-            consensus.BIP34Hash = consensus.hashGenesisBlock;
-
-            if (!gDidMineGenesisBlock)
+            if (gDidLoadGenesisBlock)
+                genesis = gLoadedGenesisBlock;
+            else if (LoadGenesisBlock(gLoadedGenesisBlock))
             {
-                assert(consensus.hashGenesisBlock == MAINNET_CONSENSUS_HASH_GENESIS_BLOCK);
-                assert(genesis.hashMerkleRoot == MAINNET_GENESIS_HASH_MERKLE_ROOT);
+                genesis = gLoadedGenesisBlock;
+                gDidLoadGenesisBlock = true;
             }
+            else
+                genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, MAINNET_GENESIS_BLOCK_NONCE, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+        }
+        // Mine
+        else if (mineGenesisBlock)
+        {
+            if (gDidMineGenesisBlock)
+                genesis = gMinedGenesisBlock;
+            else
+            {
+                gMinedGenesisBlock = MineGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+                genesis = gMinedGenesisBlock;
+                gDidMineGenesisBlock = true;
+            }
+        }
+        // Use real
+        else
+            genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, MAINNET_GENESIS_BLOCK_NONCE, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+
+        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.BIP34Hash = consensus.hashGenesisBlock;
+        consensus.powLimit = (gDidMineGenesisBlock || gDidLoadGenesisBlock ? ArithToUint256(arith_uint256().SetCompact(genesis.nBits)) : MAINNET_CONSENSUS_POW_LIMIT);
+
+        if (!gDidMineGenesisBlock && !gDidLoadGenesisBlock)
+        {
+            assert(consensus.hashGenesisBlock == MAINNET_CONSENSUS_HASH_GENESIS_BLOCK);
+            assert(genesis.hashMerkleRoot == MAINNET_GENESIS_HASH_MERKLE_ROOT);
         }
 
         if (!gDidSaveGenesisBlock && gArgs.IsArgSet("-savegenesisblock") && !gArgs.IsArgSet("-testnet") && !gArgs.IsArgSet("-regtest"))
+        {
             SaveGenesisBlock(genesis);
+            gDidSaveGenesisBlock = true;
+        }
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -315,6 +351,7 @@ class CTestNetParams : public CChainParams {
 public:
     CTestNetParams(): CChainParams(fCoinbaseAddrs) {
         bool mineGenesisBlock = gArgs.IsArgSet("-genesisblocknbits") && gArgs.IsArgSet("-testnet");
+        bool loadGenesisBlock = gArgs.IsArgSet("-loadgenesisblock") && gArgs.IsArgSet("-testnet");
         uint32_t genesisBlockNbits = static_cast<uint32_t>(strtoul(gArgs.GetArg("-genesisblocknbits", "").c_str(), NULL, 0));
         if (genesisBlockNbits == 0)
             genesisBlockNbits = TESTNET_GENESIS_BLOCK_NBITS;
@@ -324,7 +361,6 @@ public:
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
-        consensus.powLimit = (mineGenesisBlock ? ArithToUint256(arith_uint256().SetCompact(genesisBlockNbits)) : TESTNET_CONSENSUS_POW_LIMIT);
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
@@ -363,32 +399,50 @@ public:
         nDefaultPort = 18567;
         nPruneAfterHeight = 1000;
 
-        if (mineGenesisBlock && !gDidMineGenesisBlock)
+        // Load
+        if (loadGenesisBlock)
         {
-            genesis = MineGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
-
-            gMinedGenesisBlockNonce = genesis.nNonce;
-            gDidMineGenesisBlock = true;
-
-            consensus.hashGenesisBlock = genesis.GetHash();
-            consensus.BIP34Hash = consensus.hashGenesisBlock;
-        }
-        else
-        {
-            genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, (gDidMineGenesisBlock ? gMinedGenesisBlockNonce : TESTNET_GENESIS_BLOCK_NONCE), TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
-
-            consensus.hashGenesisBlock = genesis.GetHash();
-            consensus.BIP34Hash = consensus.hashGenesisBlock;
-
-            if (!gDidMineGenesisBlock)
+            if (gDidLoadGenesisBlock)
+                genesis = gLoadedGenesisBlock;
+            else if (LoadGenesisBlock(gLoadedGenesisBlock))
             {
-                assert(consensus.hashGenesisBlock == TESTNET_CONSENSUS_HASH_GENESIS_BLOCK);
-                assert(genesis.hashMerkleRoot == TESTNET_GENESIS_HASH_MERKLE_ROOT);
+                genesis = gLoadedGenesisBlock;
+                gDidLoadGenesisBlock = true;
             }
+            else
+                genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, TESTNET_GENESIS_BLOCK_NONCE, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+        }
+        // Mine
+        else if (mineGenesisBlock)
+        {
+            if (gDidMineGenesisBlock)
+                genesis = gMinedGenesisBlock;
+            else
+            {
+                gMinedGenesisBlock = MineGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+                genesis = gMinedGenesisBlock;
+                gDidMineGenesisBlock = true;
+            }
+        }
+        // Use real
+        else
+            genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, TESTNET_GENESIS_BLOCK_NONCE, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+
+        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.BIP34Hash = consensus.hashGenesisBlock;
+        consensus.powLimit = (gDidMineGenesisBlock || gDidLoadGenesisBlock ? ArithToUint256(arith_uint256().SetCompact(genesis.nBits)) : TESTNET_CONSENSUS_POW_LIMIT);
+
+        if (!gDidMineGenesisBlock && !gDidLoadGenesisBlock)
+        {
+            assert(consensus.hashGenesisBlock == TESTNET_CONSENSUS_HASH_GENESIS_BLOCK);
+            assert(genesis.hashMerkleRoot == TESTNET_GENESIS_HASH_MERKLE_ROOT);
         }
 
         if (!gDidSaveGenesisBlock && gArgs.IsArgSet("-savegenesisblock") && gArgs.IsArgSet("-testnet"))
+        {
             SaveGenesisBlock(genesis);
+            gDidSaveGenesisBlock = true;
+        }
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -470,6 +524,7 @@ class CRegTestParams : public CChainParams {
 public:
     CRegTestParams() {
         bool mineGenesisBlock = gArgs.IsArgSet("-genesisblocknbits") && gArgs.IsArgSet("-regtest");
+        bool loadGenesisBlock = gArgs.IsArgSet("-loadgenesisblock") && gArgs.IsArgSet("-regtest");
         uint32_t genesisBlockNbits = static_cast<uint32_t>(strtoul(gArgs.GetArg("-genesisblocknbits", "").c_str(), NULL, 0));
         if (genesisBlockNbits == 0)
             genesisBlockNbits = REGTEST_GENESIS_BLOCK_NBITS;
@@ -481,7 +536,6 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
-        consensus.powLimit = (mineGenesisBlock ? ArithToUint256(arith_uint256().SetCompact(genesisBlockNbits)) : REGTEST_CONSENSUS_POW_LIMIT);
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
@@ -515,36 +569,50 @@ public:
         nDefaultPort = 19567;
         nPruneAfterHeight = 1000;
 
-        if (mineGenesisBlock && !gDidMineGenesisBlock)
+        // Load
+        if (loadGenesisBlock)
         {
-            genesis = MineGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
-
-            gMinedGenesisBlockNonce = genesis.nNonce;
-            gDidMineGenesisBlock = true;
-
-            consensus.hashGenesisBlock = genesis.GetHash();
-            consensus.BIP34Hash = consensus.hashGenesisBlock;
-        }
-        else
-        {
-            // TODO: Update the values below with the nonce from the above mining for the genesis block
-            //       This should only be done once, after the mining and prior to production release
-            genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, (gDidMineGenesisBlock ? gMinedGenesisBlockNonce : REGTEST_GENESIS_BLOCK_NONCE), REGTEST_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
-
-            consensus.hashGenesisBlock = genesis.GetHash();
-            consensus.BIP34Hash = consensus.hashGenesisBlock;
-
-            // TODO: Update the values below with the data from the above mining for the genesis block
-            //       This should only be done once, after the mining and prior to production release
-            if (!gDidMineGenesisBlock)
+            if (gDidLoadGenesisBlock)
+                genesis = gLoadedGenesisBlock;
+            else if (LoadGenesisBlock(gLoadedGenesisBlock))
             {
-                assert(consensus.hashGenesisBlock == REGTEST_CONSENSUS_HASH_GENESIS_BLOCK);
-                assert(genesis.hashMerkleRoot == REGTEST_GENESIS_HASH_MERKLE_ROOT);
+                genesis = gLoadedGenesisBlock;
+                gDidLoadGenesisBlock = true;
             }
+            else
+                genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, REGTEST_GENESIS_BLOCK_NONCE, REGTEST_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
+        }
+        // Mine
+        else if (mineGenesisBlock)
+        {
+            if (gDidMineGenesisBlock)
+                genesis = gMinedGenesisBlock;
+            else
+            {
+                gMinedGenesisBlock = MineGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
+                genesis = gMinedGenesisBlock;
+                gDidMineGenesisBlock = true;
+            }
+        }
+        // Use real
+        else
+            genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, REGTEST_GENESIS_BLOCK_NONCE, REGTEST_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
+
+        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.BIP34Hash = consensus.hashGenesisBlock;
+        consensus.powLimit = (gDidMineGenesisBlock || gDidLoadGenesisBlock ? ArithToUint256(arith_uint256().SetCompact(genesis.nBits)) : REGTEST_CONSENSUS_POW_LIMIT);
+
+        if (!gDidMineGenesisBlock && !gDidLoadGenesisBlock)
+        {
+            assert(consensus.hashGenesisBlock == REGTEST_CONSENSUS_HASH_GENESIS_BLOCK);
+            assert(genesis.hashMerkleRoot == REGTEST_GENESIS_HASH_MERKLE_ROOT);
         }
 
         if (!gDidSaveGenesisBlock && gArgs.IsArgSet("-savegenesisblock") && gArgs.IsArgSet("-regtest"))
+        {
             SaveGenesisBlock(genesis);
+            gDidSaveGenesisBlock = true;
+        }
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
