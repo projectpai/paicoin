@@ -11,11 +11,14 @@
 #include "utilstrencodings.h"
 
 #include <assert.h>
-
 #include <stdlib.h>
+#include <iostream>
 
 #include "chainparamsseeds.h"
 #include "coinbase_addresses.h"
+#include "streams.h"
+#include "core_io.h"
+#include "arith_uint256.h"
 
 #define GENESIS_BLOCK_TIMESTAMP_STRING  "09/06/2017 - Create your own avatar twin that talks like you"
 #define GENESIS_BLOCK_REWARD            1470000000
@@ -49,8 +52,6 @@
 #define REGTEST_GENESIS_BLOCK_NONCE          0
 #define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x47b736c948f15d787327c84bb3ad30a064e67c79154c7608da4b062c1adfe7bb")
 #define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0xcaed1b804a2aa916d899cb398aed398fa9316d972f615903aafe06d10bedca44")
-
-#include "arith_uint256.h"
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
@@ -98,6 +99,10 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
     return false;
 }
 
+bool gDidMineGenesisBlock = false;
+bool gDidSaveGenesisBlock = false;
+uint32_t gMinedGenesisBlockNonce = 0;
+
 CBlock MineGenesisBlock(uint32_t nTime, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const char* signature)
 {
     CBlock genesis;
@@ -120,8 +125,22 @@ CBlock MineGenesisBlock(uint32_t nTime, uint32_t nBits, int32_t nVersion, const 
     return genesis;
 }
 
-bool gDidMineGenesisBlock = false;
-uint32_t gMinedGenesisBlockNonce = 0;
+// save the genesis block to genesis.block file in datadir
+void SaveGenesisBlock(CBlock genesis)
+{
+    CDataStream ds(SER_NETWORK, PROTOCOL_VERSION);
+    ds << genesis;
+    std::string gh = HexStr(ds.begin(), ds.end());
+
+    std::ofstream file;
+    fs::path path = GetDataDir();
+    path /= "genesis.block";
+    file.open(path.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+    file << gh;
+    file.close();
+
+    gDidSaveGenesisBlock = true;
+}
 
 /**
  * Main network
@@ -214,6 +233,9 @@ public:
                 assert(genesis.hashMerkleRoot == MAINNET_GENESIS_HASH_MERKLE_ROOT);
             }
         }
+
+        if (!gDidSaveGenesisBlock && gArgs.IsArgSet("-savegenesisblock") && !gArgs.IsArgSet("-testnet") && !gArgs.IsArgSet("-regtest"))
+            SaveGenesisBlock(genesis);
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -364,6 +386,9 @@ public:
                 assert(genesis.hashMerkleRoot == TESTNET_GENESIS_HASH_MERKLE_ROOT);
             }
         }
+
+        if (!gDidSaveGenesisBlock && gArgs.IsArgSet("-savegenesisblock") && gArgs.IsArgSet("-testnet"))
+            SaveGenesisBlock(genesis);
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -517,6 +542,9 @@ public:
                 assert(genesis.hashMerkleRoot == REGTEST_GENESIS_HASH_MERKLE_ROOT);
             }
         }
+
+        if (!gDidSaveGenesisBlock && gArgs.IsArgSet("-savegenesisblock") && gArgs.IsArgSet("-regtest"))
+            SaveGenesisBlock(genesis);
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.

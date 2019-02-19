@@ -329,6 +329,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-?", _("Print this help message and exit"));
     strUsage += HelpMessageOpt("-version", _("Print version and exit"));
     strUsage += HelpMessageOpt("-genesisblocknbits", _("Generate a new genesis block with the specified difficulty in compact format (e.g. 0x1d00ffff)"));
+    strUsage += HelpMessageOpt("-savegenesisblock", _("Saves the current genesis block to the genesis.block file into the datadir"));
     strUsage += HelpMessageOpt("-alertnotify=<cmd>", _("Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)"));
     strUsage += HelpMessageOpt("-blocknotify=<cmd>", _("Execute command when the best block changes (%s in cmd is replaced by block hash)"));
     if (showDebug)
