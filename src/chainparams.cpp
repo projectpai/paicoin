@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <iostream>
+#include <ctime>
 
 #include "chainparamsseeds.h"
 #include "coinbase_addresses.h"
@@ -229,6 +230,8 @@ public:
         nDefaultPort = 8567;
         nPruneAfterHeight = 100000;
 
+        uint32_t currentTimestamp = static_cast<uint32_t>(std::time(nullptr));
+
         // Load
         if (loadGenesisBlock)
         {
@@ -249,7 +252,7 @@ public:
                 genesis = gMinedGenesisBlock;
             else
             {
-                gMinedGenesisBlock = MineGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+                gMinedGenesisBlock = MineGenesisBlock(currentTimestamp, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
                 genesis = gMinedGenesisBlock;
                 gDidMineGenesisBlock = true;
             }
@@ -322,7 +325,7 @@ public:
         if (testEnvironment)
         {
             chainTxData = ChainTxData{
-                MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP,
+                currentTimestamp,
                 1,
                 0.00368
             };
@@ -401,6 +404,8 @@ public:
         nDefaultPort = 18567;
         nPruneAfterHeight = 1000;
 
+        uint32_t currentTimestamp = static_cast<uint32_t>(std::time(nullptr));
+
         // Load
         if (loadGenesisBlock)
         {
@@ -421,7 +426,7 @@ public:
                 genesis = gMinedGenesisBlock;
             else
             {
-                gMinedGenesisBlock = MineGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+                gMinedGenesisBlock = MineGenesisBlock(currentTimestamp, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
                 genesis = gMinedGenesisBlock;
                 gDidMineGenesisBlock = true;
             }
@@ -496,7 +501,7 @@ public:
         if (testEnvironment)
         {
             chainTxData = ChainTxData{
-                TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP,
+                currentTimestamp,
                 0,
                 0.00293
             };
@@ -572,6 +577,8 @@ public:
         nDefaultPort = 19567;
         nPruneAfterHeight = 1000;
 
+        uint32_t currentTimestamp = static_cast<uint32_t>(std::time(nullptr));
+
         // Load
         if (loadGenesisBlock)
         {
@@ -592,7 +599,7 @@ public:
                 genesis = gMinedGenesisBlock;
             else
             {
-                gMinedGenesisBlock = MineGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
+                gMinedGenesisBlock = MineGenesisBlock(currentTimestamp, genesisBlockNbits, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
                 genesis = gMinedGenesisBlock;
                 gDidMineGenesisBlock = true;
             }
@@ -649,7 +656,7 @@ public:
         }
 
         chainTxData = ChainTxData{
-            REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP,
+            currentTimestamp,
             0,
             0
         };
