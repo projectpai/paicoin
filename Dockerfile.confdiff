@@ -1,0 +1,45 @@
+
+# A configurable difficulty PAIcoin instance for testing
+# Generates a PAIcoin node with a blockchain having the genesis block single threaded CPU mined with the "genesisdiff" difficulty (Nbits format).
+
+FROM ubuntu:18.04
+
+# Folders
+RUN mkdir paicoin && \
+    mkdir paicoin/src && \
+    mkdir paicoin/database && \
+    mkdir paicoin/database/1 && \
+    mkdir paicoin/database/2
+
+# Dependencies
+RUN apt-get update && \
+    apt-get -y install apt-utils curl && \
+    apt-get update && \
+    apt-get -y install git \
+    build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 \
+    libssl-dev libevent-dev \
+    libboost-all-dev \
+    libminiupnpc-dev \
+    libzmq3-dev \
+    software-properties-common && \
+    add-apt-repository -y ppa:bitcoin/bitcoin && \
+    apt-get update && \
+    apt-get -y install libdb4.8-dev libdb4.8++-dev
+
+# Source code
+COPY . /paicoin/src/
+
+# Compilation
+WORKDIR /paicoin/src/
+RUN ./autogen.sh && \
+    ./configure --without-gui && \
+    make -j 2
+
+# Instances
+WORKDIR /paicoin/src/src/
+CMD ./paicoind -datadir=../../database/1 -daemon -server -port=8567 -rpcuser=user -rpcpassword=password -rpcbind=127.0.0.1 -rpcport=8566 -genesisblocknbits=${GENESIS_DIFF} -savegenesisblock && \
+    cp ../../database/1/genesis.block ../../database/2/ && \
+   ./paicoind -datadir=../../database/2 -daemon -server -port=8568 -rpcuser=user -rpcpassword=password -rpcbind=127.0.0.1 -rpcport=8565 -addnode=127.0.0.1:8567 -loadgenesisblock && \
+   tail -f ../../database/1/debug.log
+
+EXPOSE 8566
