@@ -1,39 +1,39 @@
-## Hashrate attack duration simulation
-## Author: Sebastian Rusu <sebastian.rusu@upandrunningsoftware.com>
-## Created: 2019-02-26
-## Copyright (C) 2019 ObEN, Inc.
+%% Hashrate attack duration simulation
+%% Author: Sebastian Rusu <sebastian.rusu@upandrunningsoftware.com>
+%% Created: 2019-02-26
+%% Copyright (C) 2019 ObEN, Inc.
 
-# Settling time evolution on hashrate changes
-#
-#      hinit * tideal * np * (1 - dr^n)
-# T = ----------------------------------
-#            hattack * (1 - dr)
-#
-# where,
-#
-# dr = drmax^sign(hattack-hinit)
-#
-# assuming that hattack != hinit.
+% Settling time evolution on hashrate changes
+%
+%      hinit * tideal * np * (1 - dr^n)
+% T = ----------------------------------
+%            hattack * (1 - dr)
+%
+% where,
+%
+% dr = drmax^sign(hattack-hinit)
+%
+% assuming that hattack != hinit.
 
 clear all; close all;
 
-#####################
-# model configuration
+%%%%%%%%%%%%%%%%%%%%%
+% model configuration
 
-tideal = 10 * 60;                 # ideal block time (s)
-np = 2016;                        # number of blocks in an adjustment interval
-drmax = 4;                        # maximum ratio for the adjustment of the difficulty
-global hinit = 335 * 10^12;       # initial hashrate (H/s)
-hr = 100;                         # attack hashrate ratio (1 - no attack)
-npts = 400;                       # number of points in the simulation
-dinit = hinit * (tideal / 2^32);  # initial difficulty
-global tsim = 1:tideal;           # block time simulation settings (s)
-global npsim = 1:50:2016;         # adjustment interval simulation settings
+tideal = 10 * 60;                 % ideal block time (s)
+np = 2016;                        % number of blocks in an adjustment interval
+drmax = 4;                        % maximum ratio for the adjustment of the difficulty
+global hinit = 335 * 10^12;       % initial hashrate (H/s)
+hr = 100;                         % attack hashrate ratio (1 - no attack)
+npts = 400;                       % number of points in the simulation
+dinit = hinit * (tideal / 2^32);  % initial difficulty
+global tsim = 1:tideal;           % block time simulation settings (s)
+global npsim = 1:50:2016;         % adjustment interval simulation settings
 
 figure(1);
 
-#####################
-# Settling time under majority attacks with bigger hashrates (standard algorithm)
+%%%%%%%%%%%%%%%%%%%%%
+% Settling time under majority attacks with bigger hashrates (standard algorithm)
 
 h = hinit+1 : (hr*hinit-(hinit+1)) / npts : hr*hinit;
 d = h * (tideal / (2^32));
@@ -58,8 +58,8 @@ ylabel("Time (hours)");
 grid on;
 hold off;
 
-#####################
-# Settling time under majority attacks with lower hashrates (standard algorithm)
+%%%%%%%%%%%%%%%%%%%%%
+% Settling time under majority attacks with lower hashrates (standard algorithm)
 
 h = (1/hr)*hinit : ((hinit-1)-(1/hr)*hinit) / npts : hinit-1;
 d = h * (tideal / (2^32));
@@ -86,8 +86,8 @@ hold off;
 
 figure(2);
 
-#####################
-# Difficulty adjustment interval influence on the settling time in majority attacks
+%%%%%%%%%%%%%%%%%%%%%
+% Difficulty adjustment interval influence on the settling time in majority attacks
 
 h = hr*hinit;
 d = h * (tideal / (2^32));
@@ -108,8 +108,8 @@ ylabel("Time (hours)");
 grid on;
 hold off;
 
-#####################
-# Difficulty adjustment ratio influence on the settling time in majority attacks
+%%%%%%%%%%%%%%%%%%%%%
+% Difficulty adjustment ratio influence on the settling time in majority attacks
 
 h = hr*hinit;
 d = h * (tideal / (2^32));
@@ -131,8 +131,8 @@ ylabel("Time (hours)");
 grid on;
 hold off;
 
-#####################
-# Block time influence on the settling time in majority attacks
+%%%%%%%%%%%%%%%%%%%%%
+% Block time influence on the settling time in majority attacks
 
 h = hr*hinit;
 d = h * (tsim / (2^32));
@@ -155,8 +155,8 @@ hold off;
 
 figure(3);
 
-#####################
-# Block time influence on the settling time in majority attacks with bigger hashrates
+%%%%%%%%%%%%%%%%%%%%%
+% Block time influence on the settling time in majority attacks with bigger hashrates
 
 h = hinit+1 : (hr*hinit-(hinit+1)) / npts : hr*hinit;
 dr = drmax;
@@ -188,8 +188,8 @@ zlabel("Time (hours)");
 grid on;
 hold off;
 
-#####################
-# Block time influence on the settling time in majority attacks with lower hashrates
+%%%%%%%%%%%%%%%%%%%%%
+% Block time influence on the settling time in majority attacks with lower hashrates
 
 h = (1/hr)*hinit : ((hinit-1)-(1/hr)*hinit) / npts : hinit-1;
 dr = 1/drmax;
@@ -223,8 +223,8 @@ hold off;
 
 figure(4);
 
-#####################
-# Difficulty adjustment interval influence on the settling time in majority attacks with bigger hashrates
+%%%%%%%%%%%%%%%%%%%%%
+% Difficulty adjustment interval influence on the settling time in majority attacks with bigger hashrates
 
 h = hinit+1 : (hr*hinit-(hinit+1)) / npts : hr*hinit;
 d = h * (tideal / (2^32));
@@ -253,8 +253,8 @@ zlabel("Time (hours)");
 grid on;
 hold off;
 
-#####################
-# Difficulty adjustment interval influence on the settling time in majority attacks with lower hashrates
+%%%%%%%%%%%%%%%%%%%%%
+% Difficulty adjustment interval influence on the settling time in majority attacks with lower hashrates
 
 h = (1/hr)*hinit : ((hinit-1)-(1/hr)*hinit) / npts : hinit-1;
 d = h * (tideal / (2^32));
@@ -285,8 +285,8 @@ hold off;
 
 figure(5);
 
-#####################
-# Difficulty adjustment ratio influence on the settling time in majority attacks with bigger hashrates
+%%%%%%%%%%%%%%%%%%%%%
+% Difficulty adjustment ratio influence on the settling time in majority attacks with bigger hashrates
 
 h = hinit+1 : (hr*hinit-(hinit+1)) / npts : hr*hinit;
 d = h * (tideal / (2^32));
@@ -315,8 +315,8 @@ zlabel("Time (hours)");
 grid on;
 hold off;
 
-#####################
-# Difficulty adjustment ratio influence on the settling time in majority attacks with lower hashrates
+%%%%%%%%%%%%%%%%%%%%%
+% Difficulty adjustment ratio influence on the settling time in majority attacks with lower hashrates
 
 h = (1/hr)*hinit : ((hinit-1)-(1/hr)*hinit) / npts : hinit-1;
 d = h * (tideal / (2^32));
@@ -347,8 +347,8 @@ hold off;
 
 figure(6);
 
-#####################
-# Settling time dependence on adjustment interval and ratio under majority attack with bigger hashrate
+%%%%%%%%%%%%%%%%%%%%%
+% Settling time dependence on adjustment interval and ratio under majority attack with bigger hashrate
 
 global hdyn = (1/hr)*hinit : ((hr*hinit)-(1/hr)*hinit) / npts : hr*hinit;
 drmaxmax = 50;
@@ -392,7 +392,7 @@ zlabel("Time (hours)");
 grid on;
 hold off;
 
-# Redraw settling time dependence on difficulty adjustment interval and ratio under a different attack hashrate
+% Redraw settling time dependence on difficulty adjustment interval and ratio under a different attack hashrate
 function redrawstvsaiar(h, event)
   global hinit;
   global hdyn;
