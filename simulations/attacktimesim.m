@@ -25,9 +25,10 @@ np = 2016;                        # number of blocks in an adjustment interval
 drmax = 4;                        # maximum ratio for the adjustment of the difficulty
 global hinit = 335 * 10^12;       # initial hashrate (H/s)
 hr = 100;                         # attack hashrate ratio (1 - no attack)
-npts = 100;                       # number of points in the simulation
+npts = 400;                       # number of points in the simulation
 dinit = hinit * (tideal / 2^32);  # initial difficulty
-global npsim = 1:50:2016;         # adjustment interval settings
+global tsim = 1:tideal;           # block time simulation settings (s)
+global npsim = 1:50:2016;         # adjustment interval simulation settings
 
 figure(1);
 
@@ -98,7 +99,7 @@ for i = 1:length(npsim),
   T(i) = (hinit * tideal * npsim(i) * (1 - dr^n)) / (h * (1-dr));
 endfor
 
-subplot(1,2,1);
+subplot(1,3,1);
 plot(npsim, T / (60*60));
 hold on;
 title("Difficulty adjustment interval influence on the settling time in majority attacks");
@@ -121,7 +122,7 @@ for i = 1:length(dr),
   T(i) = (hinit * tideal * np * (1 - dr(i)^n)) / (h * (1-dr(i)));
 endfor
 
-subplot(1,2,2);
+subplot(1,3,2);
 plot(dr, T / (60*60));
 hold on;
 title("Difficulty adjustment ratio influence on the settling time in majority attacks");
@@ -130,7 +131,97 @@ ylabel("Time (hours)");
 grid on;
 hold off;
 
+#####################
+# Block time influence on the settling time in majority attacks
+
+h = hr*hinit;
+d = h * (tsim / (2^32));
+dr = drmax;
+T = [];
+
+for i = 1:length(tsim),
+  n = gpexp(dinit, dr, d(i));
+  T(i) = (hinit * tsim(i) * np * (1 - dr^n)) / (h * (1-dr));
+endfor
+
+subplot(1,3,3);
+plot(tsim, T / (60*60));
+hold on;
+title("Block time influence on the settling time in majority attacks");
+xlabel("Block time (s)");
+ylabel("Time (hours)");
+grid on;
+hold off;
+
 figure(3);
+
+#####################
+# Block time influence on the settling time in majority attacks with bigger hashrates
+
+h = hinit+1 : (hr*hinit-(hinit+1)) / npts : hr*hinit;
+dr = drmax;
+T = [];
+
+for i = 1:length(h),
+    for j = 1:length(tsim),
+      d = h(i) * (tsim(j) / (2^32));
+      
+      n = gpexp(dinit, dr, d);
+      
+      if n != -1,
+        T(i,j) = (hinit * tsim(j) * np * (1 - dr^n)) / (h(i) * (1-dr));
+      elseif (i == 1) || (j == 1),
+        T(i,j) = 0;
+      else
+        T(i,j) = T(i,j-1);
+      endif
+    endfor
+endfor
+
+subplot(1,2,1);
+mesh(tsim, h / hinit, T / (60*60));
+hold on;
+title("Block time influence on the settling time in majority attacks with bigger hashrates");
+xlabel("Block time (s)");
+ylabel("Attack relative hashrate");
+zlabel("Time (hours)");
+grid on;
+hold off;
+
+#####################
+# Block time influence on the settling time in majority attacks with lower hashrates
+
+h = (1/hr)*hinit : ((hinit-1)-(1/hr)*hinit) / npts : hinit-1;
+dr = 1/drmax;
+T = [];
+
+for i = 1:length(h),
+    for j = 1:length(tsim),
+      d = h(i) * (tsim(j) / (2^32));
+      
+      n = gpexp(dinit, dr, d);
+      
+      if n != -1,
+        T(i,j) = (hinit * tsim(j) * np * (1 - dr^n)) / (h(i) * (1-dr));
+      elseif (i == 1) || (j == 1),
+        T(i,j) = 0;
+      else
+        T(i,j) = T(i,j-1);
+      endif
+    endfor
+endfor
+
+subplot(1,2,2);
+mesh(tsim, h / hinit, T / (60*60));
+hold on;
+title("Block time influence on the settling time in majority attacks with lower hashrates");
+xlabel("Block time (s)");
+ylabel("Attack relative hashrate");
+zlabel("Time (hours)");
+grid on;
+hold off;
+
+figure(4);
 
 #####################
 # Difficulty adjustment interval influence on the settling time in majority attacks with bigger hashrates
@@ -148,7 +239,7 @@ for i = 1:length(h),
       if n != -1,
         T(i,j) = (hinit * tideal * npsim(j) * (1 - dr^n)) / (h(i) * (1-dr));
       else
-       T(i,j) = T(i,j-1);
+        T(i,j) = T(i,j-1);
       endif
     endfor
 endfor
@@ -179,7 +270,7 @@ for i = 1:length(h),
       if n != -1,
         T(i,j) = (hinit * tideal * npsim(j) * (1 - dr^n)) / (h(i) * (1-dr));
       else
-       T(i,j) = T(i,j-1);
+        T(i,j) = T(i,j-1);
       endif
     endfor
 endfor
@@ -194,7 +285,7 @@ zlabel("Time (hours)");
 grid on;
 hold off;
 
-figure(4);
+figure(5);
 
 #####################
 # Difficulty adjustment ratio influence on the settling time in majority attacks with bigger hashrates
@@ -256,7 +347,7 @@ zlabel("Time (hours)");
 grid on;
 hold off;
 
-figure(5);
+figure(6);
 
 #####################
 # Settling time dependence on adjustment interval and ratio under majority attack with bigger hashrate
@@ -314,7 +405,7 @@ function redrawstvsaiar(h, event)
     return;
   endif
 
-  figure(5);
+  figure(6);
   mesh(drdyn(k,:), npsim, reshape(Tdyn(k,:,:), [size(Tdyn)(2), size(Tdyn)(3)]) / (60*60));
   hold on;
   title(sprintf("Settling time dependence on adjustment interval and ratio under majority attack with relative hashrate %f", hrset));
