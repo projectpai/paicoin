@@ -229,7 +229,6 @@ figure(4);
 h = hinit+1 : (hr*hinit-(hinit+1)) / npts : hr*hinit;
 d = h * (tideal / (2^32));
 dr = drmax;
-npsim = 1:50:2016;
 T = [];
 
 for i = 1:length(h),
@@ -260,7 +259,6 @@ hold off;
 h = (1/hr)*hinit : ((hinit-1)-(1/hr)*hinit) / npts : hinit-1;
 d = h * (tideal / (2^32));
 dr = 1/drmax;
-npsim = 1:50:2016;
 T = [];
 
 for i = 1:length(h),
@@ -353,34 +351,41 @@ figure(6);
 # Settling time dependence on adjustment interval and ratio under majority attack with bigger hashrate
 
 global hdyn = (1/hr)*hinit : ((hr*hinit)-(1/hr)*hinit) / npts : hr*hinit;
-ddyn = hdyn * (tideal / (2^32));
 drmaxmax = 50;
-global npsim = 1:50:2016;
 global Tdyn = [];
 global drdyn = [];
 
-for k=1:length(hdyn),
-  if hdyn(k) >= hinit,
-    drdyn(k,1:npts+1) = drmax : (drmaxmax-1) * drmax / npts : drmaxmax*drmax;
-  else
-    drdyn(k,1:npts+1) = 1/(drmaxmax*drmax) : (1/drmax-1/(drmaxmax*drmax)) / npts : 1/drmax;
-  endif
+for l = 1:length(tsim),
+  ddyn(l,1:length(hdyn)) = hdyn * (tsim(l) / (2^32));
   
-  for i = 1:length(npsim),
-      for j = 1:length(drdyn(k,:)),
-        n = gpexp(dinit, drdyn(k,j), ddyn(k));
-        if n != -1,
-          Tdyn(k,i,j) = (hinit * tideal * npsim(i) * (1 - drdyn(k,j)^n)) / (hdyn(k) * (1-drdyn(k,j)));
-        else
-          Tdyn(k,i,j) = Tdyn(k,i,j-1);
-        endif
-      endfor
+  for k=1:length(hdyn),
+    if hdyn(k) >= hinit,
+      drdyn(k,1:npts+1) = drmax : (drmaxmax-1) * drmax / npts : drmaxmax*drmax;
+    else
+      drdyn(k,1:npts+1) = 1/(drmaxmax*drmax) : (1/drmax-1/(drmaxmax*drmax)) / npts : 1/drmax;
+    endif
+    
+    for i = 1:length(npsim),
+        for j = 1:length(drdyn(k,:)),
+          n = gpexp(dinit, drdyn(k,j), ddyn(l,k));
+          if n != -1,
+            Tdyn(l,k,i,j) = (hinit * tsim(l) * npsim(i) * (1 - drdyn(k,j)^n)) / (hdyn(k) * (1-drdyn(k,j)));
+          elseif (l == 1) || (k == 1) || (i == 1) || (j == 1),
+            Tdyn(l,k,i,j) = 0;
+          else
+            Tdyn(l,k,i,j) = Tdyn(l,k,i,j-1);
+          endif
+        endfor
+    endfor
   endfor
 endfor
 
-mesh(drdyn(1,:), npsim, reshape(Tdyn(1,:,:), [size(Tdyn)(2) ,size(Tdyn)(3)]) / (60*60));
+global hrset = hdyn(length(hdyn)) / hinit;
+global tset = tsim(length(tsim));
+
+mesh(drdyn(length(hdyn),:), npsim, reshape(Tdyn(length(tsim),length(hdyn),:,:), [size(Tdyn)(3) ,size(Tdyn)(4)]) / (60*60));
 hold on;
-title(sprintf("Settling time dependence on adjustment interval and ratio under majority attack with relative hashrate %f", hdyn(k) / hinit));
+title(sprintf("Settling time dependence on adjustment interval and ratio under majority attack with relative hashrate %.2f and blocktime %d", hrset, tset));
 xlabel("Adjustment ratio");
 ylabel("No. of blocks in adjustment interval");
 zlabel("Time (hours)");
@@ -391,24 +396,35 @@ hold off;
 function redrawstvsaiar(h, event)
   global hinit;
   global hdyn;
-  global npsim
+  global hrset;
+  global npsim;
+  global tsim;
+  global tset;
   global drdyn;
   global Tdyn;
 
-  hrset = get (h, 'value');
+  if get(h, 'tag') == 'rh',
+    hrset = get(h, 'value');
+  endif
+  
+  if get(h, 'tag') == 'bt',
+    tset = get(h, 'value');
+  endif
   
   k = 1;
   while ((k < length(hdyn)) && (hrset * hinit > hdyn(k))),
     k = k + 1;
   endwhile
-  if k == length(hdyn),
-    return;
-  endif
+  
+  l = 1;
+  while ((l < length(tsim)) && (tset > tsim(l))),
+    l = l + 1;
+  endwhile
 
   figure(6);
-  mesh(drdyn(k,:), npsim, reshape(Tdyn(k,:,:), [size(Tdyn)(2), size(Tdyn)(3)]) / (60*60));
+  mesh(drdyn(k,:), npsim, reshape(Tdyn(l,k,:,:), [size(Tdyn)(3), size(Tdyn)(4)]) / (60*60));
   hold on;
-  title(sprintf("Settling time dependence on adjustment interval and ratio under majority attack with relative hashrate %f", hrset));
+  title(sprintf("Settling time dependence on adjustment interval and ratio under majority attack with relative hashrate %.2f and blocktime %d", hrset, tset));
   xlabel("Adjustment ratio");
   ylabel("No. of blocks in adjustment interval");
   zlabel("Time (hours)");
@@ -419,9 +435,23 @@ end
 hslider = uicontrol (
   'style', 'slider',
   'Units', 'normalized',
-  'position', [0.1, 0.05, 0.8, 0.1],
+  'position', [0.1, 0.01, 0.8, 0.1],
   'min', (1/hr),
   'max', hr,
-  'value', 1,
+  'value', hr,
+  'string', 'Relative hashrate',
+  'tag', 'rh',
+  'callback', {@redrawstvsaiar}
+);
+
+hslider = uicontrol (
+  'style', 'slider',
+  'Units', 'normalized',
+  'position', [0.1, 0.05, 0.8, 0.1],
+  'min', min(tsim),
+  'max', max(tsim),
+  'value', max(tsim),
+  'string', 'Block Time (s)',
+  'tag', 'bt',
   'callback', {@redrawstvsaiar}
 );
