@@ -15,6 +15,7 @@ clear all; close all;
 % Huge attacker: N = 100; cH = [1000 * ones(1, n/2+1) 1 * ones(1, n/2)];
 %
 % Difficulty adjustment algorithm settings:
+% Standard: Np = 2016; drmax = 4;
 % Short interval: Np = 144; drmax = 4;
 % High adjustment ratio: Np = 2016; drmax = 100;
 % Fast: Np = 144; drmax = 100;
