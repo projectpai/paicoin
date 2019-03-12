@@ -3,7 +3,7 @@ Shared Libraries
 
 ## paicoinconsensus
 
-The purpose of this library is to make the verification functionality that is critical to PAIcoin's consensus available to other applications, e.g. to language bindings.
+The purpose of this library is to make the verification functionality that is critical to PAI Coin's consensus available to other applications, e.g. to language bindings.
 
 ### API
 

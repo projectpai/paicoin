@@ -1,6 +1,6 @@
-# Python module for PAIcoin OP_RETURN transactions
+# Python module for PAI Coin OP_RETURN transactions
 
-Simple Python scripts and API for using OP_RETURN in PAIcoin transactions.
+Simple Python scripts and API for using OP_RETURN in PAI Coin transactions.
 
 Copyright (c) ObEN, Inc. - https://oben.me/ <br>
 Copyright (c) Coin Sciences Ltd - http://coinsecrets.org/
@@ -11,7 +11,7 @@ MIT License
 ## REQUIREMENTS
 
 * Python 2.5 or later (including Python 3)
-* PAIcoin Core 0.9 or later
+* PAI Coin Core 0.9 or later
 * requests (2.18.4)
 
 ## INSTALLATION
@@ -24,21 +24,21 @@ pip install .
 
 ## BEFORE YOU START
 
-If you just installed PAIcoin Core, wait for it to download and verify old blocks.<br>
+If you just installed PAI Coin Core, wait for it to download and verify old blocks.<br>
 If using as a module, add `from paicointxn import Transaction` in your Python script file.
 
 
-## SEND PAIcoin TRANSACTION WITH OP_RETURN METADATA
+## SEND PAI Coin TRANSACTION WITH OP_RETURN METADATA
 
 ### Command line:
 
 ```bash
 python send_paicoin.py <address> <amount> <metadata> <testnet (optional)>
 Where:
-  <address>  - PAIcoin address of the recipient
-  <amount>   - amount to send (in units of PAIcoin)
+  <address>  - PAI Coin address of the recipient
+  <amount>   - amount to send (in units of PAI Coin)
   <metadata> - hex string or raw string containing the OP_RETURN metadata (auto-detection: treated as a hex string if it is a valid one)
-  <testnet>  - PAIcoin testnet network flag (False if omitted)
+  <testnet>  - PAI Coin testnet network flag (False if omitted)
 ```
 
 * Outputs an error if one occurred or the txid if sending was successful
@@ -48,16 +48,16 @@ Where:
 ```bash
 python send_paicoin.py 149wHUMa41Xm2jnZtqgRx94uGbZD9kPXnS 0.001 "Hello, myPAI!"
 python send_paicoin.py 149wHUMa41Xm2jnZtqgRx94uGbZD9kPXnS 0.001 48656c6c6f2c206d7950414921
-python send_paicoin.py mzEJxCrdva57shpv62udriBBgMECmaPce4 0.001 "Hello, PAIcoin testnet!" 1
+python send_paicoin.py mzEJxCrdva57shpv62udriBBgMECmaPce4 0.001 "Hello, PAI Coin testnet!" 1
 ```
 
 ### API:
 
 **Transaction.paicoin_send**(*address, amount, metadata, testnet=False*)<br>
-`address` - PAIcoin address of the recipient<br>
-`amount` - amount to send (in units of PAIcoin)<br>
+`address` - PAI Coin address of the recipient<br>
+`amount` - amount to send (in units of PAI Coin)<br>
 `metadata` - string of raw bytes containing OP_RETURN metadata<br>
-`testnet` - PAIcoin testnet network flag (False if omitted)<br>
+`testnet` - PAI Coin testnet network flag (False if omitted)<br>
 
 **Return:**<br>
 {'`PAIcoinTransactionError`': 'error string'}<br>
@@ -70,12 +70,12 @@ or:<br>
 from paicointxn import Transaction
 
 Transaction.paicoin_send('149wHUMa41Xm2jnZtqgRx94uGbZD9kPXnS', 0.001, 'Hello, myPAI!')
-Transaction.paicoin_send('mzEJxCrdva57shpv62udriBBgMECmaPce4', 0.001, 'Hello, PAIcoin testnet!', testnet=True)
+Transaction.paicoin_send('mzEJxCrdva57shpv62udriBBgMECmaPce4', 0.001, 'Hello, PAI Coin testnet!', testnet=True)
 
 # Equivalent with:
 
 paicoin_txn = Transaction(testnet=True)
-res = paicoin_txn.send('mzEJxCrdva57shpv62udriBBgMECmaPce4', 0.001, 'Hello, PAIcoin testnet!')
+res = paicoin_txn.send('mzEJxCrdva57shpv62udriBBgMECmaPce4', 0.001, 'Hello, PAI Coin testnet!')
 ```
 
 ## STORE DATA IN THE BLOCKCHAIN USING OP_RETURN
@@ -85,7 +85,7 @@ res = paicoin_txn.send('mzEJxCrdva57shpv62udriBBgMECmaPce4', 0.001, 'Hello, PAIc
 python store_paicoin.py <data> <testnet (optional)>
 Where:
   <data>    - hex string or raw string containing the data to be stored (auto-detection: treated as a hex string if it is a valid one)
-  <testnet> - PAIcoin testnet network flag (False if omitted)
+  <testnet> - PAI Coin testnet network flag (False if omitted)
 
 ```
 * Outputs an error if one occurred or if successful, the txids that were used to store
@@ -101,7 +101,7 @@ python store_paicoin.py "This example stores 44 bytes in the testnet." 1
 
 **Transaction.paicoin_store**(*data, testnet=False*)<br>
 `data` -  string of raw bytes containing OP_RETURN metadata<br>
-`testnet` - PAIcoin testnet network flag (False if omitted)<br>
+`testnet` - PAI Coin testnet network flag (False if omitted)<br>
   
 **Return:**<br>
 {'`PAIcoinTransactionError`': 'error string'}<br>
@@ -130,7 +130,7 @@ res = paicoin_txn.store('This example stores 44 bytes in the testnet.')
 python retrieve_paicoin.py <ref> <testnet (optional)>
 Where:
   <ref>     - reference that was returned by a previous storage operation
-  <testnet> - PAIcoin testnet network flag (False if omitted)
+  <testnet> - PAI Coin testnet network flag (False if omitted)
 ```
 
 * Outputs an error if one occurred or if successful, the retrieved data in hexadecimal
@@ -150,7 +150,7 @@ python retrieve_paicoin.py 396381-059737 1
 **Transaction.paicoin_retrieve**(*ref, max_results=1, testnet=False*)<br>
 `ref` - reference that was returned by a previous storage operation<br>
 `max_results` - maximum number of results to retrieve (omit for 1)<br>
-`testnet` - PAIcoin testnet network flag (False if omitted)<br>
+`testnet` - PAI Coin testnet network flag (False if omitted)<br>
 
 **Returns**:<br>
 {'`PAIcoinTransactionError`': 'error string'}<br>
