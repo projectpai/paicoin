@@ -1,10 +1,10 @@
 """
-PAIcoin reference for labeling OP_RETURN PAIcoin transactions
+PAI Coin reference for labeling OP_RETURN PAI Coin transactions
 """
 
 # reference.py
 #
-# PAIcoin reference for labeling OP_RETURN PAIcoin transactions
+# PAI Coin reference for labeling OP_RETURN PAI Coin transactions
 #
 # Copyright (c) ObEN, Inc. - https://oben.me/
 #

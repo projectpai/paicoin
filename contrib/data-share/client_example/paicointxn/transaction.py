@@ -1,10 +1,10 @@
 """
-PAIcoin API for generating and retrieving OP_RETURN PAIcoin transactions
+PAI Coin API for generating and retrieving OP_RETURN PAI Coin transactions
 """
 
 # transaction.py
 #
-# Python API for generating and retrieving OP_RETURN PAIcoin transactions
+# Python API for generating and retrieving OP_RETURN PAI Coin transactions
 #
 # Copyright (c) ObEN, Inc. - https://oben.me/
 # Copyright (c) Coin Sciences Ltd
@@ -39,7 +39,7 @@ from unpacker import pack_txn, unpack_txn, unpack_block, bin2hex
 
 
 class Transaction(object):
-    """PAIcoin OP_RETURN transactions"""
+    """PAI Coin OP_RETURN transactions"""
 
     def __init__(self, testnet=False):
         self._testnet = testnet
@@ -49,17 +49,17 @@ class Transaction(object):
 
     def send(self, address, amount, op_return_metadata):
         """
-        Send PAIcoin transaction with OP_RETURN metadata
+        Send PAI Coin transaction with OP_RETURN metadata
 
-        :param address: PAIcoin address of the recipient
-        :param amount: amount to send (in units of PAIcoin)
+        :param address: PAI Coin address of the recipient
+        :param amount: amount to send (in units of PAI Coin)
         :param op_return_metadata: string of raw bytes containing OP_RETURN data
         :return: {'error': 'error string'}
                   or: {'txid': 'sent txid'}
         """
         try:
             if not self._paicoin_check():
-                return {'error': 'Check if PAIcoin Core is running correctly'}
+                return {'error': 'Check if PAI Coin Core is running correctly'}
 
             result = self._paicoin_rpc('validateaddress', address)
             if not ('isvalid' in result and result['isvalid']):
@@ -122,7 +122,7 @@ class Transaction(object):
         """
         try:
             if not self._paicoin_check():
-                return {'error': 'Check if PAIcoin Core is running correctly'}
+                return {'error': 'Check if PAI Coin Core is running correctly'}
 
             if isinstance(op_return_metadata, basestring):
                 op_return_metadata = op_return_metadata.encode('utf-8')
@@ -199,7 +199,7 @@ class Transaction(object):
         """
         try:
             if not self._paicoin_check():
-                return {'error': 'Check if PAIcoin Core is running correctly'}
+                return {'error': 'Check if PAI Coin Core is running correctly'}
 
             max_height = int(self._paicoin_rpc('getblockcount'))
             heights = get_ref_heights(ref, max_height)

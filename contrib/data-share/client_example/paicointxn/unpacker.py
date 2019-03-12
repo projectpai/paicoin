@@ -1,10 +1,10 @@
 """
-PAIcoin helpers for packing/unpacking PAIcoin transactions
+PAI Coin helpers for packing/unpacking PAI Coin transactions
 """
 
 # unpacker.py
 #
-# PAIcoin helpers for packing/unpacking PAIcoin transactions
+# PAI Coin helpers for packing/unpacking PAI Coin transactions
 #
 # Copyright (c) ObEN, Inc. - https://oben.me/
 #

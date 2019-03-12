@@ -36,7 +36,7 @@ class ImportMultiTest (PAIcoinTestFramework):
 
         # RPC importmulti -----------------------------------------------
 
-        # PAIcoin Address
+        # PAI Coin Address
         self.log.info("Should import an address")
         address = self.nodes[0].validateaddress(self.nodes[0].getnewaddress())
         result = self.nodes[1].importmulti([{

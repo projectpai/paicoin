@@ -1,6 +1,6 @@
 # send_paicoin.py
 # 
-# CLI wrapper for sending PAIcoin transaction with OP_RETURN metadata
+# CLI wrapper for sending PAI Coin transaction with OP_RETURN metadata
 #
 # Copyright (c) ObEN, Inc. - https://oben.me/
 # Copyright (c) Coin Sciences Ltd
@@ -34,7 +34,7 @@ usage_string = \
     Examples:
     python send_paicoin.py <send-address> 0.001 "Hello, myPAI!"
     python send_paicoin.py <send-address> 0.001 48656c6c6f2c206d7950414921
-    python send_paicoin.py <send-address> 0.001 "Hello, testnet PAIcoin!" 1'''
+    python send_paicoin.py <send-address> 0.001 "Hello, testnet PAI Coin!" 1'''
 
 if len(argv) < 4:
     exit(usage_string)
