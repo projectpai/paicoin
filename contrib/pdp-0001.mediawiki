@@ -13,9 +13,9 @@
 
 ==Abstract==
 
-A PAIcoin Development Proposal (PDP) is a design document providing information to the PAIcoin community, or describing a new feature for PAIcoin or its processes or environment. The PDP should provide a concise technical specification of the feature and a rationale for the feature.
+A PAI Coin Development Proposal (PDP) is a design document providing information to the PAI Coin community, or describing a new feature for PAI Coin or its processes or environment. The PDP should provide a concise technical specification of the feature and a rationale for the feature.
 
-We intend PDPs to be the primary mechanisms for proposing new features, for collecting community input on an issue, and for documenting the design decisions that have gone into PAIcoin. The PDP author is responsible for building consensus within the community and documenting dissenting opinions.
+We intend PDPs to be the primary mechanisms for proposing new features, for collecting community input on an issue, and for documenting the design decisions that have gone into PAI Coin. The PDP author is responsible for building consensus within the community and documenting dissenting opinions.
 
 Because the PDPs are maintained as text files in a versioned repository, their revision history is the historical record of the feature proposal.
 
@@ -25,16 +25,16 @@ This PDP is licensed under the Open Publication License
 
 ==PDP workflow==
 
-The PDP process begins with a new idea for PAIcoin. Each potential PDP must have a champion -- someone who writes the PDP using the style and format described below, shepherds the discussions in the appropriate forums, and attempts to build community consensus around the idea. The PDP champion (a.k.a. Author) should first attempt to ascertain whether the idea is PDP-able.
+The PDP process begins with a new idea for PAI Coin. Each potential PDP must have a champion -- someone who writes the PDP using the style and format described below, shepherds the discussions in the appropriate forums, and attempts to build community consensus around the idea. The PDP champion (a.k.a. Author) should first attempt to ascertain whether the idea is PDP-able.
 Small enhancements or patches to a particular piece of software often don't require standardisation between multiple projects; these don't need a PDP and should be injected into the relevant project-specific development workflow with a patch submission to the applicable issue tracker.
-Additionally, many ideas have been brought forward for changing PAIcoin that have been rejected for various reasons.
+Additionally, many ideas have been brought forward for changing PAI Coin that have been rejected for various reasons.
 The first step should be to search past discussions to see if an idea has been considered before, and if so, what issues arose in its progression.
 
 Vetting an idea publicly before going as far as writing a PDP is meant to save both the potential author and the wider community time.
-Asking the PAIcoin community first if an idea is original helps prevent too much time being spent on something that is guaranteed to be rejected based on prior discussions (searching the internet does not always do the trick).
-It also helps to make sure the idea is applicable to the entire community and not just the author. Just because an idea sounds good to the author does not mean it will work for most people in most areas where PAIcoin is used.
+Asking the PAI Coin community first if an idea is original helps prevent too much time being spent on something that is guaranteed to be rejected based on prior discussions (searching the internet does not always do the trick).
+It also helps to make sure the idea is applicable to the entire community and not just the author. Just because an idea sounds good to the author does not mean it will work for most people in most areas where PAI Coin is used.
 
-Once the champion has asked the PAIcoin community as to whether an idea has any chance of acceptance, a draft PDP should be presented to the PAIcoin forum.
+Once the champion has asked the PAI Coin community as to whether an idea has any chance of acceptance, a draft PDP should be presented to the PAI Coin forum.
 This gives the author a chance to flesh out the draft PDP to make it properly formatted, of high quality, and to address additional concerns about the proposal.
 Following a discussion, the proposal should be submitted to the [https://github.com/projectpai/pdps PDPs git repository] as a pull request.
 This draft must be written in PDP style as described below, and named with an alias such as "pdp-johndoe-infinitepaicoins" until the editor has assigned it a PDP number (authors MUST NOT self-assign PDP numbers).
@@ -45,7 +45,7 @@ It is highly recommended that a single PDP contain a single key proposal or new 
 
 When the PDP draft is complete, the PDP editor will assign the PDP a number, label it as Standards Track, Informational, or Process, and merge the pull request to the PDPs git repository.
 The PDP editor will not unreasonably reject a PDP.
-Reasons for rejecting PDPs include duplication of effort, disregard for formatting rules, being too unfocused or too broad, being technically unsound, not providing proper motivation or addressing backwards compatibility, or not in keeping with the PAIcoin philosophy.
+Reasons for rejecting PDPs include duplication of effort, disregard for formatting rules, being too unfocused or too broad, being technically unsound, not providing proper motivation or addressing backwards compatibility, or not in keeping with the PAI Coin philosophy.
 For a PDP to be accepted it must meet certain minimum criteria.
 It must be a clear and complete description of the proposed enhancement.
 The enhancement must represent a net improvement.
@@ -104,15 +104,15 @@ Each PDP should have the following parts:
 
 * Copyright -- The PDP must be explicitly licensed under acceptable copyright terms ([[#PDP licensing|see below]]).
 
-* Specification -- The technical specification should describe the syntax and semantics of any new feature. The specification should be detailed enough to allow competing, interoperable implementations for any of the current PAIcoin platforms.
+* Specification -- The technical specification should describe the syntax and semantics of any new feature. The specification should be detailed enough to allow competing, interoperable implementations for any of the current PAI Coin platforms.
 
-* Motivation -- The motivation is critical for PDPs that want to change the PAIcoin protocol. It should clearly explain why the existing protocol is inadequate to address the problem that the PDP solves.
+* Motivation -- The motivation is critical for PDPs that want to change the PAI Coin protocol. It should clearly explain why the existing protocol is inadequate to address the problem that the PDP solves.
 
 * Rationale -- The rationale fleshes out the specification by describing what motivated the design and why particular design decisions were made. It should describe alternate designs that were considered and related work. The rationale should provide evidence of consensus within the community and discuss important objections or concerns raised during discussion.
 
 * Backwards compatibility -- All PDPs that introduce backwards incompatibilities must include a section describing these incompatibilities and their severity. The PDP must explain how the author proposes to deal with these incompatibilities.
 
-* Reference implementation -- The reference implementation must be completed before any PDP is given status "Final", but it need not be completed before the PDP is accepted. It is better to finish the specification and rationale first and reach consensus on it before writing code. The final implementation must include test code and documentation appropriate for the PAIcoin protocol.
+* Reference implementation -- The reference implementation must be completed before any PDP is given status "Final", but it need not be completed before the PDP is accepted. It is better to finish the specification and rationale first and reach consensus on it before writing code. The final implementation must include test code and documentation appropriate for the PAI Coin protocol.
 
 ====PDP header preamble====
 
@@ -139,7 +139,7 @@ Each PDP must begin with an RFC 822 style header preamble. The headers must appe
 * Bitcoin-References: <BIP number and link>
 </pre>
 
-The Layer header (only for Standards Track PDPs) documents which layer of PAIcoin the PDP applies to.
+The Layer header (only for Standards Track PDPs) documents which layer of PAI Coin the PDP applies to.
 
 The Author header lists the names and email addresses of all the authors/owners of the PDP.
 The format of the Author header value must be
@@ -168,9 +168,9 @@ PDPs may include auxiliary files such as diagrams. Auxiliary files should be inc
 
 There are three kinds of PDP:
 
-* A Standards Track PDP describes any change that affects most or all PAIcoin implementations, such as a change to the network protocol, a change in block or transaction validity rules, or any change or addition that affects the interoperability of applications using PAIcoin. Standards Track PDPs consist of two parts, a design document and a reference implementation.
-* An Informational PDP describes a PAIcoin design issue, or provides general guidelines or information to the PAIcoin community, but does not propose a new feature. Informational PDPs do not necessarily represent a PAIcoin community consensus or recommendation, so users and implementors are free to ignore Informational PDPs or follow their advice.
-* A Process PDP describes a process surrounding PAIcoin, or proposes a change to (or an event in) a process. Process PDPs are like Standards Track PDPs but apply to areas other than the PAIcoin protocol itself. They may propose an implementation, but not to PAIcoin's codebase; they often require community consensus; unlike Informational PDPs, they are more than recommendations, and users are typically not free to ignore them. Examples include procedures, guidelines, changes to the decision-making process, and changes to the tools or environment used in PAIcoin development. Any meta-PDP is also considered a Process PDP.
+* A Standards Track PDP describes any change that affects most or all PAI Coin implementations, such as a change to the network protocol, a change in block or transaction validity rules, or any change or addition that affects the interoperability of applications using PAI Coin. Standards Track PDPs consist of two parts, a design document and a reference implementation.
+* An Informational PDP describes a PAI Coin design issue, or provides general guidelines or information to the PAI Coin community, but does not propose a new feature. Informational PDPs do not necessarily represent a PAI Coin community consensus or recommendation, so users and implementors are free to ignore Informational PDPs or follow their advice.
+* A Process PDP describes a process surrounding PAI Coin, or proposes a change to (or an event in) a process. Process PDPs are like Standards Track PDPs but apply to areas other than the PAI Coin protocol itself. They may propose an implementation, but not to PAI Coin's codebase; they often require community consensus; unlike Informational PDPs, they are more than recommendations, and users are typically not free to ignore them. Examples include procedures, guidelines, changes to the decision-making process, and changes to the tools or environment used in PAI Coin development. Any meta-PDP is also considered a Process PDP.
 
 ==PDP status field==
 
@@ -187,13 +187,13 @@ An Proposed PDP may progress to Final only when specific criteria reflecting rea
 
 When a Final PDP is no longer relevant, its status may be changed to Replaced or Obsolete (which is equivalent to Replaced). This change must also be objectively verifiable and/or discussed.
 
-A process PDP may change status from Draft to Active when it achieves rough consensus on the PAIcoin forum. Such a proposal is said to have rough consensus if it has been open to discussion on the development forum for at least one month, and no person maintains any unaddressed substantiated objections to it. Addressed or obstructive objections may be ignored/overruled by general agreement that they have been sufficiently addressed, but clear reasoning must be given in such circumstances.
+A process PDP may change status from Draft to Active when it achieves rough consensus on the PAI Coin forum. Such a proposal is said to have rough consensus if it has been open to discussion on the development forum for at least one month, and no person maintains any unaddressed substantiated objections to it. Addressed or obstructive objections may be ignored/overruled by general agreement that they have been sufficiently addressed, but clear reasoning must be given in such circumstances.
 
 ====Progression to Final status====
 
 A soft-fork PDP strictly requires a clear miner majority expressed by blockchain voting. In addition, if the economy seems willing to make a "no confidence" hard-fork (such as a change in proof-of-work algorithm), the soft-fork does not become Final for as long as such a hard-fork might have majority support, or at most three months. Soft-fork PDPs may also set additional requirements for their adoption. Because of the possibility of changes to miner dynamics, especially in light of delegated voting (mining pools), it is highly recommended that a supermajority vote around 95% be required by the PDP itself, unless rationale is given for a lower threshold.
 
-A hard-fork PDP requires adoption from the entire PAIcoin economy, particularly including those selling desirable goods and services in exchange for PAIcoin payments, as well as PAIcoin holders who wish to spend or would spend their PAIcoins (including selling for other currencies) differently in the event of such a hard-fork. Adoption must be expressed by de facto usage of the hard-fork in practice (ie, not merely expressing public support, although that is a good step to establish agreement before adoption of the PDP). This economic adoption cannot be established merely by a super-majority, except by literally forcing the minority to accept the hard-fork (whether this is viable or not is outside the scope of this document).
+A hard-fork PDP requires adoption from the entire PAI Coin economy, particularly including those selling desirable goods and services in exchange for PAI Coin payments, as well as PAI Coin holders who wish to spend or would spend their PAIcoins (including selling for other currencies) differently in the event of such a hard-fork. Adoption must be expressed by de facto usage of the hard-fork in practice (ie, not merely expressing public support, although that is a good step to establish agreement before adoption of the PDP). This economic adoption cannot be established merely by a super-majority, except by literally forcing the minority to accept the hard-fork (whether this is viable or not is outside the scope of this document).
 
 Peer services PDPs should be observed to be adopted by at least 1% of public listening nodes for one month.
 
@@ -205,20 +205,20 @@ These criteria are considered objective ways to observe the de facto adoption of
 
 ===Rationale===
 
-How is the entire PAIcoin economy defined by people selling goods/services and holders?
+How is the entire PAI Coin economy defined by people selling goods/services and holders?
 
-* For PAIcoin to function as a currency, it must be accepted as payment. PAIcoins have no value if you cannot acquire anything in exchange for them. If everyone accepting such payments requires a particular set of consensus rules, "paicoins" are de facto defined by that set of rules - this is already the case today. If those consensus rules are expected to broaden (as with a hard-fork), those merchants need to accept payments made under the new set of rules, or they will reject "paicoins" as invalid. Holders are relevant to the degree in that they choose the merchants they wish to spend their paicoins with, and could also as a whole decide to sell under one set of consensus rules or the other, thus flooding the market with paicoins and crashing the price.
+* For PAI Coin to function as a currency, it must be accepted as payment. PAIcoins have no value if you cannot acquire anything in exchange for them. If everyone accepting such payments requires a particular set of consensus rules, "paicoins" are de facto defined by that set of rules - this is already the case today. If those consensus rules are expected to broaden (as with a hard-fork), those merchants need to accept payments made under the new set of rules, or they will reject "paicoins" as invalid. Holders are relevant to the degree in that they choose the merchants they wish to spend their paicoins with, and could also as a whole decide to sell under one set of consensus rules or the other, thus flooding the market with paicoins and crashing the price.
 
 Why aren't <x> included in the economy?
 
 * Some entities may, to some degree, also be involved in offering goods and/or services in exchange for paicoins, thus in that capacity (but not their capacity as <x>) be involved in the economy.
 * Miners are not included in the economy, because they merely *rely on* others to sell/spend their otherwise-worthless mined produce. Therefore, they must accept everyone else's direction in deciding the consensus rules.
-* Exchanges are not included in the economy, because they merely provide services of connecting the merchants and users who wish to trade. Even if all exchanges were to defect from PAIcoin, those merchants and users can always trade directly and/or establish their own exchanges.
+* Exchanges are not included in the economy, because they merely provide services of connecting the merchants and users who wish to trade. Even if all exchanges were to defect from PAI Coin, those merchants and users can always trade directly and/or establish their own exchanges.
 * Developers are not included in the economy, since they merely write code, and it is up to others to decide to use that code or not.
 
-But they're doing something important and have invested a lot in PAIcoin! Shouldn't they be included in such an important decision?
+But they're doing something important and have invested a lot in PAI Coin! Shouldn't they be included in such an important decision?
 
-* This PDP does not aim to address what "should" be the basis of decisions. Such a statement, no matter how perfect in its justification, would be futile without some way to force others to use it. The PDP process does not aim to be a kind of forceful "governance" of PAIcoin, merely to provide a collaborative repository for proposing and providing information on standards, which people may voluntarily adopt or not. It can only hope to achieve accuracy in regard to the "Status" field by striving to reflect the reality of *how things actually are*, rather than *how they should be*.
+* This PDP does not aim to address what "should" be the basis of decisions. Such a statement, no matter how perfect in its justification, would be futile without some way to force others to use it. The PDP process does not aim to be a kind of forceful "governance" of PAI Coin, merely to provide a collaborative repository for proposing and providing information on standards, which people may voluntarily adopt or not. It can only hope to achieve accuracy in regard to the "Status" field by striving to reflect the reality of *how things actually are*, rather than *how they should be*.
 
 What if a single merchant wishes to block a hard-fork?
 
@@ -227,11 +227,11 @@ What if a single merchant wishes to block a hard-fork?
 
 How about a small number of merchants (maybe only two) who sell products to each other?
 
-* In this scenario, it would seem the previous PAIcoin is alive any working, and that the hard-fork has failed. How to resolve such a split is outside the scope of this PDP.
+* In this scenario, it would seem the previous PAI Coin is alive any working, and that the hard-fork has failed. How to resolve such a split is outside the scope of this PDP.
 
 How can economic agreement veto a soft-fork?
 
-* The group of miners is determined by the consensus rules for the dynamic-membership multi-party signature (for PAIcoin, the proof-of-work algorithm), which can be modified with a hard-fork. Thus, if the same conditions required to modify this group are met in opposition to a soft-fork, the miner majority supporting the soft-fork is effectively void because the economy can decide to replace them with another group of would-be miners who do not support the soft-fork.
+* The group of miners is determined by the consensus rules for the dynamic-membership multi-party signature (for PAI Coin, the proof-of-work algorithm), which can be modified with a hard-fork. Thus, if the same conditions required to modify this group are met in opposition to a soft-fork, the miner majority supporting the soft-fork is effectively void because the economy can decide to replace them with another group of would-be miners who do not support the soft-fork.
 
 What happens if the economy decides to hard-fork away from a controversial soft-fork, more than three months later?
 
@@ -341,7 +341,7 @@ In this case, only the acceptable license(s) should be listed in the License and
 * GNU-All-Permissive: [http://www.gnu.org/prep/maintain/html_node/License-Notices-for-Other-Files.html GNU All-Permissive License]
 * MIT: [https://opensource.org/licenses/MIT Expat/MIT/X11 license]
 
-In addition, it is recommended that literal code included in the PDP be dual-licensed under the same license terms as the project it modifies. For example, literal code intended for PAIcoin Core would ideally be dual-licensed under the MIT license terms as well as one of the above with the rest of the PDP text.
+In addition, it is recommended that literal code included in the PDP be dual-licensed under the same license terms as the project it modifies. For example, literal code intended for PAI Coin Core would ideally be dual-licensed under the MIT license terms as well as one of the above with the rest of the PDP text.
 
 ====Not recommended, but acceptable licenses====
 
@@ -356,7 +356,7 @@ In addition, it is recommended that literal code included in the PDP be dual-lic
 
 ====Not acceptable licenses====
 
-All licenses not explicitly included in the above lists are not acceptable terms for a PAIcoin Improvement Proposal unless a later PDP extends this one to add them.
+All licenses not explicitly included in the above lists are not acceptable terms for a PAI Coin Improvement Proposal unless a later PDP extends this one to add them.
 However, PDPs predating the acceptance of this PDP were allowed under other terms, and should use these abbreviation when no other license is granted:
 
 * OPL: [http://opencontent.org/openpub/ Open Publication License, version 1.0]
@@ -368,7 +368,7 @@ PDP 1 allowed the Open Publication License or releasing into the public domain; 
 
 * The OPL is generally regarded as obsolete, and not a license suitable for new publications.
 * Many are unfamiliar with the OPL terms, and may just prefer to use the public domain rather than license under uncertain terms.
-* The OPL license terms allowed for the author to prevent publication and derived works, which was widely considered inappropriate for PAIcoin standards.
+* The OPL license terms allowed for the author to prevent publication and derived works, which was widely considered inappropriate for PAI Coin standards.
 * Public domain is not universally recognised as a legitimate action, thus it is inadvisable.
 
 Why are there software licenses included?

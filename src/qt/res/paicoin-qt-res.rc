@@ -19,8 +19,8 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "PAIcoin"
-            VALUE "FileDescription",    PACKAGE_NAME " (GUI node for PAIcoin)"
+            VALUE "CompanyName",        "PAI Coin"
+            VALUE "FileDescription",    PACKAGE_NAME " (GUI node for PAI Coin)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
             VALUE "InternalName",       "paicoin-qt"
             VALUE "LegalCopyright",     COPYRIGHT_STR

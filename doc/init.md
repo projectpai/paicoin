@@ -68,9 +68,9 @@ can then be controlled by group membership.
 ### Mac OS X
 
 Binary:              `/usr/local/bin/paicoind`  
-Configuration file:  `~/Library/Application Support/PAIcoin/paicoin.conf`  
-Data directory:      `~/Library/Application Support/PAIcoin`  
-Lock file:           `~/Library/Application Support/PAIcoin/.lock`  
+Configuration file:  `~/Library/Application Support/PAI Coin/paicoin.conf`  
+Data directory:      `~/Library/Application Support/PAI Coin`  
+Lock file:           `~/Library/Application Support/PAI Coin/.lock`  
 
 Installing Service Configuration
 -----------------------------------

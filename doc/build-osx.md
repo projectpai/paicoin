@@ -62,15 +62,15 @@ PAI Coin Core is now available at `./src/paicoind`
 
 Before running, it's recommended you create an RPC configuration file.
 
-    echo -e "rpcuser=paicoinrpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/PAIcoin/paicoin.conf"
+    echo -e "rpcuser=paicoinrpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/PAI Coin/paicoin.conf"
 
-    chmod 600 "/Users/${USER}/Library/Application Support/PAIcoin/paicoin.conf"
+    chmod 600 "/Users/${USER}/Library/Application Support/PAI Coin/paicoin.conf"
 
 The first time you run paicoind, it will start downloading the blockchain. This process could take several hours.
 
 You can monitor the download process by looking at the debug.log file:
 
-    tail -f $HOME/Library/Application\ Support/PAIcoin/debug.log
+    tail -f $HOME/Library/Application\ Support/PAI Coin/debug.log
 
 Other commands:
 -------

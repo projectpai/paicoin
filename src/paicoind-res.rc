@@ -16,8 +16,8 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "PAIcoin"
-            VALUE "FileDescription",    "paicoind (PAIcoin node with a JSON-RPC server)"
+            VALUE "CompanyName",        "PAI Coin"
+            VALUE "FileDescription",    "paicoind (PAI Coin node with a JSON-RPC server)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
             VALUE "InternalName",       "paicoind"
             VALUE "LegalCopyright",     COPYRIGHT_STR
