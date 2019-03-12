@@ -222,7 +222,7 @@
         <translation>Φόρτωση ευρετηρίου μπλοκ στον σκληρο δισκο...</translation>
     </message>
     <message>
-        <source>Send coins to a PAIcoin address</source>
+        <source>Send coins to a PAI Coin address</source>
         <translation>Στείλε νομίσματα σε μια διεύθυνση paicoin</translation>
     </message>
     <message>
@@ -246,8 +246,8 @@
         <translation>&amp;Επιβεβαίωση μηνύματος</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -274,12 +274,12 @@
         <translation>Κρυπτογραφήστε τα ιδιωτικά κλειδιά που ανήκουν στο πορτοφόλι σας </translation>
     </message>
     <message>
-        <source>Sign messages with your PAIcoin addresses to prove you own them</source>
+        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
         <translation>Υπογράψτε ένα μήνυμα για να βεβαιώσετε πως είστε ο κάτοχος αυτής της διεύθυνσης</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified PAIcoin addresses</source>
-        <translation>Υπογράψτε ένα μήνυμα για ν' αποδείξετε πως ανήκει μια συγκεκριμένη διεύθυνση PAIcoin</translation>
+        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
+        <translation>Υπογράψτε ένα μήνυμα για ν' αποδείξετε πως ανήκει μια συγκεκριμένη διεύθυνση PAI Coin</translation>
     </message>
     <message>
         <source>&amp;File</source>
@@ -720,16 +720,16 @@
         <translation>&amp;Ξόδεμα μη επικυρωμένων ρέστων</translation>
     </message>
     <message>
-        <source>Automatically open the PAIcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Αυτόματο άνοιγμα των θυρών PAIcoin στον δρομολογητή. Λειτουργεί μόνο αν ο δρομολογητής σας υποστηρίζει τη λειτουργία UPnP.</translation>
+        <source>Automatically open the PAI Coin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Αυτόματο άνοιγμα των θυρών PAI Coin στον δρομολογητή. Λειτουργεί μόνο αν ο δρομολογητής σας υποστηρίζει τη λειτουργία UPnP.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
         <translation>Απόδοση θυρών με χρήστη &amp;UPnP</translation>
     </message>
     <message>
-        <source>Connect to the PAIcoin network through a SOCKS5 proxy.</source>
-        <translation>Σύνδεση στο PAIcoin δίκτυο μέσω διαμεσολαβητή SOCKS5 (π.χ. για σύνδεση μέσω Tor)</translation>
+        <source>Connect to the PAI Coin network through a SOCKS5 proxy.</source>
+        <translation>Σύνδεση στο PAI Coin δίκτυο μέσω διαμεσολαβητή SOCKS5 (π.χ. για σύνδεση μέσω Tor)</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
@@ -824,8 +824,8 @@
         <translation>Φόρμα</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAIcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>Οι πληροφορίες που εμφανίζονται μπορεί να είναι ξεπερασμένες. Το πορτοφόλι σας συγχρονίζεται αυτόματα με το δίκτυο PAIcoin μετά από μια σύνδεση, αλλά αυτή η διαδικασία δεν έχει ακόμη ολοκληρωθεί. </translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAI Coin network after a connection is established, but this process has not completed yet.</source>
+        <translation>Οι πληροφορίες που εμφανίζονται μπορεί να είναι ξεπερασμένες. Το πορτοφόλι σας συγχρονίζεται αυτόματα με το δίκτυο PAI Coin μετά από μια σύνδεση, αλλά αυτή η διαδικασία δεν έχει ακόμη ολοκληρωθεί. </translation>
     </message>
     <message>
         <source>Watch-only:</source>
@@ -905,8 +905,8 @@
         <translation>Ποσό</translation>
     </message>
     <message>
-        <source>Enter a PAIcoin address (e.g. %1)</source>
-        <translation>Εισάγετε μια διεύθυνση PAIcoin (π.χ. %1)</translation>
+        <source>Enter a PAI Coin address (e.g. %1)</source>
+        <translation>Εισάγετε μια διεύθυνση PAI Coin (π.χ. %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1373,8 +1373,8 @@
         <translation>Αυτή είναι μια απλή πληρωμή.</translation>
     </message>
     <message>
-        <source>The PAIcoin address to send the payment to</source>
-        <translation>Η διεύθυνση PAIcoin που θα σταλεί η πληρωμή</translation>
+        <source>The PAI Coin address to send the payment to</source>
+        <translation>Η διεύθυνση PAI Coin που θα σταλεί η πληρωμή</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -1430,8 +1430,8 @@
         <translation>&amp;Υπογραφή Μηνύματος</translation>
     </message>
     <message>
-        <source>The PAIcoin address to sign the message with</source>
-        <translation>Διεύθυνση PAIcoin που θα σταλεί το μήνυμα</translation>
+        <source>The PAI Coin address to sign the message with</source>
+        <translation>Διεύθυνση PAI Coin που θα σταλεί το μήνυμα</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -1462,8 +1462,8 @@
         <translation>Αντέγραφη της επιλεγμενης διεύθυνσης στο πρόχειρο του συστηματος</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this PAIcoin address</source>
-        <translation>Υπογράψτε ένα μήνυμα για ν' αποδείξετε πως σας ανήκει μια συγκεκριμένη διεύθυνση PAIcoin</translation>
+        <source>Sign the message to prove you own this PAI Coin address</source>
+        <translation>Υπογράψτε ένα μήνυμα για ν' αποδείξετε πως σας ανήκει μια συγκεκριμένη διεύθυνση PAI Coin</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -1482,12 +1482,12 @@
         <translation>&amp;Επιβεβαίωση μηνύματος</translation>
     </message>
     <message>
-        <source>The PAIcoin address the message was signed with</source>
-        <translation>Διεύθυνση PAIcoin η οποία το μήνυμα έχει υπογραφεί</translation>
+        <source>The PAI Coin address the message was signed with</source>
+        <translation>Διεύθυνση PAI Coin η οποία το μήνυμα έχει υπογραφεί</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified PAIcoin address</source>
-        <translation>Υπογράψτε ένα μήνυμα για ν' αποδείξετε πως υπογραφθηκε απο μια συγκεκριμένη διεύθυνση PAIcoin</translation>
+        <source>Verify the message to ensure it was signed with the specified PAI Coin address</source>
+        <translation>Υπογράψτε ένα μήνυμα για ν' αποδείξετε πως υπογραφθηκε απο μια συγκεκριμένη διεύθυνση PAI Coin</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
@@ -1699,8 +1699,8 @@
         <translation>Εκτέλεση στο παρασκήνιο κι αποδοχή εντολών</translation>
     </message>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>PAIcoin Core</translation>
+        <source>PAI Coin Core</source>
+        <translation>PAI Coin Core</translation>
     </message>
     <message>
         <source>Bind to given address and always listen on it. Use [host]:port notation for IPv6</source>

@@ -158,16 +158,16 @@
         <translation>Otvori &amp;URI...</translation>
     </message>
     <message>
-        <source>Send coins to a PAIcoin address</source>
-        <translation>Pošalji novčiće na PAIcoin adresu</translation>
+        <source>Send coins to a PAI Coin address</source>
+        <translation>Pošalji novčiće na PAI Coin adresu</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
         <translation>&amp;Proveri poruku...</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -406,8 +406,8 @@
 <context>
     <name>paicoin-core</name>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>PAIcoin Core</translation>
+        <source>PAI Coin Core</source>
+        <translation>PAI Coin Core</translation>
     </message>
     <message>
         <source>Information</source>

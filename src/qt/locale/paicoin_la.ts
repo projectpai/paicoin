@@ -114,8 +114,8 @@
         <translation>Recreans indicem frustorum in disco...</translation>
     </message>
     <message>
-        <source>Send coins to a PAIcoin address</source>
-        <translation>Mitte nummos ad inscriptionem PAIcoin</translation>
+        <source>Send coins to a PAI Coin address</source>
+        <translation>Mitte nummos ad inscriptionem PAI Coin</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -138,8 +138,8 @@
         <translation>&amp;Verifica nuntium...</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -166,12 +166,12 @@
         <translation>Cifra claves privatas quae cassidili tui sunt</translation>
     </message>
     <message>
-        <source>Sign messages with your PAIcoin addresses to prove you own them</source>
-        <translation>Signa nuntios cum tuis inscriptionibus PAIcoin ut demonstres te eas possidere</translation>
+        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
+        <translation>Signa nuntios cum tuis inscriptionibus PAI Coin ut demonstres te eas possidere</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified PAIcoin addresses</source>
-        <translation>Verifica nuntios ut certus sis eos signatos esse cum specificatis inscriptionibus PAIcoin</translation>
+        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
+        <translation>Verifica nuntios ut certus sis eos signatos esse cum specificatis inscriptionibus PAI Coin</translation>
     </message>
     <message>
         <source>&amp;File</source>
@@ -346,8 +346,8 @@
         <translation>Cassidile</translation>
     </message>
     <message>
-        <source>Automatically open the PAIcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Aperi per se portam clientis PAIcoin in itineratore.  Hoc tantum effectivum est si itineratrum tuum supportat UPnP et id activum est.</translation>
+        <source>Automatically open the PAI Coin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Aperi per se portam clientis PAI Coin in itineratore.  Hoc tantum effectivum est si itineratrum tuum supportat UPnP et id activum est.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
@@ -425,8 +425,8 @@
         <translation>Schema</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAIcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>Monstrata informatio fortasse non recentissima est.  Tuum cassidile per se synchronizat cum rete PAIcoin postquam conexio constabilita est, sed hoc actio nondum perfecta est.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAI Coin network after a connection is established, but this process has not completed yet.</source>
+        <translation>Monstrata informatio fortasse non recentissima est.  Tuum cassidile per se synchronizat cum rete PAI Coin postquam conexio constabilita est, sed hoc actio nondum perfecta est.</translation>
     </message>
     <message>
         <source>Immature:</source>
@@ -671,8 +671,8 @@
         <translation>Copia signationem in latibulum systematis</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this PAIcoin address</source>
-        <translation>Signa nuntium ut demonstres hanc inscriptionem PAIcoin a te possessa esse</translation>
+        <source>Sign the message to prove you own this PAI Coin address</source>
+        <translation>Signa nuntium ut demonstres hanc inscriptionem PAI Coin a te possessa esse</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -691,8 +691,8 @@
         <translation>&amp;Verifica Nuntium</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified PAIcoin address</source>
-        <translation>Verifica nuntium ut cures signatum esse cum specifica inscriptione PAIcoin</translation>
+        <source>Verify the message to ensure it was signed with the specified PAI Coin address</source>
+        <translation>Verifica nuntium ut cures signatum esse cum specifica inscriptione PAI Coin</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
@@ -768,8 +768,8 @@
         <translation>Operare infere sicut daemon et mandata accipe</translation>
     </message>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>PAIcoin Nucleus</translation>
+        <source>PAI Coin Core</source>
+        <translation>PAI Coin Nucleus</translation>
     </message>
     <message>
         <source>Bind to given address and always listen on it. Use [host]:port notation for IPv6</source>

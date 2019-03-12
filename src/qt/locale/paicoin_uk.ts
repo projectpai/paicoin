@@ -62,12 +62,12 @@
         <translation>Адреса отримання</translation>
     </message>
     <message>
-        <source>These are your PAIcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Це ваші адреси PAIcoin для надсилання платежів. Завжди перевіряйте суму та адресу одержувача перед відправленням монет.</translation>
+        <source>These are your PAI Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Це ваші адреси PAI Coin для надсилання платежів. Завжди перевіряйте суму та адресу одержувача перед відправленням монет.</translation>
     </message>
     <message>
-        <source>These are your PAIcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Це ваші адреси PAIcoin для отримання платежів. Для кожної транзакції рекомендується використовувати нову адресу одержувача.</translation>
+        <source>These are your PAI Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Це ваші адреси PAI Coin для отримання платежів. Для кожної транзакції рекомендується використовувати нову адресу одержувача.</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
@@ -338,7 +338,7 @@
         <translation>Переіндексація блоків на диску ...</translation>
     </message>
     <message>
-        <source>Send coins to a PAIcoin address</source>
+        <source>Send coins to a PAI Coin address</source>
         <translation>Відправити монети на вказану адресу</translation>
     </message>
     <message>
@@ -362,8 +362,8 @@
         <translation>П&amp;еревірити повідомлення...</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -390,12 +390,12 @@
         <translation>Зашифрувати закриті ключі, що знаходяться у вашому гаманці</translation>
     </message>
     <message>
-        <source>Sign messages with your PAIcoin addresses to prove you own them</source>
-        <translation>Підтвердіть, що Ви є власником повідомлення підписавши його Вашою PAIcoin-адресою </translation>
+        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
+        <translation>Підтвердіть, що Ви є власником повідомлення підписавши його Вашою PAI Coin-адресою </translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified PAIcoin addresses</source>
-        <translation>Перевірте повідомлення для впевненості, що воно підписано вказаною PAIcoin-адресою</translation>
+        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
+        <translation>Перевірте повідомлення для впевненості, що воно підписано вказаною PAI Coin-адресою</translation>
     </message>
     <message>
         <source>&amp;File</source>
@@ -434,8 +434,8 @@
         <translation>П&amp;араметри командного рядка</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to PAIcoin network</source>
-        <translation><numerusform>%n активне з'єднання з мережею PAIcoin</numerusform><numerusform>%n активні з'єднання з мережею PAIcoin</numerusform><numerusform>%n активних з'єднань з мережею PAIcoin</numerusform></translation>
+        <source>%n active connection(s) to PAI Coin network</source>
+        <translation><numerusform>%n активне з'єднання з мережею PAI Coin</numerusform><numerusform>%n активні з'єднання з мережею PAI Coin</numerusform><numerusform>%n активних з'єднань з мережею PAI Coin</numerusform></translation>
     </message>
     <message>
         <source>Indexing blocks on disk...</source>
@@ -478,7 +478,7 @@
         <translation>Синхронізовано</translation>
     </message>
     <message>
-        <source>Show the %1 help message to get a list with possible PAIcoin command-line options</source>
+        <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
         <translation>Показати довідку %1 для отримання переліку можливих параметрів командного рядка.</translation>
     </message>
     <message>
@@ -548,7 +548,7 @@
         <translation>&lt;b&gt;Зашифрований&lt;/b&gt; гаманець &lt;b&gt;заблоковано&lt;/b&gt;</translation>
     </message>
     <message>
-        <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
+        <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
         <translation>Сталася фатальна помилка. Помилки не сумісні з подальщою роботою. Гаманець буде закрито.</translation>
     </message>
 </context>
@@ -738,8 +738,8 @@
         <translation>Редагувати адресу для відправлення</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid PAIcoin address.</source>
-        <translation>Введена адреса "%1" не є адресою в мережі PAIcoin.</translation>
+        <source>The entered address "%1" is not a valid PAI Coin address.</source>
+        <translation>Введена адреса "%1" не є адресою в мережі PAI Coin.</translation>
     </message>
     <message>
         <source>The entered address "%1" is already in the address book.</source>
@@ -1036,7 +1036,7 @@
         <translation>&amp;Витрачати непідтверджену решту</translation>
     </message>
     <message>
-        <source>Automatically open the PAIcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Automatically open the PAI Coin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>Автоматично відкривати порт для клієнту біткоін на роутері. Працює лише якщо ваш роутер підтримує UPnP і ця функція увімкнена.</translation>
     </message>
     <message>
@@ -1044,8 +1044,8 @@
         <translation>Відображення порту через &amp;UPnP</translation>
     </message>
     <message>
-        <source>Connect to the PAIcoin network through a SOCKS5 proxy.</source>
-        <translation>Підключення до мережі PAIcoin через SOCKS5 проксі.</translation>
+        <source>Connect to the PAI Coin network through a SOCKS5 proxy.</source>
+        <translation>Підключення до мережі PAI Coin через SOCKS5 проксі.</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
@@ -1084,8 +1084,8 @@
         <translation>Tor</translation>
     </message>
     <message>
-        <source>Connect to the PAIcoin network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>Підключатися до мережі PAIcoin через окремий SOCKS5 проксі для прихованих сервісів Tor.</translation>
+        <source>Connect to the PAI Coin network through a separate SOCKS5 proxy for Tor hidden services.</source>
+        <translation>Підключатися до мережі PAI Coin через окремий SOCKS5 проксі для прихованих сервісів Tor.</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
@@ -1175,8 +1175,8 @@
         <translation>Форма</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAIcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>Показана інформація вже може бути застарілою. Ваш гаманець буде автоматично синхронізовано з мережею PAIcoin після встановлення підключення, але цей процес ще не завершено.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAI Coin network after a connection is established, but this process has not completed yet.</source>
+        <translation>Показана інформація вже може бути застарілою. Ваш гаманець буде автоматично синхронізовано з мережею PAI Coin після встановлення підключення, але цей процес ще не завершено.</translation>
     </message>
     <message>
         <source>Watch-only:</source>
@@ -1276,8 +1276,8 @@
         <translation>Кількість</translation>
     </message>
     <message>
-        <source>Enter a PAIcoin address (e.g. %1)</source>
-        <translation>Введіть адресу PAIcoin (наприклад %1)</translation>
+        <source>Enter a PAI Coin address (e.g. %1)</source>
+        <translation>Введіть адресу PAI Coin (наприклад %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1632,8 +1632,8 @@
         <translation>По&amp;вторно використати адресу для отримання (не рекомендується)</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the PAIcoin network.</source>
-        <translation>Необов'язкове повідомлення на додаток до запиту платежу, котре буде показане під час відкриття запиту. Примітка: Це повідомлення не буде відправлено з платежем через мережу PAIcoin.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the PAI Coin network.</source>
+        <translation>Необов'язкове повідомлення на додаток до запиту платежу, котре буде показане під час відкриття запиту. Примітка: Це повідомлення не буде відправлено з платежем через мережу PAI Coin.</translation>
     </message>
     <message>
         <source>An optional label to associate with the new receiving address.</source>
@@ -1850,7 +1850,7 @@
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for paicoin transactions than the network can process.</source>
-        <translation>Оплата тільки мінімальної комісії є прийнятною, допоки обсяг транзакцій є меншим простору в блоках. Але майте на увазі, що це може анулювати транзакцію, якщо попит на PAIcoin транзакції стане більшим, ніж мережа зможе обробити.</translation>
+        <translation>Оплата тільки мінімальної комісії є прийнятною, допоки обсяг транзакцій є меншим простору в блоках. Але майте на увазі, що це може анулювати транзакцію, якщо попит на PAI Coin транзакції стане більшим, ніж мережа зможе обробити.</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -1968,8 +1968,8 @@
         <translation>Це звичайний платіж.</translation>
     </message>
     <message>
-        <source>The PAIcoin address to send the payment to</source>
-        <translation>Адреса PAIcoin для відправлення платежу</translation>
+        <source>The PAI Coin address to send the payment to</source>
+        <translation>Адреса PAI Coin для відправлення платежу</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -2012,8 +2012,8 @@
         <translation>Введіть мітку для цієї адреси для додавання її в список використаних адрес</translation>
     </message>
     <message>
-        <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAIcoin network.</source>
-        <translation>Повідомлення, що було додане до paicoin:URI та буде збережено разом з транзакцією для довідки. Примітка: Це повідомлення не буде відправлено в мережу PAIcoin.</translation>
+        <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
+        <translation>Повідомлення, що було додане до paicoin:URI та буде збережено разом з транзакцією для довідки. Примітка: Це повідомлення не буде відправлено в мережу PAI Coin.</translation>
     </message>
     <message>
         <source>Pay To:</source>
@@ -2057,8 +2057,8 @@
         <translation>Ви можете підписувати повідомлення/угоди своїми адресами, щоб довести можливість отримання біткоінів, що будуть надіслані на них. Остерігайтеся підписувати будь-що нечітке чи неочікуване, так як за допомогою фішинг-атаки вас можуть спробувати ввести в оману для отримання вашого підпису під чужими словами. Підписуйте лише чіткі твердження, з якими ви повністю згодні.</translation>
     </message>
     <message>
-        <source>The PAIcoin address to sign the message with</source>
-        <translation>Адреса PAIcoin для підпису цього повідомлення</translation>
+        <source>The PAI Coin address to sign the message with</source>
+        <translation>Адреса PAI Coin для підпису цього повідомлення</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2089,7 +2089,7 @@
         <translation>Копіювати поточну сигнатуру до системного буферу обміну</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this PAIcoin address</source>
+        <source>Sign the message to prove you own this PAI Coin address</source>
         <translation>Підпишіть повідомлення щоб довести, що ви є власником цієї адреси</translation>
     </message>
     <message>
@@ -2113,12 +2113,12 @@
         <translation>Введіть нижче адресу отримувача, повідомлення (впевніться, що ви точно скопіювали символи завершення рядка, табуляцію, пробіли тощо) та підпис для перевірки повідомлення. Впевніться, що в підпис не було додано зайвих символів: це допоможе уникнути атак типу «людина посередині». Зауважте, що це лише засвідчує можливість отримання транзакцій підписувачем, але не в стані підтвердити джерело жодної транзакції!</translation>
     </message>
     <message>
-        <source>The PAIcoin address the message was signed with</source>
-        <translation>Адреса PAIcoin, якою було підписано це повідомлення</translation>
+        <source>The PAI Coin address the message was signed with</source>
+        <translation>Адреса PAI Coin, якою було підписано це повідомлення</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified PAIcoin address</source>
-        <translation>Перевірте повідомлення для впевненості, що воно підписано вказаною PAIcoin-адресою</translation>
+        <source>Verify the message to ensure it was signed with the specified PAI Coin address</source>
+        <translation>Перевірте повідомлення для впевненості, що воно підписано вказаною PAI Coin-адресою</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
@@ -2654,8 +2654,8 @@
         <translation>Неможливо запустити HTTP-сервер. Детальніший опис наведено в журналі зневадження.</translation>
     </message>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>PAIcoin Core</translation>
+        <source>PAI Coin Core</source>
+        <translation>PAI Coin Core</translation>
     </message>
     <message>
         <source>Bind to given address and always listen on it. Use [host]:port notation for IPv6</source>

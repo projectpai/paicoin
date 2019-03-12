@@ -230,8 +230,8 @@
         <translation>&amp;Проверить сообщение...</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin Core</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin Core</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -442,8 +442,8 @@
         <translation>Пробросить порт через &amp;UPnP</translation>
     </message>
     <message>
-        <source>Connect to the PAIcoin network through a SOCKS5 proxy.</source>
-        <translation>Подключится к сети PAIcoin через SOCKS5 прокси.</translation>
+        <source>Connect to the PAI Coin network through a SOCKS5 proxy.</source>
+        <translation>Подключится к сети PAI Coin через SOCKS5 прокси.</translation>
     </message>
     <message>
         <source>Proxy &amp;IP:</source>
@@ -522,7 +522,7 @@
 <context>
     <name>QObject</name>
     <message>
-        <source>Enter a PAIcoin address (e.g. %1)</source>
+        <source>Enter a PAI Coin address (e.g. %1)</source>
         <translation>Введите биткоин-адрес (напр. %1)</translation>
     </message>
     <message numerus="yes">
@@ -832,8 +832,8 @@
 <context>
     <name>paicoin-core</name>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>PAIcoin Core</translation>
+        <source>PAI Coin Core</source>
+        <translation>PAI Coin Core</translation>
     </message>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>

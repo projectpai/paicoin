@@ -130,7 +130,7 @@
         <translation>Промени &amp;лозинку...</translation>
     </message>
     <message>
-        <source>Send coins to a PAIcoin address</source>
+        <source>Send coins to a PAI Coin address</source>
         <translation>Пошаљите новац на paicoin адресу</translation>
     </message>
     <message>

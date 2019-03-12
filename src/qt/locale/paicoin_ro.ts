@@ -142,8 +142,8 @@
         <translation>Deschide &amp;URI...</translation>
     </message>
     <message>
-        <source>Send coins to a PAIcoin address</source>
-        <translation>Trimite monedele către o adresă PAIcoin</translation>
+        <source>Send coins to a PAI Coin address</source>
+        <translation>Trimite monedele către o adresă PAI Coin</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -166,8 +166,8 @@
         <translation>&amp;Verifică mesajul...</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -194,12 +194,12 @@
         <translation>Criptează cheile private care aparțin portofelului tău.</translation>
     </message>
     <message>
-        <source>Sign messages with your PAIcoin addresses to prove you own them</source>
-        <translation>Semnează mesajele cu adresa ta de PAIcoin pentru a face dovada că îți aparțin.</translation>
+        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
+        <translation>Semnează mesajele cu adresa ta de PAI Coin pentru a face dovada că îți aparțin.</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified PAIcoin addresses</source>
-        <translation>Verifică mesajele cu scopul de a asigura faptul că au fost semnate cu adresa de PAIcoin specificată.</translation>
+        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
+        <translation>Verifică mesajele cu scopul de a asigura faptul că au fost semnate cu adresa de PAI Coin specificată.</translation>
     </message>
     <message>
         <source>&amp;File</source>
@@ -748,8 +748,8 @@
 <context>
     <name>paicoin-core</name>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>PAIcoin Core</translation>
+        <source>PAI Coin Core</source>
+        <translation>PAI Coin Core</translation>
     </message>
     <message>
         <source>Information</source>

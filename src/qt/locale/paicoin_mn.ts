@@ -126,7 +126,7 @@
         <translation>Оношилгоо ба засварын консолыг онгойлго</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
+        <source>PAI Coin</source>
         <translation>Биткойн</translation>
     </message>
     <message>

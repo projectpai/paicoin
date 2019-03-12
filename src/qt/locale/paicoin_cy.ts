@@ -114,8 +114,8 @@
         <translation>Newid y cyfrinymadrodd a ddefnyddiwyd ar gyfer amgryptio'r waled</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -484,8 +484,8 @@
         <translation>Opsiynau:</translation>
     </message>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>Craidd PAIcoin</translation>
+        <source>PAI Coin Core</source>
+        <translation>Craidd PAI Coin</translation>
     </message>
     <message>
         <source>Information</source>

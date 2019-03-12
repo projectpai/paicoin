@@ -90,8 +90,8 @@
         <translation>&amp;செய்தியை சரிசெய்...</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -708,8 +708,8 @@
 <context>
     <name>paicoin-core</name>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>PAIcoin மையம்</translation>
+        <source>PAI Coin Core</source>
+        <translation>PAI Coin மையம்</translation>
     </message>
     <message>
         <source>(default: %u)</source>
