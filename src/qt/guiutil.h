@@ -29,7 +29,7 @@ class QUrl;
 class QWidget;
 QT_END_NAMESPACE
 
-/** Utility functions used by the PAIcoin Qt UI.
+/** Utility functions used by the PAI Coin Qt UI.
  */
 namespace GUIUtil
 {

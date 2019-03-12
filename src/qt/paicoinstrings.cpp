@@ -9,7 +9,7 @@
 #define UNUSED
 #endif
 static const char UNUSED *paicoin_strings[] = {
-QT_TRANSLATE_NOOP("paicoin-core", "PAIcoin Core"),
+QT_TRANSLATE_NOOP("paicoin-core", "PAI Coin Core"),
 QT_TRANSLATE_NOOP("paicoin-core", "The %s developers"),
 QT_TRANSLATE_NOOP("paicoin-core", ""
 "(1 = keep tx meta data e.g. account owner and payment request information, 2 "

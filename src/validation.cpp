@@ -51,7 +51,7 @@
 #include <boost/thread.hpp>
 
 #if defined(NDEBUG)
-# error "PAIcoin cannot be compiled without assertions."
+# error "PAI Coin cannot be compiled without assertions."
 #endif
 
 #define MICRO 0.000001
@@ -97,7 +97,7 @@ static void CheckBlockIndex(const Consensus::Params& consensusParams);
 /** Constant stuff for coinbase transactions we create: */
 CScript COINBASE_FLAGS;
 
-const std::string strMessageMagic = "PAIcoin Signed Message:\n";
+const std::string strMessageMagic = "PAI Coin Signed Message:\n";
 
 // Internal stuff
 namespace {

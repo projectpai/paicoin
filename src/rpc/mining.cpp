@@ -439,10 +439,10 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         throw JSONRPCError(RPCErrorCode::CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
 
     if (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0)
-        throw JSONRPCError(RPCErrorCode::CLIENT_NOT_CONNECTED, "PAIcoin is not connected!");
+        throw JSONRPCError(RPCErrorCode::CLIENT_NOT_CONNECTED, "PAI Coin is not connected!");
 
     if (IsInitialBlockDownload())
-        throw JSONRPCError(RPCErrorCode::CLIENT_IN_INITIAL_DOWNLOAD, "PAIcoin is downloading blocks...");
+        throw JSONRPCError(RPCErrorCode::CLIENT_IN_INITIAL_DOWNLOAD, "PAI Coin is downloading blocks...");
 
     static unsigned int nTransactionsUpdatedLast;
 

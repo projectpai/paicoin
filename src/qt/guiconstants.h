@@ -48,9 +48,9 @@ static const int MAX_URI_LENGTH = 255;
 /* Number of frames in spinner animation */
 #define SPINNER_FRAMES 36
 
-#define QAPP_ORG_NAME "PAIcoin"
+#define QAPP_ORG_NAME "PAI Coin"
 #define QAPP_ORG_DOMAIN "paicoin.org"
-#define QAPP_APP_NAME_DEFAULT "PAIcoin-Qt"
-#define QAPP_APP_NAME_TESTNET "PAIcoin-Qt-testnet"
+#define QAPP_APP_NAME_DEFAULT "PAI Coin-Qt"
+#define QAPP_APP_NAME_TESTNET "PAI Coin-Qt-testnet"
 
 #endif // PAICOIN_QT_GUICONSTANTS_H

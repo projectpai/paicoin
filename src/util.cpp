@@ -522,13 +522,13 @@ void PrintExceptionContinue(const std::exception* pex, const char* pszThread)
 
 fs::path GetDefaultDataDir()
 {
-    // Windows < Vista: C:\Documents and Settings\Username\Application Data\PAIcoin
-    // Windows >= Vista: C:\Users\Username\AppData\Roaming\PAIcoin
-    // Mac: ~/Library/Application Support/PAIcoin
+    // Windows < Vista: C:\Documents and Settings\Username\Application Data\PAI Coin
+    // Windows >= Vista: C:\Users\Username\AppData\Roaming\PAI Coin
+    // Mac: ~/Library/Application Support/PAI Coin
     // Unix: ~/.paicoin
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "PAIcoin";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "PAI Coin";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -538,7 +538,7 @@ fs::path GetDefaultDataDir()
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // Mac
-    return pathRet / "Library/Application Support/PAIcoin";
+    return pathRet / "Library/Application Support/PAI Coin";
 #else
     // Unix
     return pathRet / ".paicoin";
@@ -887,7 +887,7 @@ std::string CopyrightHolders(const std::string& strPrefix)
     std::string strCopyrightHolders = strPrefix + strprintf(_(COPYRIGHT_HOLDERS), _(COPYRIGHT_HOLDERS_SUBSTITUTION));
 
     // Check for untranslated substitution to make sure Bitcoin Core copyright is not removed by accident
-    if (strprintf(COPYRIGHT_HOLDERS, COPYRIGHT_HOLDERS_SUBSTITUTION).find("PAIcoin Core") == std::string::npos) {
+    if (strprintf(COPYRIGHT_HOLDERS, COPYRIGHT_HOLDERS_SUBSTITUTION).find("PAI Coin Core") == std::string::npos) {
         strCopyrightHolders += "\n" + strPrefix + "The Bitcoin Core developers";
     }
     return strCopyrightHolders;

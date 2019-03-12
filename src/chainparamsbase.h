@@ -11,7 +11,7 @@
 
 /**
  * CBaseChainParams defines the base parameters (shared between paicoin-cli, paicoin-block-generator and paicoind)
- * of a given instance of the PAIcoin system.
+ * of a given instance of the PAI Coin system.
  */
 class CBaseChainParams
 {

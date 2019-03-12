@@ -10,7 +10,7 @@
 
 #include <univalue.h>
 
-//! PAIcoin RPC error codes
+//! PAI Coin RPC error codes
 enum class RPCErrorCode
 {
     //! Standard JSON-RPC 2.0 errors
@@ -46,7 +46,7 @@ enum class RPCErrorCode
     TRANSACTION_ALREADY_IN_CHAIN= VERIFY_ALREADY_IN_CHAIN,
 
     //! P2P client errors
-    CLIENT_NOT_CONNECTED        = -9,  //!< PAIcoin is not connected
+    CLIENT_NOT_CONNECTED        = -9,  //!< PAI Coin is not connected
     CLIENT_IN_INITIAL_DOWNLOAD  = -10, //!< Still downloading initial blocks
     CLIENT_NODE_ALREADY_ADDED   = -23, //!< Node is already added
     CLIENT_NODE_NOT_ADDED       = -24, //!< Node has not been added before

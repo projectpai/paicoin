@@ -688,7 +688,7 @@ void ThreadImport(std::vector<fs::path> vImportFiles)
 }
 
 /** Sanity checks
- *  Ensure that PAIcoin is running in a usable environment with all
+ *  Ensure that PAI Coin is running in a usable environment with all
  *  necessary library support.
  */
 static bool InitSanityCheck()
@@ -812,7 +812,7 @@ void InitLogging()
     fLogIPs = gArgs.GetBoolArg("-logips", DEFAULT_LOGIPS);
 
     LogPrintf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    LogPrintf("PAIcoin version %s\n", FormatFullVersion());
+    LogPrintf("PAI Coin version %s\n", FormatFullVersion());
 }
 
 namespace { // Variables internal to initialization process only
@@ -1154,7 +1154,7 @@ static bool LockDataDirectory(bool probeOnly)
 {
     std::string strDataDir = GetDataDir().string();
 
-    // Make sure only a single PAIcoin process is using the data directory.
+    // Make sure only a single PAI Coin process is using the data directory.
     fs::path pathLockFile = GetDataDir() / ".lock";
     FILE* file = fsbridge::fopen(pathLockFile, "a"); // empty lock file; created if it doesn't exist.
     if (file) fclose(file);
