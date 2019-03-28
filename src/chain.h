@@ -212,7 +212,7 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
-    enum { MSG_ID_SIZE = 60 };
+    enum { MSG_ID_SIZE = 100 };
     char powMsgID[MSG_ID_SIZE];
     char powNextMsgID[MSG_ID_SIZE];
     uint256 powModelHash;
