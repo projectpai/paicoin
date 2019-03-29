@@ -618,15 +618,15 @@ fs::path static StartupShortcutPath()
 {
     std::string chain = ChainNameFromCommandLine();
     if (chain == CBaseChainParams::MAIN)
-        return GetSpecialFolderPath(CSIDL_STARTUP) / "PAI Coin.lnk";
+        return GetSpecialFolderPath(CSIDL_STARTUP) / "PAIcoin.lnk";
     if (chain == CBaseChainParams::TESTNET) // Remove this special case when CBaseChainParams::TESTNET = "testnet4"
-        return GetSpecialFolderPath(CSIDL_STARTUP) / "PAI Coin (testnet).lnk";
-    return GetSpecialFolderPath(CSIDL_STARTUP) / strprintf("PAI Coin (%s).lnk", chain);
+        return GetSpecialFolderPath(CSIDL_STARTUP) / "PAIcoin (testnet).lnk";
+    return GetSpecialFolderPath(CSIDL_STARTUP) / strprintf("PAIcoin (%s).lnk", chain);
 }
 
 bool GetStartOnSystemStartup()
 {
-    // check for PAI Coin*.lnk
+    // check for PAIcoin*.lnk
     return fs::exists(StartupShortcutPath());
 }
 

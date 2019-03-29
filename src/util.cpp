@@ -522,13 +522,13 @@ void PrintExceptionContinue(const std::exception* pex, const char* pszThread)
 
 fs::path GetDefaultDataDir()
 {
-    // Windows < Vista: C:\Documents and Settings\Username\Application Data\PAI Coin
-    // Windows >= Vista: C:\Users\Username\AppData\Roaming\PAI Coin
-    // Mac: ~/Library/Application Support/PAI Coin
+    // Windows < Vista: C:\Documents and Settings\Username\Application Data\PAIcoin
+    // Windows >= Vista: C:\Users\Username\AppData\Roaming\PAIcoin
+    // Mac: ~/Library/Application Support/PAIcoin
     // Unix: ~/.paicoin
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "PAI Coin";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "PAIcoin";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -538,7 +538,7 @@ fs::path GetDefaultDataDir()
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // Mac
-    return pathRet / "Library/Application Support/PAI Coin";
+    return pathRet / "Library/Application Support/PAIcoin";
 #else
     // Unix
     return pathRet / ".paicoin";
