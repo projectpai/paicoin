@@ -57,7 +57,7 @@ SF32 = 1 << 32
 os_type = system()
 
 if os_type == 'Darwin':
-    PAICOIN_CONF_PATH = '/Library/Application Support/PAI Coin/paicoin.conf'
+    PAICOIN_CONF_PATH = '/Library/Application Support/PAIcoin/paicoin.conf'
 elif os_type == 'Linux':
     PAICOIN_CONF_PATH = '/.paicoin/paicoin.conf'
 else:
