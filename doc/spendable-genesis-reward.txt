@@ -1,5 +1,5 @@
 
-PAIcoin methodology to create a spendable genesis block with a large coinbase reward
+PAI Coin methodology to create a spendable genesis block with a large coinbase reward
 
 1. Create the private / public key pair (SK / PK), using an ECDSA generator (use the generate-keys files)
 

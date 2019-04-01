@@ -1,6 +1,6 @@
 # pai_transaction_operations.py
 #
-# PAIcoin Send/Store/Retrieve PAI Protocol in blockchain test script
+# PAI Coin Send/Store/Retrieve PAI Protocol in blockchain test script
 #
 # Copyright (c) ObEN, Inc. - https://oben.me/
 #
@@ -41,9 +41,9 @@ paicoin_txn = Transaction(testnet=True)
 res = paicoin_txn.send(address, amount, pai_pack)
 
 if 'error' in res:
-    print('PAIcoin::Send TransactionError: {}\n'.format(res['error']))
+    print('PAI Coin::Send TransactionError: {}\n'.format(res['error']))
 else:
-    print('PAIcoin::Send TxID: {}\n'.format(res['txid']))
+    print('PAI Coin::Send TxID: {}\n'.format(res['txid']))
 
 timeout = 20
 
@@ -56,7 +56,7 @@ res = paicoin_txn.store(pai_pack)
 
 pai_reference = None
 if 'error' in res:
-    print('PAIcoin::Store TransactionError: {}\n'.format(res['error']))
+    print('PAI Coin::Store TransactionError: {}\n'.format(res['error']))
 else:
     pai_reference = res['ref']
     print('TxIDs:\n\n{}\n\nRef: {}\n'.format(''.join(res['txids']), res['ref']))
@@ -64,7 +64,7 @@ else:
 if pai_reference:
     res = paicoin_txn.retrieve(pai_reference, 1)
     if 'error' in res:
-        print('PAIcoin::Retrieve TransactionError: {}\n'.format(res['error']))
+        print('PAI Coin::Retrieve TransactionError: {}\n'.format(res['error']))
 
     elif len(res):
         for r in res:

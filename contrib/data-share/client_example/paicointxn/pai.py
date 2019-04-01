@@ -1,9 +1,9 @@
 """
-PAIcoin PAI Protocol over OP_RETURN metadata
+PAI Coin PAI Protocol over OP_RETURN metadata
 """
 # pai.py
 #
-# PAIcoin - PAI Protocol over OP_RETURN metadata
+# PAI Coin - PAI Protocol over OP_RETURN metadata
 #
 # Copyright (c) ObEN, Inc. - https://oben.me/
 #

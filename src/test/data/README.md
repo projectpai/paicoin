@@ -1,7 +1,7 @@
 Description
 ------------
 
-This directory contains data-driven tests for various aspects of PAIcoin.
+This directory contains data-driven tests for various aspects of PAI Coin.
 
 License
 --------

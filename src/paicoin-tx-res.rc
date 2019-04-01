@@ -16,8 +16,8 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "PAIcoin"
-            VALUE "FileDescription",    "paicoin-tx (CLI PAIcoin transaction editor utility)"
+            VALUE "CompanyName",        "PAI Coin"
+            VALUE "FileDescription",    "paicoin-tx (CLI PAI Coin transaction editor utility)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
             VALUE "InternalName",       "paicoin-tx"
             VALUE "LegalCopyright",     COPYRIGHT_STR

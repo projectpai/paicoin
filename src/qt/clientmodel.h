@@ -34,7 +34,7 @@ enum NumConnections {
     CONNECTIONS_ALL  = (CONNECTIONS_IN | CONNECTIONS_OUT),
 };
 
-/** Model for PAIcoin network client. */
+/** Model for PAI Coin network client. */
 class ClientModel : public QObject
 {
     Q_OBJECT

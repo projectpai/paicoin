@@ -26,7 +26,7 @@ If you want to build the disk image with `make deploy` (.dmg / optional), you ne
 
 NOTE: Building with Qt4 is still supported, however, could result in a broken UI. Building with Qt5 is recommended.
 
-Build PAIcoin Core
+Build PAI Coin Core
 ------------------------
 
 1. Clone the paicoin source code and cd into `paicoin`
@@ -58,7 +58,7 @@ Build PAIcoin Core
 Running
 -------
 
-PAIcoin Core is now available at `./src/paicoind`
+PAI Coin Core is now available at `./src/paicoind`
 
 Before running, it's recommended you create an RPC configuration file.
 

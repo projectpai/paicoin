@@ -1,7 +1,7 @@
 Translation Strings Policy
 ===========================
 
-This document provides guidelines for internationalization of the PAIcoin Core software.
+This document provides guidelines for internationalization of the PAI Coin Core software.
 
 How to translate?
 ------------------
@@ -85,10 +85,10 @@ In Qt code use tr's third argument for optional plurality. For example:
 This adds `<numerusform>`s to the respective `.ts` file, which can be translated separately depending on the language. In English, this is simply:
 
     <message numerus="yes">
-        <source>%n active connection(s) to PAIcoin network</source>
+        <source>%n active connection(s) to PAI Coin network</source>
         <translation>
-            <numerusform>%n active connection to PAIcoin network</numerusform>
-            <numerusform>%n active connections to PAIcoin network</numerusform>
+            <numerusform>%n active connection to PAI Coin network</numerusform>
+            <numerusform>%n active connections to PAI Coin network</numerusform>
         </translation>
     </message>
 

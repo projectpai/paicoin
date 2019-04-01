@@ -1,6 +1,6 @@
 # retrieve_paicoin.py
 # 
-# CLI wrapper for retrieving PAIcoin transaction with OP_RETURN metadata
+# CLI wrapper for retrieving PAI Coin transaction with OP_RETURN metadata
 #
 # Copyright (c) ObEN, Inc. - https://oben.me/
 # Copyright (c) Coin Sciences Ltd
