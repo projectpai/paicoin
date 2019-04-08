@@ -675,6 +675,130 @@ UniValue getreceivedbyaddress(const JSONRPCRequest& request)
     return ValueFromAmount(nAmount);
 }
 
+UniValue getticketfee(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error{
+            "getticketfee\n"
+            "\nGet the current fee per kB of the serialized tx size used for an authored stake transaction.\n"
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "n.nnn (numeric)    The current fee\n"
+            + HelpExampleCli("getticketfee", "")
+            + HelpExampleRpc("getticketfee", "")
+        };
+
+    auto ret = UniValue{0.0};
+    return ret;
+}
+
+UniValue gettickets(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "gettickets includeimmature\n"
+            "\nReturning the hashes of the tickets currently owned by wallet.\n"
+            "\nArguments:\n"
+            "1. includeimmature                 (boolean, required)     If true include immature tickets in the results.\n"
+            "\nResult:\n"
+            "{\n"
+            "   \"hashes\": [\"value\",...],    (array of string)       Hashes of the tickets owned by the wallet encoded as strings\n"
+            "}\n"
+            + HelpExampleCli("gettickets", "true")
+            + HelpExampleRpc("gettickets", "false")
+        };
+
+    const auto& bIncludeMature = request.params[0].get_bool();
+
+    auto ret = UniValue{UniValue::VOBJ};
+    return ret;
+}
+
+UniValue revoketickets(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error{
+            "revoketickets\n"
+            "\nRequests the wallet create revovactions for any previously missed tickets.  Wallet must be unlocked.\n"
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "Nothing\n"
+            + HelpExampleCli("revoketickets", "")
+            + HelpExampleRpc("revoketickets", "")
+        };
+
+    auto ret = UniValue{UniValue::VNULL};
+    return ret;
+}
+
+UniValue listtickets(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error{
+            "listtickets\n"
+            "\nProduces an array of ticket information objects.\n"
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "[\n"
+            "   {\n"
+            "       \"ticket\": { ... }   JSON object containting ticket information\n"
+            "   }\n"
+            "]\n"
+            + HelpExampleCli("listtickets", "")
+            + HelpExampleRpc("listtickets", "")
+        };
+
+    auto ret = UniValue{UniValue::VARR};
+    return ret;
+}
+
+UniValue setticketfee(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketfee fee\n"
+            "\nModify the fee per kB of the serialized tx size used each time more fee is required for an authored stake transaction.\n"
+            "\nArguments:\n"
+            "1. fee     (numeric, required) The new fee per kB of the serialized tx size valued in decred\n"
+            "\nResult:\n"
+            "true|false (boolean)           The boolean return status\n"
+            + HelpExampleCli("setticketfee", "0.02")
+            + HelpExampleRpc("setticketfee", "0.02")
+        };
+
+    const auto& nFee = request.params[0].get_real();
+
+    auto ret = UniValue{UniValue::VBOOL};
+    return ret;
+}
 
 UniValue getreceivedbyaccount(const JSONRPCRequest& request)
 {
@@ -3274,6 +3398,11 @@ static const CRPCCommand commands[] =
     { "wallet",             "getrawchangeaddress",      &getrawchangeaddress,      {} },
     { "wallet",             "getreceivedbyaccount",     &getreceivedbyaccount,     {"account","minconf"} },
     { "wallet",             "getreceivedbyaddress",     &getreceivedbyaddress,     {"address","minconf"} },
+    { "wallet",             "getticketfee",             &getticketfee,             {} },
+    { "wallet",             "gettickets",               &gettickets,               {"includeimmature"} },
+    { "wallet",             "revoketickets",            &revoketickets,            {} },
+    { "wallet",             "setticketfee",             &setticketfee,             {"fee"} },
+    { "wallet",             "listtickets",              &listtickets,              {} },
     { "wallet",             "gettransaction",           &gettransaction,           {"txid","include_watchonly"} },
     { "wallet",             "getunconfirmedbalance",    &getunconfirmedbalance,    {} },
     { "wallet",             "getwalletinfo",            &getwalletinfo,            {} },
