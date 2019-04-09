@@ -2570,6 +2570,74 @@ UniValue getwalletinfo(const JSONRPCRequest& request)
     return obj;
 }
 
+UniValue getstakeinfo(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error{
+            "getstakeinfo\n"
+            "Returns statistics about staking from the wallet.\n"
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "{\n"
+            "    \"blockheight\": n,          (numeric) Current block height for stake info.\n"
+            "    \"difficulty\": n.nnn,       (numeric) Current stake difficulty.\n"
+            "    \"totalsubsidy\": n.nnn,     (numeric) Total amount of coins earned by proof-of-stake voting\n"
+            "    \"ownmempooltix\": n,        (numeric) Number of tickets submitted by this wallet currently in mempool\n"
+            "    \"immature\": n,             (numeric) Number of tickets from this wallet that are in the blockchain but which are not yet mature\n"
+            "    \"unspent\": n,              (numeric) Number of unspent tickets\n"
+            "    \"voted\": n,                (numeric) Number of votes cast by this wallet\n"
+            "    \"revoked\": n,              (numeric) Number of missed tickets that were missed and then revoked\n"
+            "    \"unspentexpired\": n,       (numeric) Number of unspent tickets which are past expiry\n"
+            "    \"poolsize\": n,             (numeric) Number of live tickets in the ticket pool.\n"
+            "    \"allmempooltix\": n,        (numeric) Number of tickets currently in the mempool\n"
+            "    \"live\": n,                 (numeric) Number of mature, active tickets owned by this wallet\n"
+            "    \"proportionlive\": n.nnn,   (numeric) (Live / PoolSize)\n"
+            "    \"missed\": n,               (numeric) Number of missed tickets (failure to vote, not including expired)\n"
+            "    \"proportionmissed\": n.nnn, (numeric) (Missed / (Missed + Voted))\n"
+            "    \"expired\": n,              (numeric) Number of tickets that have expired\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getstakeinfo", "")
+            + HelpExampleRpc("getstakeinfo", "")
+        };
+
+    UniValue obj{UniValue::VOBJ};
+
+    return obj;
+}
+
+UniValue stakepooluserinfo(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "stakepooluserinfo \"user\"\n"
+            "Get user info for stakepool.\n"
+            "\nArguments:\n"
+            "1. user                       (string, required)   The id of the user to be looked up\n"
+            "\nResult:\n"
+            "{\n"
+            "    \"tickets\": [{             (array of object)    A list of valid tickets that the user has added\n"
+            "       \"status\": \"value\",     (string)             The current status of the added ticket\n"
+            "       \"ticket\": \"value\",     (string)             The hash of the added ticket\n"
+            "       \"ticketheight\": n,     (numeric)            The height in which the ticket was added\n"
+            "       \"spentby\": \"value\",    (string)             The vote in which the ticket was spent\n"
+            "       \"spentbyheight\": n,    (numeric)            The height in which the ticket was spent\n"
+            "     },...],\n"
+            "    \"invalid\": [\"value\",...], (array of string)    A list of invalid tickets that the user has added\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("stakepooluserinfo", "\"user\"")
+            + HelpExampleRpc("stakepooluserinfo", "\"user\"")
+        };
+
+    const auto& user = request.params[0].get_str();
+
+    UniValue obj{UniValue::VOBJ};
+
+    return obj;
+}
+
 UniValue listwallets(const JSONRPCRequest& request)
 {
     if (request.fHelp || !request.params.empty())
@@ -3277,6 +3345,8 @@ static const CRPCCommand commands[] =
     { "wallet",             "gettransaction",           &gettransaction,           {"txid","include_watchonly"} },
     { "wallet",             "getunconfirmedbalance",    &getunconfirmedbalance,    {} },
     { "wallet",             "getwalletinfo",            &getwalletinfo,            {} },
+    { "wallet",             "getstakeinfo",             &getstakeinfo,             {} },
+    { "wallet",             "stakepooluserinfo",        &stakepooluserinfo,        {"user"} },
     { "wallet",             "importmulti",              &importmulti,              {"requests","options"} },
     { "wallet",             "importprivkey",            &importprivkey,            {"privkey","label","rescan"} },
     { "wallet",             "importwallet",             &importwallet,             {"filename"} },
