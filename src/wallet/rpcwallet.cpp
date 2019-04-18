@@ -3327,7 +3327,7 @@ UniValue redeemmultisigouts(const JSONRPCRequest& request)
     {
         throw std::runtime_error{
             "redeemmultisigouts \"fromscraddress\" (\"toaddress\" number)\n"
-            "\nTakes a hash, looks up all unspent outpoints and generates list artially signed transactions spending to either an address specified or internal addresses\n"
+            "\nTakes a hash, looks up all unspent outpoints and generates list of signed transactions spending to either an address specified or internal addresses\n"
             "\nArguments:\n"
             "1. fromscraddress (string, required)  Input script hash address.\n"
             "2. toaddress      (string, optional)  Address to look for (if not internal addresses).\n"
