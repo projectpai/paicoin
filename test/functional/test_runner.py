@@ -78,6 +78,7 @@ BASE_SCRIPTS= [
     'bip68-112-113-p2p.py',
     'rawtransactions.py',
     'reindex.py',
+    'searchrawtransactions.py',
     # vv Tests less than 30s vv
     'keypool-topup.py',
     'zmq_test.py',
@@ -129,7 +130,8 @@ BASE_SCRIPTS= [
     'wallet_stake_api.py'
     'wallet_multisig_api.py'
     'wallet_ticket_api.py'
-    'rpc_ticket_operations.py'
+    'rpc_ticket_operations.py',
+    'rpc_search_operations.py'
 ]
 
 EXTENDED_SCRIPTS = [
