@@ -127,6 +127,7 @@ BASE_SCRIPTS= [
     'p2p-fingerprint.py',
     'wallet_balance.py',
     'wallet_ticket_api.py'
+    'rpc_ticket_operations.py'
 ]
 
 EXTENDED_SCRIPTS = [
@@ -156,6 +157,7 @@ EXTENDED_SCRIPTS = [
     'invalidateblock.py',
     'p2p-acceptblock.py',
     'replace-by-fee.py',
+    'stake_api.py',
 ]
 
 # Place EXTENDED_SCRIPTS first since it has the 3 longest running tests

@@ -2923,6 +2923,46 @@ UniValue listunspent(const JSONRPCRequest& request)
     return results;
 }
 
+UniValue purchaseticket(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 10)
+        throw std::runtime_error{
+            "purchaseticket \"fromaccount\" spendlimit (minconf=1 \"ticketaddress\" numtickets \"pooladdress\" poolfees expiry \"comment\" ticketfee)\n"
+            "\nPurchase ticket using available funds.\n"
+            "\nArguments:\n"
+            "1.  \"fromaccount\"    (string, required)             The account to use for purchase (default=\"default\")\n"
+            "2.  spendlimit       (numeric, required)            Limit on the amount to spend on ticket\n"
+            "3.  minconf          (numeric, optional, default=1) Minimum number of block confirmations required\n"
+            "4.  ticketaddress    (string, optional)             Override the ticket address to which voting rights are given\n"
+            "5.  numtickets       (numeric, optional)            The number of tickets to purchase\n"
+            "6.  pooladdress      (string, optional)             The address to pay stake pool fees to\n"
+            "7.  poolfees         (numeric, optional)            The amount of fees to pay to the stake pool\n"
+            "8.  expiry           (numeric, optional)            Height at which the purchase tickets expire\n"
+            "9.  comment          (string, optional)             Unused\n"
+            "10. ticketfee        (numeric, optional)            The transaction fee rate (PAI/kB) to use (overrides fees set by the wallet config or settxfee RPC)\n"
+
+            "\nResult:\n"
+            "\"value\"              (string) Hash of the resulting ticket\n"
+
+            "\nExamples:\n"
+            "\nUse PAI from your default account to purchase a ticket if the current ticket price was a max of 50 PAI\n"
+            + HelpExampleCli("purchaseticket", "\"default\" 50") +
+            "\nPurchase 5 tickets, as the 5th argument (numtickets) is set to 5\n"
+            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" 5") +
+            "\nPurchase 5 tickets that would expire from the mempool if not mined by block 100,000, as the 8th argument (expiry) is set to 100000\n"
+            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" 5 \"\" 0 100000")
+        };
+
+    UniValue results{UniValue::VSTR};
+
+    return results;
+}
+
 UniValue fundrawtransaction(const JSONRPCRequest& request)
 {
     const auto pwallet = GetWalletForJSONRPCRequest(request);
@@ -3421,6 +3461,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "listsinceblock",           &listsinceblock,           {"blockhash","target_confirmations","include_watchonly","include_removed"} },
     { "wallet",             "listtransactions",         &listtransactions,         {"account","count","skip","include_watchonly"} },
     { "wallet",             "listunspent",              &listunspent,              {"minconf","maxconf","addresses","include_unsafe","query_options"} },
+    { "wallet",             "purchaseticket",           &purchaseticket,           {"spendlimit","fromaccount","minconf","ticketaddress","numtickets","pooladdress","poolfees","expiry","comment","ticketfee"} },
     { "wallet",             "listwallets",              &listwallets,              {} },
     { "wallet",             "lockunspent",              &lockunspent,              {"unlock","transactions"} },
     { "wallet",             "move",                     &movecmd,                  {"fromaccount","toaccount","amount","minconf","comment"} },
