@@ -154,7 +154,8 @@ void ScriptPubKeyToUniv(const CScript& scriptPubKey,
     out.pushKV("addresses", a);
 }
 
-void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry, bool include_hex, int serialize_flags)
+void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry, bool include_hex, int serialize_flags
+            , const std::map<uint256,std::shared_ptr<const CTransaction>>* const prevHashToTxMap)
 {
     entry.pushKV("txid", tx.GetHash().GetHex());
     entry.pushKV("hash", tx.GetWitnessHash().GetHex());
@@ -176,12 +177,36 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
             o.pushKV("asm", ScriptToAsmStr(txin.scriptSig, true));
             o.pushKV("hex", HexStr(txin.scriptSig.begin(), txin.scriptSig.end()));
             in.pushKV("scriptSig", o);
-            if (!tx.vin[i].scriptWitness.IsNull()) {
+            if (!txin.scriptWitness.IsNull()) {
                 UniValue txinwitness(UniValue::VARR);
-                for (const auto& item : tx.vin[i].scriptWitness.stack) {
+                for (const auto& item : txin.scriptWitness.stack) {
                     txinwitness.push_back(HexStr(item.begin(), item.end()));
                 }
                 in.pushKV("txinwitness", txinwitness);
+            }
+            if( prevHashToTxMap != nullptr) {
+                const auto& it = prevHashToTxMap->find(txin.prevout.hash);
+                if (it != std::end(*prevHashToTxMap) ){
+                    UniValue prevOut(UniValue::VARR);
+                    const auto& prevTx = it->second;
+                    for (const auto& txOut : prevTx->vout) {
+                        txnouttype type;
+                        std::vector<CTxDestination> addresses;
+                        int nRequired;
+                        if (ExtractDestinations(txOut.scriptPubKey, type, addresses, nRequired)) {
+                            UniValue a(UniValue::VARR);
+                            for (const CTxDestination& addr : addresses) {
+                                a.push_back(EncodeDestination(addr));
+                            }
+
+                            UniValue vout(UniValue::VOBJ);
+                            vout.pushKV("addresses", a);
+                            vout.pushKV("value", ValueFromAmount(txOut.nValue));
+                            prevOut.push_back(vout);
+                        }
+                    }
+                    in.pushKV("prevOut", prevOut);
+                }
             }
         }
         in.pushKV("sequence", (int64_t)txin.nSequence);
