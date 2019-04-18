@@ -235,6 +235,79 @@ UniValue addnode(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
+UniValue node(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 3)
+        throw std::runtime_error{
+            "node \"connect|remove|disconnect\" \"target\" (\"perm|temp\")\n"
+            "\nAttempts to add or remove a peer.\n"
+            "\nArguments:\n"
+            "1. \"subcmd\"          (string, required)  'disconnect' to remove all matching non-persistent peers, 'remove' to remove a persistent peer, or 'connect' to connect to a peer\n"
+            "2. \"target\"          (string, required)  Either the IP address and port of the peer to operate on, or a valid peer ID.\n"
+            "3. \"connectsubcmd\"   (string, optional)  'perm' to make the connected peer a permanent one, 'temp' to try a single connect to a peer\n"
+            "\nExamples:\n"
+            + HelpExampleCli("node", "\"connect\" \"192.168.0.6:8567\" \"perm\"")
+            + HelpExampleRpc("node", "\"connect\" \"192.168.0.6:8567\" \"perm\"")
+        };
+
+    return NullUniValue;
+}
+
+UniValue getheaders(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() !=2)
+        throw std::runtime_error{
+            "getheaders \"blocklocators\" \"hashstop\"\n"
+            "\nReturns block headers starting with the first known block hash from the request.\n"
+            "\nArguments:\n"
+            "1. \"blocklocators\"   (string, required) Concatenated hashes of blocks.  Headers are returned starting from the first known hash in this list\n"
+            "2. \"hashstop\"        (string, required) Optional block hash to stop including block headers for\n"
+            "\nResult:\n"
+            "{\n"
+            "\"headers\":\n"
+            "   [\n"
+            "    \"value\"\n"
+            "     ,...\n"
+            "   ], (array of string) Serialized block headers of all located blocks, limited to some arbitrary maximum number of hashes (currently 2000, which matches the wire protocol headers message, but this is not guaranteed)\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getheaders", "\"blocklocators\" \"hashstop\"")
+            + HelpExampleRpc("getheaders", "\"blocklocators\" \"hashstop\"")
+        };
+
+    UniValue ret{UniValue::VARR};
+
+    return ret;
+}
+
+UniValue rebroadcastmissed(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error{
+            "rebroadcastmissed\n"
+            "\nAsks the daemon to rebroadcast missed votes.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("rebroadcastmissed", "")
+            + HelpExampleRpc("rebroadcastmissed", "")
+        };
+
+    return NullUniValue;
+}
+
+UniValue rebroadcastwinners(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error{
+            "rebroadcastwinners\n"
+            "\nAsks the daemon to rebroadcast the winners of the voting lottery.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("rebroadcastwinners", "")
+            + HelpExampleRpc("rebroadcastwinners", "")
+        };
+
+    return NullUniValue;
+}
+
 UniValue disconnectnode(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() == 0 || request.params.size() >= 3)
@@ -629,6 +702,10 @@ static const CRPCCommand commands[] =
     { "network",            "ping",                   &ping,                   {} },
     { "network",            "getpeerinfo",            &getpeerinfo,            {} },
     { "network",            "addnode",                &addnode,                {"node","command"} },
+    { "network",            "node",                   &node,                   {"subcmd", "target", "connectsubcmd"} },
+    { "network",            "getheaders",             &getheaders,             {"blocklocators", "hashstop"} },
+    { "network",            "rebroadcastmissed",      &rebroadcastmissed,      {} },
+    { "network",            "rebroadcastwinners",     &rebroadcastwinners,     {} },
     { "network",            "disconnectnode",         &disconnectnode,         {"address", "nodeid"} },
     { "network",            "getaddednodeinfo",       &getaddednodeinfo,       {"node"} },
     { "network",            "getnettotals",           &getnettotals,           {} },

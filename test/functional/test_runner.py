@@ -131,7 +131,8 @@ BASE_SCRIPTS= [
     'wallet_multisig_api.py'
     'wallet_ticket_api.py'
     'rpc_ticket_operations.py',
-    'rpc_search_operations.py'
+    'rpc_search_operations.py',
+    'rpc_node_operations.py'
 ]
 
 EXTENDED_SCRIPTS = [
