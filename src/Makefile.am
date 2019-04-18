@@ -214,6 +214,7 @@ libpaicoin_server_a_SOURCES = \
   rpc/rawtransaction.cpp \
   rpc/safemode.cpp \
   rpc/server.cpp \
+  rpc/stakeapi.cpp \
   script/sigcache.cpp \
   script/ismine.cpp \
   timedata.cpp \

@@ -135,6 +135,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "logging", 0, "include" },
     { "logging", 1, "exclude" },
     { "disconnectnode", 1, "nodeid" },
+    { "estimatestakediff", 0, "numtickets" },
+    { "getstakeversioninfo", 0, "count" },
+    { "getstakeversions", 1, "count" },
     // Echo with conversion (For testing only)
     { "echojson", 0, "arg0" },
     { "echojson", 1, "arg1" },
