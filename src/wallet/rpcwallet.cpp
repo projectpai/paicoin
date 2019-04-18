@@ -787,7 +787,7 @@ UniValue setticketfee(const JSONRPCRequest& request)
             "setticketfee fee\n"
             "\nModify the fee per kB of the serialized tx size used each time more fee is required for an authored stake transaction.\n"
             "\nArguments:\n"
-            "1. fee     (numeric, required) The new fee per kB of the serialized tx size valued in decred\n"
+            "1. fee     (numeric, required) The new fee per kB of the serialized tx size valued in PAI\n"
             "\nResult:\n"
             "true|false (boolean)           The boolean return status\n"
             + HelpExampleCli("setticketfee", "0.02")
