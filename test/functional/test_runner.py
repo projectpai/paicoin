@@ -125,7 +125,8 @@ BASE_SCRIPTS= [
     'minchainwork.py',
     'rpc_help.py',
     'p2p-fingerprint.py',
-    'wallet_balance.py'
+    'wallet_balance.py',
+    'rpc_ticket_operations.py'
 ]
 
 EXTENDED_SCRIPTS = [
