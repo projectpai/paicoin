@@ -126,6 +126,7 @@ BASE_SCRIPTS= [
     'rpc_help.py',
     'p2p-fingerprint.py',
     'wallet_balance.py',
+    'wallet_multisig_api.py'
     'wallet_ticket_api.py'
     'rpc_ticket_operations.py'
 ]
