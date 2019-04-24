@@ -131,10 +131,6 @@ bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params
     if (UintToArith256(block.GetHash()) > bnTarget)
         return false;
 
-    // check that the nonce is derived from ML data
-    if (block.nNonce != block.DeriveNonceFromML())
-        return false;
-
     // if we are asked only to check block hash against difficulty, we are done
     if (!checkMLproof)
         return true;
@@ -154,7 +150,7 @@ bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params
     // check ML proof
     std::string verificationServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
     VerificationClient client(grpc::CreateChannel(verificationServerAddress, grpc::InsecureChannelCredentials()));
-    auto result = client.Verify(std::string(block.powMsgID), block.powModelHash.ToString(), std::string(block.powNextMsgID));
+    auto result = client.Verify(std::string(block.powMsgHistoryId), std::string(block.powMsgId), block.nNonce);
     int resultCode = int(result.first);
     return resultCode == pai::pouw::verification::Response::OK;
 }

@@ -28,9 +28,8 @@ public:
     uint32_t nBits;
     uint32_t nNonce;
     enum { MSG_ID_SIZE = 100 };
-    char powMsgID[MSG_ID_SIZE];
-    char powNextMsgID[MSG_ID_SIZE];
-    uint256 powModelHash;
+    char powMsgHistoryId[MSG_ID_SIZE];
+    char powMsgId[MSG_ID_SIZE];
 
     CBlockHeader()
     {
@@ -48,19 +47,17 @@ public:
         READWRITE(nBits);
         READWRITE(nNonce);
 
-        std::string strMsgID, strNextMsgID;
+        std::string strMsgHistoryId, strMsgId;
         if (!ser_action.ForRead()) {
-            strMsgID = powMsgID;
-            strNextMsgID = powNextMsgID;
+            strMsgHistoryId = powMsgHistoryId;
+            strMsgId = powMsgId;
         }
-        READWRITE(strMsgID);
-        READWRITE(strNextMsgID);
+        READWRITE(strMsgHistoryId);
+        READWRITE(strMsgId);
         if (ser_action.ForRead()) {
-            strncpy(powMsgID, strMsgID.c_str(), MSG_ID_SIZE);
-            strncpy(powNextMsgID, strNextMsgID.c_str(), MSG_ID_SIZE);
+            strncpy(powMsgHistoryId, strMsgHistoryId.c_str(), MSG_ID_SIZE);
+            strncpy(powMsgId, strMsgId.c_str(), MSG_ID_SIZE);
         }
-
-        READWRITE(powModelHash);
     }
 
     void SetNull()
@@ -71,9 +68,8 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
-        powMsgID[0] = '\0';
-        powNextMsgID[0] = '\0';
-        powModelHash.SetNull();
+        powMsgHistoryId[0] = '\0';
+        powMsgId[0] = '\0';
     }
 
     bool IsNull() const
@@ -87,8 +83,6 @@ public:
     {
         return (int64_t)nTime;
     }
-
-    uint32_t DeriveNonceFromML() const;
 };
 
 

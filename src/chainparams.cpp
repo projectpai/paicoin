@@ -28,7 +28,6 @@
 #define MAINNET_CONSENSUS_POW_LIMIT      uint256S("0x0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define MAINNET_GENESIS_BLOCK_POW_BITS   36 // 32
 #define MAINNET_GENESIS_BLOCK_NBITS      0x1c09fe61
-#define MAINNET_GENESIS_BLOCK_MODEL      uint256()
 #define MAINNET_GENESIS_BLOCK_SIGNATURE  "95ba0161eb524f97d3847653057baaef7d7ba0ff"
 
 #define MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706776
@@ -39,7 +38,6 @@
 #define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
 #define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
-#define TESTNET_GENESIS_BLOCK_MODEL      uint256S("0x00000000000000000000000000000000000000000000000000000000000045c1")
 #define TESTNET_GENESIS_BLOCK_SIGNATURE  "9a8abac6c3d97d37d627e6ebcaf68be72275168b"
 
 #define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706516  
@@ -50,7 +48,6 @@
 #define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define REGTEST_GENESIS_BLOCK_POW_BITS   1
 #define REGTEST_GENESIS_BLOCK_NBITS      0x207fffff
-#define REGTEST_GENESIS_BLOCK_MODEL      uint256S("0x000000000000000000000000000000000000000000000000000000000004505d")
 #define REGTEST_GENESIS_BLOCK_SIGNATURE  "23103f0e2d2abbaad0d79b7a37759b1a382b7821"
 
 #define REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP 1509798928
@@ -114,7 +111,7 @@ uint32_t CHAINPARAMS_XUINT32(const char * name, uint32_t value)
 #endif
 }
 
-static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, uint256 powModelHash, const CAmount& genesisReward)
+static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
     CMutableTransaction txNew;
     txNew.nVersion = 1;
@@ -129,7 +126,6 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     genesis.nBits    = nBits;
     genesis.nNonce   = nNonce;
     genesis.nVersion = nVersion;
-    genesis.powModelHash = powModelHash;
     genesis.vtx.push_back(MakeTransactionRef(std::move(txNew)));
     genesis.hashPrevBlock.SetNull();
     genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
@@ -162,11 +158,11 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  *     CScriptWitness()
  *     CTxOut(nValue=1470000000.00000000, scriptPubKey=410439cc2db2636303ea74af82dea7)
  */
-static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, uint256 powModelHash, const CAmount& genesisReward, const std::string & signature)
+static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const std::string & signature)
 {
     std::string sTimestamp = CHAINPARAMS_STR("GENESIS_BLOCK_TIMESTAMP_STRING", GENESIS_BLOCK_TIMESTAMP_STRING);
     const CScript genesisOutputScript = CScript() << OP_HASH160 << ParseHex(signature.c_str()) << OP_EQUAL;
-    return CreateGenesisBlock(sTimestamp.c_str(), genesisOutputScript, nTime, nNonce, nBits, nVersion, powModelHash, genesisReward);
+    return CreateGenesisBlock(sTimestamp.c_str(), genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
 }
 
 void CChainParams::UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout)
@@ -205,7 +201,6 @@ void SaveGenesisParams(const std::string & prefix, const CBlock & genesis)
     char buffer[32];
     snprintf(buffer, sizeof(buffer), "%u", genesis.nNonce);
     gGenesisparams.SoftSetArg(prefix + "_GENESIS_BLOCK_NONCE", buffer);
-    gGenesisparams.SoftSetArg(prefix + "_GENESIS_BLOCK_MODEL", std::string("0x") + genesis.powModelHash.ToString());
     gGenesisparams.SoftSetArg(prefix + "_CONSENSUS_HASH_GENESIS_BLOCK", std::string("0x") + genesis.GetHash().ToString());
     gGenesisparams.SoftSetArg(prefix + "_GENESIS_HASH_MERKLE_ROOT", std::string("0x") + genesis.hashMerkleRoot.ToString());
 #endif
@@ -279,7 +274,6 @@ public:
                 0,
                 CHAINPARAMS_XUINT32("MAINNET_GENESIS_BLOCK_NBITS", MAINNET_GENESIS_BLOCK_NBITS),
                 4,
-                uint256(),
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
             );
@@ -291,11 +285,7 @@ public:
             LogPrintf("- old mainnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
             LogPrintf("- old mainnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-            while (UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit)
-            {
-                genesis.powModelHash = ArithToUint256(UintToArith256(genesis.powModelHash) + 1);
-                genesis.nNonce = genesis.DeriveNonceFromML();
-            }
+            for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { }
 
             LogPrintf("- new mainnet genesis nonce: %u\n", genesis.nNonce);
             LogPrintf("- new mainnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
@@ -317,7 +307,6 @@ public:
                 GENESIS_UINT32("MAINNET_GENESIS_BLOCK_NONCE", MAINNET_GENESIS_BLOCK_NONCE),
                 CHAINPARAMS_XUINT32("MAINNET_GENESIS_BLOCK_NBITS", MAINNET_GENESIS_BLOCK_NBITS),
                 4,
-                GENESIS_UINT256("MAINNET_GENESIS_BLOCK_MODEL", MAINNET_GENESIS_BLOCK_MODEL),
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
             );
@@ -459,7 +448,6 @@ public:
                 0,
                 CHAINPARAMS_XUINT32("TESTNET_GENESIS_BLOCK_NBITS", TESTNET_GENESIS_BLOCK_NBITS),
                 4,
-                uint256(),
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("TESTNET_GENESIS_BLOCK_SIGNATURE", TESTNET_GENESIS_BLOCK_SIGNATURE)
             );
@@ -471,11 +459,7 @@ public:
             LogPrintf("- old testnet genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
             LogPrintf("- old testnet genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-            while (UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit)
-            {
-                genesis.powModelHash = ArithToUint256(UintToArith256(genesis.powModelHash) + 1);
-                genesis.nNonce = genesis.DeriveNonceFromML();
-            }
+            for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { }
 
             LogPrintf("- new testnet genesis nonce: %u\n", genesis.nNonce);
             LogPrintf("- new testnet genesis hash: %s\n", genesis.GetHash().ToString().c_str());
@@ -495,7 +479,6 @@ public:
                 GENESIS_UINT32("TESTNET_GENESIS_BLOCK_NONCE", TESTNET_GENESIS_BLOCK_NONCE),
                 CHAINPARAMS_XUINT32("TESTNET_GENESIS_BLOCK_NBITS", TESTNET_GENESIS_BLOCK_NBITS),
                 4,
-                GENESIS_UINT256("TESTNET_GENESIS_BLOCK_MODEL", TESTNET_GENESIS_BLOCK_MODEL),
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("TESTNET_GENESIS_BLOCK_SIGNATURE", TESTNET_GENESIS_BLOCK_SIGNATURE)
             );
@@ -636,7 +619,6 @@ public:
                 0,
                 CHAINPARAMS_XUINT32("REGTEST_GENESIS_BLOCK_NBITS", REGTEST_GENESIS_BLOCK_NBITS),
                 4,
-                uint256(),
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("REGTEST_GENESIS_BLOCK_SIGNATURE", REGTEST_GENESIS_BLOCK_SIGNATURE)
             );
@@ -648,11 +630,7 @@ public:
             LogPrintf("- old regtest genesis hash:  %s\n", genesis.GetHash().ToString().c_str());
             LogPrintf("- old regtest genesis merkle root: %s\n", genesis.hashMerkleRoot.ToString().c_str());
 
-            while (UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit)
-            {
-                genesis.powModelHash = ArithToUint256(UintToArith256(genesis.powModelHash) + 1);
-                genesis.nNonce = genesis.DeriveNonceFromML();
-            }
+            for (genesis.nNonce = 0; UintToArith256(genesis.GetHash()) > bnProofOfWorkLimit; genesis.nNonce++) { } 
 
             LogPrintf("- new regtest genesis nonce: %u\n", genesis.nNonce);
             LogPrintf("- new regtest genesis hash: %s\n", genesis.GetHash().ToString().c_str());
@@ -674,7 +652,6 @@ public:
                 GENESIS_UINT32("REGTEST_GENESIS_BLOCK_NONCE", REGTEST_GENESIS_BLOCK_NONCE),
                 CHAINPARAMS_XUINT32("REGTEST_GENESIS_BLOCK_NBITS", REGTEST_GENESIS_BLOCK_NBITS),
                 4,
-                GENESIS_UINT256("REGTEST_GENESIS_BLOCK_MODEL", REGTEST_GENESIS_BLOCK_MODEL),
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("REGTEST_GENESIS_BLOCK_SIGNATURE", REGTEST_GENESIS_BLOCK_SIGNATURE)
             );

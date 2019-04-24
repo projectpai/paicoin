@@ -132,12 +132,10 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
             IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
         }
 
-        // find a model hash / nonce with which this block satisfies difficulty
-        pblock->nNonce = pblock->DeriveNonceFromML();
+        // find a nonce with which this block satisfies difficulty
         while (nMaxTries > 0 && !CheckProofOfWork(*pblock, Params().GetConsensus()))
         {
-            pblock->powModelHash = ArithToUint256(UintToArith256(pblock->powModelHash) + 1);
-            pblock->nNonce = pblock->DeriveNonceFromML();
+            ++pblock->nNonce;
             --nMaxTries;
         }
         if (nMaxTries == 0) {
@@ -208,9 +206,9 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
             "1. submitusefulwork_request         (json object) A json object in the following spec\n"
             "     {\n"
             "       \"address\":\"miner_address\"       (string, required) The address to send the newly generated paicoin to.\n"
-            "       \"pow_msg_id\":\"msg_id\"           (string, required) Message ID\n"
-            "       \"pow_next_msg_id\":\"next_msg_id\" (string, required) Next message ID\n"
-            "       \"pow_model_hash\":\"model_hash\"   (string, required) ML model hash\n"
+            "       \"pow_msg_history_id\":\"msg_history_id\"           (string, required) Message History ID\n"
+            "       \"pow_msg_id\":\"msg_id\" (string, required) Message ID\n"
+            "       \"pow_nonce\":\"nonce\" (numeric, required) Nonce\n"
             "     }\n"
             "\n"
 
@@ -220,9 +218,9 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
 
     const UniValue& oparam = request.params[0].get_obj();
     std::string address = find_value(oparam, "address").get_str();
-    std::string pow_msg_id = find_value(oparam, "pow_msg_id").get_str();
-    std::string pow_next_msg_id = find_value(oparam, "pow_next_msg_id").get_str();
-    uint256 pow_model_hash = ParseHashStr(find_value(oparam, "pow_model_hash").get_str(), "pow_model_hash");
+    std::string pow_msg_id = find_value(oparam, "pow_msg_history_id").get_str();
+    std::string pow_next_msg_id = find_value(oparam, "pow_msg_id").get_str();
+    const uint32_t pow_nonce = find_value(oparam, "pow_nonce").get_int();
 
     CTxDestination destination = DecodeDestination(address);
     if (!IsValidDestination(destination)) {
@@ -244,13 +242,12 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
         IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
     }
 
-    pblock->powMsgID[0] = '\0';
-    strncat(pblock->powMsgID, pow_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
-    pblock->powNextMsgID[0] = '\0';
-    strncat(pblock->powNextMsgID, pow_next_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
+    pblock->powMsgHistoryId[0] = '\0';
+    strncat(pblock->powMsgHistoryId, pow_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
+    pblock->powMsgId[0] = '\0';
+    strncat(pblock->powMsgId, pow_next_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
 
-    pblock->powModelHash = pow_model_hash;
-    pblock->nNonce = pblock->DeriveNonceFromML();
+    pblock->nNonce = pow_nonce;
 
 	bool valid = CheckProofOfWork(*pblock, Params().GetConsensus(), false);
 	if (!valid)
