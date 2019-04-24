@@ -21,12 +21,12 @@ class VerificationClient {
   VerificationClient(std::shared_ptr<Channel> channel)
       : stub_(Verifier::NewStub(channel)) {}
 
-  std::pair<Response_ReturnCode, std::string> Verify(const std::string& msg_id, const std::string& model_hash, const std::string& msg_next_id) {
+  std::pair<Response_ReturnCode, std::string> Verify(const std::string& msg_history_id, const std::string& msg_id, const uint32_t nonce) {
 
     Request request;
+    request.set_msg_history_id(msg_history_id);
     request.set_msg_id(msg_id);
-    request.set_model_hash(model_hash);
-    request.set_msg_next_id(msg_next_id);
+    request.set_nonce(nonce);
 
     Response response;
     ClientContext context;

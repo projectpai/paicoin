@@ -11,9 +11,9 @@ service Verifier {
 
 // Request message
 message Request {
-    string msg_id = 1; // the id from the Redis database
-    string model_hash = 2; // the hash of the state of the model before the lucky iteration was executed
-    string msg_next_id = 3; // the id of the message picked after sending the results of the lucky iteration
+    string msg_history_id = 1; // the id/hash of the message history chunk in which the lucky nonce was generated
+    string msg_id = 2; // the id/hash of the message
+    uint32 nonce = 3; // the nonce that is supposed to be checked against
 }
 
 // Response message

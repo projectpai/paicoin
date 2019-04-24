@@ -160,9 +160,8 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("height", blockindex->nHeight));
     result.push_back(Pair("version", blockindex->nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", blockindex->nVersion)));
-    result.push_back(Pair("powMsgID", blockindex->powMsgID));
-    result.push_back(Pair("powModelHash", blockindex->powModelHash.GetHex()));
-    result.push_back(Pair("powNextMsgID", blockindex->powNextMsgID));
+    result.push_back(Pair("powMsgHistoryId", blockindex->powMsgHistoryId));
+    result.push_back(Pair("powMsgId", blockindex->powMsgId));
     result.push_back(Pair("merkleroot", blockindex->hashMerkleRoot.GetHex()));
     result.push_back(Pair("time", static_cast<int64_t>(blockindex->nTime)));
     result.push_back(Pair("mediantime", static_cast<int64_t>(blockindex->GetMedianTimePast())));
@@ -204,9 +203,8 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("version", block.nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", block.nVersion)));
     result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
-    result.push_back(Pair("powMsgID", std::string(block.powMsgID)));
-    result.push_back(Pair("powNextMsgID", std::string(block.powNextMsgID)));
-    result.push_back(Pair("powModelHash", block.powModelHash.GetHex()));
+    result.push_back(Pair("powMsgHistoryId", std::string(block.powMsgHistoryId)));
+    result.push_back(Pair("powMsgId", std::string(block.powMsgId)));
     UniValue txs(UniValue::VARR);
     for(const auto& tx : block.vtx)
     {
@@ -817,9 +815,8 @@ UniValue getblock(const JSONRPCRequest& request)
             "  \"version\" : n,         (numeric) The block version\n"
             "  \"versionHex\" : \"00000000\", (string) The block version formatted in hexadecimal\n"
             "  \"merkleroot\" : \"xxxx\", (string) The merkle root\n"
-            "  \"powMsgID\" : \"...\",  (string) The ID of the message used for POW\n"
-            "  \"powNextMsgID\" : \"...\",  (string) The ID of the next message used for POW\n"
-            "  \"powModelHash\" : \"hash\",  (string) The hash of the ML model used for POW\n"
+            "  \"powMsgHistoryId\" : \"...\",  (string) The ID of the message history used for POW\n"
+            "  \"powMsgId\" : \"...\",  (string) The ID of the message used for POW\n"
             "  \"tx\" : [               (array of string) The transaction ids\n"
             "     \"transactionid\"     (string) The transaction id\n"
             "     ,...\n"
