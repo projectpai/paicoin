@@ -143,6 +143,13 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "txfeeinfo", 2, "rangeend" },
     { "getblocksubsidy", 0, "height" },
     { "getblocksubsidy", 1, "voters" },
+    { "getmultisigoutinfo", 1, "index"},
+    { "redeemmultisigout", 1, "index"},
+    { "redeemmultisigout", 2, "tree"},
+    { "redeemmultisigouts", 2, "number"},
+    { "sendtomultisig", 2, "pubkeys"},
+    { "sendtomultisig", 3, "nrequired"},
+    { "sendtomultisig", 4, "minconf"},
     // Echo with conversion (For testing only)
     { "echojson", 0, "arg0" },
     { "echojson", 1, "arg1" },

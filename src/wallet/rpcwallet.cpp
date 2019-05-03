@@ -26,6 +26,7 @@
 #include "wallet/feebumper.h"
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
+#include "wallet/fees.h"
 
 #include <init.h>  // For StartShutdown
 
@@ -3474,6 +3475,11 @@ UniValue rescanblockchain(const JSONRPCRequest& request)
 
 UniValue getmultisigoutinfo(const JSONRPCRequest& request)
 {
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
     if (request.fHelp || request.params.size() !=2)
     {
         throw std::runtime_error{
@@ -3504,15 +3510,191 @@ UniValue getmultisigoutinfo(const JSONRPCRequest& request)
         };
     }
 
-    const auto& sHash = request.params[0].get_str();
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    uint256 hash;
+    hash.SetHex(request.params[0].get_str());
+
     const auto& nIndex = request.params[1].get_int();
 
-    auto ret = UniValue{UniValue::VOBJ};
-    return ret;
+    auto it = pwallet->mapWallet.find(hash);
+    if (it == pwallet->mapWallet.end()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
+    }
+
+    const auto& wtx = it->second;
+    const auto& txOut = wtx.tx->vout[nIndex];
+
+    const auto& scriptPubKey = txOut.scriptPubKey;
+
+    auto result = UniValue{UniValue::VOBJ};
+
+    CTxDestination address;
+    const auto fValidAddress = ExtractDestination(scriptPubKey, address);
+
+    if (fValidAddress) {
+        result.push_back(Pair("address", EncodeDestination(address)));
+
+        if (txOut.scriptPubKey.IsPayToScriptHash()){
+            const auto& hash = boost::get<CScriptID>(address);
+            CScript redeemScript;
+            if (pwallet->GetCScript(hash, redeemScript)) {
+                result.push_back(Pair("redeemScript", HexStr(redeemScript.begin(), redeemScript.end())));
+
+                txnouttype type;
+                std::vector<CTxDestination> addresses;
+                int nRequired;
+                if (ExtractDestinations(redeemScript, type, addresses, nRequired)) {
+                    result.push_back(Pair("m", nRequired));
+                    result.push_back(Pair("n", addresses.size()));
+                    auto pubkeys = UniValue{UniValue::VARR};
+                    for (const auto& addr: addresses){
+                        CPubKey pubkey;
+                        if (pwallet->GetPubKey(boost::get<CKeyID>(addr),pubkey))
+                            pubkeys.push_back(HexStr(pubkey));
+                    }
+                    result.push_back(Pair("pubkeys",pubkeys));
+                }
+            }
+
+            result.push_back(Pair("txhash",wtx.GetHash().GetHex()));
+            result.push_back(Pair("blockheight", mapBlockIndex[wtx.hashBlock]->nHeight));
+            result.push_back(Pair("blockhash",wtx.hashBlock.GetHex()));
+
+            auto spendingWtx = CWalletTx{};
+            if (pwallet->IsSpent(wtx.GetHash(), nIndex, &spendingWtx)) {
+                result.push_back(Pair("spent",true));
+                result.push_back(Pair("spentby", spendingWtx.GetHash().GetHex()));
+
+                // find the index in vin of spending transaction that comes from our hash
+                size_t idx = 0;
+                while (idx < spendingWtx.tx->vin.size() && spendingWtx.tx->vin[idx].prevout.hash != wtx.GetHash()) ++idx;
+                assert( idx < spendingWtx.tx->vin.size());
+
+                result.push_back(Pair("spentbyindex", idx));
+            } else {
+                result.push_back(Pair("spent",false));
+            }
+
+        }
+    }
+
+    result.push_back(Pair("amount", ValueFromAmount(txOut.nValue)));
+
+    return result;
+}
+
+// Defined in rpc/rawtransaction.cpp
+extern void TxInErrorToJSON(const CTxIn& txin, UniValue& vErrorsRet, const std::string& strMessage);
+
+static void RedeemMultisigOut(CWallet *const pwallet, const uint256& hash, int index, const CTxDestination& dest, UniValue& result)
+{
+
+    auto it = pwallet->mapWallet.find(hash);
+    if (it == pwallet->mapWallet.end()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
+    }
+
+    const auto& wtx = it->second;
+    const auto& txOut = wtx.tx->vout[index];
+
+    const auto& rawtxIn = CTxIn{COutPoint(hash, index),CScript()};
+    const auto& rawtxOut= CTxOut(txOut.nValue,GetScriptForDestination(dest));
+
+    CMutableTransaction mtx;
+    mtx.vin.push_back(rawtxIn);
+    mtx.vout.push_back(rawtxOut);
+
+    // Fetch previous transactions (inputs):
+    CCoinsView viewDummy;
+    CCoinsViewCache view(&viewDummy);
+    {
+        LOCK(mempool.cs);
+        CCoinsViewCache &viewChain = *pcoinsTip;
+        CCoinsViewMemPool viewMempool(&viewChain, mempool);
+        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
+
+        for (const CTxIn& txin : mtx.vin) {
+            view.AccessCoin(txin.prevout); // Load entries from viewChain into view; can fail.
+        }
+
+        view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
+    }
+
+    // Script verification errors
+    UniValue vErrors(UniValue::VARR);
+
+    CTxIn& txin = mtx.vin[0];
+    // deduct the fee
+    if (!pwallet->DummySignTx(mtx, std::set<CInputCoin>{CInputCoin(&wtx, txin.prevout.n)})) {
+        TxInErrorToJSON(txin, vErrors, "Failed to dummy sign the transction!");
+    }
+
+    const auto& nBytes = GetVirtualTransactionSize(mtx);
+    const auto& nFeeNeeded = GetRequiredFee(nBytes);
+    auto& currentValue = mtx.vout[0].nValue;
+    if (currentValue < nFeeNeeded) {
+        TxInErrorToJSON(txin, vErrors, "The transaction amount is too small to pay the fee");
+    }
+    currentValue -= nFeeNeeded;
+
+    const Coin& coin = view.AccessCoin(txin.prevout);
+    if (coin.IsSpent()) {
+        TxInErrorToJSON(txin, vErrors, "Input not found or already spent");
+    }
+    const CScript& prevPubKey = coin.out.scriptPubKey;
+    const CAmount& amount = coin.out.nValue;
+
+    SignatureData sigdata;
+    const CTransaction txConst(mtx);
+    const CKeyStore& keystore = *pwallet;
+    ProduceSignature(MutableTransactionSignatureCreator(&keystore, &mtx, 0, amount, SIGHASH_ALL), prevPubKey, sigdata);
+    sigdata = CombineSignatures(prevPubKey, TransactionSignatureChecker(&txConst, 0, amount), sigdata, DataFromTransaction(mtx, 0));
+
+    UpdateTransaction(mtx, 0, sigdata);
+
+    ScriptError serror = SCRIPT_ERR_OK;
+    if (!VerifyScript(txin.scriptSig, prevPubKey, &txin.scriptWitness, STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&txConst, 0, amount), &serror)) {
+        TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
+    }
+
+    bool fComplete = vErrors.empty();
+
+    result.push_back(Pair("hex", EncodeHexTx(mtx)));
+    result.push_back(Pair("complete", fComplete));
+    if (!vErrors.empty()) {
+        result.push_back(Pair("errors", vErrors));
+    }
+}
+
+CTxDestination GetOrGenerateAddress(const JSONRPCRequest& request, int paramIndex, CWallet *const pwallet)
+{
+    CTxDestination dest;
+    if (!request.params[paramIndex].isNull()) {
+        dest = DecodeDestination(request.params[paramIndex].get_str());
+        if (!IsValidDestination(dest)) {
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
+        }
+    }
+    else{
+        // Generate a new key that is added to wallet
+        CPubKey newKey;
+        if (!pwallet->GetKeyFromPool(newKey)) {
+            throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+        }
+        dest = newKey.GetID();
+    }
+    return dest;
 }
 
 UniValue redeemmultisigout(const JSONRPCRequest& request)
 {
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
     if (request.fHelp || request.params.size() < 3 || request.params.size() > 4)
     {
         throw std::runtime_error{
@@ -3541,20 +3723,32 @@ UniValue redeemmultisigout(const JSONRPCRequest& request)
             + HelpExampleRpc("redeemmultisigout", "\"hash\" 2 220")
         };
     }
-    const auto& sHash = request.params[0].get_str();
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    uint256 hash;
+    hash.SetHex(request.params[0].get_str());
+
     const auto& nIndex = request.params[1].get_int();
     const auto& nTree = request.params[2].get_int();
 
-    auto sAddress = std::string{};
-    if (!request.params[3].isNull())
-        sAddress = request.params[3].get_str();
+    EnsureWalletIsUnlocked(pwallet);
+    const auto& dest = GetOrGenerateAddress(request,3,pwallet);
 
-    auto ret = UniValue{UniValue::VOBJ};
-    return ret;
+    UniValue result(UniValue::VOBJ);
+    RedeemMultisigOut(pwallet, hash, nIndex, dest, result);
+
+    return result;
 }
 
 UniValue redeemmultisigouts(const JSONRPCRequest& request)
 {
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
     {
         throw std::runtime_error{
@@ -3582,22 +3776,58 @@ UniValue redeemmultisigouts(const JSONRPCRequest& request)
             + HelpExampleRpc("redeemmultisigouts", "\"fromaddress\"")
         };
     }
-    const auto& sFromAddress = request.params[0].get_str();
 
-    auto sToAddress = std::string{};
-    if (!request.params[1].isNull())
-        sToAddress = request.params[1].get_str();
+    ObserveSafeMode();
 
-    auto nNumber = 0;
+    const auto& scrAddress = DecodeDestination(request.params[0].get_str());
+    if (scrAddress.which() != 2/*CScriptID template pos*/) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "fromscraddress must be a script hash address");
+    }
+
+    auto nMaxOutputs = std::numeric_limits<int>::max();
     if (!request.params[2].isNull())
-        nNumber = request.params[2].get_int();
+        nMaxOutputs = request.params[2].get_int();
 
-    auto ret = UniValue{UniValue::VOBJ};
-    return ret;
+    EnsureWalletIsUnlocked(pwallet);
+
+    const auto& sToAddress = GetOrGenerateAddress(request,1,pwallet);
+
+    UniValue results{UniValue::VARR};
+
+    auto nCount = 1;
+    std::vector<COutput> vecOutputs;
+    pwallet->AvailableCoins(vecOutputs);
+    for (const auto& out : vecOutputs) {
+        const auto& scriptPubKey = out.tx->tx->vout[out.i].scriptPubKey;
+        if (scriptPubKey.IsPayToScriptHash()) {
+            CTxDestination address;
+            const auto fValidAddress = ExtractDestination(scriptPubKey, address);
+
+            if (!fValidAddress || address != scrAddress) {
+                continue;
+            }
+
+            if (nCount > nMaxOutputs) {
+                break;
+            }
+
+            UniValue entry{UniValue::VOBJ};
+            RedeemMultisigOut(pwallet, out.tx->GetHash(), out.i, sToAddress, entry);
+            results.push_back(entry);
+            ++nCount;
+        }
+    }
+
+    return results;
 }
 
 UniValue sendtomultisig(const JSONRPCRequest& request)
 {
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
     if (request.fHelp || request.params.size() < 3 || request.params.size() > 6)
     {
         throw std::runtime_error{
@@ -3607,7 +3837,7 @@ UniValue sendtomultisig(const JSONRPCRequest& request)
             "A change output is automatically included to send extra output value back to the original account.\n"
             "\nArguments:\n"
             "1. fromaccount (string, required)             Unused\n"
-            "2. amount      (numeric, required)            Amount to send to the payment address valued in decred\n"
+            "2. amount      (numeric, required)            Amount to send to the payment address valued in PAI coin\n"
             "3. pubkeys     (array of string, required)    Pubkey to send to.\n"
             "4. nrequired   (numeric, optional, default=1) The number of signatures required to redeem outputs paid to this address\n"
             "5. minconf     (numeric, optional, default=1) Minimum number of block confirmations required\n"
@@ -3621,13 +3851,47 @@ UniValue sendtomultisig(const JSONRPCRequest& request)
         };
     }
 
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
     const auto& sFromAccount = request.params[0].get_str();
-    const auto& nAmount = request.params[1].get_int();
-    const auto& pubkeys = request.params[2].get_array();
+    // Amount
+    const auto nAmount = AmountFromValue(request.params[1]);
+    if (nAmount <= 0)
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid amount for send");
 
     auto nRequired = 1;
     if (!request.params[3].isNull())
         nRequired = request.params[3].get_int();
+    if (nRequired < 1)
+        throw std::runtime_error("a multisignature address must require at least one key to redeem");
+
+    RPCTypeCheckArgument(request.params[2], UniValue::VARR);
+    const auto& keys = request.params[2].get_array();
+    if (static_cast<int>(keys.size()) < nRequired)
+        throw std::runtime_error(
+            strprintf("not enough keys supplied "
+                      "(got %u keys, but need at least %d to redeem)", keys.size(), nRequired));
+    if (keys.size() > 16)
+        throw std::runtime_error("Number of addresses involved in the multisignature address creation > 16\nReduce the number");
+    std::vector<CPubKey> pubkeys;
+    pubkeys.resize(keys.size());
+    for (size_t i{0}; i < keys.size(); ++i)
+    {
+        const auto& ks = keys[i].get_str();
+        if (IsHex(ks))
+        {
+            CPubKey vchPubKey{ParseHex(ks)};
+            if (!vchPubKey.IsFullyValid())
+                throw std::runtime_error(" Invalid public key: "+ks);
+            pubkeys[i] = vchPubKey;
+        }
+        else
+        {
+            throw std::runtime_error(" Invalid public key: "+ks);
+        }
+    }
+
     auto nMinConf = 1;
     if (!request.params[4].isNull())
         nMinConf = request.params[4].get_int();
@@ -3636,12 +3900,30 @@ UniValue sendtomultisig(const JSONRPCRequest& request)
     if (!request.params[5].isNull())
         sComment = request.params[5].get_str();
 
-    auto ret = UniValue{UniValue::VSTR};
-    return ret;
+    const auto inner = GetScriptForMultisig(nRequired, pubkeys);
+    if (inner.size() > MAX_SCRIPT_ELEMENT_SIZE)
+        throw std::runtime_error(
+                strprintf("redeemScript exceeds size limit: %d > %d", inner.size(), MAX_SCRIPT_ELEMENT_SIZE));
+    CScriptID innerID{inner};
+
+    EnsureWalletIsUnlocked(pwallet);
+    pwallet->AddCScript(inner);
+
+    const auto& dest = CTxDestination{innerID}; 
+
+    // Wallet comments
+    CWalletTx wtx;
+    SendMoney(pwallet, dest, nAmount, false /*fSubtractFeeFromAmount*/, wtx, CCoinControl{});
+    return wtx.GetHash().GetHex();
 }
 
 UniValue getmasterpubkey(const JSONRPCRequest& request)
 {
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
     if (request.fHelp || request.params.size() > 1)
     {
         throw std::runtime_error{
@@ -3662,8 +3944,12 @@ UniValue getmasterpubkey(const JSONRPCRequest& request)
     if (!request.params[0].isNull())
         sAccount = request.params[0].get_str();
 
-    auto ret = UniValue{UniValue::VSTR};
-    return ret;
+    CPubKey pubkey;
+    if (!pwallet->GetAccountPubkey(pubkey, sAccount)) {
+        throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+    }
+
+    return HexStr(pubkey);
 }
 
 extern UniValue abortrescan(const JSONRPCRequest& request); // in rpcdump.cpp
