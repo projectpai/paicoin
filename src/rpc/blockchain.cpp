@@ -9,16 +9,21 @@
 #include "chain.h"
 #include "chainparams.h"
 #include "checkpoints.h"
+#include "clientversion.h"
 #include "coins.h"
+#include "config/paicoin-config.h"
 #include "consensus/validation.h"
 #include "validation.h"
 #include "core_io.h"
+#include "net.h"
+#include "netbase.h"
 #include "policy/feerate.h"
 #include "policy/policy.h"
 #include "primitives/transaction.h"
 #include "rpc/server.h"
 #include "streams.h"
 #include "sync.h"
+#include "timedata.h"
 #include "txdb.h"
 #include "txmempool.h"
 #include "util.h"
@@ -26,6 +31,7 @@
 #include "hash.h"
 #include "warnings.h"
 
+#include <numeric>
 #include <stdint.h>
 
 #include <univalue.h>
@@ -1575,18 +1581,601 @@ UniValue savemempool(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
+UniValue getcoinsupply(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error{
+            "getcoinsupply\n"
+            "\nReturns current total coin supply.\n"
+            "Note this call may take some time.\n"
+            "\nResult:\n"
+            "\n"
+            "  \"supply\":n,     (numeric) Current coin supply\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getcoinsupply", "")
+            + HelpExampleRpc("getcoinsupply", "")
+        };
+
+    UniValue ret{UniValue::VNUM};
+
+    CCoinsStats stats;
+    FlushStateToDisk();
+    if (GetUTXOStats(pcoinsdbview, stats)) {
+        ret = ValueFromAmount(stats.nTotalAmount);
+    } else {
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Unable to read UTXO set");
+    }
+    return ret;
+}
+
+UniValue getbestblock(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error{
+            "getbestblock\n"
+            "\nReturns the best (tip) block in the longest blockchain.\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"hash\"      (string)  the best block hash hex encoded\n"
+            "  \"height\"    (numeric) the best block height\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getbestblock", "")
+            + HelpExampleRpc("getbestblock", "")
+        };
+
+    LOCK(cs_main);
+
+    auto tip = chainActive.Tip();
+    auto height = tip->nHeight;
+    auto hash = tip->GetBlockHash().GetHex();
+
+    UniValue res{UniValue::VOBJ};
+    res.push_back(Pair("hash", hash));
+    res.push_back(Pair("height", height));
+
+    return res;
+}
+
+UniValue getcurrentnet(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error{
+            "getcurrentnet\n"
+            "\nReturns the current network ID.\n"
+            "\nResult:\n"
+            "\"networkID\"      (string)  the current network ID\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getcurrentnet", "")
+            + HelpExampleRpc("getcurrentnet", "")
+        };
+
+    LOCK(cs_main);
+
+    return Params().NetworkIDString();
+}
+
+UniValue version(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error{
+            "version\n"
+            "\nReturns the JSON-RPC version.\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"versionstring\"    (string)  The full version string\n"
+            "  \"major\"            (numeric) The major version\n"
+            "  \"minor\"            (numeric) The minor version\n"
+            "  \"patch\"            (numeric) The patch version\n"
+            "  \"prerelease\"       (string)  The prerelease version\n"
+            "  \"buildmetadata\"    (string)  The build metadata\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("version", "")
+            + HelpExampleRpc("version", "")
+        };
+    
+    UniValue versionResult{UniValue::VOBJ};
+
+    versionResult.push_back(Pair("versionstring", FormatFullVersion()));
+    versionResult.push_back(Pair("major", CLIENT_VERSION_MAJOR));
+    versionResult.push_back(Pair("minor", CLIENT_VERSION_MINOR));
+    versionResult.push_back(Pair("patch", CLIENT_VERSION_REVISION));
+    versionResult.push_back(Pair("prerelease", ""));
+    versionResult.push_back(Pair("buildmetadata", FormatFullVersion()));
+
+    return versionResult;
+}
+
+static std::string GetProxyInfo()
+{
+    UniValue networks{UniValue::VARR};
+    for(int n=0; n<NET_MAX; ++n)
+    {
+        const auto network = static_cast<enum Network>(n);
+        if(network == NET_UNROUTABLE || network == NET_INTERNAL)
+            continue;
+
+        proxyType proxy;
+        UniValue obj{UniValue::VOBJ};
+        GetProxy(network, proxy);
+        if (proxy.IsValid()) {
+            auto proxyStr = proxy.proxy.ToStringIPPort();
+            if (!proxyStr.empty()) {
+                return proxyStr;
+            }
+        }
+    }
+
+    return "";
+}
+
+UniValue getinfo(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error{
+            "getinfo\n"
+            "\nReturns a JSON object containing various state info.\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"version\"          (numeric)  The version of the server\n"
+            "  \"protocolversion\"  (numeric)  The latest supported protocol version\n"
+            "  \"blocks\"           (numeric)  The number of blocks processed\n"
+            "  \"timeoffset\"       (numeric)  The time offset\n"
+            "  \"connections\"      (numeric)  The number of connected peers\n"
+            "  \"proxy\"            (string)   The proxy used by the server\n"
+            "  \"difficulty\"       (float)    The proxy used by the server\n"
+            "  \"testnet\"          (bool)     Whether or not server is using testnet\n"
+            "  \"relayfee\"         (float)    The minimum relay fee for non-free transactions in Satoshis/KB\n"
+            "  \"errors\"           (string)   Any current errors\n"
+            "}"
+            "\nExamples:\n"
+            + HelpExampleCli("getinfo", "")
+            + HelpExampleRpc("getinfo", "")
+        };
+    
+    auto numConnections = 0;
+    if (g_connman) {
+        numConnections = static_cast<int>(g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL));
+    }
+    bool isTestNet = (Params().NetworkIDString() == BaseParams().TESTNET);
+
+    LOCK(cs_main);
+    UniValue stateResult{UniValue::VOBJ};
+    stateResult.push_back(Pair("version", CLIENT_VERSION));
+    stateResult.push_back(Pair("protocolversion", PROTOCOL_VERSION));
+    stateResult.push_back(Pair("blocks", chainActive.Height()));
+    stateResult.push_back(Pair("timeoffset", GetTimeOffset()));
+    stateResult.push_back(Pair("connections", numConnections));
+    stateResult.push_back(Pair("proxy", GetProxyInfo()));
+    stateResult.push_back(Pair("difficulty", GetDifficulty()));
+    stateResult.push_back(Pair("testnet", isTestNet));
+    stateResult.push_back(Pair("relayfee", ValueFromAmount(::minRelayTxFee.GetFeePerK())));
+    stateResult.push_back(Pair("errors", ""));
+
+    return stateResult;
+}
+
+CAmount computeTransactionFee(CTransaction const& tx)
+{
+    CCoinsViewCache &view = *pcoinsTip;
+    CAmount valueIn = view.GetValueIn(tx);
+    CAmount valueOut = tx.GetValueOut();
+
+    CAmount txFee = ((valueIn - valueOut) * 1000) / tx.GetTotalSize();
+    return txFee;
+}
+
+CAmount computeMeanAmount(std::vector<CAmount> const& txFees)
+{
+    if (txFees.empty()) {
+        return CAmount(0);
+    }
+
+    CAmount sumFees = std::accumulate(txFees.cbegin(), txFees.cend(), CAmount(0));
+    return sumFees / CAmount(txFees.size());
+}
+
+CAmount computeMedianAmount(std::vector<CAmount> txFees)
+{
+    if (txFees.empty()) {
+        return CAmount(0);
+    }
+
+    auto numFees = txFees.size();
+
+    std::sort(txFees.begin(), txFees.end(), [](const CAmount& c1, const CAmount& c2) -> bool {
+        return (c1 < c2);
+    });
+
+    size_t middleIndex = numFees / 2;
+    if ((numFees % 2) != 0) {
+        return txFees[middleIndex];
+    }
+
+    return (txFees[middleIndex] + txFees[middleIndex - 1]) / 2;
+}
+
+CAmount computeStdDevAmount(std::vector<CAmount> const& txFees)
+{
+    auto numFees = txFees.size();
+    if (numFees < 2) {
+        return CAmount(0);
+    }
+
+    CAmount meanValue = computeMeanAmount(txFees);
+    double total = 0.0;
+    for (auto const& currFee : txFees) {
+        total += pow(currFee - meanValue, 2);
+    }
+
+    double v = total / static_cast<double>((numFees - 1));
+    return static_cast<CAmount>(v);
+}
+
+UniValue computeBlocksTxFees(uint32_t startBlockHeight, uint32_t endBlockHeight)
+{
+    uint32_t currHeightU = static_cast<uint32_t>(chainActive.Tip()->nHeight);
+    if (startBlockHeight > currHeightU) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid starting block height");
+    }
+    if (endBlockHeight <= startBlockHeight || endBlockHeight > (currHeightU + 1)) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid ending block height");
+    }
+
+    std::vector<CAmount> txFees;
+
+    for (auto currHeight = startBlockHeight; currHeight < endBlockHeight; ++currHeight) {
+        auto blockIndex = chainActive[currHeight];
+        if (!blockIndex) {
+            continue;
+        }
+
+        CBlock block;
+        if (!ReadBlockFromDisk(block, blockIndex, Params().GetConsensus())) {
+            continue;
+        }
+
+        for (auto const& tx: block.vtx) {
+            if (tx->IsCoinBase()) {
+                continue;
+            }
+            txFees.push_back(computeTransactionFee(*tx));
+        }
+    }
+
+    CAmount minValue = 0;
+    CAmount maxValue = 0;
+    if (!txFees.empty()) {
+        minValue = *std::min_element(txFees.cbegin(), txFees.cend());
+        maxValue = *std::max_element(txFees.cbegin(), txFees.cend());
+    }
+
+    CAmount meanValue = computeMeanAmount(txFees);
+    CAmount medianValue = computeMedianAmount(txFees);
+    CAmount stdDevValue = computeStdDevAmount(txFees);
+
+    UniValue blockResult{UniValue::VOBJ};
+    blockResult.push_back(Pair("number", txFees.size()));
+    blockResult.push_back(Pair("min", minValue));
+    blockResult.push_back(Pair("max", maxValue));
+    blockResult.push_back(Pair("mean", meanValue));
+    blockResult.push_back(Pair("median", medianValue));
+    blockResult.push_back(Pair("stddev", stdDevValue));
+
+    return blockResult;
+}
+
+UniValue computeMempoolTxFees()
+{
+    auto mempoolTxs = mempool.infoAll();
+    std::vector<CAmount> txFees;
+    txFees.reserve(mempoolTxs.size());
+
+    for (auto const& mempoolTx : mempoolTxs) {
+        auto txFee = computeTransactionFee(*(mempoolTx.tx));
+        txFees.push_back(txFee);
+    }
+
+    auto numFees = txFees.size();
+    CAmount minValue = 0;
+    CAmount maxValue = 0;
+    if (numFees > 0) {
+        minValue = *std::min_element(txFees.cbegin(), txFees.cend());
+        maxValue = *std::max_element(txFees.cbegin(), txFees.cend());
+    }
+
+    CAmount meanValue = computeMeanAmount(txFees);
+    CAmount medianValue = computeMedianAmount(txFees);
+    CAmount stdDevValue = computeStdDevAmount(txFees);
+
+    UniValue mempoolResult{UniValue::VOBJ};
+    mempoolResult.push_back(Pair("number", numFees));
+    mempoolResult.push_back(Pair("min", minValue));
+    mempoolResult.push_back(Pair("max", maxValue));
+    mempoolResult.push_back(Pair("mean", meanValue));
+    mempoolResult.push_back(Pair("median", medianValue));
+    mempoolResult.push_back(Pair("stddev", stdDevValue));
+
+    return mempoolResult;
+}
+
+UniValue txfeeinfo(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 3)
+        throw std::runtime_error{
+            "txfeeinfo ( blocks rangestart rangeend )\n"
+            "\nGet various information about regular transaction fees from the mempool, blocks, and difficulty windows.\n"
+            "\nArguments:\n"
+            "1. blocks      (numeric, optional) The number of blocks to calculate transaction fees for, starting from the end of the tip moving backwards.\n"
+            "2. rangestart  (numeric, optional) The start height of the block range to calculate transaction fees for.\n"
+            "3. rangeend    (numeric, optional) The end height of the block range to calculate transaction fees for.\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"feeinfomempool\":  Transaction fee information for all regular transactions in the mempool\n"
+            "  {\n"
+            "       \"number\": (numeric)   Number of transactions in the mempool\n"
+            "       \"min\":    (numeric)   Minimum transaction fee in the mempool\n"
+            "       \"max\":    (numeric)   Maximum transaction fee in the mempool\n"
+            "       \"mean\":   (numeric)   Mean of transaction fees in the mempool\n"
+            "       \"median\": (numeric)   Median of transaction fees in the mempool\n"
+            "       \"stddev\": (numeric)   Standard deviation of transaction fees in the mempool\n"
+            "  },\n"
+            "  \"feeinfoblocks\":  Ticket fee information for a given list of blocks descending from the chain tip (units: PAIcoin/kB)\n"
+            "  [\n"
+            "       {\n"
+            "            \"height\": (numeric)   Height of the block\n"
+            "            \"number\": (numeric)   Number of transactions in the block\n"
+            "            \"min\":    (numeric)   Minimum transaction fee in the block\n"
+            "            \"max\":    (numeric)   Maximum transaction fee in the block\n"
+            "            \"mean\":   (numeric)   Mean of transaction fees in the block\n"
+            "            \"median\": (numeric)   Median of transaction fees in the block\n"
+            "            \"stddev\": (numeric)   Standard deviation of transaction fees in the block\n"
+            "       },\n"
+            "  ],\n"
+            "  \"feeinforange\":  Ticket fee information for a window period where the stake difficulty was the same (units: PAIcoin/kB)\n"
+            "  {\n"
+            "       \"number\": (numeric)   Number of transactions in the window\n"
+            "       \"min\":    (numeric)   Minimum transaction fee in the window\n"
+            "       \"max\":    (numeric)   Maximum transaction fee in the window\n"
+            "       \"mean\":   (numeric)   Mean of transaction fees in the window\n"
+            "       \"median\": (numeric)   Median of transaction fees in the window\n"
+            "       \"stddev\": (numeric)   Standard deviation of transaction fees in the window\n"
+            "  }\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("txfeeinfo", "")
+            + HelpExampleRpc("txfeeinfo", "")
+            + HelpExampleCli("txfeeinfo", "3 5 7")
+            + HelpExampleRpc("txfeeinfo", "3 5 7")
+        };
+    
+    auto blocksTip = chainActive.Tip();
+    auto currHeight = static_cast<uint32_t>(blocksTip->nHeight);
+
+    uint32_t blocks = 0;
+    uint32_t rangeStart = 0;
+    uint32_t rangeEnd = 0;
+    if (!request.params[0].isNull()) {
+        blocks = static_cast<uint32_t>(request.params[0].get_int());
+    }
+    if (!request.params[1].isNull()) {
+        rangeStart = static_cast<uint32_t>(request.params[1].get_int());
+    } else {
+        rangeStart = currHeight - 1; // TODO: -1 here is a placeholder for windowdiffsize
+    }
+    if (!request.params[2].isNull()) {
+        rangeEnd = static_cast<uint32_t>(request.params[2].get_int());
+    } else {
+        rangeEnd = currHeight;
+    }
+
+    // Validations
+    if (blocks > currHeight) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter for blocks");
+    }
+    if (rangeStart > rangeEnd) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Range start is larger than range end");
+    }
+    if (rangeEnd > currHeight) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Range end is out of bounds");
+    }
+
+    UniValue mempoolFees = computeMempoolTxFees();
+
+    UniValue blockFees{UniValue::VARR};
+    if (blocks > 0) {
+        auto start = currHeight;
+        auto end = currHeight - blocks;
+
+        for (auto i = start; i > end; --i) {
+            auto blockFee = computeBlocksTxFees(i, i + 1);
+            blockFee.push_back(Pair("height", static_cast<int32_t>(i)));
+
+            blockFees.push_back(blockFee);
+        }
+    }
+
+    UniValue rangeFees = computeBlocksTxFees(rangeStart, rangeEnd);
+
+    UniValue txFeesResult{UniValue::VOBJ};
+    txFeesResult.push_back(Pair("feeinfomempool", mempoolFees));
+    txFeesResult.push_back(Pair("feeinfoblocks", blockFees));
+    txFeesResult.push_back(Pair("feeinforange", rangeFees));
+    return txFeesResult;
+}
+
+UniValue getblocksubsidy(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2)
+        throw std::runtime_error{
+            "getblocksubsidy ( height voters )\n"
+            "\nReturns information regarding subsidy amounts.\n"
+            "\nArguments:\n"
+            "1. height      (numeric) The block height.\n"
+            "2. voters      (numeric) The number of voters.\n"
+            "\nResult:\n"
+            "{\n"
+            "   \"developer\":  (numeric)   The developer subsidy\n"
+            "   \"pos\":        (numeric)   The Proof-of-Stake subsidy\n"
+            "   \"pow\":        (numeric)   The Proof-of-Work subsidy\n"
+            "   \"total\":      (numeric)   The total subsidy\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getblocksubsidy", "100 5")
+            + HelpExampleRpc("getblocksubsidy", "100 5")
+        };
+    
+    UniValue result{UniValue::VOBJ};
+    result.push_back(Pair("developer", 0));
+    result.push_back(Pair("pos", 0));
+    result.push_back(Pair("pow", 0));
+    result.push_back(Pair("total", 0));
+    return result;
+}
+
+UniValue getcfilter(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2)
+        throw std::runtime_error{
+            "getcfilter ( hash filtertype )\n"
+            "\nReturns the committed filter for a block.\n"
+            "\nArguments:\n"
+            "1. hash        (hash)   The block hash of the filter being queried.\n"
+            "2. filtertype  (string) The type of committed filter to return.\n"
+            "\nResult:\n"
+            "{\n"
+            "   \"filterbytes\":  (serialized bytes) The committed filter serialized with the N value and encoded as a hex string\n"
+            "}\n"
+        };
+    
+    UniValue result{UniValue::VSTR};
+    result.setStr("000000");
+    return result;
+}
+
+UniValue getcfilterheader(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2)
+        throw std::runtime_error{
+            "getcfilterheader ( hash filtertype )\n"
+            "\nReturns the filter header hash committing to all filters in the chain up through a block.\n"
+            "\nArguments:\n"
+            "1. hash        (hash)   The block hash of the filter header being queried.\n"
+            "2. filtertype  (string) The type of committed filter to return the header commitment for.\n"
+            "\nResult:\n"
+            "{\n"
+            "   \"filterbytes\":  (serialized bytes) The filter header commitment hash\n"
+            "}\n"
+        };
+    
+    UniValue result{UniValue::VSTR};
+    result.setStr("000000");
+    return result;
+}
+
+UniValue getvoteinfo(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "getvoteinfo ( version )\n"
+            "\nReturns the vote info statistics.\n"
+            "\nArguments:\n"
+            "1. version      (numeric) The stake version.\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"currentheight\":   (numeric) Top of the chain height.\n"
+            "  \"startheight\":     (numeric) The start height of this voting window.\n"
+            "  \"endheight\":       (numeric) The end height of this voting window.\n"
+            "  \"hash\":            (hash)    The hash of the current height block.\n"
+            "  \"voteversion\":     (numeric) Selected vote version.\n"
+            "  \"quorum\":          (numeric) Minimum amount of votes required.\n"
+            "  \"totalvotes\":      (numeric) Total votes.\n"
+            "  \"agendas\":         All agendas for this stake version.\n"
+            "  [\n"
+            "       {\n"
+            "            \"id\":                (string)  Unique identifier of this agenda.\n"
+            "            \"description\":       (string)  Description of this agenda.\n"
+            "            \"mask\":              (numeric) Agenda mask.\n"
+            "            \"starttime\":         (numeric) Time agenda becomes valid.\n"
+            "            \"expiretime\":        (numeric) Time agenda becomes invalid.\n"
+            "            \"status\":            (string)  Agenda status.\n"
+            "            \"quorumprogress\":    (float)   Progress of quorum reached.\n"
+            "            \"choices\":           All choices in this agenda.\n"
+            "            [\n"
+            "                 {\n"
+            "                      \"id\":          (string)  Unique identifier of this choice.\n"
+            "                      \"description\": (string)  Description of this choice.\n"
+            "                      \"bits\":        (numeric) Bits that identify this choice.\n"
+            "                      \"isabstain\":   (bool)    This choice is to abstain from change.\n"
+            "                      \"isno\":        (bool)    Hard no choice (1 and only 1 per agenda).\n"
+            "                      \"count\":       (numeric) How many votes received.\n"
+            "                      \"progress\":    (float)   Progress of the overall count.\n"
+            "                 },\n"
+            "            ]\n"
+            "       },\n"
+            "  ],\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getvoteinfo", "2")
+            + HelpExampleRpc("getvoteinfo", "2")
+        };
+    
+    UniValue resultChoice{UniValue::VOBJ};
+    resultChoice.push_back(Pair("id", "choice"));
+    resultChoice.push_back(Pair("description", "choice description"));
+    resultChoice.push_back(Pair("bits", 0));
+    resultChoice.push_back(Pair("isabstain", true));
+    resultChoice.push_back(Pair("isno", true));
+    resultChoice.push_back(Pair("count", 1));
+    resultChoice.push_back(Pair("progress", 0));
+    UniValue arrChoices{UniValue::VARR};
+    arrChoices.push_back(resultChoice);
+
+    UniValue resultAgenda{UniValue::VOBJ};
+    resultAgenda.push_back(Pair("id", "agenda"));
+    resultAgenda.push_back(Pair("description", "agenda description"));
+    resultAgenda.push_back(Pair("mask", 0));
+    resultAgenda.push_back(Pair("starttime", 0));
+    resultAgenda.push_back(Pair("expiretime", 0));
+    resultAgenda.push_back(Pair("status", "agenda status"));
+    resultAgenda.push_back(Pair("quorumprogress", 0));
+    resultAgenda.push_back(Pair("choices", arrChoices));
+    UniValue arrAgendas{UniValue::VARR};
+    arrAgendas.push_back(resultAgenda);
+
+    UniValue result{UniValue::VOBJ};
+    result.push_back(Pair("currentheight", -1));
+    result.push_back(Pair("startheight", -1));
+    result.push_back(Pair("endheight", -1));
+    result.push_back(Pair("hash", "AB"));
+    result.push_back(Pair("voteversion", 0));
+    result.push_back(Pair("quorum", 0));
+    result.push_back(Pair("totalvotes", 1));
+    result.push_back(Pair("agendas", arrAgendas));
+
+    return result;
+}
+
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
   //  --------------------- ------------------------  -----------------------  ----------
     { "blockchain",         "getblockchaininfo",      &getblockchaininfo,      {} },
     { "blockchain",         "getchaintxstats",        &getchaintxstats,        {"nblocks", "blockhash"} },
     { "blockchain",         "getbestblockhash",       &getbestblockhash,       {} },
+    { "blockchain",         "getbestblock",           &getbestblock,           {} },
     { "blockchain",         "getblockcount",          &getblockcount,          {} },
     { "blockchain",         "getblock",               &getblock,               {"blockhash","verbosity|verbose"} },
     { "blockchain",         "getblockhash",           &getblockhash,           {"height"} },
     { "blockchain",         "getblockheader",         &getblockheader,         {"blockhash","verbose"} },
+    { "blockchain",         "getblocksubsidy",        &getblocksubsidy,        {"height","voters"} },
+    { "blockchain",         "getcfilter",             &getcfilter,             {"hash","filtertype"} },
+    { "blockchain",         "getcfilterheader",       &getcfilterheader,       {} },
     { "blockchain",         "getchaintips",           &getchaintips,           {} },
+    { "blockchain",         "getcoinsupply",          &getcoinsupply,          {} },
+    { "blockchain",         "getcurrentnet",          &getcurrentnet,          {} },
     { "blockchain",         "getdifficulty",          &getdifficulty,          {} },
+    { "blockchain",         "getinfo",                &getinfo,                {} },
     { "blockchain",         "getmempoolancestors",    &getmempoolancestors,    {"txid","verbose"} },
     { "blockchain",         "getmempooldescendants",  &getmempooldescendants,  {"txid","verbose"} },
     { "blockchain",         "getmempoolentry",        &getmempoolentry,        {"txid"} },
@@ -1594,9 +2183,12 @@ static const CRPCCommand commands[] =
     { "blockchain",         "getrawmempool",          &getrawmempool,          {"verbose"} },
     { "blockchain",         "gettxout",               &gettxout,               {"txid","n","include_mempool"} },
     { "blockchain",         "gettxoutsetinfo",        &gettxoutsetinfo,        {} },
+    { "blockchain",         "getvoteinfo",            &getvoteinfo,            {} },
     { "blockchain",         "pruneblockchain",        &pruneblockchain,        {"height"} },
     { "blockchain",         "savemempool",            &savemempool,            {} },
+    { "blockchain",         "txfeeinfo",              &txfeeinfo,              {"blocks", "rangestart", "rangeend"} },
     { "blockchain",         "verifychain",            &verifychain,            {"checklevel","nblocks"} },
+    { "blockchain",         "version",                &version,                {} },
 
     { "blockchain",         "preciousblock",          &preciousblock,          {"blockhash"} },
 

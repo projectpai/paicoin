@@ -138,6 +138,11 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "estimatestakediff", 0, "numtickets" },
     { "getstakeversioninfo", 0, "count" },
     { "getstakeversions", 1, "count" },
+    { "txfeeinfo", 0, "blocks" },
+    { "txfeeinfo", 1, "rangestart" },
+    { "txfeeinfo", 2, "rangeend" },
+    { "getblocksubsidy", 0, "height" },
+    { "getblocksubsidy", 1, "voters" },
     // Echo with conversion (For testing only)
     { "echojson", 0, "arg0" },
     { "echojson", 1, "arg1" },
