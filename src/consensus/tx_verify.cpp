@@ -5,9 +5,13 @@
 #include "tx_verify.h"
 
 #include "consensus.h"
+#include "pubkey.h"
 #include "primitives/transaction.h"
 #include "script/interpreter.h"
+#include "script/standard.h"
+#include "stake/staketx.h"
 #include "validation.h"
+#include "../validation.h"
 #include "chainparams.h"
 
 // TODO remove the following dependencies
@@ -191,13 +195,29 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
         }
     }
 
-    if (tx.IsCoinBase())
+    ETxClass txClass = ParseTxClass(tx);
+    if (txClass == TX_Regular && tx.IsCoinBase())
     {
+        // Check length of coinbase scriptSig.
         if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-length");
     }
+    else if (txClass == TX_Vote)
+    {
+        // Check length of subsidy scriptSig.
+        if (tx.vin[voteSubsidyInputIndex].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
+            return state.DoS(100, false, REJECT_INVALID, "bad-stakereward-length");
+
+        // TODO validation
+        // Reward scriptSig must be set to the one specified by the network.
+
+        // The ticket reference must not be null.
+        if (tx.vin[voteStakeInputIndex].prevout.IsNull())
+            return state.DoS(100, false, REJECT_INVALID, "bad-ticket-ref");
+    }
     else
     {
+        // Previous transaction outputs referenced by the inputs to this transaction must not be null.
         for (const auto& txin : tx.vin)
             if (txin.prevout.IsNull())
                 return state.DoS(10, false, REJECT_INVALID, "bad-txns-prevout-null");
@@ -206,7 +226,176 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
     return true;
 }
 
-bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, CAmount& txfee)
+bool isBuyTicketStake(const Coin& coin, uint32_t txoutIndex)
+{
+    return coin.txClass == TX_BuyTicket && txoutIndex == ticketStakeOutputIndex;
+}
+
+bool isVoteReward(const Coin& coin, uint32_t txoutIndex)
+{
+    return coin.txClass == TX_Vote && txoutIndex >= voteRewardOutputIndex;
+}
+
+bool isRevokeTicketRefund(const Coin& coin, uint32_t txoutIndex)
+{
+    return coin.txClass == TX_RevokeTicket && txoutIndex >= revocationRefundOutputIndex;
+}
+
+bool isLegalScriptTypeForStake(const CScript& script)
+{
+    txnouttype whichType;
+    std::vector<std::vector<unsigned char> > vSolutions;
+    if (!Solver(script, whichType, vSolutions))
+        return false;
+    return whichType == TX_PUBKEYHASH || whichType == TX_SCRIPTHASH;
+}
+
+bool isLegalInputForBuyTicket(const Coin& coin, int txoutIndex)
+{
+    // check class of containing transaction
+    bool containedInLegalTxClass =
+        coin.txClass == TX_Regular                          // a regular tx output, including coinbase, is a valid input
+        || (coin.txClass == TX_BuyTicket && txoutIndex != ticketStakeOutputIndex)   // BuyTicket change is a valid input; BuyTicket stake is not!
+        || coin.txClass == TX_Vote                             // Vote reward is a valid input
+        || coin.txClass == TX_RevokeTicket;                    // RevokeTicket refund is a valid input
+    if (!containedInLegalTxClass)
+        return false;
+
+    // check if stake coin's scriptPubKey is P2PKH or P2SH
+    return isLegalScriptTypeForStake(coin.out.scriptPubKey);
+}
+
+bool isLegalInputForVoteOrRevocation(const Coin& coin, int txoutIndex)
+{
+    // check that the containing transaction is a ticket stake
+    if (!isBuyTicketStake(coin, txoutIndex))
+        return false;
+
+    // check if stake coin's scriptPubKey is P2PKH or P2SH
+    return isLegalScriptTypeForStake(coin.out.scriptPubKey);
+}
+
+bool checkBuyTicketInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, const CChainParams& chainparams)
+{
+    // check transaction structure
+    std::string reason;
+    if (!ValidateBuyTicketStructure(tx, reason))
+        return state.DoS(100, false, REJECT_INVALID, "bad-buyticket-structure", false, reason);
+
+    // validate individual inputs
+    for (unsigned i = 0; i < tx.vin.size(); i++)
+    {
+        auto& txIn = tx.vin[i];
+        const Coin& coin = inputs.AccessCoin(txIn.prevout);
+
+        // check that the coin exists and is unspent
+        if (coin.IsSpent())
+            return state.DoS(100, false, REJECT_INVALID, "bad-txin-missingorspent");
+
+        // legal inputs are: outputs of regular or coinbase transactions, BuyTicket change outputs, Vote reward and RevokeTicket refund outputs
+        // illegal inputs are: BuyTicket stake outputs, data outputs
+        if (!isLegalInputForBuyTicket(coin, txIn.prevout.n))
+            return state.DoS(100, false, REJECT_INVALID, "bad-txin-illegal-input");
+
+        // check that the contribution plus change equals input amount
+        TicketContribData contrib;
+        ParseTicketContrib(tx, ticketContribOutputIndex + 2*i, contrib);
+        CAmount change = tx.vout[ticketChangeOutputIndex + 2*i].nValue;
+        CAmount funding = coin.out.nValue;
+        if (contrib.contributedAmount + change != funding)
+            return state.DoS(100, false, REJECT_INVALID, "bad-txin-amount-mismatch");
+    }
+
+    return true;
+}
+
+bool checkVoteOrRevokeTicketInputs(const CTransaction& tx, bool vote, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, const CChainParams& chainparams)
+{
+    std::string what = vote ? "vote" : "revocation";
+    std::string badTxin = "bad-txin-";
+
+    // check transaction structure
+    std::string reason;
+    bool structureValid = vote ? ValidateVoteStructure(tx, reason) : ValidateRevokeTicketStructure(tx, reason);
+    if (!structureValid)
+        return state.DoS(100, false, REJECT_INVALID, std::string("bad-") + what + "-structure", false, reason);
+
+    // Check that the ticket stake input is the second output (index 1) of BuyTicket
+    int stakeInputIndex = vote ? voteStakeInputIndex : revocationStakeInputIndex;
+    const COutPoint& ticketStakeOutpoint = tx.vin[stakeInputIndex].prevout;
+    if (ticketStakeOutpoint.n != ticketStakeOutputIndex)
+        return state.DoS(100, false, REJECT_INVALID, badTxin + what + "-spends-nonstake");
+
+    // Find BuyTicket transaction
+    CTransactionRef ticketTxPtr = GetTicket(ticketStakeOutpoint.hash);
+    if (ticketTxPtr == nullptr)
+        return state.DoS(100, false, REJECT_INVALID, badTxin + what + "-bad-ticket-reference");
+
+    // Ensure the referenced ticket stake coins are available.
+    const Coin& coin = inputs.AccessCoin(ticketStakeOutpoint);
+    if (coin.IsSpent())
+        return state.DoS(100, false, REJECT_INVALID, badTxin + what + "-ticketstake-missingorspent");
+
+    // legal input is only a BuyTicket stake output
+    if (!isLegalInputForVoteOrRevocation(coin, ticketStakeOutpoint.n))
+        return state.DoS(100, false, REJECT_INVALID, "bad-txin-illegal-input");
+
+    // Ensure that the ticket being spent is mature.
+    // NOTE: A ticket stake can only be spent in the block AFTER the entire ticket maturity has passed, hence the +1.
+    // In case of revocations, the ticket must have been missed which can't possibly
+    // happen for another block after that, hence the +2.
+    int maturityAdd = vote ? 2 : 1;
+    int ticketMaturity = chainparams.GetConsensus().nTicketMaturity + maturityAdd;
+    if (nSpendHeight - coin.nHeight < ticketMaturity)
+        return state.DoS(100, false, REJECT_INVALID, badTxin + what + "-ticketstake-immature");
+
+    // Ensure that the number of payment outputs matches the number of ticket stake contributions.
+    auto numVotePayments = tx.vout.size() - 1;
+    auto numTicketStakeContributions = ticketTxPtr->vout.size() - 2;
+    if (numVotePayments * 2 != numTicketStakeContributions)
+        return state.DoS(100, false, REJECT_INVALID, what + "-payments-contributions-mismatch");
+
+    // Calculate contribution sum
+    CAmount contributionSum = 0;
+    for (unsigned i = ticketContribOutputIndex; i < ticketTxPtr->vout.size(); i += 2) {
+        TicketContribData contrib;
+        ParseTicketContrib(*ticketTxPtr, i, contrib);
+        contributionSum += contrib.contributedAmount;
+    }
+
+    // Ensure the payment outputs correspond with the ticket contributions.
+    CAmount stakedAmount = ticketTxPtr->vout[ticketStakeOutputIndex].nValue;
+    CAmount subsidy = vote ? GetVoterSubsidy(nSpendHeight, Params().GetConsensus()) : 0;
+    unsigned paymentOutputIndex = vote ? voteRewardOutputIndex : revocationRefundOutputIndex;
+    for (unsigned i = paymentOutputIndex; i < tx.vout.size(); i++)
+    {
+        // Extract contribution info corresponding to this payment
+        unsigned contribIndex = 2 * i;
+        TicketContribData contrib;
+        ParseTicketContrib(*ticketTxPtr, contribIndex, contrib);
+
+        // Check if the payment uses P2PKH or P2SH
+        if (!isLegalScriptTypeForStake(tx.vout[i].scriptPubKey))
+            return state.DoS(100, false, REJECT_INVALID, what + "-invalid-payment-type");
+
+        // Check if the payment goes to the address specified in the contribution info
+        CTxDestination dest;
+        if (!ExtractDestination(tx.vout[i].scriptPubKey, dest) || !IsValidDestination(dest))
+            return state.DoS(100, false, REJECT_INVALID, what + "-invalid-payment-address");
+        const uint160& addr = dest.which() == 1 ? boost::get<CKeyID>(dest) : boost::get<CScriptID>(dest);
+        if (addr != contrib.rewardAddr)
+            return state.DoS(100, false, REJECT_INVALID, what + "-incorrect-payment-address");
+
+        // Check if the payment amount is as expected
+        CAmount paymentAmount = CalcContributorRemuneration(contrib.contributedAmount, stakedAmount, subsidy, contributionSum);
+        if (tx.vout[i].nValue != paymentAmount)
+            return state.DoS(100, false, REJECT_INVALID, what + "-bad-payment-amount");
+    }
+
+    return true;
+}
+
+bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, CAmount& txfee, const CChainParams& chainparams)
 {
     // are the actual inputs available?
     if (!inputs.HaveInputs(tx)) {
@@ -214,8 +403,33 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
                          strprintf("%s: inputs missing/spent", __func__));
     }
 
+    // parse tx
+    ETxClass txClass = ParseTxClass(tx);
+    VoteData voteData;
+    if (txClass == TX_Vote && !ParseVote(tx, voteData))
+        return state.DoS(100, false, REJECT_INVALID, "could-not-parse-vote-tx", false);
+
+    // check inputs of stake transactions
+    if (txClass == TX_BuyTicket && !checkBuyTicketInputs(tx, state, inputs, nSpendHeight, chainparams))
+        return false;
+    if (txClass == TX_Vote && !checkVoteOrRevokeTicketInputs(tx, true, state, inputs, nSpendHeight, chainparams))
+        return false;
+    if (txClass == TX_RevokeTicket && !checkVoteOrRevokeTicketInputs(tx, false, state, inputs, nSpendHeight, chainparams))
+        return false;
+
+    // general inputs check and summation of input amounts
     CAmount nValueIn = 0;
-    for (unsigned int i = 0; i < tx.vin.size(); ++i) {
+    for (unsigned int i = 0; i < tx.vin.size(); ++i)
+    {
+        // vote reward input doesn't reference existing coins
+        // (instead, like with coinbase, coins are generated out of thin air)
+        // so we'll skip the checks
+        if (txClass == TX_Vote && i == voteSubsidyInputIndex)
+        {
+            nValueIn += GetVoterSubsidy(voteData.blockHeight, ::Params().GetConsensus());
+            continue;
+        }
+
         const COutPoint &prevout = tx.vin[i].prevout;
         const Coin& coin = inputs.AccessCoin(prevout);
         assert(!coin.IsSpent());
@@ -230,6 +444,15 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
           }
         }
 
+        // Unless the tx is a vote or a revocation, it is forbidden to spend ticket stake
+        if (txClass != TX_Vote && txClass != TX_RevokeTicket && isBuyTicketStake(coin, prevout.n))
+            return state.DoS(100, false, REJECT_INVALID, "bad-txns-illegal-spend-of-ticket-stake");
+
+        // Vote reward and revocation refund payments can only be spent after coinbase maturity many blocks.
+        if ((isVoteReward(coin, prevout.n) || isRevokeTicketRefund(coin, prevout.n))
+            && nSpendHeight - coin.nHeight < COINBASE_MATURITY)
+            return state.DoS(100, false, REJECT_INVALID, "bad-txns-reward-or-refund-immature");
+
         // Check for negative or overflow input values
         nValueIn += coin.out.nValue;
         if (!MoneyRange(coin.out.nValue) || !MoneyRange(nValueIn)) {
@@ -237,6 +460,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         }
     }
 
+    // Output amount must not be greater than inputs
     const CAmount value_out = tx.GetValueOut();
     if (nValueIn < value_out) {
         return state.DoS(100, false, REJECT_INVALID, "bad-txns-in-belowout", false,

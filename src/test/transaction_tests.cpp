@@ -19,7 +19,9 @@
 #include "script/sign.h"
 #include "script/script_error.h"
 #include "script/standard.h"
+#include "script/pai_data_classifier.h"
 #include "utilstrencodings.h"
+#include "stake/staketx.h"
 
 #include <map>
 #include <string>
@@ -739,6 +741,34 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
     t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_RETURN;
     BOOST_CHECK(!IsStandardTx(t, reason));
 
+    // structured OP_RETURN
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_STRUCT << OP_1 << CLASS_Staking << TX_BuyTicket;
+    BOOST_CHECK(IsStandardTx(t, reason));
+    // version can also be stored as data
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_STRUCT << 1 << CLASS_Staking << TX_BuyTicket;
+    BOOST_CHECK(IsStandardTx(t, reason));
+    // only version 1 is supported currently
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_STRUCT << OP_2 << CLASS_Staking << TX_BuyTicket;
+    BOOST_CHECK(!IsStandardTx(t, reason));
+    // version can be a big number as well; but only version 1 is supported currently
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_STRUCT << 12345 << CLASS_Staking << TX_BuyTicket;
+    BOOST_CHECK(!IsStandardTx(t, reason));
+    // classifier can be stored as a constant as well
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_STRUCT << OP_1 << OP_0 << TX_BuyTicket;
+    BOOST_CHECK(IsStandardTx(t, reason));
+    // classifier must be within range of known classifiers
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_STRUCT << OP_1 << OP_1 << TX_BuyTicket;
+    BOOST_CHECK(!IsStandardTx(t, reason));
+    // after classifier, no more data is mandatory
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_STRUCT << OP_1 << CLASS_Staking;
+    BOOST_CHECK(IsStandardTx(t, reason));
+    // missing classifier is not allowed
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_STRUCT << OP_1;
+    BOOST_CHECK(!IsStandardTx(t, reason));
+    // missing version is not allowed
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_STRUCT;
+    BOOST_CHECK(!IsStandardTx(t, reason));
+
     // TX_NULL_DATA w/o PUSHDATA
     t.vout.resize(1);
     t.vout[0].scriptPubKey = CScript() << OP_RETURN;
@@ -757,6 +787,223 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
     t.vout[0].scriptPubKey = CScript() << OP_RETURN;
     t.vout[1].scriptPubKey = CScript() << OP_RETURN;
     BOOST_CHECK(!IsStandardTx(t, reason));
+}
+
+BOOST_AUTO_TEST_CASE(test_ValidateDataScript)
+{
+    std::string reason;
+    bool ok;
+
+    CMutableTransaction t;
+    t.vout.resize(1);
+
+    std::vector<unsigned char> word20bytes = ParseHex("01234567890123456789" "01234567890123456789");
+    std::vector<unsigned char> word80bytes = ParseHex("01234567890123456789" "01234567890123456789" "01234567890123456789" "01234567890123456789"
+                                                 "01234567890123456789" "01234567890123456789" "01234567890123456789" "01234567890123456789");
+    unsigned dataSizes[10];
+
+    // check that data consists of one small constant (between 0 and 16), regarded as 1-byte long, internally also stored as 1 byte: { 16 }
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_16;
+    dataSizes[0] = 1;
+    BOOST_CHECK(ok = ValidateDataTxoutStructure(t, 0, 1, dataSizes, nullptr, reason));
+    if (!ok)
+        std::cout << reason << std::endl;
+
+    // a larger constant (between 0 and 255), also regarded as 1-byte long, but internally represented with 2 bytes: { 1, 33 }
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << 33;
+    dataSizes[0] = 1;
+    BOOST_CHECK(ok = ValidateDataTxoutStructure(t, 0, 1, dataSizes, nullptr, reason));
+    if (!ok)
+        std::cout << reason << std::endl;
+
+    // a 20-byte piece of data, regarded as 20 bytes long, but internally represented with 21 bytes: { 20, word20bytes }
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << word20bytes;
+    dataSizes[0] = 20;
+    BOOST_CHECK(ok = ValidateDataTxoutStructure(t, 0, 1, dataSizes, nullptr, reason));
+    if (!ok)
+        std::cout << reason << std::endl;
+
+    // an 80-byte piece of data, regarded as 80 bytes long, but internally represented with 82 bytes: { OP_PUSHDATA1, 80, word80bytes }
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << word80bytes;
+    dataSizes[0] = 80;
+    BOOST_CHECK(ok = ValidateDataTxoutStructure(t, 0, 1, dataSizes, nullptr, reason));
+    if (!ok)
+        std::cout << reason << std::endl;
+
+    // 3 small constants, regarded as 3 separate 1-byte long pieces of data, and internally represented with 3 bytes: { 16, 0, 7 }
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << OP_16 << OP_0 << OP_7;
+    dataSizes[0] = dataSizes[1] = dataSizes[2] = 1;
+    BOOST_CHECK(ok = ValidateDataTxoutStructure(t, 0, 3, dataSizes, nullptr, reason));
+    if (!ok)
+        std::cout << reason << std::endl;
+
+    // 4 arbitrary data items: one 4-byte item, once small constant, one 20-byte item, one 80-byte item
+    // internally represented with 5+1+21+82=109 bytes
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("11223344") << OP_5 << word20bytes << word80bytes;
+    dataSizes[0] = 4;
+    dataSizes[1] = 1;
+    dataSizes[2] = 20;
+    dataSizes[3] = 80;
+    BOOST_CHECK(ok = ValidateDataTxoutStructure(t, 0, 4, dataSizes, nullptr, reason));
+    if (!ok)
+        std::cout << reason << std::endl;
+
+    // use the same 4 arbitrary data items, but pretend we don't know the sizes of some of them, so size check will be skipped for those items;
+    // this is most useful when data contains integers, stored as 1-byte, 2-byte, 4-byte or 8-byte words depending on their value
+    // for example, a blockHeight value of 21500 will be stored as a 2-byte word (internally represented with 3 bytes)
+    // while a blockHeight value of 74000 will be stored as a 4-byte word (internally represented with 5 bytes)
+    dataSizes[0] = 0;
+    dataSizes[1] = 0;
+    dataSizes[2] = 20;
+    dataSizes[3] = 0;
+    BOOST_CHECK(ok = ValidateDataTxoutStructure(t, 0, 4, dataSizes, nullptr, reason));
+    if (!ok)
+        std::cout << reason << std::endl;
+
+    // deliberately declare a larger number of items to be parsed than actually exist in the script
+    dataSizes[0] = 0;
+    dataSizes[1] = 0;
+    dataSizes[2] = 20;
+    dataSizes[3] = 0;
+    dataSizes[4] = 0;
+    BOOST_CHECK(!(ok = ValidateDataTxoutStructure(t, 0, 5, dataSizes, nullptr, reason)));
+//    if (!ok)
+//        std::cout << reason << std::endl;
+
+    // deliberately supply a wrong size for an item
+    dataSizes[0] = 0;
+    dataSizes[1] = 0;
+    dataSizes[2] = 15;
+    dataSizes[3] = 0;
+    BOOST_CHECK(!(ok = ValidateDataTxoutStructure(t, 0, 4, dataSizes, nullptr, reason)));
+//    if (!ok)
+//        std::cout << reason << std::endl;
+}
+
+CMutableTransaction CreateDummyBuyTicket()
+{
+    CMutableTransaction mtx;
+
+    // create a dummy input to fund the transaction
+    mtx.vin.push_back(CTxIn());
+
+    // create a structured OP_RETURN output containing tx declaration
+    BuyTicketData buyTicketData = { 1 };    // version
+    CScript declScript = GetScriptForBuyTicketDecl(buyTicketData);
+    mtx.vout.push_back(CTxOut(0, declScript));
+
+    // create an output that pays dummy ticket stake
+    auto stakeKey = CKey();
+    stakeKey.MakeNewKey(false);
+    auto stakeAddr = stakeKey.GetPubKey().GetID();
+    CScript stakeScript = GetScriptForDestination(stakeAddr);
+    CAmount dummyStakeAmount = 50;
+    mtx.vout.push_back(CTxOut(dummyStakeAmount, stakeScript));
+
+    // create an OP_RETURN push containing a dummy address to send rewards to, and the amount contributed to stake
+    auto rewardKey = CKey();
+    rewardKey.MakeNewKey(false);
+    auto rewardAddr = rewardKey.GetPubKey().GetID();
+    CAmount contributedAmount = 123;
+    TicketContribData ticketContribData = { 1, rewardAddr, contributedAmount };
+    CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
+    mtx.vout.push_back(CTxOut(0, contributorInfoScript));
+
+    // create an output which pays back dummy change
+    auto changeKey = CKey();
+    changeKey.MakeNewKey(false);
+    auto changeAddr = changeKey.GetPubKey().GetID();
+    CScript changeScript = GetScriptForDestination(changeAddr);
+    CAmount dummyChange = 30;
+    mtx.vout.push_back(CTxOut(dummyChange, changeScript));
+
+    return mtx;
+}
+
+CMutableTransaction CreateDummyVote()
+{
+    CMutableTransaction mtx;
+
+    // create a reward generation input
+    mtx.vin.push_back(CTxIn(COutPoint()));
+
+    // create an input from a dummy BuyTicket stake
+    uint256 dummyBuyTicketTxHash = uint256();
+    mtx.vin.push_back(CTxIn(COutPoint(dummyBuyTicketTxHash, ticketStakeOutputIndex)));
+
+    // create a structured OP_RETURN output containing tx declaration and dummy voting data
+    uint256 dummyBlockHash = uint256();
+    uint32_t dummyBlockHeight = 55;
+    uint32_t dummyVoteBits = 0x0001;
+    VoteData voteData = { 1, dummyBlockHash, dummyBlockHeight, dummyVoteBits };
+    CScript declScript = GetScriptForVoteDecl(voteData);
+    mtx.vout.push_back(CTxOut(0, declScript));
+
+    // Create an output which pays back a dummy reward
+    auto changeKey = CKey();
+    changeKey.MakeNewKey(false);
+    auto rewardAddr = changeKey.GetPubKey().GetID();
+    CScript rewardScript = GetScriptForDestination(rewardAddr);
+    CAmount dummyReward = 60;
+    mtx.vout.push_back(CTxOut(dummyReward, rewardScript));
+
+    return mtx;
+}
+
+CMutableTransaction CreateDummyRevokeTicket()
+{
+    CMutableTransaction mtx;
+
+    // create an input from a dummy BuyTicket stake
+    uint256 dummyBuyTicketTxHash = uint256();
+    mtx.vin.push_back(CTxIn(COutPoint(dummyBuyTicketTxHash, ticketStakeOutputIndex)));
+
+    // create a structured OP_RETURN output containing tx declaration
+    RevokeTicketData revokeTicketData = { 1 };
+    CScript declScript = GetScriptForRevokeTicketDecl(revokeTicketData);
+    mtx.vout.push_back(CTxOut(0, declScript));
+
+    // Create an output which pays back a dummy refund
+    auto changeKey = CKey();
+    changeKey.MakeNewKey(false);
+    auto rewardAddr = changeKey.GetPubKey().GetID();
+    CScript rewardScript = GetScriptForDestination(rewardAddr);
+    CAmount dummyRefund = 60;
+    mtx.vout.push_back(CTxOut(dummyRefund, rewardScript));
+
+    return mtx;
+}
+
+BOOST_AUTO_TEST_CASE(test_ValidateStakeTransactions)
+{
+    // this code tests validation functions that perform structural checks on stake transactions;
+    // since coin amounts cannot be properly set without context, we don't perform coin checks
+
+    std::string reason;
+    bool ok;
+
+    CMutableTransaction txBuyTicket = CreateDummyBuyTicket();
+    BOOST_CHECK(ok = ValidateBuyTicketStructure(txBuyTicket, reason));
+    if (!ok)
+        std::cout << reason << std::endl;
+    TicketContribData contribData;
+    BOOST_CHECK(ok = ParseTicketContrib(txBuyTicket, 2, contribData));
+    if (!ok)
+        std::cout << "Couldn't parse ticket contribution data" << std::endl;
+
+    CMutableTransaction txVote = CreateDummyVote();
+    BOOST_CHECK(ok = ValidateVoteStructure(txVote, reason));
+    if (!ok)
+        std::cout << reason << std::endl;
+    VoteData voteData;
+    BOOST_CHECK(ok = ParseVote(txVote, voteData));
+    if (!ok)
+        std::cout << "Couldn't parse vote data" << std::endl;
+
+    CMutableTransaction txRevokeTicket = CreateDummyRevokeTicket();
+    BOOST_CHECK(ok = ValidateRevokeTicketStructure(txRevokeTicket, reason));
+    if (!ok)
+        std::cout << reason << std::endl;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -719,9 +719,40 @@ UniValue gettickets(const JSONRPCRequest& request)
             + HelpExampleRpc("gettickets", "false")
         };
 
-    const auto& bIncludeMature = request.params[0].get_bool();
+    const auto& bIncludeImmature = request.params[0].get_bool();
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    const auto& txOrdered = pwallet->wtxOrdered;
+
+    auto tx_arr = UniValue{UniValue::VARR};
+    for (const auto& it : txOrdered) {
+        const auto* const pwtx = it.second.first;
+
+        if (pwtx != nullptr) {
+
+            std::string reason;
+            const CTransaction& current_tx = *(pwtx->tx);
+            if (ParseTxClass(current_tx) != TX_BuyTicket)
+                continue;
+
+            const auto& confirmations = pwtx->GetDepthInMainChain();
+            if (confirmations < 0)
+                continue;
+
+            if (pwtx->isAbandoned())
+                continue;
+
+            if (!bIncludeImmature && confirmations < Params().GetConsensus().nTicketMaturity)
+                continue;
+
+            tx_arr.push_back(pwtx->GetHash().GetHex());
+        }
+    }
 
     auto ret = UniValue{UniValue::VOBJ};
+    ret.pushKV("hashes",tx_arr);
     return ret;
 }
 
@@ -3026,7 +3057,201 @@ UniValue purchaseticket(const JSONRPCRequest& request)
             + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" 5 \"\" 0 100000")
         };
 
-    UniValue results{UniValue::VSTR};
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    // Account
+    const auto strAccount = AccountFromValue(request.params[0]);
+
+    // Spend limit
+    const auto nSpendLimit = AmountFromValue(request.params[1]);
+    if (nSpendLimit <= 0)
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid spend limit");
+
+    // Minimum confirmations
+    int nMinDepth{1};
+    if (!request.params[2].isNull())
+        nMinDepth = request.params[2].get_int();
+
+    if (nMinDepth < 0)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "negative minconf");
+
+    // Ticket address
+    CTxDestination ticketAddress;
+    if (!request.params[3].isNull()) {
+        const auto& str = request.params[3].get_str();
+        if (!str.empty()) {
+            ticketAddress = DecodeDestination(str);
+            if (!IsValidDestination(ticketAddress)) {
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid ticket address");
+            }
+        }
+    }
+
+    // Number of tickets
+    int nNumTickets{1};
+    if (!request.params[4].isNull()) {
+        nNumTickets = request.params[4].get_int();
+        if (nNumTickets < 1)
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER,"Number of tickets must be at least 1");
+    }
+    
+    // Pool address
+    CTxDestination poolAddress;
+    if (!request.params[5].isNull()) {
+        const auto& str = request.params[5].get_str();
+        if (!str.empty()) {
+            poolAddress = DecodeDestination(request.params[5].get_str());
+            if (!IsValidDestination(poolAddress)) {
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid pool address");
+            }
+        }
+    }
+
+    double dfPoolFee{0.0};
+    if(!request.params[6].isNull()) {
+        dfPoolFee = request.params[6].get_real();
+        // TODO make it CFeeRate and validate it
+    }
+
+    // Expiry
+    int nExpiry{0};
+    if (!request.params[7].isNull())
+        nExpiry = request.params[7].get_int();
+
+    if (nExpiry < 0)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "negative expiry");
+
+    // Ticket Fee
+    CAmount ticketFeeIncrement;
+    if (!request.params[9].isNull()) {
+        ticketFeeIncrement = AmountFromValue(request.params[9]);
+    }
+    if (ticketFeeIncrement == 0) {
+        // TODO read the wallet's default increment
+    }
+
+
+    // Perform a sanity check on expiry.
+    if (nExpiry > 0  && nExpiry <= chainActive.Height() + 1)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "expiry height must be above next block height");
+
+    // TODO Calculate the current ticket price.  If the DCP0001 deployment is not
+    // active, fallback to querying the ticket price over RPC.
+    //ticketPrice, err := w.NextStakeDifficulty()
+    const auto& ticketPrice = CAmount{34500};
+
+    // Ensure the ticket price does not exceed the spend limit if set.
+    if (ticketPrice > nSpendLimit)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "ticket price above spend limit");
+
+    // Check sanity of poolfee
+    if (IsValidDestination(poolAddress) && dfPoolFee == 0.0)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "stakepool fee percent unset");
+
+    // check ticketAddr type, only P2PKH and P2SH are accepted
+    // seems to always be the case while the address is valid
+
+    // TODO calculate ticket fee based on estimated size and the ticketFee parameter
+    const auto& ticketFee = CAmount{1000};
+    const auto& neededPerTicket = ticketPrice + ticketFee;
+
+    UniValue results{UniValue::VARR};
+
+    EnsureWalletIsUnlocked(pwallet);
+    const auto& splitTxAddr = GetAccountAddress(pwallet,"",true);
+
+    for (int i = 0; i < nNumTickets; ++i) {
+        // Fetch the single use split address to break tickets into, to
+        // immediately be consumed as tickets.
+        // ! Not clear why we should do another set of transaction to our wallet first
+        // ! probably needed to be able to satisfy the inputs of a BuyTicket Transaction,
+        // ! where each input represents a contribution
+        CWalletTx splitTx;
+
+        if (!IsValidDestination(poolAddress)) {
+            // no pool used
+            SendMoney(pwallet, splitTxAddr, neededPerTicket, false, splitTx, CCoinControl{});
+        }
+        else{
+            // use pool adress
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Using pool address is not supported yet");
+        }
+
+        CMutableTransaction mTicketTx;
+        COutPoint op;
+
+        // look for the index of the output that pays neededPerTicket and use that
+        for (int idx = 0; idx<splitTx.tx->vout.size(); ++idx) {
+            if (splitTx.tx->vout[idx].nValue == neededPerTicket) {
+                op = COutPoint(splitTx.tx->GetHash(), idx);
+                break;
+            }
+        }
+        if (op.IsNull()) {
+            throw JSONRPCError(RPCErrorCode::TRANSACTION_ERROR, "Error: cannot find correct output of split transaction");
+        }
+
+        if (!IsValidDestination(ticketAddress)) {
+            // Generate a new key that is added to wallet
+            CPubKey newKey;
+            if (!pwallet->GetKeyFromPool(newKey)) {
+                throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+            }
+            ticketAddress = newKey.GetID();
+        }
+
+        CKeyID rewardAddress;
+        {
+            // Generate a new key that is added to wallet
+            CPubKey newKey;
+            if (!pwallet->GetKeyFromPool(newKey)) {
+                throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+            }
+            rewardAddress = newKey.GetID();
+        }
+
+        mTicketTx.vin.push_back(CTxIn(op));
+        // create buy ticket tx declaration
+        BuyTicketData buyTicketData = { 1 };
+        CScript declScript = GetScriptForBuyTicketDecl(buyTicketData);
+        mTicketTx.vout.push_back(CTxOut(0, declScript));
+
+        // create an output that pays the ticket
+        CScript ticketScript = GetScriptForDestination(ticketAddress);
+        mTicketTx.vout.push_back(CTxOut(ticketPrice, ticketScript));
+
+        const auto& contributedAmount = neededPerTicket; // in case no pool is used, this is equal to the price
+        TicketContribData ticketContribData = { 1, rewardAddress, contributedAmount };
+        CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
+        mTicketTx.vout.push_back(CTxOut(0, contributorInfoScript));
+
+        // create an output which pays back the change
+        auto changeKey = CKey();
+        changeKey.MakeNewKey(false);
+        auto changeAddr = changeKey.GetPubKey().GetID();
+        CScript changeScript = GetScriptForDestination(changeAddr);
+        mTicketTx.vout.push_back(CTxOut(0, changeScript));
+
+        std::string reason;
+        if (!ValidateBuyTicketStructure(mTicketTx,reason))
+            throw JSONRPCError(RPCErrorCode::TRANSACTION_ERROR, "Error while constructing buy ticket transaction :" + reason);
+        
+        if (!pwallet->SignTransaction(mTicketTx))
+            throw JSONRPCError(RPCErrorCode::TRANSACTION_ERROR, "Signing transaction failed");
+
+        CValidationState state;
+        CWalletTx wtx;
+        wtx.fTimeReceivedIsTxTime = true;
+        wtx.BindWallet(pwallet);
+        wtx.SetTx(MakeTransactionRef(std::move(mTicketTx)));
+        CReserveKey reservekey{pwallet};
+        if (!pwallet->CommitTransaction(wtx, reservekey, g_connman.get(), state)) {
+            throw JSONRPCError(RPCErrorCode::TRANSACTION_ERROR, "CommitTransaction failed");
+        }
+        
+        results.push_back(wtx.GetHash().GetHex());
+    }
 
     return results;
 }

@@ -150,6 +150,15 @@ BOOST_AUTO_TEST_CASE(rpc_createraw_op_return)
 
     // Data 81 bytes long
     BOOST_CHECK_NO_THROW(CallRPC("createrawtransaction [{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\",\"vout\":0}] {\"data\":\"010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081\"}"));
+
+    // Structured data output
+    BOOST_CHECK_NO_THROW(CallRPC("createrawtransaction [{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\",\"vout\":0}] {\"struct\":{\"version\":1,\"class\":0,\"somenum\":987,\"somehex\":\"11fe3ef776f726c64f\"}}"));
+
+    // Missing version in structured data
+    BOOST_CHECK_THROW(CallRPC("createrawtransaction [{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\",\"vout\":0}] {\"struct\":{\"class\":0}}"), std::runtime_error);
+
+    // Missing class in structured data
+    BOOST_CHECK_THROW(CallRPC("createrawtransaction [{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\",\"vout\":0}] {\"struct\":{\"version\":0}}"), std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(rpc_format_monetary_values)

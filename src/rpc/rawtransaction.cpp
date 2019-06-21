@@ -490,7 +490,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
         throw std::runtime_error(
             "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"address\":amount,\"data\":\"hex\",...} ( locktime ) ( replaceable )\n"
             "\nCreate a transaction spending the given inputs and creating new outputs.\n"
-            "Outputs can be addresses or data.\n"
+            "Outputs can be addresses, data (OP_RETURN) or structured data (OP_RETURN OP_STRUCT).\n"
             "Returns hex-encoded raw transaction.\n"
             "Note that the transaction's inputs are not signed, and\n"
             "it is not stored in the wallet or transmitted to the network.\n"
@@ -509,6 +509,14 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             "    {\n"
             "      \"address\": x.xxx,    (numeric or string, required) The key is the paicoin address, the numeric value (can be string) is the " + CURRENCY_UNIT + " amount\n"
             "      \"data\": \"hex\"      (string, required) The key is \"data\", the value is hex encoded data\n"
+            "      \"struct\"             (object, required) An object with individual data items to be added to the script\n"
+            "       {\n"
+            "         \"version\": x,     (numeric, required) Version number\n"
+            "         \"class\": x,       (numeric, required) Top-level classifier for data, corresponding to enum EDataClass\n"
+            "         \"somenumber\": x,  (numeric, optional) A numerical piece of data\n"
+            "         \"somehex\": \"hex\" (string, optional) A hex encoded piece of data\n"
+            "         ,...\n"
+            "       }\n"
             "      ,...\n"
             "    }\n"
             "3. locktime                  (numeric, optional, default=0) Raw locktime. Non-0 value also locktime-activates inputs\n"
@@ -583,11 +591,37 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
     std::set<CTxDestination> destinations;
     std::vector<std::string> addrList = sendTo.getKeys();
     for (const std::string& name_ : addrList) {
-
         if (name_ == "data") {
             std::vector<unsigned char> data = ParseHexV(sendTo[name_].getValStr(),"Data");
-
             CTxOut out(0, CScript() << OP_RETURN << data);
+            rawTx.vout.push_back(out);
+        } else if (name_ == "struct") {
+            UniValue structData = sendTo[name_];
+            if (!structData.isObject())
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Structured data not an object"));
+            if (!structData.exists("version"))
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Missing version in structured data"));
+            if (!structData.exists("class"))
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Missing class in structured data"));
+            if (!structData["version"].isNum())
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Version not a number"));
+            if (!structData["class"].isNum())
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Class not a number"));
+            CScript script = CScript() << OP_RETURN << OP_STRUCT << structData["version"].get_int() << structData["class"].get_int();
+            std::vector<std::string> allKeys = structData.getKeys();
+            std::vector<UniValue> allValues = structData.getValues();
+            for (unsigned i=0; i<allKeys.size(); i++) {
+                if (allKeys[i] == "version" || allKeys[i] == "class")
+                    continue;
+                bool numOrStr = allValues[i].isNum() || allValues[i].isStr();
+                if (!numOrStr)
+                    throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Data item not a number or hex string"));
+                if (allValues[i].isNum())
+                    script << allValues[i].get_int();
+                else if (allValues[i].isStr())
+                    script << ParseHexV(allValues[i], "Data item");
+            }
+            CTxOut out(0, script);
             rawTx.vout.push_back(out);
         } else {
             CTxDestination destination = DecodeDestination(name_);

@@ -1,3 +1,8 @@
+Proposed PoW/PoS Hybrid Consensus Mechanism
+===========================================
+
+The contributing developers of Project PAI have released a white paper proposing a Hybrid PoW/PoS consensus mechanism. Read the white paper [here](https://projectpai.com/assets/files/whitepaper/Prospective-Hybrid-Consensus-for-Project-PAI.pdf).
+
 PAI Coin Core integration/staging tree
 =====================================
 

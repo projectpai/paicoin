@@ -581,7 +581,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         } // end LOCK(pool.cs)
 
         CAmount nFees = 0;
-        if (!Consensus::CheckTxInputs(tx, state, view, GetSpendHeight(view), nFees)) {
+        if (!Consensus::CheckTxInputs(tx, state, view, GetSpendHeight(view), nFees, chainparams)) {
             return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), FormatStateMessage(state));
         }
 
@@ -1002,6 +1002,15 @@ bool GetTransaction(const uint256 &hash, CTransactionRef &txOut, const Consensus
     return false;
 }
 
+CTransactionRef GetTicket(const uint256& txHash)
+{
+    CTransactionRef ticketTxPtr;
+    uint256 ticketBlockHash;
+    if (GetTransaction(txHash, ticketTxPtr, Params().GetConsensus(), ticketBlockHash, true))
+        return ticketTxPtr;
+    else
+        return nullptr;
+}
 
 
 
@@ -1067,19 +1076,56 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
     return true;
 }
 
-CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
+CAmount GetTotalBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
     int halvings = nHeight / consensusParams.nSubsidyHalvingInterval;
     // Force block reward to zero when right shift is undefined.
     if (halvings >= 64)
         return 0;
 
-    // PAICOIN Note: If the initial block subsidy has been changed,
-    // update the subsidy with the correct value
-    CAmount nSubsidy = 1500 * COIN;
+    CAmount nSubsidy = consensusParams.nTotalBlockSubsidy * COIN;
     // Subsidy is cut in half every 210,000 blocks which will occur approximately every 4 years.
     nSubsidy >>= halvings;
     return nSubsidy;
+}
+
+CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams)
+{
+    // Miner subsidy is a portion of total block subsidy
+    CAmount nTotalBlockSubsidy = GetTotalBlockSubsidy(nHeight, consensusParams);
+    return nHeight < consensusParams.nStakeValidationHeight ? nTotalBlockSubsidy :
+        (nTotalBlockSubsidy * consensusParams.nWorkSubsidyProportion) / consensusParams.TotalSubsidyProportions();
+}
+
+CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams)
+{
+    // Voter subsidy is a portion of total block subsidy
+    return nHeight < consensusParams.nStakeValidationHeight ? 0 :
+        (GetTotalBlockSubsidy(nHeight, consensusParams) * consensusParams.nStakeSubsidyProportion)
+        / (consensusParams.TotalSubsidyProportions() * consensusParams.nTicketsPerBlock);
+}
+
+CAmount CalcContributorRemuneration(CAmount contributedAmount, CAmount totalStake, CAmount subsidy, CAmount contributionSum)
+{
+    // Conceptually, the formula is:
+    //
+    //                 total stake + subsidy
+    // remuneration =  --------------------- * contribution amount
+    //                  total contributions
+    //
+    // However, in order to avoid floating point math, we will use large integers (arith_uint256) and a modified formula:
+    //
+    //                  --                                                  --
+    //                 | (total stake + subsidy) * contribution amount * 2^32 |
+    //                 | ---------------------------------------------------- |
+    // remuneration =  |                 total contributions                  |
+    //                  --                                                  --
+    //                 --------------------------------------------------------
+    //                                         2^32
+    //
+    arith_uint256 funding(totalStake + subsidy);
+    arith_uint256 result = (((arith_uint256(contributedAmount) * funding) << 32) / arith_uint256(contributionSum)) >> 32;
+    return result.GetLow64();
 }
 
 bool IsInitialBlockDownload()
@@ -1842,7 +1888,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         if (!tx.IsCoinBase())
         {
             CAmount txfee = 0;
-            if (!Consensus::CheckTxInputs(tx, state, view, pindex->nHeight, txfee)) {
+            if (!Consensus::CheckTxInputs(tx, state, view, pindex->nHeight, txfee, chainparams)) {
                 return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), FormatStateMessage(state));
             }
             nFees += txfee;
@@ -1907,7 +1953,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     LogPrint(BCLog::BENCH, "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs (%.2fms/blk)]\n", (unsigned)block.vtx.size(), MILLI * (nTime3 - nTime2), MILLI * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : MILLI * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * MICRO, nTimeConnect * MILLI / nBlocksTotal);
 
     if (block.GetHash() != chainparams.GetConsensus().hashGenesisBlock) {
-        CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
+        CAmount blockReward = nFees + GetMinerSubsidy(pindex->nHeight, chainparams.GetConsensus());
         if (block.vtx[0]->GetValueOut() > blockReward)
             return state.DoS(100,
                          error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)",
@@ -2483,7 +2529,7 @@ static bool ActivateBestChainStep(CValidationState& state, const CChainParams& c
         // any disconnected transactions back to the mempool.
         UpdateMempoolForReorg(disconnectpool, true);
     }
-    mempool.check(pcoinsTip);
+    mempool.check(pcoinsTip, chainparams);
 
     // Callbacks/notifications for a new best chain.
     if (fInvalidFound)
@@ -3007,7 +3053,7 @@ std::vector<unsigned char> GenerateCoinbaseCommitment(CBlock& block, const CBloc
     if (consensusParams.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout != 0) {
         if (commitpos == -1) {
             uint256 witnessroot = BlockWitnessMerkleRoot(block, nullptr);
-            CHash256().Write(witnessroot.begin(), 32).Write(ret.data(), 32).Finalize(witnessroot.begin());
+            CSha256D().Write(witnessroot.begin(), 32).Write(ret.data(), 32).Finalize(witnessroot.begin());
             CTxOut out;
             out.nValue = 0;
             out.scriptPubKey.resize(38);
@@ -3121,7 +3167,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
             if (block.vtx[0]->vin[0].scriptWitness.stack.size() != 1 || block.vtx[0]->vin[0].scriptWitness.stack[0].size() != 32) {
                 return state.DoS(100, false, REJECT_INVALID, "bad-witness-nonce-size", true, strprintf("%s : invalid witness nonce size", __func__));
             }
-            CHash256().Write(hashWitness.begin(), 32).Write(&block.vtx[0]->vin[0].scriptWitness.stack[0][0], 32).Finalize(hashWitness.begin());
+            CSha256D().Write(hashWitness.begin(), 32).Write(&block.vtx[0]->vin[0].scriptWitness.stack[0][0], 32).Finalize(hashWitness.begin());
             if (memcmp(hashWitness.begin(), &block.vtx[0]->vout[commitpos].scriptPubKey[6], 32)) {
                 return state.DoS(100, false, REJECT_INVALID, "bad-witness-merkle-match", true, strprintf("%s : witness merkle commitment mismatch", __func__));
             }
