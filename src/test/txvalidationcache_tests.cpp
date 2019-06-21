@@ -16,6 +16,7 @@
 #include "core_io.h"
 #include "keystore.h"
 #include "policy/policy.h"
+#include "chainparams.h"
 
 #include <boost/test/unit_test.hpp>
 
@@ -31,6 +32,21 @@ ToMemPool(CMutableTransaction& tx)
     CValidationState state;
     return AcceptToMemoryPool(mempool, state, MakeTransactionRef(tx), nullptr /* pfMissingInputs */,
                               nullptr /* plTxnReplaced */, true /* bypass_limits */, 0 /* nAbsurdFee */);
+}
+
+BOOST_FIXTURE_TEST_CASE(stake_tx_validation, TestChain100Setup)
+{
+    CBlockIndex* blockIndex = chainActive.Tip()->pprev;
+    if (blockIndex != nullptr) {
+        CBlock block;
+        bool success = ReadBlockFromDisk(block, blockIndex, Params().GetConsensus());
+        BOOST_CHECK(success);
+        if (success) {
+            uint256 fakeTicketHash = block.vtx[0]->GetHash();
+            CTransactionRef txRef = GetTicket(fakeTicketHash);
+            BOOST_CHECK(txRef != nullptr);
+        }
+    }
 }
 
 BOOST_FIXTURE_TEST_CASE(tx_mempool_block_doublespend, TestChain100Setup)

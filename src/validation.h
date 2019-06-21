@@ -16,7 +16,9 @@
 #include "protocol.h" // For CMessageHeader::MessageStartChars
 #include "policy/feerate.h"
 #include "script/script_error.h"
+#include "script/standard.h"
 #include "sync.h"
+#include "txdb.h"
 #include "versionbits.h"
 
 #include <algorithm>
@@ -130,6 +132,7 @@ static const int64_t MAX_FEE_ESTIMATION_TIP_AGE = 3 * 60 * 60;
 static const bool DEFAULT_PERMIT_BAREMULTISIG = true;
 static const bool DEFAULT_CHECKPOINTS_ENABLED = true;
 static const bool DEFAULT_TXINDEX = false;
+static const bool DEFAULT_ADDRINDEX = false;
 static const unsigned int DEFAULT_BANSCORE_THRESHOLD = 100;
 /** Default for -persistmempool */
 static const bool DEFAULT_PERSIST_MEMPOOL = true;
@@ -169,6 +172,7 @@ extern std::atomic_bool fImporting;
 extern std::atomic_bool fReindex;
 extern int nScriptCheckThreads;
 extern bool fTxIndex;
+extern bool fAddrIndex;
 extern bool fIsBareMultisigStd;
 extern bool fRequireStandard;
 extern bool fCheckBlockIndex;
@@ -273,9 +277,14 @@ void ThreadScriptCheck();
 bool IsInitialBlockDownload();
 /** Retrieve a transaction (from memory pool, or from disk, if possible) */
 bool GetTransaction(const uint256 &hash, CTransactionRef &tx, const Consensus::Params& params, uint256 &hashBlock, bool fAllowSlow = false);
+/** Retrieve a ticket transaction */
+CTransactionRef GetTicket(const uint256 &ticketTxHash);
 /** Find the best known block, and make it the tip of the block chain */
 bool ActivateBestChain(CValidationState& state, const CChainParams& chainparams, std::shared_ptr<const CBlock> pblock = std::shared_ptr<const CBlock>());
-CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams);
+CAmount GetTotalBlockSubsidy(int nHeight, const Consensus::Params& consensusParams);
+CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams);
+CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams);
+CAmount CalcContributorRemuneration(CAmount contributedAmount, CAmount totalStake, CAmount subsidy, CAmount contributionSum);
 
 /** Guess verification progress (as a fraction between 0.0=genesis and 1.0=current tip). */
 double GuessVerificationProgress(const ChainTxData& data, CBlockIndex* pindex);
@@ -395,6 +404,8 @@ void InitScriptExecutionCache();
 /** Functions for disk access for blocks */
 bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams);
 bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus::Params& consensusParams);
+bool ReadTransaction(CTransactionRef& tx, const CDiskTxPos &pos, uint256 &hashBlock);
+bool FindTransactionsByDestination(const CTxDestination &dest, std::set<CExtDiskTxPos> &setpos);
 
 /** Functions for validating blocks and updating the block tree */
 

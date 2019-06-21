@@ -26,6 +26,7 @@
 #include "wallet/feebumper.h"
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
+#include "wallet/fees.h"
 
 #include <init.h>  // For StartShutdown
 
@@ -675,6 +676,161 @@ UniValue getreceivedbyaddress(const JSONRPCRequest& request)
     return ValueFromAmount(nAmount);
 }
 
+UniValue getticketfee(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error{
+            "getticketfee\n"
+            "\nGet the current fee per kB of the serialized tx size used for an authored stake transaction.\n"
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "n.nnn (numeric)    The current fee\n"
+            + HelpExampleCli("getticketfee", "")
+            + HelpExampleRpc("getticketfee", "")
+        };
+
+    auto ret = UniValue{0.0};
+    return ret;
+}
+
+UniValue gettickets(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "gettickets includeimmature\n"
+            "\nReturning the hashes of the tickets currently owned by wallet.\n"
+            "\nArguments:\n"
+            "1. includeimmature                 (boolean, required)     If true include immature tickets in the results.\n"
+            "\nResult:\n"
+            "{\n"
+            "   \"hashes\": [\"value\",...],    (array of string)       Hashes of the tickets owned by the wallet encoded as strings\n"
+            "}\n"
+            + HelpExampleCli("gettickets", "true")
+            + HelpExampleRpc("gettickets", "false")
+        };
+
+    const auto& bIncludeImmature = request.params[0].get_bool();
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    const auto& txOrdered = pwallet->wtxOrdered;
+
+    auto tx_arr = UniValue{UniValue::VARR};
+    for (const auto& it : txOrdered) {
+        const auto* const pwtx = it.second.first;
+
+        if (pwtx != nullptr) {
+
+            std::string reason;
+            const CTransaction& current_tx = *(pwtx->tx);
+            if (ParseTxClass(current_tx) != TX_BuyTicket)
+                continue;
+
+            const auto& confirmations = pwtx->GetDepthInMainChain();
+            if (confirmations < 0)
+                continue;
+
+            if (pwtx->isAbandoned())
+                continue;
+
+            if (!bIncludeImmature && confirmations < Params().GetConsensus().nTicketMaturity)
+                continue;
+
+            tx_arr.push_back(pwtx->GetHash().GetHex());
+        }
+    }
+
+    auto ret = UniValue{UniValue::VOBJ};
+    ret.pushKV("hashes",tx_arr);
+    return ret;
+}
+
+UniValue revoketickets(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error{
+            "revoketickets\n"
+            "\nRequests the wallet create revovactions for any previously missed tickets.  Wallet must be unlocked.\n"
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "Nothing\n"
+            + HelpExampleCli("revoketickets", "")
+            + HelpExampleRpc("revoketickets", "")
+        };
+
+    auto ret = UniValue{UniValue::VNULL};
+    return ret;
+}
+
+UniValue listtickets(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error{
+            "listtickets\n"
+            "\nProduces an array of ticket information objects.\n"
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "[\n"
+            "   {\n"
+            "       \"ticket\": { ... }   JSON object containting ticket information\n"
+            "   }\n"
+            "]\n"
+            + HelpExampleCli("listtickets", "")
+            + HelpExampleRpc("listtickets", "")
+        };
+
+    auto ret = UniValue{UniValue::VARR};
+    return ret;
+}
+
+UniValue setticketfee(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketfee fee\n"
+            "\nModify the fee per kB of the serialized tx size used each time more fee is required for an authored stake transaction.\n"
+            "\nArguments:\n"
+            "1. fee     (numeric, required) The new fee per kB of the serialized tx size valued in PAI\n"
+            "\nResult:\n"
+            "true|false (boolean)           The boolean return status\n"
+            + HelpExampleCli("setticketfee", "0.02")
+            + HelpExampleRpc("setticketfee", "0.02")
+        };
+
+    const auto& nFee = request.params[0].get_real();
+
+    auto ret = UniValue{UniValue::VBOOL};
+    return ret;
+}
 
 UniValue getreceivedbyaccount(const JSONRPCRequest& request)
 {
@@ -2570,6 +2726,74 @@ UniValue getwalletinfo(const JSONRPCRequest& request)
     return obj;
 }
 
+UniValue getstakeinfo(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error{
+            "getstakeinfo\n"
+            "Returns statistics about staking from the wallet.\n"
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "{\n"
+            "    \"blockheight\": n,          (numeric) Current block height for stake info.\n"
+            "    \"difficulty\": n.nnn,       (numeric) Current stake difficulty.\n"
+            "    \"totalsubsidy\": n.nnn,     (numeric) Total amount of coins earned by proof-of-stake voting\n"
+            "    \"ownmempooltix\": n,        (numeric) Number of tickets submitted by this wallet currently in mempool\n"
+            "    \"immature\": n,             (numeric) Number of tickets from this wallet that are in the blockchain but which are not yet mature\n"
+            "    \"unspent\": n,              (numeric) Number of unspent tickets\n"
+            "    \"voted\": n,                (numeric) Number of votes cast by this wallet\n"
+            "    \"revoked\": n,              (numeric) Number of missed tickets that were missed and then revoked\n"
+            "    \"unspentexpired\": n,       (numeric) Number of unspent tickets which are past expiry\n"
+            "    \"poolsize\": n,             (numeric) Number of live tickets in the ticket pool.\n"
+            "    \"allmempooltix\": n,        (numeric) Number of tickets currently in the mempool\n"
+            "    \"live\": n,                 (numeric) Number of mature, active tickets owned by this wallet\n"
+            "    \"proportionlive\": n.nnn,   (numeric) (Live / PoolSize)\n"
+            "    \"missed\": n,               (numeric) Number of missed tickets (failure to vote, not including expired)\n"
+            "    \"proportionmissed\": n.nnn, (numeric) (Missed / (Missed + Voted))\n"
+            "    \"expired\": n,              (numeric) Number of tickets that have expired\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getstakeinfo", "")
+            + HelpExampleRpc("getstakeinfo", "")
+        };
+
+    UniValue obj{UniValue::VOBJ};
+
+    return obj;
+}
+
+UniValue stakepooluserinfo(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "stakepooluserinfo \"user\"\n"
+            "Get user info for stakepool.\n"
+            "\nArguments:\n"
+            "1. user                       (string, required)   The id of the user to be looked up\n"
+            "\nResult:\n"
+            "{\n"
+            "    \"tickets\": [{             (array of object)    A list of valid tickets that the user has added\n"
+            "       \"status\": \"value\",     (string)             The current status of the added ticket\n"
+            "       \"ticket\": \"value\",     (string)             The hash of the added ticket\n"
+            "       \"ticketheight\": n,     (numeric)            The height in which the ticket was added\n"
+            "       \"spentby\": \"value\",    (string)             The vote in which the ticket was spent\n"
+            "       \"spentbyheight\": n,    (numeric)            The height in which the ticket was spent\n"
+            "     },...],\n"
+            "    \"invalid\": [\"value\",...], (array of string)    A list of invalid tickets that the user has added\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("stakepooluserinfo", "\"user\"")
+            + HelpExampleRpc("stakepooluserinfo", "\"user\"")
+        };
+
+    const auto& user = request.params[0].get_str();
+
+    UniValue obj{UniValue::VOBJ};
+
+    return obj;
+}
+
 UniValue listwallets(const JSONRPCRequest& request)
 {
     if (request.fHelp || !request.params.empty())
@@ -2794,6 +3018,240 @@ UniValue listunspent(const JSONRPCRequest& request)
         entry.push_back(Pair("solvable", out.fSolvable));
         entry.push_back(Pair("safe", out.fSafe));
         results.push_back(entry);
+    }
+
+    return results;
+}
+
+UniValue purchaseticket(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 10)
+        throw std::runtime_error{
+            "purchaseticket \"fromaccount\" spendlimit (minconf=1 \"ticketaddress\" numtickets \"pooladdress\" poolfees expiry \"comment\" ticketfee)\n"
+            "\nPurchase ticket using available funds.\n"
+            "\nArguments:\n"
+            "1.  \"fromaccount\"    (string, required)             The account to use for purchase (default=\"default\")\n"
+            "2.  spendlimit       (numeric, required)            Limit on the amount to spend on ticket\n"
+            "3.  minconf          (numeric, optional, default=1) Minimum number of block confirmations required\n"
+            "4.  ticketaddress    (string, optional)             Override the ticket address to which voting rights are given\n"
+            "5.  numtickets       (numeric, optional)            The number of tickets to purchase\n"
+            "6.  pooladdress      (string, optional)             The address to pay stake pool fees to\n"
+            "7.  poolfees         (numeric, optional)            The amount of fees to pay to the stake pool\n"
+            "8.  expiry           (numeric, optional)            Height at which the purchase tickets expire\n"
+            "9.  comment          (string, optional)             Unused\n"
+            "10. ticketfee        (numeric, optional)            The transaction fee rate (PAI/kB) to use (overrides fees set by the wallet config or settxfee RPC)\n"
+
+            "\nResult:\n"
+            "\"value\"              (string) Hash of the resulting ticket\n"
+
+            "\nExamples:\n"
+            "\nUse PAI from your default account to purchase a ticket if the current ticket price was a max of 50 PAI\n"
+            + HelpExampleCli("purchaseticket", "\"default\" 50") +
+            "\nPurchase 5 tickets, as the 5th argument (numtickets) is set to 5\n"
+            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" 5") +
+            "\nPurchase 5 tickets that would expire from the mempool if not mined by block 100,000, as the 8th argument (expiry) is set to 100000\n"
+            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" 5 \"\" 0 100000")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    // Account
+    const auto strAccount = AccountFromValue(request.params[0]);
+
+    // Spend limit
+    const auto nSpendLimit = AmountFromValue(request.params[1]);
+    if (nSpendLimit <= 0)
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid spend limit");
+
+    // Minimum confirmations
+    int nMinDepth{1};
+    if (!request.params[2].isNull())
+        nMinDepth = request.params[2].get_int();
+
+    if (nMinDepth < 0)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "negative minconf");
+
+    // Ticket address
+    CTxDestination ticketAddress;
+    if (!request.params[3].isNull()) {
+        const auto& str = request.params[3].get_str();
+        if (!str.empty()) {
+            ticketAddress = DecodeDestination(str);
+            if (!IsValidDestination(ticketAddress)) {
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid ticket address");
+            }
+        }
+    }
+
+    // Number of tickets
+    int nNumTickets{1};
+    if (!request.params[4].isNull()) {
+        nNumTickets = request.params[4].get_int();
+        if (nNumTickets < 1)
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER,"Number of tickets must be at least 1");
+    }
+    
+    // Pool address
+    CTxDestination poolAddress;
+    if (!request.params[5].isNull()) {
+        const auto& str = request.params[5].get_str();
+        if (!str.empty()) {
+            poolAddress = DecodeDestination(request.params[5].get_str());
+            if (!IsValidDestination(poolAddress)) {
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid pool address");
+            }
+        }
+    }
+
+    double dfPoolFee{0.0};
+    if(!request.params[6].isNull()) {
+        dfPoolFee = request.params[6].get_real();
+        // TODO make it CFeeRate and validate it
+    }
+
+    // Expiry
+    int nExpiry{0};
+    if (!request.params[7].isNull())
+        nExpiry = request.params[7].get_int();
+
+    if (nExpiry < 0)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "negative expiry");
+
+    // Ticket Fee
+    CAmount ticketFeeIncrement;
+    if (!request.params[9].isNull()) {
+        ticketFeeIncrement = AmountFromValue(request.params[9]);
+    }
+    if (ticketFeeIncrement == 0) {
+        // TODO read the wallet's default increment
+    }
+
+
+    // Perform a sanity check on expiry.
+    if (nExpiry > 0  && nExpiry <= chainActive.Height() + 1)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "expiry height must be above next block height");
+
+    // TODO Calculate the current ticket price.  If the DCP0001 deployment is not
+    // active, fallback to querying the ticket price over RPC.
+    //ticketPrice, err := w.NextStakeDifficulty()
+    const auto& ticketPrice = CAmount{34500};
+
+    // Ensure the ticket price does not exceed the spend limit if set.
+    if (ticketPrice > nSpendLimit)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "ticket price above spend limit");
+
+    // Check sanity of poolfee
+    if (IsValidDestination(poolAddress) && dfPoolFee == 0.0)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "stakepool fee percent unset");
+
+    // check ticketAddr type, only P2PKH and P2SH are accepted
+    // seems to always be the case while the address is valid
+
+    // TODO calculate ticket fee based on estimated size and the ticketFee parameter
+    const auto& ticketFee = CAmount{1000};
+    const auto& neededPerTicket = ticketPrice + ticketFee;
+
+    UniValue results{UniValue::VARR};
+
+    EnsureWalletIsUnlocked(pwallet);
+    const auto& splitTxAddr = GetAccountAddress(pwallet,"",true);
+
+    for (int i = 0; i < nNumTickets; ++i) {
+        // Fetch the single use split address to break tickets into, to
+        // immediately be consumed as tickets.
+        // ! Not clear why we should do another set of transaction to our wallet first
+        // ! probably needed to be able to satisfy the inputs of a BuyTicket Transaction,
+        // ! where each input represents a contribution
+        CWalletTx splitTx;
+
+        if (!IsValidDestination(poolAddress)) {
+            // no pool used
+            SendMoney(pwallet, splitTxAddr, neededPerTicket, false, splitTx, CCoinControl{});
+        }
+        else{
+            // use pool adress
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Using pool address is not supported yet");
+        }
+
+        CMutableTransaction mTicketTx;
+        COutPoint op;
+
+        // look for the index of the output that pays neededPerTicket and use that
+        for (int idx = 0; idx<splitTx.tx->vout.size(); ++idx) {
+            if (splitTx.tx->vout[idx].nValue == neededPerTicket) {
+                op = COutPoint(splitTx.tx->GetHash(), idx);
+                break;
+            }
+        }
+        if (op.IsNull()) {
+            throw JSONRPCError(RPCErrorCode::TRANSACTION_ERROR, "Error: cannot find correct output of split transaction");
+        }
+
+        if (!IsValidDestination(ticketAddress)) {
+            // Generate a new key that is added to wallet
+            CPubKey newKey;
+            if (!pwallet->GetKeyFromPool(newKey)) {
+                throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+            }
+            ticketAddress = newKey.GetID();
+        }
+
+        CKeyID rewardAddress;
+        {
+            // Generate a new key that is added to wallet
+            CPubKey newKey;
+            if (!pwallet->GetKeyFromPool(newKey)) {
+                throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+            }
+            rewardAddress = newKey.GetID();
+        }
+
+        mTicketTx.vin.push_back(CTxIn(op));
+        // create buy ticket tx declaration
+        BuyTicketData buyTicketData = { 1 };
+        CScript declScript = GetScriptForBuyTicketDecl(buyTicketData);
+        mTicketTx.vout.push_back(CTxOut(0, declScript));
+
+        // create an output that pays the ticket
+        CScript ticketScript = GetScriptForDestination(ticketAddress);
+        mTicketTx.vout.push_back(CTxOut(ticketPrice, ticketScript));
+
+        const auto& contributedAmount = neededPerTicket; // in case no pool is used, this is equal to the price
+        TicketContribData ticketContribData = { 1, rewardAddress, contributedAmount };
+        CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
+        mTicketTx.vout.push_back(CTxOut(0, contributorInfoScript));
+
+        // create an output which pays back the change
+        auto changeKey = CKey();
+        changeKey.MakeNewKey(false);
+        auto changeAddr = changeKey.GetPubKey().GetID();
+        CScript changeScript = GetScriptForDestination(changeAddr);
+        mTicketTx.vout.push_back(CTxOut(0, changeScript));
+
+        std::string reason;
+        if (!ValidateBuyTicketStructure(mTicketTx,reason))
+            throw JSONRPCError(RPCErrorCode::TRANSACTION_ERROR, "Error while constructing buy ticket transaction :" + reason);
+        
+        if (!pwallet->SignTransaction(mTicketTx))
+            throw JSONRPCError(RPCErrorCode::TRANSACTION_ERROR, "Signing transaction failed");
+
+        CValidationState state;
+        CWalletTx wtx;
+        wtx.fTimeReceivedIsTxTime = true;
+        wtx.BindWallet(pwallet);
+        wtx.SetTx(MakeTransactionRef(std::move(mTicketTx)));
+        CReserveKey reservekey{pwallet};
+        if (!pwallet->CommitTransaction(wtx, reservekey, g_connman.get(), state)) {
+            throw JSONRPCError(RPCErrorCode::TRANSACTION_ERROR, "CommitTransaction failed");
+        }
+        
+        results.push_back(wtx.GetHash().GetHex());
     }
 
     return results;
@@ -3240,6 +3698,485 @@ UniValue rescanblockchain(const JSONRPCRequest& request)
     return response;
 }
 
+UniValue getmultisigoutinfo(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() !=2)
+    {
+        throw std::runtime_error{
+            "getmultisigoutinfo \"hash\" index\n"
+            "\nReturns information about a multisignature output.\n"
+            "\nArguments:\n"
+            "1. hash             (string, required)  Input hash to check.\n"
+            "2. index            (numeric, required) Index of input.\n"
+            "\nResult:\n"
+            "{\n"
+            "\"address\": \"value\",       (string)          Script address.\n"
+            "\"redeemscript\": \"value\",  (string)          Hex of the redeeming script.\n"
+            "\"m\": n,                   (numeric)         m (in m-of-n)\n"
+            "\"n\": n,                   (numeric)         n (in m-of-n)\n"
+            "\"pubkeys\": [\"value\",...], (array of string) Associated pubkeys.\n"
+            "\"txhash\": \"value\",        (string)          txhash\n"
+            "\"blockheight\": n,         (numeric)         Height of the containing block.\n"
+            "\"blockhash\": \"value\",     (string)          Hash of the containing block.\n"
+            "\"spent\": true|false,      (boolean)         If it has been spent.\n"
+            "\"spentby\": \"value\",       (string)          Hash of spending tx.\n"
+            "\"spentbyindex\": n,        (numeric)         Index of spending tx.\n"
+            "\"amount\": n.nnn,          (numeric)         Amount of coins contained.\n"
+            "}\n"
+            "\nExamples:\n"
+            //TODO update examples
+            + HelpExampleCli("getmultisigoutinfo", "\"hash\" 2")
+            + HelpExampleRpc("getmultisigoutinfo", "\"hash\" 2")
+        };
+    }
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    uint256 hash;
+    hash.SetHex(request.params[0].get_str());
+
+    const auto& nIndex = request.params[1].get_int();
+
+    auto it = pwallet->mapWallet.find(hash);
+    if (it == pwallet->mapWallet.end()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
+    }
+
+    const auto& wtx = it->second;
+    const auto& txOut = wtx.tx->vout[nIndex];
+
+    const auto& scriptPubKey = txOut.scriptPubKey;
+
+    auto result = UniValue{UniValue::VOBJ};
+
+    CTxDestination address;
+    const auto fValidAddress = ExtractDestination(scriptPubKey, address);
+
+    if (fValidAddress) {
+        result.push_back(Pair("address", EncodeDestination(address)));
+
+        if (txOut.scriptPubKey.IsPayToScriptHash()){
+            const auto& hash = boost::get<CScriptID>(address);
+            CScript redeemScript;
+            if (pwallet->GetCScript(hash, redeemScript)) {
+                result.push_back(Pair("redeemScript", HexStr(redeemScript.begin(), redeemScript.end())));
+
+                txnouttype type;
+                std::vector<CTxDestination> addresses;
+                int nRequired;
+                if (ExtractDestinations(redeemScript, type, addresses, nRequired)) {
+                    result.push_back(Pair("m", nRequired));
+                    result.push_back(Pair("n", addresses.size()));
+                    auto pubkeys = UniValue{UniValue::VARR};
+                    for (const auto& addr: addresses){
+                        CPubKey pubkey;
+                        if (pwallet->GetPubKey(boost::get<CKeyID>(addr),pubkey))
+                            pubkeys.push_back(HexStr(pubkey));
+                    }
+                    result.push_back(Pair("pubkeys",pubkeys));
+                }
+            }
+
+            result.push_back(Pair("txhash",wtx.GetHash().GetHex()));
+            result.push_back(Pair("blockheight", mapBlockIndex[wtx.hashBlock]->nHeight));
+            result.push_back(Pair("blockhash",wtx.hashBlock.GetHex()));
+
+            auto spendingWtx = CWalletTx{};
+            if (pwallet->IsSpent(wtx.GetHash(), nIndex, &spendingWtx)) {
+                result.push_back(Pair("spent",true));
+                result.push_back(Pair("spentby", spendingWtx.GetHash().GetHex()));
+
+                // find the index in vin of spending transaction that comes from our hash
+                size_t idx = 0;
+                while (idx < spendingWtx.tx->vin.size() && spendingWtx.tx->vin[idx].prevout.hash != wtx.GetHash()) ++idx;
+                assert( idx < spendingWtx.tx->vin.size());
+
+                result.push_back(Pair("spentbyindex", idx));
+            } else {
+                result.push_back(Pair("spent",false));
+            }
+
+        }
+    }
+
+    result.push_back(Pair("amount", ValueFromAmount(txOut.nValue)));
+
+    return result;
+}
+
+// Defined in rpc/rawtransaction.cpp
+extern void TxInErrorToJSON(const CTxIn& txin, UniValue& vErrorsRet, const std::string& strMessage);
+
+static void RedeemMultisigOut(CWallet *const pwallet, const uint256& hash, int index, const CTxDestination& dest, UniValue& result)
+{
+
+    auto it = pwallet->mapWallet.find(hash);
+    if (it == pwallet->mapWallet.end()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
+    }
+
+    const auto& wtx = it->second;
+    const auto& txOut = wtx.tx->vout[index];
+
+    const auto& rawtxIn = CTxIn{COutPoint(hash, index),CScript()};
+    const auto& rawtxOut= CTxOut(txOut.nValue,GetScriptForDestination(dest));
+
+    CMutableTransaction mtx;
+    mtx.vin.push_back(rawtxIn);
+    mtx.vout.push_back(rawtxOut);
+
+    // Fetch previous transactions (inputs):
+    CCoinsView viewDummy;
+    CCoinsViewCache view(&viewDummy);
+    {
+        LOCK(mempool.cs);
+        CCoinsViewCache &viewChain = *pcoinsTip;
+        CCoinsViewMemPool viewMempool(&viewChain, mempool);
+        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
+
+        for (const CTxIn& txin : mtx.vin) {
+            view.AccessCoin(txin.prevout); // Load entries from viewChain into view; can fail.
+        }
+
+        view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
+    }
+
+    // Script verification errors
+    UniValue vErrors(UniValue::VARR);
+
+    CTxIn& txin = mtx.vin[0];
+    // deduct the fee
+    if (!pwallet->DummySignTx(mtx, std::set<CInputCoin>{CInputCoin(&wtx, txin.prevout.n)})) {
+        TxInErrorToJSON(txin, vErrors, "Failed to dummy sign the transction!");
+    }
+
+    const auto& nBytes = GetVirtualTransactionSize(mtx);
+    const auto& nFeeNeeded = GetRequiredFee(nBytes);
+    auto& currentValue = mtx.vout[0].nValue;
+    if (currentValue < nFeeNeeded) {
+        TxInErrorToJSON(txin, vErrors, "The transaction amount is too small to pay the fee");
+    }
+    currentValue -= nFeeNeeded;
+
+    const Coin& coin = view.AccessCoin(txin.prevout);
+    if (coin.IsSpent()) {
+        TxInErrorToJSON(txin, vErrors, "Input not found or already spent");
+    }
+    const CScript& prevPubKey = coin.out.scriptPubKey;
+    const CAmount& amount = coin.out.nValue;
+
+    SignatureData sigdata;
+    const CTransaction txConst(mtx);
+    const CKeyStore& keystore = *pwallet;
+    ProduceSignature(MutableTransactionSignatureCreator(&keystore, &mtx, 0, amount, SIGHASH_ALL), prevPubKey, sigdata);
+    sigdata = CombineSignatures(prevPubKey, TransactionSignatureChecker(&txConst, 0, amount), sigdata, DataFromTransaction(mtx, 0));
+
+    UpdateTransaction(mtx, 0, sigdata);
+
+    ScriptError serror = SCRIPT_ERR_OK;
+    if (!VerifyScript(txin.scriptSig, prevPubKey, &txin.scriptWitness, STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&txConst, 0, amount), &serror)) {
+        TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
+    }
+
+    bool fComplete = vErrors.empty();
+
+    result.push_back(Pair("hex", EncodeHexTx(mtx)));
+    result.push_back(Pair("complete", fComplete));
+    if (!vErrors.empty()) {
+        result.push_back(Pair("errors", vErrors));
+    }
+}
+
+CTxDestination GetOrGenerateAddress(const JSONRPCRequest& request, int paramIndex, CWallet *const pwallet)
+{
+    CTxDestination dest;
+    if (!request.params[paramIndex].isNull()) {
+        dest = DecodeDestination(request.params[paramIndex].get_str());
+        if (!IsValidDestination(dest)) {
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
+        }
+    }
+    else{
+        // Generate a new key that is added to wallet
+        CPubKey newKey;
+        if (!pwallet->GetKeyFromPool(newKey)) {
+            throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+        }
+        dest = newKey.GetID();
+    }
+    return dest;
+}
+
+UniValue redeemmultisigout(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 4)
+    {
+        throw std::runtime_error{
+            "redeemmultisigout \"hash\" index tree (\"address\")\n"
+            "\nTakes the input and constructs a P2PKH paying to the specified address.\n"
+            "\nArguments:\n"
+            "1. hash    (string, required)  Hash of the input transaction\n"
+            "2. index   (numeric, required) Idx of the input transaction\n"
+            "3. tree    (numeric, required) Tree the transaction is on.\n"
+            "4. address (string, optional)  Address to pay to.\n"
+            "\nResult:\n"
+            "{\n"
+            " \"hex\": \"value\",         (string)          Resulting hash.\n"
+            " \"complete\": true|false, (boolean)         Shows if opperation was completed.\n"
+            " \"errors\": [{            (array of object) Any errors generated.\n"
+            "  \"txid\": \"value\",       (string)          The transaction hash of the referenced previous output\n"
+            "  \"vout\": n,             (numeric)         The output index of the referenced previous output\n"
+            "  \"scriptSig\": \"value\",  (string)          The hex-encoded signature script\n"
+            "  \"sequence\": n,         (numeric)         Script sequence number\n"
+            "  \"error\": \"value\",      (string)          Verification or signing error related to the input\n"
+            " },...],\n"
+            "}\n"
+            "\nExamples:\n"
+            //TODO update examples
+            + HelpExampleCli("redeemmultisigout", "\"hash\" 2 220")
+            + HelpExampleRpc("redeemmultisigout", "\"hash\" 2 220")
+        };
+    }
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    uint256 hash;
+    hash.SetHex(request.params[0].get_str());
+
+    const auto& nIndex = request.params[1].get_int();
+    const auto& nTree = request.params[2].get_int();
+
+    EnsureWalletIsUnlocked(pwallet);
+    const auto& dest = GetOrGenerateAddress(request,3,pwallet);
+
+    UniValue result(UniValue::VOBJ);
+    RedeemMultisigOut(pwallet, hash, nIndex, dest, result);
+
+    return result;
+}
+
+UniValue redeemmultisigouts(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
+    {
+        throw std::runtime_error{
+            "redeemmultisigouts \"fromscraddress\" (\"toaddress\" number)\n"
+            "\nTakes a hash, looks up all unspent outpoints and generates list of signed transactions spending to either an address specified or internal addresses\n"
+            "\nArguments:\n"
+            "1. fromscraddress (string, required)  Input script hash address.\n"
+            "2. toaddress      (string, optional)  Address to look for (if not internal addresses).\n"
+            "3. number         (numeric, optional) Number of outpoints found.\n"
+            "\nResult:\n"
+            "{\n"
+            " \"hex\": \"value\",         (string)          Resulting hash.\n"
+            " \"complete\": true|false, (boolean)         Shows if opperation was completed.\n"
+            " \"errors\": [{            (array of object) Any errors generated.\n"
+            "  \"txid\": \"value\",       (string)          The transaction hash of the referenced previous output\n"
+            "  \"vout\": n,             (numeric)         The output index of the referenced previous output\n"
+            "  \"scriptSig\": \"value\",  (string)          The hex-encoded signature script\n"
+            "  \"sequence\": n,         (numeric)         Script sequence number\n"
+            "  \"error\": \"value\",      (string)          Verification or signing error related to the input\n"
+            " },...],\n"
+            "}\n"
+            "\nExamples:\n"
+            //TODO update examples
+            + HelpExampleCli("redeemmultisigouts", "\"fromaddress\"")
+            + HelpExampleRpc("redeemmultisigouts", "\"fromaddress\"")
+        };
+    }
+
+    ObserveSafeMode();
+
+    const auto& scrAddress = DecodeDestination(request.params[0].get_str());
+    if (scrAddress.which() != 2/*CScriptID template pos*/) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "fromscraddress must be a script hash address");
+    }
+
+    auto nMaxOutputs = std::numeric_limits<int>::max();
+    if (!request.params[2].isNull())
+        nMaxOutputs = request.params[2].get_int();
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    const auto& sToAddress = GetOrGenerateAddress(request,1,pwallet);
+
+    UniValue results{UniValue::VARR};
+
+    auto nCount = 1;
+    std::vector<COutput> vecOutputs;
+    pwallet->AvailableCoins(vecOutputs);
+    for (const auto& out : vecOutputs) {
+        const auto& scriptPubKey = out.tx->tx->vout[out.i].scriptPubKey;
+        if (scriptPubKey.IsPayToScriptHash()) {
+            CTxDestination address;
+            const auto fValidAddress = ExtractDestination(scriptPubKey, address);
+
+            if (!fValidAddress || address != scrAddress) {
+                continue;
+            }
+
+            if (nCount > nMaxOutputs) {
+                break;
+            }
+
+            UniValue entry{UniValue::VOBJ};
+            RedeemMultisigOut(pwallet, out.tx->GetHash(), out.i, sToAddress, entry);
+            results.push_back(entry);
+            ++nCount;
+        }
+    }
+
+    return results;
+}
+
+UniValue sendtomultisig(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 6)
+    {
+        throw std::runtime_error{
+            "sendtomultisig \"fromaccount\" amount [\"pubkey\",...] (nrequired=1 minconf=1 \"comment\")\n"
+            "\nAuthors, signs, and sends a transaction that outputs some amount to a multisig address.\n"
+            "Unlike sendfrom, outputs are always chosen from the default account.\n"
+            "A change output is automatically included to send extra output value back to the original account.\n"
+            "\nArguments:\n"
+            "1. fromaccount (string, required)             Unused\n"
+            "2. amount      (numeric, required)            Amount to send to the payment address valued in PAI coin\n"
+            "3. pubkeys     (array of string, required)    Pubkey to send to.\n"
+            "4. nrequired   (numeric, optional, default=1) The number of signatures required to redeem outputs paid to this address\n"
+            "5. minconf     (numeric, optional, default=1) Minimum number of block confirmations required\n"
+            "6. comment     (string, optional)             Unused\n"
+            "\nResult:\n"
+            "\"value\"    (string)      The transaction hash of the sent transaction\n"
+            "\nExamples:\n"
+            //TODO update examples
+            + HelpExampleCli("sendtomultisig", "\"fromaccount\" 2 \"[\\\"16sSauSf5pF2UkUwvKGq4qjNRzBZYqgEL5\\\",\\\"171sgjn4YtPu27adkKGrdDwzRTxnRkBfKV\\\"]\"")
+            + HelpExampleRpc("sendtomultisig", "\"fromaccount\" 2 \"[\\\"16sSauSf5pF2UkUwvKGq4qjNRzBZYqgEL5\\\",\\\"171sgjn4YtPu27adkKGrdDwzRTxnRkBfKV\\\"]\"")
+        };
+    }
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    const auto& sFromAccount = request.params[0].get_str();
+    // Amount
+    const auto nAmount = AmountFromValue(request.params[1]);
+    if (nAmount <= 0)
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid amount for send");
+
+    auto nRequired = 1;
+    if (!request.params[3].isNull())
+        nRequired = request.params[3].get_int();
+    if (nRequired < 1)
+        throw std::runtime_error("a multisignature address must require at least one key to redeem");
+
+    RPCTypeCheckArgument(request.params[2], UniValue::VARR);
+    const auto& keys = request.params[2].get_array();
+    if (static_cast<int>(keys.size()) < nRequired)
+        throw std::runtime_error(
+            strprintf("not enough keys supplied "
+                      "(got %u keys, but need at least %d to redeem)", keys.size(), nRequired));
+    if (keys.size() > 16)
+        throw std::runtime_error("Number of addresses involved in the multisignature address creation > 16\nReduce the number");
+    std::vector<CPubKey> pubkeys;
+    pubkeys.resize(keys.size());
+    for (size_t i{0}; i < keys.size(); ++i)
+    {
+        const auto& ks = keys[i].get_str();
+        if (IsHex(ks))
+        {
+            CPubKey vchPubKey{ParseHex(ks)};
+            if (!vchPubKey.IsFullyValid())
+                throw std::runtime_error(" Invalid public key: "+ks);
+            pubkeys[i] = vchPubKey;
+        }
+        else
+        {
+            throw std::runtime_error(" Invalid public key: "+ks);
+        }
+    }
+
+    auto nMinConf = 1;
+    if (!request.params[4].isNull())
+        nMinConf = request.params[4].get_int();
+
+    auto sComment = std::string{};
+    if (!request.params[5].isNull())
+        sComment = request.params[5].get_str();
+
+    const auto inner = GetScriptForMultisig(nRequired, pubkeys);
+    if (inner.size() > MAX_SCRIPT_ELEMENT_SIZE)
+        throw std::runtime_error(
+                strprintf("redeemScript exceeds size limit: %d > %d", inner.size(), MAX_SCRIPT_ELEMENT_SIZE));
+    CScriptID innerID{inner};
+
+    EnsureWalletIsUnlocked(pwallet);
+    pwallet->AddCScript(inner);
+
+    const auto& dest = CTxDestination{innerID}; 
+
+    // Wallet comments
+    CWalletTx wtx;
+    SendMoney(pwallet, dest, nAmount, false /*fSubtractFeeFromAmount*/, wtx, CCoinControl{});
+    return wtx.GetHash().GetHex();
+}
+
+UniValue getmasterpubkey(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 1)
+    {
+        throw std::runtime_error{
+            "getmasterpubkey (\"account\")\n"
+            "\nRequests the master pubkey from the wallet.\n"
+            "\nArguments:\n"
+            "1. account (string, optional) The account to get the master pubkey for\n"
+            "\nResult:\n"
+            "\"value\" (string) The master pubkey for the wallet\n"
+            "\nExamples:\n"
+            //TODO update examples
+            + HelpExampleCli("getmasterpubkey", "\"account\"")
+            + HelpExampleRpc("getmasterpubkey", "")
+        };
+    }
+
+    auto sAccount = std::string{};
+    if (!request.params[0].isNull())
+        sAccount = request.params[0].get_str();
+
+    CPubKey pubkey;
+    if (!pwallet->GetAccountPubkey(pubkey, sAccount)) {
+        throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+    }
+
+    return HexStr(pubkey);
+}
+
 extern UniValue abortrescan(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue dumpprivkey(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue importprivkey(const JSONRPCRequest& request);
@@ -3274,9 +4211,16 @@ static const CRPCCommand commands[] =
     { "wallet",             "getrawchangeaddress",      &getrawchangeaddress,      {} },
     { "wallet",             "getreceivedbyaccount",     &getreceivedbyaccount,     {"account","minconf"} },
     { "wallet",             "getreceivedbyaddress",     &getreceivedbyaddress,     {"address","minconf"} },
+    { "wallet",             "getticketfee",             &getticketfee,             {} },
+    { "wallet",             "gettickets",               &gettickets,               {"includeimmature"} },
+    { "wallet",             "revoketickets",            &revoketickets,            {} },
+    { "wallet",             "setticketfee",             &setticketfee,             {"fee"} },
+    { "wallet",             "listtickets",              &listtickets,              {} },
     { "wallet",             "gettransaction",           &gettransaction,           {"txid","include_watchonly"} },
     { "wallet",             "getunconfirmedbalance",    &getunconfirmedbalance,    {} },
     { "wallet",             "getwalletinfo",            &getwalletinfo,            {} },
+    { "wallet",             "getstakeinfo",             &getstakeinfo,             {} },
+    { "wallet",             "stakepooluserinfo",        &stakepooluserinfo,        {"user"} },
     { "wallet",             "importmulti",              &importmulti,              {"requests","options"} },
     { "wallet",             "importprivkey",            &importprivkey,            {"privkey","label","rescan"} },
     { "wallet",             "importwallet",             &importwallet,             {"filename"} },
@@ -3292,6 +4236,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "listsinceblock",           &listsinceblock,           {"blockhash","target_confirmations","include_watchonly","include_removed"} },
     { "wallet",             "listtransactions",         &listtransactions,         {"account","count","skip","include_watchonly"} },
     { "wallet",             "listunspent",              &listunspent,              {"minconf","maxconf","addresses","include_unsafe","query_options"} },
+    { "wallet",             "purchaseticket",           &purchaseticket,           {"spendlimit","fromaccount","minconf","ticketaddress","numtickets","pooladdress","poolfees","expiry","comment","ticketfee"} },
     { "wallet",             "listwallets",              &listwallets,              {} },
     { "wallet",             "lockunspent",              &lockunspent,              {"unlock","transactions"} },
     { "wallet",             "move",                     &movecmd,                  {"fromaccount","toaccount","amount","minconf","comment"} },
@@ -3306,6 +4251,11 @@ static const CRPCCommand commands[] =
     { "wallet",             "walletpassphrase",         &walletpassphrase,         {"passphrase","timeout"} },
     { "wallet",             "removeprunedfunds",        &removeprunedfunds,        {"txid"} },
     { "wallet",             "rescanblockchain",         &rescanblockchain,         {"start_height", "stop_height"} },
+    { "wallet",             "getmultisigoutinfo",       &getmultisigoutinfo,       {"hash", "index"} },
+    { "wallet",             "redeemmultisigout",        &redeemmultisigout,        {"hash", "index", "tree", "address"} },
+    { "wallet",             "redeemmultisigouts",       &redeemmultisigouts,       {"fromscraddress", "toaddress", "number"} },
+    { "wallet",             "sendtomultisig",           &sendtomultisig,           {"fromaccount", "amount", "pubkeys", "nrequired", "minconf", "comment"} },
+    { "wallet",             "getmasterpubkey",          &getmasterpubkey,          {"account"} },
 
     { "generating",         "generate",                 &generate,                 {"nblocks","maxtries"} },
 };

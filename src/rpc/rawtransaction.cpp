@@ -35,14 +35,90 @@
 #include <univalue.h>
 
 
-void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry)
+typedef std::set<CTxDestination> lt_DestinationSet;
+typedef std::map<uint256, CTransactionRef> lt_HashToTransactionMap;
+
+bool CheckFilterAgainstVinTxs(const CTransaction& tx, bool bVinExtra, const lt_DestinationSet& filterAddress, lt_HashToTransactionMap& prevOutMap)
+{
+    bool passesFilter = (filterAddress.size() == 0);
+
+    if (!tx.IsCoinBase()) {
+        if ( bVinExtra || !passesFilter ) {
+            for (const auto& txIn : tx.vin) {
+                // Get each transaction in vin for investigation
+                uint256 hashBlock;
+                CTransactionRef prevTxVin;
+                if (!GetTransaction(txIn.prevout.hash, prevTxVin, Params().GetConsensus(), hashBlock, true))
+                    throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, std::string("No such mempool or blockchain transaction ") + txIn.prevout.hash.GetHex());
+
+                if (bVinExtra)
+                    prevOutMap[txIn.prevout.hash] = prevTxVin;
+
+                if (passesFilter) {
+                    if (bVinExtra)
+                        continue; // not breaking, we still need to fill in the map in case on bVinExtra
+                    else
+                        break;
+                }
+
+                // extract the addresses for each vout transaction to check against the filter set
+                for (const auto& txOut : prevTxVin->vout) {
+                    txnouttype type;
+                    std::vector<CTxDestination> addresses;
+                    int nRequired;
+                    if (ExtractDestinations(txOut.scriptPubKey, type, addresses, nRequired)) {
+                        for (const CTxDestination& addr : addresses) {
+                            if (filterAddress.count(addr) > 0) {
+                                passesFilter = true;
+                                break;
+                            }
+                        }
+                        if (passesFilter)
+                            break;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        // Coinbase transactions only have a single txin by definition.
+        // Only include the transaction if the filter set is empty
+        // because a coinbase input has no addresses and so would never
+        // match a non-empty filter.
+    }
+
+    return passesFilter;
+}
+
+bool CheckFilterAgainstVoutTxs(const CTransaction& tx, const lt_DestinationSet& filterAddress)
+{ 
+    if (filterAddress.size() == 0)
+        return true;
+
+    for (const auto& txOut: tx.vout) {
+        txnouttype type;
+        std::vector<CTxDestination> addresses;
+        int nRequired;
+        if (!ExtractDestinations(txOut.scriptPubKey, type, addresses, nRequired)) 
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, std::string("Could not extract destinations ") + HexStr(txOut.scriptPubKey));
+
+        for (const CTxDestination& addr : addresses) {
+            if (filterAddress.count(addr) > 0)
+                return true;
+        }
+    }
+    return false;
+}
+
+
+void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry, const lt_HashToTransactionMap * const pHashToTransactionMap = nullptr)
 {
     // Call into TxToUniv() in paicoin-common to decode the transaction hex.
     //
     // Blockchain contextual information (confirmations and blocktime) is not
     // available to code in paicoin-common, so we query them here and push the
     // data into the returned UniValue.
-    TxToUniv(tx, uint256(), entry, true, RPCSerializationFlags());
+    TxToUniv(tx, uint256(), entry, true, RPCSerializationFlags(), pHashToTransactionMap);
 
     if (!hashBlock.IsNull()) {
         entry.push_back(Pair("blockhash", hashBlock.GetHex()));
@@ -166,6 +242,126 @@ UniValue getrawtransaction(const JSONRPCRequest& request)
 
     UniValue result(UniValue::VOBJ);
     TxToJSON(*tx, hashBlock, result);
+    return result;
+}
+
+UniValue searchrawtransactions(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 7)
+        throw std::runtime_error{
+            "searchrawtransactions \"address\" ( \"verbose\" ) ( \"skip\" ) ( \"count\" ) ( \"vinextra\" ) ( \"reverse\" ) ( \"filteraddrs\" )\n"
+            "\nReturns raw data for transactions involving the passed address.\n"
+		    "Returned transactions are pulled from both the database, and transactions currently in the mempool.\n"
+		    "Transactions pulled from the mempool will have the 'confirmations' field set to 0.\n"
+		    "Usage of this RPC requires the optional --addrindex flag to be activated, otherwise all responses will simply return with an error stating the address index has not yet been built.\n"
+		    "Similarly, until the address index has caught up with the current best height, all requests will return an error response in order to avoid serving stale data.\n"
+            "\nArguments:\n"
+            "1. \"address\"      (string, required) The PAIcoin address to search for\n"
+            "2. \"verbose\"= 0|1 (integer, optional, default=\"0\") Specifies the transaction is returned as a JSON object instead of hex-encoded string\n"
+            "3. \"skip\"         (integer, optional) The number of leading transactions to leave out of the final response\n"
+            "4. \"count\"        (integer, optional) The maximum number of transactions to return\n"
+            "5. \"vinextra\"     (boolean, optional) Specify that extra data from previous output will be returned in vin (--txindex is required)\n"
+            "6. \"reverse\"      (boolean, optional) Specifies that the transactions should be returned in reverse chronological order\n"
+            "7. \"filteraddrs\"  (array, optional) Address list. Only inputs or outputs with matching address will be returned\n"
+
+            "\nResult:\n"
+            "   Hex-encoded serialized transaction or JSON array object\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("searchrawtransactions", "\"<address\">")
+            + HelpExampleRpc("searchrawtransactions", "\"<address\">")
+        };
+
+    if (!fAddrIndex)
+        throw JSONRPCError(RPCErrorCode::MISC_ERROR, "Address index not enabled");
+
+    int nSkip     = 0;
+    int nCount    = 100;
+    bool fVerbose = false;
+    bool fVinExtra = false;
+    bool fReverse = false;
+
+    if (request.params.size() > 1)
+        fVerbose = (request.params[1].get_int() != 0);
+    if (request.params.size() > 2)
+        nSkip = request.params[2].get_int();
+    if (request.params.size() > 3)
+        nCount = request.params[3].get_int();
+    if (request.params.size() > 4)
+        fVinExtra = request.params[4].get_bool();
+    if (request.params.size() > 5)
+        fReverse = request.params[5].get_bool();
+
+    lt_DestinationSet setFilterAddrs;
+    if (request.params.size() > 6) {
+        UniValue aFilterAddrs = request.params[6].get_array();
+        for (unsigned int idx = 0; idx < aFilterAddrs.size(); idx++) {
+            const UniValue& addr = aFilterAddrs[idx];
+            const auto& sAddr    = addr.get_str();
+            CTxDestination destination = DecodeDestination(sAddr);
+            if (!IsValidDestination(destination))
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Invalid PAIcoin address: ") + sAddr);
+            if (setFilterAddrs.count(destination))
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Invalid parameter, duplicated address: ") + sAddr);
+            setFilterAddrs.insert(destination);
+        }
+    }
+    
+    if ((fVinExtra || setFilterAddrs.size() > 0 ) && !fTxIndex)
+        throw JSONRPCError(RPCErrorCode::MISC_ERROR, "Transaction index not enabled");
+
+    const auto& name_ = request.params[0].get_str();
+    CTxDestination destination = DecodeDestination(name_);
+    if (!IsValidDestination(destination))
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, std::string("Invalid PAIcoin address: ") + name_);
+
+    std::set<CExtDiskTxPos> setpos;
+    if (!FindTransactionsByDestination(destination, setpos))
+        throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "Cannot search for address");
+
+    if (nSkip < 0)
+        nSkip += setpos.size();
+    if (nSkip < 0)
+        nSkip = 0;
+    if (nCount < 0)
+        nCount = 0;
+    
+    auto it = setpos.cbegin();
+
+    while (it != setpos.end() && nSkip--) ++it;
+
+    UniValue result(UniValue::VARR);
+    while (it != setpos.end() && nCount--) {
+        CTransactionRef tx;
+        uint256 hashBlock;
+        if (!ReadTransaction(tx, *it, hashBlock))
+            throw JSONRPCError(RPCErrorCode::DESERIALIZATION_ERROR, "Cannot read transaction from disk");
+        
+
+        CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
+        ssTx << tx;
+        std::string strHex = HexStr(ssTx.begin(), ssTx.end());
+        if (fVerbose) {
+            lt_HashToTransactionMap prevOutMap;
+            if (! ( CheckFilterAgainstVinTxs(*tx, fVinExtra, setFilterAddrs, prevOutMap) || CheckFilterAgainstVoutTxs(*tx, setFilterAddrs)) )
+                continue;
+            UniValue object(UniValue::VOBJ);
+            TxToJSON(*tx, hashBlock, object, &prevOutMap);
+            object.push_back(Pair("hex", strHex));
+            result.push_back(object);
+        } else {
+            result.push_back(strHex);
+        }
+        ++it;
+    }
+
+    if (fReverse){
+        UniValue reversed_result(UniValue::VARR);
+        for (auto i = result.size(); i!= 0; --i)
+            reversed_result.push_back(result[i-1]);
+        return reversed_result;
+    }
+
     return result;
 }
 
@@ -294,7 +490,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
         throw std::runtime_error(
             "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"address\":amount,\"data\":\"hex\",...} ( locktime ) ( replaceable )\n"
             "\nCreate a transaction spending the given inputs and creating new outputs.\n"
-            "Outputs can be addresses or data.\n"
+            "Outputs can be addresses, data (OP_RETURN) or structured data (OP_RETURN OP_STRUCT).\n"
             "Returns hex-encoded raw transaction.\n"
             "Note that the transaction's inputs are not signed, and\n"
             "it is not stored in the wallet or transmitted to the network.\n"
@@ -313,6 +509,14 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             "    {\n"
             "      \"address\": x.xxx,    (numeric or string, required) The key is the paicoin address, the numeric value (can be string) is the " + CURRENCY_UNIT + " amount\n"
             "      \"data\": \"hex\"      (string, required) The key is \"data\", the value is hex encoded data\n"
+            "      \"struct\"             (object, required) An object with individual data items to be added to the script\n"
+            "       {\n"
+            "         \"version\": x,     (numeric, required) Version number\n"
+            "         \"class\": x,       (numeric, required) Top-level classifier for data, corresponding to enum EDataClass\n"
+            "         \"somenumber\": x,  (numeric, optional) A numerical piece of data\n"
+            "         \"somehex\": \"hex\" (string, optional) A hex encoded piece of data\n"
+            "         ,...\n"
+            "       }\n"
             "      ,...\n"
             "    }\n"
             "3. locktime                  (numeric, optional, default=0) Raw locktime. Non-0 value also locktime-activates inputs\n"
@@ -387,11 +591,37 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
     std::set<CTxDestination> destinations;
     std::vector<std::string> addrList = sendTo.getKeys();
     for (const std::string& name_ : addrList) {
-
         if (name_ == "data") {
             std::vector<unsigned char> data = ParseHexV(sendTo[name_].getValStr(),"Data");
-
             CTxOut out(0, CScript() << OP_RETURN << data);
+            rawTx.vout.push_back(out);
+        } else if (name_ == "struct") {
+            UniValue structData = sendTo[name_];
+            if (!structData.isObject())
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Structured data not an object"));
+            if (!structData.exists("version"))
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Missing version in structured data"));
+            if (!structData.exists("class"))
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Missing class in structured data"));
+            if (!structData["version"].isNum())
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Version not a number"));
+            if (!structData["class"].isNum())
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Class not a number"));
+            CScript script = CScript() << OP_RETURN << OP_STRUCT << structData["version"].get_int() << structData["class"].get_int();
+            std::vector<std::string> allKeys = structData.getKeys();
+            std::vector<UniValue> allValues = structData.getValues();
+            for (unsigned i=0; i<allKeys.size(); i++) {
+                if (allKeys[i] == "version" || allKeys[i] == "class")
+                    continue;
+                bool numOrStr = allValues[i].isNum() || allValues[i].isStr();
+                if (!numOrStr)
+                    throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, std::string("Data item not a number or hex string"));
+                if (allValues[i].isNum())
+                    script << allValues[i].get_int();
+                else if (allValues[i].isStr())
+                    script << ParseHexV(allValues[i], "Data item");
+            }
+            CTxOut out(0, script);
             rawTx.vout.push_back(out);
         } else {
             CTxDestination destination = DecodeDestination(name_);
@@ -537,7 +767,7 @@ UniValue decodescript(const JSONRPCRequest& request)
 }
 
 /** Pushes a JSON object for script verification or signing errors to vErrorsRet. */
-static void TxInErrorToJSON(const CTxIn& txin, UniValue& vErrorsRet, const std::string& strMessage)
+void TxInErrorToJSON(const CTxIn& txin, UniValue& vErrorsRet, const std::string& strMessage)
 {
     UniValue entry(UniValue::VOBJ);
     entry.push_back(Pair("txid", txin.prevout.hash.ToString()));
@@ -964,6 +1194,7 @@ static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
   //  --------------------- ------------------------  -----------------------  ----------
     { "rawtransactions",    "getrawtransaction",      &getrawtransaction,      {"txid","verbose"} },
+    { "rawtransactions",    "searchrawtransactions",  &searchrawtransactions,  {"address","verbose","skip","count","vinextra","reverse","filteraddrs"} },
     { "rawtransactions",    "createrawtransaction",   &createrawtransaction,   {"inputs","outputs","locktime","replaceable"} },
     { "rawtransactions",    "decoderawtransaction",   &decoderawtransaction,   {"hexstring"} },
     { "rawtransactions",    "decodescript",           &decodescript,           {"hexstring"} },

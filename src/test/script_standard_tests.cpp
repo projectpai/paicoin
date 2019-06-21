@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(script_standard_Solver_success)
         std::vector<unsigned char>({255});
     BOOST_CHECK(Solver(s, whichType, solutions));
     BOOST_CHECK_EQUAL(whichType, TX_NULL_DATA);
-    BOOST_CHECK_EQUAL(solutions.size(), 0);
+    BOOST_CHECK_EQUAL(solutions.size(), 3);
 
     // TX_WITNESS_V0_KEYHASH
     s.clear();

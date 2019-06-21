@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <iterator>
 #include <string>
+#include <bitset>
 #ifdef HAVE_MALLOC_INFO
 #include <malloc.h>
 #endif
@@ -77,6 +78,84 @@ public:
     }
 };
 #endif
+
+UniValue existsaddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "existsaddress \"address\"\n"
+            "\nTest for the existence of the provided address.\n"
+            "\nArguments:\n"
+            "1. \"address\"     (string, required) The paicoin address to check\n"
+            "\nResult:\n"
+            "   Bool showing if address exists or not"
+            "\nExamples:\n"
+            + HelpExampleCli("existsaddress", "\"1PSSGeFHDnKNxiEyFrD1wcEaHr9hrQDDWc\"")
+            + HelpExampleRpc("existsaddress", "\"1PSSGeFHDnKNxiEyFrD1wcEaHr9hrQDDWc\"")
+        };
+
+    UniValue ret{UniValue::VBOOL};
+
+    //TODO add implementation
+
+    return ret;
+}
+
+UniValue existsaddresses(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "existsaddresses \"addresses\"\n"
+            "\nTest for the existence of the provided addresses in the blockchain or memory pool.\n"
+            "\nArguments:\n"
+            "1. \"addresses\"     (array, required) The paicoin addresses to check\n"
+            "\nResult:\n"
+            "   Bitset of bools showing if addresses exist or not"
+            "\nExamples:\n"
+            + HelpExampleCli("existsaddresses", "'[{ \"address\": \"<my address>\" },"
+                                                  "{ \"address\": \"<my 2nd address>\" }]'")
+            + HelpExampleRpc("existsaddresses", "'[{ \"address\": \"<my address>\" },"
+                                                  "{ \"address\": \"<my 2nd address>\" }]'")
+        };
+
+    //TODO add implementation
+
+    //store bool results in a bitset
+    //convert bitset to char[]
+    //and use HexStr from utilstrencodings.h to Encode the char[] to hex
+    //then return it as string
+
+    UniValue ret{UniValue::VSTR, "00"};
+
+    return ret;
+}
+
+UniValue existsmempooltxs(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "existsmempooltxs \"txhashblob\"\n"
+            "\nTest for the existence of the provided txs in the mempool.\n"
+            "\nArguments:\n"
+            "1. \"txhashblob\"     (string, required) Blob containing the hashes to check\n"
+            "\nResult:\n"
+            "   Bool blob showing if txs exist in the mempool or not"
+            "\nExamples:\n"
+            + HelpExampleCli("existsmempooltxs", "\"<txhashblob\">")
+            + HelpExampleRpc("existsmempooltxs", "\"<txhashblob\">")
+        };
+
+    //TODO add implementation
+
+    //store bool results in a bitset
+    //convert bitset to char[]
+    //and use HexStr from utilstrencodings.h to Encode the char[] to hex
+    //then return it as string
+
+    UniValue ret{UniValue::VSTR, "00"};
+
+    return ret;
+}
 
 UniValue validateaddress(const JSONRPCRequest& request)
 {
@@ -564,6 +643,9 @@ static const CRPCCommand commands[] =
   //  --------------------- ------------------------  -----------------------  ----------
     { "control",            "getmemoryinfo",          &getmemoryinfo,          {"mode"} },
     { "util",               "validateaddress",        &validateaddress,        {"address"} }, /* uses wallet if enabled */
+    { "util",               "existsaddress",          &existsaddress,          {"address"} },
+    { "util",               "existsaddresses",        &existsaddresses,        {"addresses"} },
+    { "util",               "existsmempooltxs",       &existsmempooltxs,       {"txhashblob"} },
     { "util",               "createmultisig",         &createmultisig,         {"nrequired","keys"} },
     { "util",               "verifymessage",          &verifymessage,          {"address","signature","message"} },
     { "util",               "signmessagewithprivkey", &signmessagewithprivkey, {"privkey","message"} },

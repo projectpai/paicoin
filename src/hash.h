@@ -8,6 +8,9 @@
 
 #include "crypto/ripemd160.h"
 #include "crypto/sha256.h"
+extern "C" {
+#include "crypto/tiny_sha3.h"
+}
 #include "prevector.h"
 #include "serialize.h"
 #include "uint256.h"
@@ -17,8 +20,35 @@
 
 typedef uint256 ChainCode;
 
+class CShake256
+{
+private:
+    sha3_ctx_t sha3;
+
+public:
+    static const size_t OUTPUT_SIZE = 32;
+
+    CShake256() { Reset(); }
+
+    void Finalize(unsigned char hash[]) {
+        shake_xof(&sha3);               // switch to extensible output
+        for (int j = 0; j < 512; j += OUTPUT_SIZE)   // output. discard bytes 0..479
+            shake_out(&sha3, hash, OUTPUT_SIZE);
+    }
+
+    CShake256& Write(const unsigned char *data, size_t len) {
+        sha3_update(&sha3, data, len);
+        return *this;
+    }
+
+    CShake256& Reset() {
+        sha3_init(&sha3, OUTPUT_SIZE); // output length is specified in bytes
+        return *this;
+    }
+};
+
 /** A hasher class for PAIcoin's 256-bit hash (double SHA-256). */
-class CHash256 {
+class CSha256D {
 private:
     CSHA256 sha;
 public:
@@ -30,12 +60,12 @@ public:
         sha.Reset().Write(buf, CSHA256::OUTPUT_SIZE).Finalize(hash);
     }
 
-    CHash256& Write(const unsigned char *data, size_t len) {
+    CSha256D& Write(const unsigned char *data, size_t len) {
         sha.Write(data, len);
         return *this;
     }
 
-    CHash256& Reset() {
+    CSha256D& Reset() {
         sha.Reset();
         return *this;
     }
@@ -71,7 +101,7 @@ inline uint256 Hash(const T1 pbegin, const T1 pend)
 {
     static const unsigned char pblank[1] = {};
     uint256 result;
-    CHash256().Write(pbegin == pend ? pblank : (const unsigned char*)&pbegin[0], (pend - pbegin) * sizeof(pbegin[0]))
+    CSha256D().Write(pbegin == pend ? pblank : (const unsigned char*)&pbegin[0], (pend - pbegin) * sizeof(pbegin[0]))
               .Finalize((unsigned char*)&result);
     return result;
 }
@@ -82,7 +112,7 @@ inline uint256 Hash(const T1 p1begin, const T1 p1end,
                     const T2 p2begin, const T2 p2end) {
     static const unsigned char pblank[1] = {};
     uint256 result;
-    CHash256().Write(p1begin == p1end ? pblank : (const unsigned char*)&p1begin[0], (p1end - p1begin) * sizeof(p1begin[0]))
+    CSha256D().Write(p1begin == p1end ? pblank : (const unsigned char*)&p1begin[0], (p1end - p1begin) * sizeof(p1begin[0]))
               .Write(p2begin == p2end ? pblank : (const unsigned char*)&p2begin[0], (p2end - p2begin) * sizeof(p2begin[0]))
               .Finalize((unsigned char*)&result);
     return result;
@@ -113,38 +143,42 @@ inline uint160 Hash160(const prevector<N, unsigned char>& vch)
 }
 
 /** A writer stream (for serialization) that computes a 256-bit hash. */
-class CHashWriter
+template<class Hasher>
+class THashWriter
 {
 private:
-    CHash256 ctx;
+    Hasher hasher;
 
     const int nType;
     const int nVersion;
 public:
 
-    CHashWriter(int nTypeIn, int nVersionIn) : nType(nTypeIn), nVersion(nVersionIn) {}
+    THashWriter(int nTypeIn, int nVersionIn) : nType(nTypeIn), nVersion(nVersionIn) {}
 
     int GetType() const { return nType; }
     int GetVersion() const { return nVersion; }
 
     void write(const char *pch, size_t size) {
-        ctx.Write((const unsigned char*)pch, size);
+        hasher.Write((const unsigned char*)pch, size);
     }
 
     // invalidates the object
     uint256 GetHash() {
         uint256 result;
-        ctx.Finalize((unsigned char*)&result);
+        hasher.Finalize((unsigned char*)&result);
         return result;
     }
 
     template<typename T>
-    CHashWriter& operator<<(const T& obj) {
+    THashWriter& operator<<(const T& obj) {
         // Serialize to this stream
         ::Serialize(*this, obj);
         return (*this);
     }
 };
+
+typedef THashWriter<CSha256D> CHashWriter;
+typedef THashWriter<CShake256> CBlockHashWriter;
 
 /** Reads data from an underlying stream, while hashing the read data. */
 template<typename Source>
@@ -182,10 +216,10 @@ public:
 };
 
 /** Compute the 256-bit hash of an object's serialization. */
-template<typename T>
+template<class HashWriter, typename T>
 uint256 SerializeHash(const T& obj, int nType=SER_GETHASH, int nVersion=PROTOCOL_VERSION)
 {
-    CHashWriter ss(nType, nVersion);
+    HashWriter ss(nType, nVersion);
     ss << obj;
     return ss.GetHash();
 }

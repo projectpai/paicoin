@@ -6,6 +6,7 @@
 #include "validation.h"
 
 #include "arith_uint256.h"
+#include "base58.h"
 #include <key_io.h>
 #include "chain.h"
 #include "chainparams.h"
@@ -72,6 +73,7 @@ int nScriptCheckThreads = 0;
 std::atomic_bool fImporting(false);
 std::atomic_bool fReindex(false);
 bool fTxIndex = false;
+bool fAddrIndex = false;
 bool fHavePruned = false;
 bool fPruneMode = false;
 bool fIsBareMultisigStd = DEFAULT_PERMIT_BAREMULTISIG;
@@ -579,7 +581,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         } // end LOCK(pool.cs)
 
         CAmount nFees = 0;
-        if (!Consensus::CheckTxInputs(tx, state, view, GetSpendHeight(view), nFees)) {
+        if (!Consensus::CheckTxInputs(tx, state, view, GetSpendHeight(view), nFees, chainparams)) {
             return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), FormatStateMessage(state));
         }
 
@@ -907,6 +909,43 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     return AcceptToMemoryPoolWithTime(chainparams, pool, state, tx, pfMissingInputs, GetTime(), plTxnReplaced, bypass_limits, nAbsurdFee);
 }
 
+bool ReadTransaction(CTransactionRef& tx, const CDiskTxPos &pos, uint256 &hashBlock) {
+    CAutoFile file(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
+    CBlockHeader header;
+    try {
+        file >> header;
+        fseek(file.Get(), pos.nTxOffset, SEEK_CUR);
+        file >> tx;
+    } catch (std::exception &e) {
+        return error("%s() : deserialize or I/O error", __PRETTY_FUNCTION__);
+    }
+    hashBlock = header.GetHash();
+    return true;
+}
+
+bool FindTransactionsByDestination(const CTxDestination &dest, std::set<CExtDiskTxPos> &setpos) {
+    uint160 addrid;
+    const CKeyID *pkeyid = boost::get<CKeyID>(&dest);
+    if (pkeyid)
+            addrid = static_cast<uint160>(*pkeyid);
+    if (addrid.IsNull()) {
+        const CScriptID *pscriptid = boost::get<CScriptID>(&dest);
+        if (pscriptid)
+            addrid = static_cast<uint160>(*pscriptid);
+        }
+    if (addrid.IsNull())
+        return false;
+
+    LOCK(cs_main);
+    if (!fAddrIndex)
+        return false;
+    std::vector<CExtDiskTxPos> vPos;
+    if (!pblocktree->ReadAddrIndex(addrid, vPos))
+        return false;
+    setpos.insert(vPos.begin(), vPos.end());
+    return true;
+}
+
 /** Return transaction in txOut, and if it was found inside a block, its hash is placed in hashBlock */
 bool GetTransaction(const uint256 &hash, CTransactionRef &txOut, const Consensus::Params& consensusParams, uint256 &hashBlock, bool fAllowSlow)
 {
@@ -963,6 +1002,15 @@ bool GetTransaction(const uint256 &hash, CTransactionRef &txOut, const Consensus
     return false;
 }
 
+CTransactionRef GetTicket(const uint256& txHash)
+{
+    CTransactionRef ticketTxPtr;
+    uint256 ticketBlockHash;
+    if (GetTransaction(txHash, ticketTxPtr, Params().GetConsensus(), ticketBlockHash, true))
+        return ticketTxPtr;
+    else
+        return nullptr;
+}
 
 
 
@@ -1028,19 +1076,56 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
     return true;
 }
 
-CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
+CAmount GetTotalBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
     int halvings = nHeight / consensusParams.nSubsidyHalvingInterval;
     // Force block reward to zero when right shift is undefined.
     if (halvings >= 64)
         return 0;
 
-    // PAICOIN Note: If the initial block subsidy has been changed,
-    // update the subsidy with the correct value
-    CAmount nSubsidy = 1500 * COIN;
+    CAmount nSubsidy = consensusParams.nTotalBlockSubsidy * COIN;
     // Subsidy is cut in half every 210,000 blocks which will occur approximately every 4 years.
     nSubsidy >>= halvings;
     return nSubsidy;
+}
+
+CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams)
+{
+    // Miner subsidy is a portion of total block subsidy
+    CAmount nTotalBlockSubsidy = GetTotalBlockSubsidy(nHeight, consensusParams);
+    return nHeight < consensusParams.nStakeValidationHeight ? nTotalBlockSubsidy :
+        (nTotalBlockSubsidy * consensusParams.nWorkSubsidyProportion) / consensusParams.TotalSubsidyProportions();
+}
+
+CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams)
+{
+    // Voter subsidy is a portion of total block subsidy
+    return nHeight < consensusParams.nStakeValidationHeight ? 0 :
+        (GetTotalBlockSubsidy(nHeight, consensusParams) * consensusParams.nStakeSubsidyProportion)
+        / (consensusParams.TotalSubsidyProportions() * consensusParams.nTicketsPerBlock);
+}
+
+CAmount CalcContributorRemuneration(CAmount contributedAmount, CAmount totalStake, CAmount subsidy, CAmount contributionSum)
+{
+    // Conceptually, the formula is:
+    //
+    //                 total stake + subsidy
+    // remuneration =  --------------------- * contribution amount
+    //                  total contributions
+    //
+    // However, in order to avoid floating point math, we will use large integers (arith_uint256) and a modified formula:
+    //
+    //                  --                                                  --
+    //                 | (total stake + subsidy) * contribution amount * 2^32 |
+    //                 | ---------------------------------------------------- |
+    // remuneration =  |                 total contributions                  |
+    //                  --                                                  --
+    //                 --------------------------------------------------------
+    //                                         2^32
+    //
+    arith_uint256 funding(totalStake + subsidy);
+    arith_uint256 result = (((arith_uint256(contributedAmount) * funding) << 32) / arith_uint256(contributionSum)) >> 32;
+    return result.GetLow64();
 }
 
 bool IsInitialBlockDownload()
@@ -1638,6 +1723,33 @@ static int64_t nTimeCallbacks = 0;
 static int64_t nTimeTotal = 0;
 static int64_t nBlocksTotal = 0;
 
+// Index either: a) every data push >=8 bytes,  b) if no such pushes, the entire script
+void static BuildAddrIndex(const CScript &script, const CExtDiskTxPos &pos, std::vector<std::pair<uint160, CExtDiskTxPos> > &out)
+{
+    CScript::const_iterator pc = script.begin();
+    CScript::const_iterator pend = script.end();
+    std::vector<unsigned char> data;
+    opcodetype opcode;
+    bool fHaveData = false;
+    while (pc < pend) {
+        script.GetOp(pc, opcode, data);
+        if (0 <= opcode && opcode <= OP_PUSHDATA4 && data.size() >= 8) { // data element
+            uint160 addrid;
+            if (data.size() <= 20) {
+                memcpy(&addrid, &data[0], data.size());
+            } else {
+                addrid = Hash160(data);
+            }
+            out.push_back(std::make_pair(addrid, pos));
+            fHaveData = true;
+        }
+    }
+    if (!fHaveData) {
+        uint160 addrid = Hash160(script);
+        out.push_back(std::make_pair(addrid, pos));
+    }
+}
+
 /** Apply the effects of this block (with given index) on the UTXO set represented by coins.
  *  Validity checks that depend on the UTXO set are also done; ConnectBlock()
  *  can fail if those validity checks fail (among other reasons). */
@@ -1755,9 +1867,15 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     CAmount nFees = 0;
     int nInputs = 0;
     int64_t nSigOpsCost = 0;
-    CDiskTxPos pos(pindex->GetBlockPos(), GetSizeOfCompactSize(block.vtx.size()));
-    std::vector<std::pair<uint256, CDiskTxPos> > vPos;
-    vPos.reserve(block.vtx.size());
+
+    CExtDiskTxPos pos(CDiskTxPos(pindex->GetBlockPos(), GetSizeOfCompactSize(block.vtx.size())), pindex->nHeight);
+    std::vector<std::pair<uint256, CDiskTxPos> > vPosTxid;
+    std::vector<std::pair<uint160, CExtDiskTxPos> > vPosAddrid;
+    if (fTxIndex)
+        vPosTxid.reserve(block.vtx.size());
+    if (fAddrIndex)
+        vPosAddrid.reserve(4*block.vtx.size());
+
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
     std::vector<PrecomputedTransactionData> txdata;
     txdata.reserve(block.vtx.size()); // Required so that pointers to individual PrecomputedTransactionData don't get invalidated
@@ -1770,7 +1888,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         if (!tx.IsCoinBase())
         {
             CAmount txfee = 0;
-            if (!Consensus::CheckTxInputs(tx, state, view, pindex->nHeight, txfee)) {
+            if (!Consensus::CheckTxInputs(tx, state, view, pindex->nHeight, txfee, chainparams)) {
                 return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), FormatStateMessage(state));
             }
             nFees += txfee;
@@ -1808,6 +1926,20 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
                     tx.GetHash().ToString(), FormatStateMessage(state));
             control.Add(vChecks);
         }
+        
+        if (fTxIndex)
+            vPosTxid.push_back(std::make_pair(tx.GetHash(), pos));
+        if (fAddrIndex) {
+            if (!tx.IsCoinBase()) {
+                for (const CTxIn &txin : tx.vin) {
+                    Coin coin;
+                    view.GetCoin(txin.prevout, coin);
+                    BuildAddrIndex(coin.out.scriptPubKey, pos, vPosAddrid);
+                }
+            }
+            for (const CTxOut &txout : tx.vout)
+               BuildAddrIndex(txout.scriptPubKey, pos, vPosAddrid);
+        }
 
         CTxUndo undoDummy;
         if (i > 0) {
@@ -1815,14 +1947,13 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         }
         UpdateCoins(tx, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight);
 
-        vPos.push_back(std::make_pair(tx.GetHash(), pos));
         pos.nTxOffset += ::GetSerializeSize(tx, SER_DISK, CLIENT_VERSION);
     }
     int64_t nTime3 = GetTimeMicros(); nTimeConnect += nTime3 - nTime2;
     LogPrint(BCLog::BENCH, "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs (%.2fms/blk)]\n", (unsigned)block.vtx.size(), MILLI * (nTime3 - nTime2), MILLI * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : MILLI * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * MICRO, nTimeConnect * MILLI / nBlocksTotal);
 
     if (block.GetHash() != chainparams.GetConsensus().hashGenesisBlock) {
-        CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
+        CAmount blockReward = nFees + GetMinerSubsidy(pindex->nHeight, chainparams.GetConsensus());
         if (block.vtx[0]->GetValueOut() > blockReward)
             return state.DoS(100,
                          error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)",
@@ -1857,8 +1988,13 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     }
 
     if (fTxIndex)
-        if (!pblocktree->WriteTxIndex(vPos))
+        if (!pblocktree->WriteTxIndex(vPosTxid))
             return AbortNode(state, "Failed to write transaction index");
+
+    if (fAddrIndex)
+        if (!pblocktree->AddAddrIndex(vPosAddrid))
+            return AbortNode(state, "Failed to write address index");
+
 
     // add this block to the view's block chain
     view.SetBestBlock(pindex->GetBlockHash());
@@ -2393,7 +2529,7 @@ static bool ActivateBestChainStep(CValidationState& state, const CChainParams& c
         // any disconnected transactions back to the mempool.
         UpdateMempoolForReorg(disconnectpool, true);
     }
-    mempool.check(pcoinsTip);
+    mempool.check(pcoinsTip, chainparams);
 
     // Callbacks/notifications for a new best chain.
     if (fInvalidFound)
@@ -2917,7 +3053,7 @@ std::vector<unsigned char> GenerateCoinbaseCommitment(CBlock& block, const CBloc
     if (consensusParams.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout != 0) {
         if (commitpos == -1) {
             uint256 witnessroot = BlockWitnessMerkleRoot(block, nullptr);
-            CHash256().Write(witnessroot.begin(), 32).Write(ret.data(), 32).Finalize(witnessroot.begin());
+            CSha256D().Write(witnessroot.begin(), 32).Write(ret.data(), 32).Finalize(witnessroot.begin());
             CTxOut out;
             out.nValue = 0;
             out.scriptPubKey.resize(38);
@@ -3031,7 +3167,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
             if (block.vtx[0]->vin[0].scriptWitness.stack.size() != 1 || block.vtx[0]->vin[0].scriptWitness.stack[0].size() != 32) {
                 return state.DoS(100, false, REJECT_INVALID, "bad-witness-nonce-size", true, strprintf("%s : invalid witness nonce size", __func__));
             }
-            CHash256().Write(hashWitness.begin(), 32).Write(&block.vtx[0]->vin[0].scriptWitness.stack[0][0], 32).Finalize(hashWitness.begin());
+            CSha256D().Write(hashWitness.begin(), 32).Write(&block.vtx[0]->vin[0].scriptWitness.stack[0][0], 32).Finalize(hashWitness.begin());
             if (memcmp(hashWitness.begin(), &block.vtx[0]->vout[commitpos].scriptPubKey[6], 32)) {
                 return state.DoS(100, false, REJECT_INVALID, "bad-witness-merkle-match", true, strprintf("%s : witness merkle commitment mismatch", __func__));
             }
@@ -3588,6 +3724,9 @@ bool LoadChainTip(const CChainParams& chainparams)
         }
     }
 
+    pblocktree->ReadFlag("addrindex", fAddrIndex);
+    LogPrintf("LoadBlockIndexDB(): address index %s\n", fAddrIndex ? "enabled" : "disabled");
+
     // Load pointer to end of best chain
     BlockMap::iterator it = mapBlockIndex.find(pcoinsTip->GetBestBlock());
     if (it == mapBlockIndex.end())
@@ -3936,6 +4075,8 @@ bool LoadBlockIndex(const CChainParams& chainparams)
         // Use the provided setting for -txindex in the new database
         fTxIndex = gArgs.GetBoolArg("-txindex", DEFAULT_TXINDEX);
         pblocktree->WriteFlag("txindex", fTxIndex);
+        fAddrIndex = gArgs.GetBoolArg("-addrindex", DEFAULT_ADDRINDEX);
+        pblocktree->WriteFlag("addrindex", fAddrIndex);
     }
     return true;
 }

@@ -74,6 +74,8 @@ class CBlock : public CBlockHeader
 public:
     // network and disk
     std::vector<CTransactionRef> vtx;
+    // stake transactions
+    std::vector<CTransactionRef> vstx;
 
     // memory only
     mutable bool fChecked;
@@ -95,12 +97,15 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(*static_cast<CBlockHeader*>(this));
         READWRITE(vtx);
+        if (s.GetVersion() > 70015)
+            READWRITE(vstx);
     }
 
     void SetNull()
     {
         CBlockHeader::SetNull();
         vtx.clear();
+        vstx.clear();
         fChecked = false;
     }
 
