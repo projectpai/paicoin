@@ -273,7 +273,9 @@ crypto_libpaicoin_crypto_a_SOURCES = \
   crypto/sha256.cpp \
   crypto/sha256.h \
   crypto/sha512.cpp \
-  crypto/sha512.h
+  crypto/sha512.h \
+  crypto/tiny_sha3.c \
+  crypto/tiny_sha3.h
 
 if USE_ASM
 crypto_libpaicoin_crypto_a_SOURCES += crypto/sha256_sse4.cpp
@@ -290,6 +292,20 @@ libpaicoin_consensus_a_SOURCES = \
   consensus/merkle.h \
   consensus/params.h \
   consensus/validation.h \
+  stake/hash256prng.cpp \
+  stake/hash256prng.h \
+  stake/hasher.cpp \
+  stake/hasher.h \
+  stake/treap/value.cpp \
+  stake/treap/value.h \
+  stake/treap/treapnode.cpp \
+  stake/treap/treapnode.h \
+  stake/treap/tickettreap.cpp \
+  stake/treap/tickettreap.h \
+  stake/stakenode.cpp \
+  stake/stakenode.h \
+  stake/staketx.cpp \
+  stake/staketx.h \
   hash.cpp \
   hash.h \
   prevector.h \
