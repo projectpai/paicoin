@@ -6,6 +6,7 @@
 Test the wallet ticket API.
 
 Scenarios using operations:
+    addticket
     getticketfee
     gettickets
     purchaseticket
@@ -86,7 +87,6 @@ class WalletTicketOperations(PAIcoinTestFramework):
         self.nodes[0].generate(5)
         self.sync_all()
 
-
         # getticketfee tests:
         # 1. valid parameters
         x = self.nodes[0].getticketfee()
@@ -163,6 +163,16 @@ class WalletTicketOperations(PAIcoinTestFramework):
         assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "default", 2.3, 1, ticketaddr, 1, "", 0.0, 10) # expiry height must be above next block height
         assert_raises_rpc_error(-3, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, 1, pooladdr, 1, 1, "", "param2")
 
+        # addticket tests:
+        # 1. valid parameters
+        x = self.nodes[0].addticket(txids[0])
+        assert(x == None)
+        # TODO make this test have valid input and output once the command is implemented
+        # 2. invalid parameters
+        assert_raises_rpc_error(-1, None, self.nodes[0].addticket)
+        assert_raises_rpc_error(-8, None, self.nodes[0].addticket, "param1")
+        assert_raises_rpc_error(-1, None, self.nodes[0].addticket, "param1", "param2")
+
         # gettickets tests:
         # 1. valid parameters
         include_immature = False
@@ -201,7 +211,6 @@ class WalletTicketOperations(PAIcoinTestFramework):
         assert_equal(len(tickets["hashes"]), len(total_purchased_tickets)) 
         assert(set(tickets["hashes"]) == set(total_purchased_tickets))
 
-        # TODO make this test have valid input and output once the command is implemented
         # 2. invalid parameters
         assert_raises_rpc_error(-1, None, self.nodes[0].gettickets)
         assert_raises_rpc_error(-1, None, self.nodes[0].gettickets, "param1")

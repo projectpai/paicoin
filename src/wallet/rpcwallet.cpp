@@ -3256,6 +3256,31 @@ UniValue purchaseticket(const JSONRPCRequest& request)
 
     return results;
 }
+UniValue addticket(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "addticket \"tickethex\"\n"
+            "\nAdd a ticket to the wallet for vote and revocation creation. Added tickets are auxiliary to transaction history and do not appear in getstakeinfo stats.\n"
+            "\nArguments:\n"
+            "1. \"tickethex\" (string, required) Hex-encoded serialized transaction\n"
+            "\nResult:\n"
+            "   Nothing\n"
+            "\nExamples:\n"
+            + HelpExampleCli("addticket", "\"tickethex\"")
+        };
+
+    const auto& tickethex = request.params[0].get_str();
+
+    if (!IsHex(tickethex))
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter, expected hex txid");
+
+    uint256 hash;
+    hash.SetHex(tickethex);
+
+    UniValue result{UniValue::VNULL};
+    return result;
+}
 
 UniValue fundrawtransaction(const JSONRPCRequest& request)
 {
@@ -4237,6 +4262,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "listtransactions",         &listtransactions,         {"account","count","skip","include_watchonly"} },
     { "wallet",             "listunspent",              &listunspent,              {"minconf","maxconf","addresses","include_unsafe","query_options"} },
     { "wallet",             "purchaseticket",           &purchaseticket,           {"spendlimit","fromaccount","minconf","ticketaddress","numtickets","pooladdress","poolfees","expiry","comment","ticketfee"} },
+    { "wallet",             "addticket",                &addticket,                {"tickethex"} },
     { "wallet",             "listwallets",              &listwallets,              {} },
     { "wallet",             "lockunspent",              &lockunspent,              {"unlock","transactions"} },
     { "wallet",             "move",                     &movecmd,                  {"fromaccount","toaccount","amount","minconf","comment"} },
