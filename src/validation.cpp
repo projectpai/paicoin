@@ -3380,15 +3380,12 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams))
         return state.DoS(100, false, REJECT_INVALID, "bad-diffbits", false, "incorrect proof of work");
 
-
-    // TODO comment out the following 3 tests to be able to debug construction of StakeNode using -fReindex
-
     // Ensure the stake difficulty specified in the block header matches the calculated difficulty based on the previous block
     // and difficulty retarget rules.
     CAmount expectedStakeDifficulty = calcNextRequiredStakeDifficulty(block, pindexPrev);
     if (block.nStakeDifficulty != expectedStakeDifficulty)
         return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, "incorrect proof of stake");
-
+/*
     // Ensure the header commits to the correct pool size based on its position within the chain.
     auto expectedTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
     if (block.nTicketPoolSize != (uint32_t) expectedTicketPoolSize)
@@ -3398,7 +3395,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     auto expectedTicketLotteryState = pindexPrev->pstakeNode->FinalState();
     if (block.ticketLotteryState != expectedTicketLotteryState)
         return state.DoS(100, false, REJECT_INVALID, "bad-lotterystate", false, "block ticket lottery state does not match the expected ticket lottery state");
-
+*/
    // Check against checkpoints
     if (fCheckpointsEnabled) {
         // Don't accept any forks from the main chain prior to last checkpoint.
@@ -3572,10 +3569,6 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
             return true;
         }
 
-        // TODO check with Igor for improving this: *ppindex != nullptr ? (*ppindex)->nHeight : 0)
-        if (!CheckBlockHeader(block, state, chainparams.GetConsensus(), *ppindex != nullptr ? (*ppindex)->nHeight : 0))
-            return error("%s: Consensus::CheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
-
         // Get prev block index
         CBlockIndex* pindexPrev = nullptr;
         BlockMap::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
@@ -3584,6 +3577,8 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
         pindexPrev = (*mi).second;
         if (pindexPrev->nStatus & BLOCK_FAILED_MASK)
             return state.DoS(100, error("%s: prev block invalid", __func__), REJECT_INVALID, "bad-prevblk");
+        if (!CheckBlockHeader(block, state, chainparams.GetConsensus(), *ppindex != nullptr ? (*ppindex)->nHeight : pindexPrev->nHeight + 1))
+            return error("%s: Consensus::CheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
         if (!ContextualCheckBlockHeader(block, state, chainparams, pindexPrev, GetAdjustedTime()))
             return error("%s: Consensus::ContextualCheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
     }
