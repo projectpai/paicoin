@@ -27,6 +27,10 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
+    int64_t nStakeDifficulty;
+    uint32_t nVoteBits;
+    uint32_t nTicketPoolSize;
+    std::array<char,6> ticketLotteryState;
 
     CBlockHeader()
     {
@@ -53,6 +57,10 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        nStakeDifficulty = 0;
+        nVoteBits = 0;
+        nTicketPoolSize = 0;
+        std::fill(ticketLotteryState.begin(), ticketLotteryState.end(), 0);
     }
 
     bool IsNull() const
@@ -74,8 +82,6 @@ class CBlock : public CBlockHeader
 public:
     // network and disk
     std::vector<CTransactionRef> vtx;
-    // stake transactions
-    std::vector<CTransactionRef> vstx;
 
     // memory only
     mutable bool fChecked;
@@ -97,15 +103,12 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(*static_cast<CBlockHeader*>(this));
         READWRITE(vtx);
-        if (s.GetVersion() > 70015)
-            READWRITE(vstx);
     }
 
     void SetNull()
     {
         CBlockHeader::SetNull();
         vtx.clear();
-        vstx.clear();
         fChecked = false;
     }
 
@@ -118,6 +121,10 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.nVoteBits      = nVoteBits;
+        block.nStakeDifficulty = nStakeDifficulty;
+        block.nTicketPoolSize = nTicketPoolSize;
+        block.ticketLotteryState = ticketLotteryState;
         return block;
     }
 

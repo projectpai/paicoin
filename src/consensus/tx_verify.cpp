@@ -19,6 +19,11 @@
 #include "coins.h"
 #include "utilmoneystr.h"
 
+bool IsExpiredTx(const CTransaction &tx, int nBlockHeight)
+{
+    return tx.nExpiry != 0 && (uint32_t)nBlockHeight >= tx.nExpiry;
+}
+
 bool IsFinalTx(const CTransaction &tx, int nBlockHeight, int64_t nBlockTime)
 {
     if (tx.nLockTime == 0)
@@ -111,9 +116,12 @@ bool SequenceLocks(const CTransaction &tx, int flags, std::vector<int>* prevHeig
 
 unsigned int GetLegacySigOpCount(const CTransaction& tx)
 {
+    unsigned startInput = ParseTxClass(tx) == TX_Vote ? voteStakeInputIndex : 0;    // first input in a vote is subsidy generation; skip it
+
     unsigned int nSigOps = 0;
-    for (const auto& txin : tx.vin)
+    for (unsigned i=startInput; i<tx.vin.size(); i++)
     {
+        auto& txin = tx.vin[i];
         nSigOps += txin.scriptSig.GetSigOpCount(false);
     }
     for (const auto& txout : tx.vout)

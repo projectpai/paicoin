@@ -73,10 +73,13 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     CBlock genesis;
     genesis.nTime    = nTime;
     genesis.nBits    = nBits;
+    genesis.nStakeDifficulty = 0;
+    genesis.nVoteBits = 0;
+    genesis.nTicketPoolSize = 0;
+    std::fill(genesis.ticketLotteryState.begin(), genesis.ticketLotteryState.end(), 0);
     genesis.nNonce   = nNonce;
     genesis.nVersion = nVersion;
     genesis.vtx.push_back(MakeTransactionRef(std::move(txNew)));
-    genesis.vstx.clear();
     genesis.hashPrevBlock.SetNull();
     genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
     return genesis;

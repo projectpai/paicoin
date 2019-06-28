@@ -128,6 +128,16 @@ StakeState StakeNode::FinalState() const
     return finalState;
 }
 
+std::string StakeNode::FinalStateToString() const
+{
+    std::string str;
+
+    for (auto c : finalState)
+        str += std::to_string((int)c);
+
+    return str;
+}
+
 uint32_t StakeNode::Height() const
 {
     return height;

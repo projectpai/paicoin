@@ -120,6 +120,9 @@ public:
     // FinalState returns the final state lottery checksum of the node.
     StakeState FinalState() const;
 
+    // FinalStateToString returns the final state lottery checksum as a printable string.
+    std::string FinalStateToString() const;
+
     // Height returns the height of the node.
     uint32_t Height() const;
 
