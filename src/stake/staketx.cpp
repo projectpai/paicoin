@@ -1,6 +1,7 @@
 #include "primitives/transaction.h"
 #include "stake/staketx.h"
 #include "script/standard.h"
+#include "chain.h"
 
 #include <sstream>
 
@@ -434,4 +435,49 @@ StakeSlice::StakeSlice(std::vector<CTransactionRef> vtx, ETxClass txClass)
         if (txCl == txClass)
             push_back(vtx[i]);
     }
+}
+
+
+// FindSpentTicketsInBlock returns information about tickets spent in a given
+// block. This includes voted and revoked tickets, and the vote bits of each
+// spent ticket. This is faster than calling the individual functions to
+// determine ticket state if all information regarding spent tickets is needed.
+//
+// Note that the returned hashes are of the originally purchased *tickets* and
+// **NOT** of the vote/revoke transaction.
+//
+// The tickets are determined **only** from the STransactions of the provided
+// block and no validation is performed.
+//
+// This function is only safe to be called with a block that has previously
+// had all header commitments validated.
+SpentTicketsInBlock FindSpentTicketsInBlock(const CBlock& block)
+{
+    HashVector revocations;
+    HashVector voters;
+    VoteVersionVector votes;
+
+    for (auto& it: block.vtx){
+        switch (ParseTxClass(*it))
+        {
+        case TX_Vote: {
+                VoteData voteData;
+                ParseVote(*it, voteData);
+                voters.push_back(
+                    it->vin[1].prevout.hash);
+                votes.push_back(
+                    VoteVersion{
+                        static_cast<uint32_t>(voteData.nVersion),
+                        static_cast<uint16_t>(voteData.voteBits)
+                        });
+                }
+                break;
+        case TX_RevokeTicket:
+                revocations.push_back(
+                    it->vin[0].prevout.hash);
+                break;
+        };
+    }
+
+    return std::make_tuple(voters, revocations, votes);
 }

@@ -104,6 +104,15 @@ public:
     }
 };
 
+/** 48-bit blob
+ * @note This type is used to represent the final stake state checksum on 6 bytes
+ */
+class uint48 : public base_blob<48>{
+public:
+    uint48() {}
+    explicit uint48(const std::vector<unsigned char>& vch) : base_blob<48>(vch) {}
+};
+
 /** 160-bit opaque blob.
  * @note This type is called uint160 for historical reasons only. It is an opaque
  * blob of 160 bits and has no integer operations.
