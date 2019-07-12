@@ -105,4 +105,29 @@ bool ValidateBuyTicketStructure(const CTransaction& tx, std::string& reason);
 bool ValidateVoteStructure(const CTransaction& tx, std::string& reason);
 bool ValidateRevokeTicketStructure(const CTransaction& tx, std::string& reason);
 
+// ==============================
+
+// StakeSlice is a helper class that makes it easier to traverse stake transactions of a block.
+// It assumes that transactions in the original container satisfy the rules that:
+// - The first transaction is the coinbase
+// - Then follow stake transactions in any order
+// - Then follow regular transactions
+// Example usage:
+// for (const auto& tx : StakeSlice(block.vtx, TX_BuyTicket))  // traverses BuyTicket transactions
+// or:
+// for (const auto& tx : StakeSlice(block.vtx))                // traverses all stake transactions
+// Implementation details:
+// The current implementation uses a simple but non-optimal approach:
+// It makes a copy of transaction references into a new local container that contain only the desired transactions.
+// Making a temp vector shouldn't be too big a deal since there aren't many stake transactions in blocks.
+// However, a better implementation should rather provide a custom range or custom iterators over the given container.
+// Also, in case we'd need a slice of regular transactions as well, we wouldn't have it using this approach as it would be costly.
+// So feel free to reimplement.
+class StakeSlice : public std::vector<CTransactionRef>
+{
+public:
+    StakeSlice(std::vector<CTransactionRef> vtx);
+    StakeSlice(std::vector<CTransactionRef> vtx, ETxClass txClass);
+};
+
 #endif //PAICOIN_STAKE_STAKETX_H

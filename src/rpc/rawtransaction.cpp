@@ -521,6 +521,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             "    }\n"
             "3. locktime                  (numeric, optional, default=0) Raw locktime. Non-0 value also locktime-activates inputs\n"
             "4. replaceable               (boolean, optional, default=false) Marks this transaction as BIP125 replaceable.\n"
+            "5. expiry                    (numeric, optional, default=0) Expiration height. 0 value means no expiry."
             "                             Allows this transaction to be replaced by a transaction with higher fees. If provided, it is an error if explicit sequence numbers are incompatible.\n"
             "\nResult:\n"
             "\"transaction\"              (string) hex string of the transaction\n"
@@ -643,6 +644,13 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
 
     if (!request.params[3].isNull() && rbfOptIn != SignalsOptInRBF(rawTx)) {
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter combination: Sequence number(s) contradict replaceable option");
+    }
+
+    if (!request.params[4].isNull()) {
+        int64_t nExpiry = request.params[4].get_int64();
+        if (nExpiry < 0 || nExpiry > std::numeric_limits<uint32_t>::max())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter, expiry out of range");
+        rawTx.nExpiry = nExpiry;
     }
 
     return EncodeHexTx(rawTx);

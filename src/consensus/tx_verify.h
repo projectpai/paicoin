@@ -59,6 +59,11 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& ma
 int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& inputs, int flags);
 
 /**
+ * Check if transaction is expired with respect to given block height. Consensus critical.
+ */
+bool IsExpiredTx(const CTransaction &tx, int nBlockHeight);
+
+/**
  * Check if transaction is final and can be included in a block with the
  * specified height and time. Consensus critical.
  */

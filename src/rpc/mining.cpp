@@ -675,6 +675,13 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     }
     result.push_back(Pair("curtime", pblock->GetBlockTime()));
     result.push_back(Pair("bits", strprintf("%08x", pblock->nBits)));
+    result.push_back(Pair("stakedifficulty", std::to_string(pblock->nStakeDifficulty)));
+    result.push_back(Pair("votebits", strprintf("%08x", pblock->nVoteBits)));
+    result.push_back(Pair("ticketpoolsize", strprintf("%08x", pblock->nTicketPoolSize)));
+    std::string ticketLotteryStateString;
+    for (auto c : pblock->ticketLotteryState)
+        ticketLotteryStateString += std::to_string((int)c) + " ";
+    result.push_back(Pair("ticketlotterystate", ticketLotteryStateString));
     result.push_back(Pair("height", static_cast<int64_t>((pindexPrev->nHeight+1))));
 
     if (!pblocktemplate->vchCoinbaseCommitment.empty() && fSupportsSegwit) {

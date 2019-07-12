@@ -282,6 +282,7 @@ public:
     const std::vector<CTxOut> vout;
     const int32_t nVersion;
     const uint32_t nLockTime;
+    const uint32_t nExpiry;
 
 private:
     /** Memory only. */
@@ -365,6 +366,7 @@ struct CMutableTransaction
     std::vector<CTxOut> vout;
     int32_t nVersion;
     uint32_t nLockTime;
+    uint32_t nExpiry;
 
     CMutableTransaction();
     CMutableTransaction(const CTransaction& tx);

@@ -412,3 +412,26 @@ bool ValidateRevokeTicketStructure(const CTransaction &tx, std::string& reason)
 
     return true;
 }
+
+StakeSlice::StakeSlice(std::vector<CTransactionRef> vtx)
+{
+    for (size_t i=1; i<vtx.size(); i++) // skip coinbase
+    {
+        auto txCl = ParseTxClass(*vtx[i]);
+        if (txCl == TX_Regular)
+            break;  // reached the end of stake transactions
+        push_back(vtx[i]);
+    }
+}
+
+StakeSlice::StakeSlice(std::vector<CTransactionRef> vtx, ETxClass txClass)
+{
+    for (size_t i=1; i<vtx.size(); i++) // skip coinbase
+    {
+        auto txCl = ParseTxClass(*vtx[i]);
+        if (txCl == TX_Regular)
+            break;  // reached the end of stake transactions
+        if (txCl == txClass)
+            push_back(vtx[i]);
+    }
+}
