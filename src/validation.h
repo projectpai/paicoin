@@ -500,4 +500,7 @@ void MaybeFetchTicketInfo(CBlockIndex* pindex, const Consensus::Params& params);
 void MaybeFetchNewTickets(CBlockIndex* pindex, const Consensus::Params& params);
 std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::Params& params);
 
+/** Check existence of address in the address index */
+bool AddressExistsInIndex(const std::string& address);
+
 #endif // PAICOIN_VALIDATION_H
