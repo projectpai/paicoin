@@ -6,6 +6,8 @@
 #include "stake/treap/value.h"
 #include "uint256.h"
 
+#include <array>
+
 constexpr u_int8_t StaticDepth = 128;
 
 class TreapNode;
