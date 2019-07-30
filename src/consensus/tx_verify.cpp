@@ -137,7 +137,8 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& in
         return 0;
 
     unsigned int nSigOps = 0;
-    for (unsigned int i = 0; i < tx.vin.size(); i++)
+    unsigned startInput = ParseTxClass(tx) == TX_Vote ? voteStakeInputIndex : 0;    // first input in a vote is subsidy generation; skip it
+    for (unsigned int i = startInput; i < tx.vin.size(); i++)
     {
         const Coin& coin = inputs.AccessCoin(tx.vin[i].prevout);
         assert(!coin.IsSpent());
@@ -159,7 +160,8 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
         nSigOps += GetP2SHSigOpCount(tx, inputs) * WITNESS_SCALE_FACTOR;
     }
 
-    for (unsigned int i = 0; i < tx.vin.size(); i++)
+    unsigned startInput = ParseTxClass(tx) == TX_Vote ? voteStakeInputIndex : 0;    // first input in a vote is subsidy generation; skip it
+    for (unsigned int i = startInput; i < tx.vin.size(); i++)
     {
         const Coin& coin = inputs.AccessCoin(tx.vin[i].prevout);
         assert(!coin.IsSpent());
@@ -352,7 +354,7 @@ bool checkVoteOrRevokeTicketInputs(const CTransaction& tx, bool vote, CValidatio
     // NOTE: A ticket stake can only be spent in the block AFTER the entire ticket maturity has passed, hence the +1.
     // In case of revocations, the ticket must have been missed which can't possibly
     // happen for another block after that, hence the +2.
-    int maturityAdd = vote ? 2 : 1;
+    int maturityAdd = vote ? 1 : 2;
     int ticketMaturity = chainparams.GetConsensus().nTicketMaturity + maturityAdd;
     if (nSpendHeight - coin.nHeight < ticketMaturity)
         return state.DoS(100, false, REJECT_INVALID, badTxin + what + "-ticketstake-immature");

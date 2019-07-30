@@ -503,4 +503,9 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
 /** Check existence of address in the address index */
 bool AddressExistsInIndex(const std::string& address);
 
+/** 
+ * Get the next stake difficulty
+*/
+CAmount calcNextRequiredStakeDifficulty(const CBlock& block, const CBlockIndex *pindexPrev, const CChainParams& params);
+
 #endif // PAICOIN_VALIDATION_H

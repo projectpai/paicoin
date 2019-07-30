@@ -1135,7 +1135,7 @@ CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams)
 CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
     // Voter subsidy is a portion of total block subsidy
-    return nHeight < consensusParams.nStakeValidationHeight ? 0 :
+    return nHeight + 1 < consensusParams.nStakeValidationHeight ? 0 :
         (GetTotalBlockSubsidy(nHeight, consensusParams) * consensusParams.nStakeSubsidyProportion)
         / (consensusParams.TotalSubsidyProportions() * consensusParams.nTicketsPerBlock);
 }
@@ -1311,10 +1311,12 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txund
 {
     // mark inputs spent
     if (!tx.IsCoinBase()) {
-        txundo.vprevout.reserve(tx.vin.size());
-        for (const CTxIn &txin : tx.vin) {
+        unsigned startInput = ParseTxClass(tx) == TX_Vote ? voteStakeInputIndex : 0;    // first input in a vote is subsidy generation; skip it
+        txundo.vprevout.reserve(tx.vin.size() - startInput);
+        // for (const CTxIn &txin : tx.vin) {
+        for (unsigned int i = startInput; i < tx.vin.size(); ++i) {
             txundo.vprevout.emplace_back();
-            bool is_spent = inputs.SpendCoin(txin.prevout, &txundo.vprevout.back());
+            bool is_spent = inputs.SpendCoin(tx.vin[i].prevout, &txundo.vprevout.back());
             assert(is_spent);
         }
     }
@@ -1400,7 +1402,8 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                 return true;
             }
 
-            for (unsigned int i = 0; i < tx.vin.size(); i++) {
+            unsigned startInput = ParseTxClass(tx) == TX_Vote ? voteStakeInputIndex : 0;    // first input in a vote is subsidy generation; skip it
+            for (unsigned int i = startInput; i < tx.vin.size(); i++) {
                 const COutPoint &prevout = tx.vin[i].prevout;
                 const Coin& coin = inputs.AccessCoin(prevout);
                 assert(!coin.IsSpent());
@@ -1649,14 +1652,14 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
         return DISCONNECT_FAILED;
     }
 
-    StakeNode stakeNode;
-    pos = pindex->GetStakePos();
-    if (!pos.IsNull()) {
-        if (!StakeReadFromDisk(stakeNode, pos, pindex->pprev->GetBlockHash())) {
-            error("DisconnectBlock(): failure reading stake data");
-            return DISCONNECT_FAILED;
-        }
-    }
+    // StakeNode stakeNode;
+    // pos = pindex->GetStakePos();
+    // if (!pos.IsNull()) {
+    //     if (!StakeReadFromDisk(stakeNode, pos, pindex->pprev->GetBlockHash())) {
+    //         error("DisconnectBlock(): failure reading stake data");
+    //         return DISCONNECT_FAILED;
+    //     }
+    // }
     //TODO use the read StakeNode info
 
     // undo transactions in reverse order
@@ -2096,13 +2099,13 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         setDirtyBlockIndex.insert(pindex);
     }
 
-    auto stakeNode = *FetchStakeNode(pindex, chainparams.GetConsensus());
+    // auto stakeNode = *FetchStakeNode(pindex, chainparams.GetConsensus());
     if(pindex->GetStakePos().IsNull()){
         CDiskBlockPos _pos;
 
-        if (!FindStakePos(state, pindex->nFile, _pos, ::GetSerializeSize(stakeNode, SER_DISK, CLIENT_VERSION) + 40))
+        if (!FindStakePos(state, pindex->nFile, _pos, ::GetSerializeSize(*pindex->pstakeNode, SER_DISK, CLIENT_VERSION) + 40))
             return error("ConnectBlock(): FindStakePos failed");
-        if (!StakeWriteToDisk(stakeNode, _pos, pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash(), chainparams.MessageStart()))
+        if (!StakeWriteToDisk(*pindex->pstakeNode, _pos, pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash(), chainparams.MessageStart()))
             return AbortNode(state, "Failed to write stake data");
 
         // update nStakePos in block index
@@ -3128,29 +3131,48 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
     if (consensusParams.nStakeEnabledHeight > consensusParams.nStakeValidationHeight)
         return state.Error("bad stake height consensus parameters");
 
+    return true;
+}
+
+bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase, int blockHeight)
+{
+    // These are checks that are independent of context.
+    if (blockHeight < 0) {
+        blockHeight = chainActive.Height() + 1;
+    }
+
+    if (block.fChecked)
+        return true;
+
+    // Check that the header is valid (particularly PoW).  This is mostly
+    // redundant with the call in AcceptBlockHeader.
+    if (!CheckBlockHeader(block, state, consensusParams, blockHeight, fCheckPOW))
+        return false;
+
+    // Count transactions by class
     int numTickets, numVotes, numRevocations;
-    CountStakeTransactions(block, numTickets, numVotes, numRevocations);
+    int numStakeTx = CountStakeTransactions(block, numTickets, numVotes, numRevocations);
 
     // Before stake validation begins, a block must not contain any votes or revocations, its vote bits
     // must be 0x0001, and its ticket lottery state must be all zeroes.
-    if (nBlockHeight < consensusParams.nStakeValidationHeight) {
-        if (numVotes > 0)
-            return state.DoS(50, false, REJECT_INVALID, "votes-too-early", false, "vote transactions present before stake validation time");
+    // if (nBlockHeight < consensusParams.nStakeValidationHeight) {
+    //     if (numVotes > 0)
+    //         return state.DoS(50, false, REJECT_INVALID, "votes-too-early", false, "vote transactions present before stake validation time");
 
-        if (numRevocations > 0)
-            return state.DoS(50, false, REJECT_INVALID, "revocations-too-early", false, "revocation transactions present before stake validation time");
+    //     if (numRevocations > 0)
+    //         return state.DoS(50, false, REJECT_INVALID, "revocations-too-early", false, "revocation transactions present before stake validation time");
 
-        if (block.nVoteBits != 1)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
-            return state.DoS(50, false, REJECT_INVALID, "voteBits-too-early", false, "voteBits present before stake validation time");
+    //     if (block.nVoteBits != 1)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
+    //         return state.DoS(50, false, REJECT_INVALID, "voteBits-too-early", false, "voteBits present before stake validation time");
 
-        StakeState earlyLotteryState;
-        std::fill(earlyLotteryState.begin(), earlyLotteryState.end(), 0);
-        if (block.ticketLotteryState != earlyLotteryState)
-            return state.DoS(50, false, REJECT_INVALID, "lottery-too-early", false, "ticket lottery state non-zero before stake validation time");
-    }
+    //     StakeState earlyLotteryState;
+    //     std::fill(earlyLotteryState.begin(), earlyLotteryState.end(), 0);
+    //     if (block.ticketLotteryState != earlyLotteryState)
+    //         return state.DoS(50, false, REJECT_INVALID, "lottery-too-early", false, "ticket lottery state non-zero before stake validation time");
+    // }
 
     // Check that the number of votes in a block is within limits
-    if (nBlockHeight >= consensusParams.nStakeValidationHeight)
+    if (blockHeight >= consensusParams.nStakeValidationHeight)
     {
         auto majority = (consensusParams.nTicketsPerBlock / 2) + 1;
         if (numVotes < majority)
@@ -3162,21 +3184,6 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
     // The block must not contain more ticket purchases than the maximum allowed.
     if (numTickets > consensusParams.nMaxFreshStakePerBlock)
         return state.DoS(50, false, REJECT_INVALID, "too-many-tickets", false, "block contains more than the maximum allowed number of tickets per block");
-
-    return true;
-}
-
-bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase, int blockHeight)
-{
-    // These are checks that are independent of context.
-
-    if (block.fChecked)
-        return true;
-
-    // Check that the header is valid (particularly PoW).  This is mostly
-    // redundant with the call in AcceptBlockHeader.
-    if (!CheckBlockHeader(block, state, consensusParams, blockHeight, fCheckPOW))
-        return false;
 
     // All ticket purchases must meet the difficulty specified by the block header.
     if (!CheckProofOfStake(block, consensusParams.nMinimumStakeDiff))
@@ -3209,10 +3216,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     // First transaction must be coinbase
     if (block.vtx.empty() || !block.vtx[0]->IsCoinBase())
         return state.DoS(100, false, REJECT_INVALID, "bad-cb-missing", false, "first tx is not coinbase");
-
-    // Count transactions by class
-    int numTickets, numVotes, numRevocations;
-    int numStakeTx = CountStakeTransactions(block, numTickets, numVotes, numRevocations);
 
     // After coinbase must come stake transactions, followed by regular transactions
     unsigned firstRegularTxIndex = 1 + numStakeTx;
@@ -3286,9 +3289,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
 
     if (fCheckCoinbase && block.GetHash() != consensusParams.hashGenesisBlock) {
         const auto& coinbaseAddrs = Params().coinbaseAddrs;
-        if (blockHeight < 0) {
-            blockHeight = chainActive.Height() + 1;
-        }
         if (!coinbaseAddrs.empty()) {
             for (const CTxOut& out : block.vtx[0]->vout) {
                 if (out.nValue > 0.00) {
@@ -3715,7 +3715,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     if (fCheckForPruning)
         FlushStateToDisk(chainparams, state, FLUSH_STATE_NONE); // we just allocated more disk space for block files
 
-    if (pindex->pprev == nullptr){
+    if (pindex->pprev == nullptr) {
         pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
     }
     else{
@@ -4193,7 +4193,7 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
                 if (!UndoReadFromDisk(undo, pos, pindex->pprev->GetBlockHash()))
                     return error("VerifyDB(): *** found bad undo data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
             }
-            StakeNode stake;
+            StakeNode stake(chainparams.GetConsensus());
             pos = pindex->GetStakePos();
             if (!pos.IsNull()) {
                 if (!StakeReadFromDisk(stake, pos, pindex->pprev->GetBlockHash()))
@@ -4499,6 +4499,9 @@ bool LoadGenesisBlock(const CChainParams& chainparams)
         if (!WriteBlockToDisk(block, blockPos, chainparams.MessageStart()))
             return error("%s: writing genesis block to disk failed", __func__);
         CBlockIndex *pindex = AddToBlockIndex(block);
+        assert (pindex->pprev == nullptr);
+        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+        assert(pindex->pstakeNode != nullptr);
         if (!ReceivedBlockTransactions(block, state, pindex, blockPos, chainparams.GetConsensus()))
             return error("%s: genesis block not accepted", __func__);
     } catch (const std::runtime_error& e) {
@@ -5034,18 +5037,21 @@ void MaybeFetchNewTickets(CBlockIndex* pindex, const Consensus::Params& params)
     // its block from DB.
     const auto matureBlockIndex = pindex->GetAncestor(pindex->nHeight - params.nTicketMaturity);
     if (matureBlockIndex == nullptr) {
-        assert("Unable to obtian ancestor");
+        assert(!"Unable to obtian ancestor");
         // return fmt.Errorf("unable to obtain ancestor %d blocks prior to %s "+
         //     "(height %d)", b.chainParams.TicketMaturity, node.hash, node.height)
     }
 
     CBlock matureBlock;
-    if(ReadBlockFromDisk(matureBlock, pindex, params)) {
+    if(ReadBlockFromDisk(matureBlock, matureBlockIndex, params)) {
         // Extract any ticket purchases from the block and cache them.
         pindex->newTickets = std::make_shared<HashVector>();
         for (const auto& tx : StakeSlice(matureBlock.vtx, TX_BuyTicket)){
             pindex->newTickets->push_back(tx->GetHash());
         }
+    }
+    else {
+        assert(!"Could not read block from disk");
     }
 }
 
@@ -5105,7 +5111,9 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
         // Generate the previous stake node by starting with the child stake
         // node and undoing the modifications caused by the stake details in
         // the previous block.
-        auto stakeNode = it->pstakeNode->DisconnectNode();
+        // const auto parentUtds = this->databaseUndoUpdate; //TODO get correct one from height-1
+        // const auto parentTickets = this->databaseBlockTickets; //TODO get correct one from height-1
+        auto stakeNode = it->pstakeNode->DisconnectNode(prev->pstakeNode->UndoData(), prev->pstakeNode->NewTickets());
         // stakeNode, err := n.stakeNode.DisconnectNode(prev.lotteryIV(), nil,
         // nil, dbTx)
         prev->pstakeNode = stakeNode;
