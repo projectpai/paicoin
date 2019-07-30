@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -77,6 +77,8 @@ static const unsigned int MAX_BLOCKFILE_SIZE = 0x8000000; // 128 MiB
 static const unsigned int BLOCKFILE_CHUNK_SIZE = 0x1000000; // 16 MiB
 /** The pre-allocation chunk size for rev?????.dat files (since 0.8) */
 static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
+/** The pre-allocation chunk size for stk?????.dat files (since 1.0.5) */
+static const unsigned int STAKEFILE_CHUNK_SIZE = 0x100000; // 1 MiB
 
 /** Maximum number of script-checking threads allowed */
 static const int MAX_SCRIPTCHECK_THREADS = 16;
@@ -492,5 +494,10 @@ bool DumpMempool();
 
 /** Load the mempool from disk. */
 bool LoadMempool();
+
+/* Get the Stake Node */
+void MaybeFetchTicketInfo(CBlockIndex* pindex, const Consensus::Params& params);
+void MaybeFetchNewTickets(CBlockIndex* pindex, const Consensus::Params& params);
+std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::Params& params);
 
 #endif // PAICOIN_VALIDATION_H

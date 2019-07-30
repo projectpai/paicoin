@@ -43,6 +43,7 @@
 #include "validationinterface.h"
 #include "versionbits.h"
 #include "warnings.h"
+#include "stake/stakenode.h"
 
 #include <atomic>
 #include <sstream>
@@ -201,6 +202,7 @@ static void FindFilesToPruneManual(std::set<int>& setFilesToPrune, int nManualPr
 static void FindFilesToPrune(std::set<int>& setFilesToPrune, uint64_t nPruneAfterHeight);
 bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsViewCache &inputs, bool fScriptChecks, unsigned int flags, bool cacheSigStore, bool cacheFullScriptStore, PrecomputedTransactionData& txdata, std::vector<CScriptCheck> *pvChecks = nullptr);
 static FILE* OpenUndoFile(const CDiskBlockPos &pos, bool fReadOnly = false);
+static FILE* OpenStakeFile(const CDiskBlockPos &pos, bool fReadOnly = false);
 
 bool CheckFinalTx(const CTransaction &tx, int flags)
 {
@@ -1451,6 +1453,34 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
 
 namespace {
 
+
+bool StakeWriteToDisk(const StakeNode& stakeNode, CDiskBlockPos& pos, const uint256& hashBlock, const CMessageHeader::MessageStartChars& messageStart)
+{
+    // Open history file to append
+    CAutoFile fileout(OpenStakeFile(pos), SER_DISK, CLIENT_VERSION);
+    if (fileout.IsNull())
+        return error("%s: OpenStakeFile failed", __func__);
+
+    // Write index header
+    unsigned int nSize = GetSerializeSize(fileout, stakeNode);
+    fileout << FLATDATA(messageStart) << nSize;
+
+    // Write undo data
+    long fileOutPos = ftell(fileout.Get());
+    if (fileOutPos < 0)
+        return error("%s: ftell failed", __func__);
+    pos.nPos = (unsigned int)fileOutPos;
+    fileout << stakeNode;
+
+    // calculate & write checksum
+    CHashWriter hasher(SER_GETHASH, PROTOCOL_VERSION);
+    hasher << hashBlock;
+    hasher << stakeNode;
+    fileout << hasher.GetHash();
+
+    return true;
+}
+
 bool UndoWriteToDisk(const CBlockUndo& blockundo, CDiskBlockPos& pos, const uint256& hashBlock, const CMessageHeader::MessageStartChars& messageStart)
 {
     // Open history file to append
@@ -1491,6 +1521,32 @@ bool UndoReadFromDisk(CBlockUndo& blockundo, const CDiskBlockPos& pos, const uin
     try {
         verifier << hashBlock;
         verifier >> blockundo;
+        filein >> hashChecksum;
+    }
+    catch (const std::exception& e) {
+        return error("%s: Deserialize or I/O error - %s", __func__, e.what());
+    }
+
+    // Verify checksum
+    if (hashChecksum != verifier.GetHash())
+        return error("%s: Checksum mismatch", __func__);
+
+    return true;
+}
+
+bool StakeReadFromDisk(StakeNode& stakeNode, const CDiskBlockPos& pos, const uint256& hashBlock)
+{
+    // Open history file to read
+    CAutoFile filein(OpenUndoFile(pos, true), SER_DISK, CLIENT_VERSION);
+    if (filein.IsNull())
+        return error("%s: OpenStakeFile failed", __func__);
+
+    // Read block
+    uint256 hashChecksum;
+    CHashVerifier<CAutoFile> verifier(&filein); // We need a CHashVerifier as reserializing may lose data
+    try {
+        verifier << hashBlock;
+        verifier >> stakeNode;
         filein >> hashChecksum;
     }
     catch (const std::exception& e) {
@@ -1593,6 +1649,16 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
         return DISCONNECT_FAILED;
     }
 
+    StakeNode stakeNode;
+    pos = pindex->GetStakePos();
+    if (!pos.IsNull()) {
+        if (!StakeReadFromDisk(stakeNode, pos, pindex->pprev->GetBlockHash())) {
+            error("DisconnectBlock(): failure reading stake data");
+            return DISCONNECT_FAILED;
+        }
+    }
+    //TODO use the read StakeNode info
+
     // undo transactions in reverse order
     for (int i = block.vtx.size() - 1; i >= 0; i--) {
         const CTransaction &tx = *(block.vtx[i]);
@@ -1659,6 +1725,7 @@ void static FlushBlockFile(bool fFinalize = false)
 }
 
 static bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize);
+static bool FindStakePos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize);
 
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
@@ -2018,6 +2085,20 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 
         pindex->RaiseValidity(BLOCK_VALID_SCRIPTS);
         setDirtyBlockIndex.insert(pindex);
+    }
+
+    auto stakeNode = *FetchStakeNode(pindex, chainparams.GetConsensus());
+    if(pindex->GetStakePos().IsNull()){
+        CDiskBlockPos _pos;
+
+        if (!FindStakePos(state, pindex->nFile, _pos, ::GetSerializeSize(stakeNode, SER_DISK, CLIENT_VERSION) + 40))
+            return error("ConnectBlock(): FindStakePos failed");
+        if (!StakeWriteToDisk(stakeNode, _pos, pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash(), chainparams.MessageStart()))
+            return AbortNode(state, "Failed to write stake data");
+
+        // update nStakePos in block index
+        pindex->nStakePos = _pos.nPos;
+        pindex->nStatus |= BLOCK_HAVE_STAKE;
     }
 
     if (fTxIndex)
@@ -2917,6 +2998,37 @@ static bool FindBlockPos(CValidationState &state, CDiskBlockPos &pos, unsigned i
     return true;
 }
 
+static bool FindStakePos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize)
+{
+    pos.nFile = nFile;
+
+    LOCK(cs_LastBlockFile);
+
+    unsigned int nNewSize;
+    pos.nPos = vinfoBlockFile[nFile].nStakeSize;
+    nNewSize = vinfoBlockFile[nFile].nStakeSize += nAddSize;
+    setDirtyFileInfo.insert(nFile);
+
+    unsigned int nOldChunks = (pos.nPos + STAKEFILE_CHUNK_SIZE - 1) / STAKEFILE_CHUNK_SIZE;
+    unsigned int nNewChunks = (nNewSize + STAKEFILE_CHUNK_SIZE - 1) / STAKEFILE_CHUNK_SIZE;
+    if (nNewChunks > nOldChunks) {
+        if (fPruneMode)
+            fCheckForPruning = true;
+        if (CheckDiskSpace(nNewChunks * STAKEFILE_CHUNK_SIZE - pos.nPos)) {
+            FILE *file = OpenUndoFile(pos);
+            if (file) {
+                LogPrintf("Pre-allocating up to position 0x%x in stk%05u.dat\n", nNewChunks * STAKEFILE_CHUNK_SIZE, pos.nFile);
+                AllocateFileRange(file, pos.nPos, nNewChunks * STAKEFILE_CHUNK_SIZE - pos.nPos);
+                fclose(file);
+            }
+        }
+        else
+            return state.Error("out of disk space");
+    }
+
+    return true;
+}
+
 static bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize)
 {
     pos.nFile = nFile;
@@ -3268,6 +3380,9 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams))
         return state.DoS(100, false, REJECT_INVALID, "bad-diffbits", false, "incorrect proof of work");
 
+
+    // TODO comment out the following 3 tests to be able to debug construction of StakeNode using -fReindex
+
     // Ensure the stake difficulty specified in the block header matches the calculated difficulty based on the previous block
     // and difficulty retarget rules.
     CAmount expectedStakeDifficulty = calcNextRequiredStakeDifficulty(block, pindexPrev);
@@ -3457,7 +3572,8 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
             return true;
         }
 
-        if (!CheckBlockHeader(block, state, chainparams.GetConsensus(), (*ppindex)->nHeight))
+        // TODO check with Igor for improving this: *ppindex != nullptr ? (*ppindex)->nHeight : 0)
+        if (!CheckBlockHeader(block, state, chainparams.GetConsensus(), *ppindex != nullptr ? (*ppindex)->nHeight : 0))
             return error("%s: Consensus::CheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
 
         // Get prev block index
@@ -3577,6 +3693,13 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
 
     if (fCheckForPruning)
         FlushStateToDisk(chainparams, state, FLUSH_STATE_NONE); // we just allocated more disk space for block files
+
+    if (pindex->pprev == nullptr){
+        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+    }
+    else{
+        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
+    }
 
     return true;
 }
@@ -3831,6 +3954,11 @@ static FILE* OpenUndoFile(const CDiskBlockPos &pos, bool fReadOnly) {
     return OpenDiskFile(pos, "rev", fReadOnly);
 }
 
+/** Open a stake file (stk?????.dat) */
+static FILE* OpenStakeFile(const CDiskBlockPos &pos, bool fReadOnly) {
+    return OpenDiskFile(pos, "stk", fReadOnly);
+}
+
 fs::path GetBlockPosFilename(const CDiskBlockPos &pos, const char *prefix)
 {
     return GetDataDir() / "blocks" / strprintf("%s%05u.dat", prefix, pos.nFile);
@@ -4036,13 +4164,19 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
         if (nCheckLevel >= 1 && !CheckBlock(block, state, chainparams.GetConsensus(), true, true, true, pindex->nHeight))
             return error("%s: *** found bad block at %d, hash=%s (%s)\n", __func__,
                          pindex->nHeight, pindex->GetBlockHash().ToString(), FormatStateMessage(state));
-        // check level 2: verify undo validity
+        // check level 2: verify undo and stake validity
         if (nCheckLevel >= 2 && pindex) {
             CBlockUndo undo;
             CDiskBlockPos pos = pindex->GetUndoPos();
             if (!pos.IsNull()) {
                 if (!UndoReadFromDisk(undo, pos, pindex->pprev->GetBlockHash()))
                     return error("VerifyDB(): *** found bad undo data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
+            }
+            StakeNode stake;
+            pos = pindex->GetStakePos();
+            if (!pos.IsNull()) {
+                if (!StakeReadFromDisk(stake, pos, pindex->pprev->GetBlockHash()))
+                    return error("VerifyDB(): *** found bad stake data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
             }
         }
         // check level 3: check for inconsistencies during memory-only disconnect of tip blocks
@@ -4832,3 +4966,161 @@ public:
         mapBlockIndex.clear();
     }
 } instance_of_cmaincleanup;
+
+// maybeFetchTicketInfo loads and populates prunable ticket information in the
+// provided block node if needed.
+//
+// This function MUST be called with the chain state lock held (for writes).
+void MaybeFetchTicketInfo(CBlockIndex* pindex, const Consensus::Params& params)
+{
+    // Load and populate the tickets maturing in this block when they are not
+    // already loaded.
+    MaybeFetchNewTickets(pindex, params);
+
+    // Load and populate the vote and revocation information as needed.
+    if (pindex->ticketsVoted.empty() || pindex->ticketsRevoked.empty() || pindex->votes.empty()) {
+        CBlock blockAtIndex;
+        if(ReadBlockFromDisk(blockAtIndex, pindex, params)) {
+            pindex->PopulateTicketInfo(
+                FindSpentTicketsInBlock(blockAtIndex)
+                );
+        }
+    }
+}
+
+// maybeFetchNewTickets loads the list of newly maturing tickets for a given
+// node by traversing backwards through its parents until it finds the block
+// that contains the original tickets to mature if needed.
+//
+// This function MUST be called with the chain state lock held (for writes).
+void MaybeFetchNewTickets(CBlockIndex* pindex, const Consensus::Params& params)
+{
+    // Nothing to do if the tickets are already loaded.  It's important to make
+    // the distinction here that nil means the value was never looked up, while
+    // an empty slice means that there are no new tickets at this height.
+    if (pindex->newTickets != nullptr) {
+        return;
+    }
+
+    // No tickets in the live ticket pool are possible before stake enabled
+    // height.
+    if (pindex->nHeight < params.nStakeEnabledHeight) {
+        pindex->newTickets = std::make_shared<HashVector>();
+        return;
+    }
+
+    // Calculate block number for where new tickets matured from and retrieve
+    // its block from DB.
+    const auto matureBlockIndex = pindex->GetAncestor(pindex->nHeight - params.nTicketMaturity);
+    if (matureBlockIndex == nullptr) {
+        assert("Unable to obtian ancestor");
+        // return fmt.Errorf("unable to obtain ancestor %d blocks prior to %s "+
+        //     "(height %d)", b.chainParams.TicketMaturity, node.hash, node.height)
+    }
+
+    CBlock matureBlock;
+    if(ReadBlockFromDisk(matureBlock, pindex, params)) {
+        // Extract any ticket purchases from the block and cache them.
+        pindex->newTickets = std::make_shared<HashVector>();
+        for (const auto& tx : StakeSlice(matureBlock.vtx, TX_BuyTicket)){
+            pindex->newTickets->push_back(tx->GetHash());
+        }
+    }
+}
+
+std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::Params& params)
+{
+    // Return the cached immutable stake node when it is already loaded.
+    if (pindex->pstakeNode != nullptr)
+        return pindex->pstakeNode;
+
+    // Create the requested stake node from the parent stake node if it is
+    // already loaded as an optimization.
+
+    if  (pindex->pprev->pstakeNode != nullptr) {
+        // Populate the prunable ticket information as needed.
+        MaybeFetchTicketInfo(pindex,params);
+
+        auto stakeNode = pindex->pprev->pstakeNode->ConnectNode(
+            pindex->ticketsVoted, pindex->ticketsRevoked, *pindex->newTickets);
+        // stakeNode, err := node.parent.stakeNode.ConnectNode(node.lotteryIV(),
+        // 		node.ticketsVoted, node.ticketsRevoked, node.newTickets)
+        pindex->pstakeNode = stakeNode;
+
+        return stakeNode;
+    }
+
+    // -------------------------------------------------------------------------
+    // In order to create the stake node, it is necessary to generate a path to
+    // the stake node from the current tip, which always has the stake node
+    // loaded, and undo the effects of each block back to, and including, the
+    // fork point (which might be the requested node itself), and then, in the
+    // case the target node is on a side chain, replay the effects of each on
+    // the side chain.  In most cases, many of the stake nodes along the path
+    // will already be loaded, so, they are only regenerated and populated if
+    // they aren't.
+    //
+    // For example, consider the following scenario:
+    //   A -> B  -> C  -> D
+    //    \-> B' -> C'
+    //
+    // Further assume the requested stake node is for C'.  The code that follows
+    // will regenerate and populate (only for those not already loaded) the
+    // stake nodes for C, B, A, B', and finally, C'.
+    // -------------------------------------------------------------------------
+
+    // Start by undoing the effects from the current tip back to, and including
+    // the fork point per the above description.
+
+    auto tip = chainActive.Tip();
+    auto fork = chainActive.FindFork(pindex);
+
+    for (auto it = tip; it != nullptr && it != fork; it = it->pprev){
+        // No need to load nodes that are already loaded.
+        auto * prev = it->pprev;
+        if (prev == nullptr || prev->pstakeNode != nullptr)
+            continue;
+
+        // Generate the previous stake node by starting with the child stake
+        // node and undoing the modifications caused by the stake details in
+        // the previous block.
+        auto stakeNode = it->pstakeNode->DisconnectNode();
+        // stakeNode, err := n.stakeNode.DisconnectNode(prev.lotteryIV(), nil,
+        // nil, dbTx)
+        prev->pstakeNode = stakeNode;
+    }
+
+    // Nothing more to do if the requested node is the fork point itself.
+    if (pindex == fork)
+        return pindex->pstakeNode;
+
+    // The requested node is on a side chain, so replay the effects of the
+    // blocks up to the requested node per the above description.
+    //
+    // Note that the blocks between the fork point and the requested node are
+    // added to the slice from back to front so that they are attached in the
+    // appropriate order when iterating the slice.
+    std::vector<CBlockIndex*> attachNodes{static_cast<size_t>(pindex->nHeight - fork->nHeight), nullptr};
+    for (auto it = pindex; it != nullptr && it != fork; it = it->pprev) {
+        attachNodes[it->nHeight - fork->nHeight-1] = it;
+    }
+
+    for (auto it : attachNodes){
+        // No need to load nodes that are already loaded.
+        if (it->pstakeNode != nullptr)
+            continue;
+
+        // Populate the prunable ticket information as needed.
+        MaybeFetchTicketInfo(it,params);
+
+        // Generate the stake node by applying the stake details in the current
+        // block to the previous stake node.
+        auto stakeNode = it->pprev->pstakeNode->ConnectNode(
+            it->ticketsVoted, it->ticketsRevoked, *it->newTickets);
+        it->pstakeNode = stakeNode;
+        // 	stakeNode, err := n.parent.stakeNode.ConnectNode(n.lotteryIV(),
+        // 		n.ticketsVoted, n.ticketsRevoked, n.newTickets)
+    }
+
+    return pindex->pstakeNode;
+}

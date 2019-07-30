@@ -3,9 +3,11 @@
 
 #include <string>
 #include "script/pai_data_classifier.h"
+#include "stakenode.h"
 
 class CTransaction;
 class CScript;
+class CBlock;
 
 // ======================================================================
 // classification and structural validation of transaction outputs;
@@ -130,4 +132,5 @@ public:
     StakeSlice(std::vector<CTransactionRef> vtx, ETxClass txClass);
 };
 
+SpentTicketsInBlock FindSpentTicketsInBlock(const CBlock& block);
 #endif //PAICOIN_STAKE_STAKETX_H

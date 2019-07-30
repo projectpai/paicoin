@@ -30,7 +30,8 @@ public:
     int64_t nStakeDifficulty;
     uint32_t nVoteBits;
     uint32_t nTicketPoolSize;
-    std::array<char,6> ticketLotteryState;
+    uint48  ticketLotteryState;
+
 
     CBlockHeader()
     {

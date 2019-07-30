@@ -118,6 +118,11 @@ void CBlockIndex::BuildSkip()
         pskip = pprev->GetAncestor(GetSkipHeight(nHeight));
 }
 
+void CBlockIndex::PopulateTicketInfo(const SpentTicketsInBlock& spentTicketsInBlock)
+{
+    std::tie(ticketsVoted,ticketsRevoked,votes) = spentTicketsInBlock;
+}
+
 arith_uint256 GetBlockProof(const CBlockIndex& block)
 {
     arith_uint256 bnTarget;

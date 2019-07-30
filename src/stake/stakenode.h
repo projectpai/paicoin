@@ -2,6 +2,8 @@
 #define PAICOIN_STAKE_STAKENODE_H
 
 #include "stake/treap/tickettreap.h"
+#include "serialize.h"
+#include "chainparams.h"
 
 // UndoTicketData is the data for any ticket that has been spent, missed, or
 // revoked at some new height.  It is used to roll back the database in the
@@ -20,13 +22,29 @@
 //      from the live ticket bucket.
 //  4. No flags are set. The ticket was newly added to the live ticket
 //      bucket this block as a maturing ticket.
-struct UndoTicketData {
+class UndoTicketData 
+{
+public:
     uint256  ticketHash;
     uint32_t ticketHeight;
     bool missed;
     bool revoked;
     bool spent;
     bool expired;
+
+    UndoTicketData()
+    {}
+
+    UndoTicketData(const uint256& hash, uint32_t height, bool _missed, bool _revoked, bool _spent, bool _expired)
+    : ticketHash(hash), ticketHeight(height), missed(_missed), revoked(_revoked),spent(_spent), expired(_expired)
+    {}
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(ticketHash);
+    }
 };
 
 typedef std::vector<UndoTicketData> UndoTicketDataVector;
@@ -35,7 +53,16 @@ typedef std::vector<UndoTicketData> UndoTicketDataVector;
 // many blocks from the block in which they were included.
 typedef std::vector<uint256> HashVector;
 
-typedef std::array<char,6> StakeState;
+// VoteVersionTuple contains the extracted vote bits and version from votes
+// (SSGen).
+struct VoteVersion {
+    uint32_t Version;
+	uint16_t Bits;
+};
+typedef std::vector<VoteVersion> VoteVersionVector;
+typedef std::tuple<HashVector, HashVector, VoteVersionVector> SpentTicketsInBlock;
+
+typedef uint48 StakeState;
 
 // StakeNode is in-memory stake data for a node.  It contains a list of database
 // updates to be written in the case that the block is inserted in the main
@@ -52,16 +79,87 @@ class StakeNode final
 {
 private:
     uint32_t                    height;
-    TicketTreapPtr              liveTickets; 
-    TicketTreapPtr              missedTickets; 
-    TicketTreapPtr              revokedTickets; 
+    TicketTreapPtr              liveTickets;
+    TicketTreapPtr              missedTickets;
+    TicketTreapPtr              revokedTickets;
     UndoTicketDataVector        databaseUndoUpdate;
     HashVector                  databaseBlockTickets;
     HashVector                  nextWinners;
     StakeState                  finalState;
-    // params *chaincfg.Params
+    Consensus::Params           params;
 
 public:
+
+    void SetNull()
+    {
+        height = 0;
+        liveTickets = std::make_shared<TicketTreap>();
+        missedTickets = std::make_shared<TicketTreap>();
+        revokedTickets = std::make_shared<TicketTreap>();
+        databaseUndoUpdate = UndoTicketDataVector{};
+        databaseBlockTickets = HashVector{};
+        nextWinners = HashVector{};
+        finalState = StakeState{};
+        params = Consensus::Params{};
+    }
+
+    StakeNode(){
+        SetNull();
+    }
+
+    StakeNode(const Consensus::Params& consensus_params){
+        SetNull();
+        params = consensus_params;
+    }
+
+    StakeNode(const StakeNode& other)
+    : height(other.height),
+      liveTickets(other.liveTickets),
+      missedTickets(other.missedTickets),
+      revokedTickets(other.revokedTickets),
+      databaseUndoUpdate(other.databaseUndoUpdate),
+      databaseBlockTickets(other.databaseBlockTickets),
+      nextWinners(other.nextWinners),
+      finalState(other.finalState),
+      params(other.params)
+      {}
+
+    StakeNode(
+          uint32_t              _height,
+    const TicketTreapPtr&       _liveTickets,
+    const TicketTreapPtr&       _missedTickets,
+    const TicketTreapPtr&       _revokedTickets,
+    const UndoTicketDataVector& _databaseUndoUpdate,
+    const HashVector&           _databaseBlockTickets,
+    const HashVector&           _nextWinners,
+    // const StakeState&           _finalState,
+    const Consensus::Params&    _params
+    )
+    : height(_height),
+      liveTickets(_liveTickets),
+      missedTickets(_missedTickets),
+      revokedTickets(_revokedTickets),
+      databaseUndoUpdate(_databaseUndoUpdate),
+      databaseBlockTickets(_databaseBlockTickets),
+      nextWinners(_nextWinners),
+    //   finalState(_finalState),
+      params(_params)
+      {}
+
+    static std::unique_ptr<StakeNode> genesisNode(const Consensus::Params& params);
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        // READWRITE(height);
+        // READWRITE(liveTickets); //????
+        READWRITE(databaseUndoUpdate);
+        READWRITE(databaseBlockTickets);
+        // READWRITE(nextWinners);
+        // READWRITE(finalState);
+    }
+
     // UndoData returns the stored UndoTicketDataSlice used to remove this node
     // and restore it to the parent state.
     UndoTicketDataVector UndoData() const;
@@ -128,10 +226,12 @@ public:
 
     // ConnectNode connects a stake node to the node and returns a pointer
     // to the stake node of the child.
+    std::shared_ptr<StakeNode> ConnectNode(const HashVector& ticketsVoted, const HashVector& revokedTickets, const HashVector& newTickets) const;
     // func (sn *Node) ConnectNode(lotteryIV chainhash.Hash, ticketsVoted, revokedTickets, newTickets []chainhash.Hash) (*Node, error) {
 
     // DisconnectNode disconnects a stake node from the node and returns a pointer
     // to the stake node of the parent.
+    std::shared_ptr<StakeNode> DisconnectNode() const;
     // func (sn *Node) DisconnectNode(parentLotteryIV chainhash.Hash, parentUtds UndoTicketDataSlice, parentTickets []chainhash.Hash, dbTx database.Tx) (*Node, error) {
 };
 

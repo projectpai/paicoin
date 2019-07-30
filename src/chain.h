@@ -35,6 +35,7 @@ public:
     unsigned int nBlocks;      //!< number of blocks stored in file
     unsigned int nSize;        //!< number of used bytes of block file
     unsigned int nUndoSize;    //!< number of used bytes in the undo file
+    unsigned int nStakeSize;   //!< number of used bytes in the stake file
     unsigned int nHeightFirst; //!< lowest height of block in file
     unsigned int nHeightLast;  //!< highest height of block in file
     uint64_t nTimeFirst;       //!< earliest time of block in file
@@ -51,12 +52,15 @@ public:
         READWRITE(VARINT(nHeightLast));
         READWRITE(VARINT(nTimeFirst));
         READWRITE(VARINT(nTimeLast));
+        if (s.GetVersion() > 70015)
+            READWRITE(VARINT(nStakeSize));
     }
 
      void SetNull() {
          nBlocks = 0;
          nSize = 0;
          nUndoSize = 0;
+         nStakeSize = 0;
          nHeightFirst = 0;
          nHeightLast = 0;
          nTimeFirst = 0;
@@ -221,7 +225,7 @@ public:
     int64_t nStakeDifficulty;
     uint32_t nVoteBits;
     uint32_t nTicketPoolSize;
-    std::array<char,6> ticketLotteryState;
+    StakeState ticketLotteryState;
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t nSequenceId;
@@ -229,8 +233,11 @@ public:
     //! (memory only) Maximum nTime in the chain up to and including this block.
     unsigned int nTimeMax;
 
-    const StakeNode* pstakeNode;
-
+    std::shared_ptr<StakeNode> pstakeNode;
+    std::shared_ptr<HashVector> newTickets;
+    HashVector ticketsVoted;
+    HashVector ticketsRevoked;
+    VoteVersionVector votes;
 
     void SetNull()
     {
@@ -393,6 +400,8 @@ public:
     //! Efficiently find an ancestor of this block.
     CBlockIndex* GetAncestor(int height);
     const CBlockIndex* GetAncestor(int height) const;
+
+    void PopulateTicketInfo(const SpentTicketsInBlock& spentTicketsInBlock);
 };
 
 arith_uint256 GetBlockProof(const CBlockIndex& block);
@@ -400,7 +409,6 @@ arith_uint256 GetBlockProof(const CBlockIndex& block);
 int64_t GetBlockProofEquivalentTime(const CBlockIndex& to, const CBlockIndex& from, const CBlockIndex& tip, const Consensus::Params&);
 /** Find the forking point between two chain tips. */
 const CBlockIndex* LastCommonAncestor(const CBlockIndex* pa, const CBlockIndex* pb);
-
 
 /** Used to marshal pointers into hashes for db storage. */
 class CDiskBlockIndex : public CBlockIndex
