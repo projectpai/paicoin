@@ -996,8 +996,6 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
     // Simple block creation, nothing special yet:
     BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKeyCoinbase));
 
-    // int baseheight = 0;
-
     LOCK(cs_main);
     LOCK(::mempool.cs);
 
@@ -1214,4 +1212,218 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
     fCheckpointsEnabled = true;
 }
 
+BOOST_FIXTURE_TEST_CASE( FakeChainGenerator_stake_REGTEST, Generator)
+{
+    BOOST_CHECK_EQUAL(Tip()->nHeight, 0);
+    // Add the required first block.
+    //
+    //   genesis -> bfb
+    // g.CreatePremineBlock("bfb", 0)
+    // g.AssertTipHeight(1)
+    // g.AcceptTipBlock()
+
+    // ---------------------------------------------------------------------
+    // Generate enough blocks to have mature coinbase outputs to work with.
+    //
+    //   genesis -> bfb -> bm0 -> bm1 -> ... -> bm#
+    // ---------------------------------------------------------------------
+    for (int i = 0; i < COINBASE_MATURITY; ++i) {
+        const auto& b = NextBlock("bcm",nullptr,{});
+        SaveCoinbaseOut(b);
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+    }
+
+    BOOST_CHECK_EQUAL(Tip()->nHeight, COINBASE_MATURITY);
+
+    // we will use mempool to add stake transaction into the block
+    LOCK(cs_main);
+    LOCK(::mempool.cs);
+    fCheckpointsEnabled = false;
+
+    // buy one ticket
+    {
+        const auto& ticketOuts = OldestCoinOuts();
+        BOOST_CHECK_EQUAL(ticketOuts.size(),1);
+        const auto& b = NextBlock("bsp", nullptr, ticketOuts);
+        SaveAllSpendableOuts(b);
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+        //coinbase tx + the ticket purchase tx
+        BOOST_CHECK_EQUAL(b.vtx.size(),2);
+    }
+
+    // spend a coinbase on a regular tx
+    {
+        const auto& spend = OldestCoinOuts();
+        BOOST_CHECK_EQUAL(spend.size(),1);
+        const auto& b = NextBlock("bsp", &spend.front() ,{});
+        SaveAllSpendableOuts(b);
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+        //coinbase tx + the spend tx
+        BOOST_CHECK_EQUAL(b.vtx.size(),2);
+    }
+
+    // use munger to buy max number of Tickets using a split transaction first to make multiple outs
+    {
+        const auto& b = NextBlock("bsp", nullptr, {}, [this](const CBlock& b){
+            std::vector<CMutableTransaction> txns;
+            const auto& spend = OldestCoinOuts();
+            const auto& ticketPrice = NextRequiredStakeDifficulty();
+            const auto& ticketFee = CAmount(2000);
+            const auto& splitAmounts = std::vector<CAmount>(ConsensusParams().nTicketsPerBlock - 1, ticketPrice + ticketFee);
+            const auto& splitSpendTx = CreateSplitSpendTx(spend.front(),splitAmounts,ticketFee);
+            txns.push_back(splitSpendTx);
+            for (int i = 0; i <  splitSpendTx.vout.size(); ++i) {
+                const auto& purchaseTx =  CreateTicketPurchaseTx(MakeSpendableOut(splitSpendTx,i), ticketPrice, ticketFee);
+                txns.push_back(purchaseTx);
+            }
+            return txns;
+        });
+        SaveCoinbaseOut(b); //calling SaveAllSpendableOuts here would also save the already spent outs of the split tx
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+        //coinbase tx + the split tx + ticket purchases tx
+        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + 1 + ConsensusParams().nTicketsPerBlock);
+    } 
+
+    auto PurchaseMaxTickets = [this](const CBlock& b)
+    {
+        std::vector<CMutableTransaction> txns;
+        const auto& spend = OldestCoinOuts();
+        const auto& ticketPrice = NextRequiredStakeDifficulty();
+        const auto& ticketFee = CAmount(2);
+        auto purchaseTx =  CreateTicketPurchaseTx(spend.front(), ticketPrice, ticketFee);
+        txns.push_back(purchaseTx);
+        while(txns.size() < ConsensusParams().nMaxFreshStakePerBlock) {
+            purchaseTx =  CreateTicketPurchaseTx(MakeSpendableOut(purchaseTx,ticketChangeOutputIndex), ticketPrice, ticketFee);
+            txns.push_back(purchaseTx);
+        }
+        return txns;
+    };
+
+    // ---------------------------------------------------------------------
+    // Generate enough blocks to reach the stake enabled height while
+    // creating ticket purchases that spend from the coinbases matured
+    // above.  This will also populate the pool of immature tickets.
+    //
+    //   ... -> bm# ... -> bse0 -> bse1 -> ... -> bse#
+    // ---------------------------------------------------------------------
+    while (Tip()->nHeight < ConsensusParams().nStakeEnabledHeight) {
+        const auto& b = NextBlock("bse", nullptr, {}, PurchaseMaxTickets);
+        SaveCoinbaseOut(b); //calling SaveAllSpendableOuts here would also save the already spent outs of the split tx
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+        //coinbase tx + ticket purchases tx
+        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + ConsensusParams().nMaxFreshStakePerBlock );
+    }
+    BOOST_CHECK_EQUAL(Tip()->nHeight, ConsensusParams().nStakeEnabledHeight);
+
+    // ---------------------------------------------------------------------
+    // Generate enough blocks to reach the stake validation height while
+    // continuing to purchase tickets using the coinbases matured above and
+    // allowing the immature tickets to mature and thus become live.
+    //
+    //   ... -> bse# -> bsv0 -> bsv1 -> ... -> bsv#
+    // ---------------------------------------------------------------------
+    while (Tip()->nHeight < ConsensusParams().nStakeValidationHeight - 1) { //stop just before StakeValidationHeight we this block doesn't add votes
+        const auto& b = NextBlock("bsv", nullptr, {}, PurchaseMaxTickets);
+        SaveCoinbaseOut(b); //calling SaveAllSpendableOuts here would also save the already spent outs of the split tx
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+        //coinbase tx + ticket purchases tx
+        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + ConsensusParams().nMaxFreshStakePerBlock );
+    }
+    BOOST_CHECK_EQUAL(Tip()->nHeight, ConsensusParams().nStakeValidationHeight - 1);
+
+    // we should see votes being added to the block
+    {
+        const auto& ticketOuts = OldestCoinOuts();
+        const auto& b = NextBlock("bsm",nullptr, ticketOuts);
+        SaveAllSpendableOuts(b);
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+        //coinbase tx + all winning votes + ticket purchases tx
+        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + Tip()->pstakeNode->Winners().size() + ticketOuts.size() );
+    }
+
+    auto DropSomeVotes = [this](const CBlock& b)
+    {
+        std::vector<CMutableTransaction> txns;
+        const auto& numberOfWinners = Tip()->pstakeNode->Winners().size();
+        const auto& majority = (ConsensusParams().nTicketsPerBlock / 2) + 1;
+
+        BOOST_CHECK_GE(b.vtx.size(), 1 + numberOfWinners);
+        for (int i = 1; i <= majority; ++i) // skip the coinbase, it is always kept and copy enough votes to have the majority
+        {
+            const auto& tx = *b.vtx[i];
+            const auto& txClass = ParseTxClass(tx);
+            BOOST_CHECK_EQUAL(txClass, TX_Vote);
+            txns.push_back(*b.vtx[i]);
+        }
+        for (int i = 1 + numberOfWinners; i < b.vtx.size(); ++i) //copy the rest of txns
+        {
+            const auto& tx = *b.vtx[i];
+            const auto& txClass = ParseTxClass(tx);
+            BOOST_CHECK_NE(txClass, TX_Vote);
+            txns.push_back(*b.vtx[i]);
+        }
+
+        return txns;
+    };
+
+    // build a block where only the majority of votes are kept
+    {
+        const auto& ticketSpends = OldestCoinOuts();
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends, DropSomeVotes);
+        SaveAllSpendableOuts(b);
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+        //coinbase tx + a majority of votes + ticket purchases tx
+        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + ((ConsensusParams().nTicketsPerBlock / 2) + 1) + ticketSpends.size() );
+    }
+
+    auto PurchaseMaxTicketsMinVotes = [this](const CBlock& b)
+    {
+        std::vector<CMutableTransaction> txns;
+        const auto& winners = Tip()->pstakeNode->Winners();
+        const auto& majority = (ConsensusParams().nTicketsPerBlock / 2) + 1;
+        for(int i = 0; txns.size() < majority && i < winners.size(); ++i) {
+            const auto& voteTx = CreateVoteTx(*Tip(), winners[i]);
+            txns.push_back(voteTx);
+        }
+        const auto& spend = OldestCoinOuts();
+        const auto& ticketPrice = NextRequiredStakeDifficulty();
+        const auto& ticketFee = CAmount(2);
+        auto purchaseTx =  CreateTicketPurchaseTx(spend.front(), ticketPrice, ticketFee);
+        txns.push_back(purchaseTx);
+        while(txns.size() < ConsensusParams().nMaxFreshStakePerBlock + majority) {
+            purchaseTx =  CreateTicketPurchaseTx(MakeSpendableOut(purchaseTx,ticketChangeOutputIndex), ticketPrice, ticketFee);
+            txns.push_back(purchaseTx);
+        }
+        return txns;
+    };
+
+    // re-construct only a majority of votes and purchase max tickets
+    {
+        const auto& b = NextBlock("bsm", nullptr, {}, PurchaseMaxTicketsMinVotes);
+        SaveCoinbaseOut(b); //calling SaveAllSpendableOuts here would also save the already spent outs of the split tx
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+        //coinbase tx + a majority of votes + ticket purchases tx
+        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + ((ConsensusParams().nTicketsPerBlock / 2) + 1) + ConsensusParams().nMaxFreshStakePerBlock );
+    }
+
+    const auto& heightExpiredBecomeMissed = ConsensusParams().nTicketExpiry + ConsensusParams().nStakeEnabledHeight;
+    while (Tip()->nHeight < heightExpiredBecomeMissed + 10 /*add to pass the expiration height*/)
+    {
+        const auto& ticketSpends = OldestCoinOuts();
+        const auto& nWinners = Tip()->pstakeNode->Winners().size(); 
+        const auto& nRevocations = Tip()->pstakeNode->MissedTickets().size(); 
+        // check that we have revocations after the expected height
+        BOOST_CHECK(nRevocations > 0 || Tip()->nHeight < heightExpiredBecomeMissed);
+
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends);
+        SaveCoinbaseOut(b); //calling SaveAllSpendableOuts here would also save the already spent outs of the split tx
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+
+        // coinbase tx + all winning votes + all missed (revocations) + ticket purchases tx
+        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + nWinners + nRevocations + ticketSpends.size() );
+    }
+
+    fCheckpointsEnabled = true;
+
+}
 BOOST_AUTO_TEST_SUITE_END()

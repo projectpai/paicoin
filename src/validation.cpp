@@ -3118,7 +3118,7 @@ CAmount calcNextRequiredStakeDifficulty(const CBlock& block, const CBlockIndex *
     if (blockHeight >= params.GetConsensus().nStakeValidationHeight)
         return 1 * COIN;
     else
-        return 0;
+        return params.GetConsensus().nMinimumStakeDiff;
 }
 
 static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, int nBlockHeight, bool fCheckPOW = true)
