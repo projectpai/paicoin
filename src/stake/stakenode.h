@@ -87,7 +87,7 @@ private:
     HashVector                  databaseBlockTickets;
     HashVector                  nextWinners;
     StakeState                  finalState;
-    Consensus::Params           params;
+    const Consensus::Params&    params;
 
 public:
 
@@ -101,16 +101,12 @@ public:
         databaseBlockTickets = HashVector{};
         nextWinners = HashVector{};
         finalState = StakeState{};
-        params = Consensus::Params{};
     }
 
-    StakeNode(){
+    StakeNode(const Consensus::Params& consensus_params)
+      : params(consensus_params)
+    {
         SetNull();
-    }
-
-    StakeNode(const Consensus::Params& consensus_params){
-        SetNull();
-        params = consensus_params;
     }
 
     StakeNode(const StakeNode& other)
@@ -123,7 +119,9 @@ public:
       nextWinners(other.nextWinners),
       finalState(other.finalState),
       params(other.params)
-      {}
+    {
+        ;
+    }
 
     StakeNode(
           uint32_t              _height,
@@ -145,7 +143,9 @@ public:
       nextWinners(_nextWinners),
     //   finalState(_finalState),
       params(_params)
-      {}
+    {
+        ;
+    }
 
     static std::unique_ptr<StakeNode> genesisNode(const Consensus::Params& params);
 
@@ -229,7 +229,7 @@ public:
 
     // DisconnectNode disconnects a stake node from the node and returns a pointer
     // to the stake node of the parent.
-    std::shared_ptr<StakeNode> DisconnectNode() const;
+    std::shared_ptr<StakeNode> DisconnectNode(const UndoTicketDataVector& parentUtds, const HashVector& parentTickets) const;
     // func (sn *Node) DisconnectNode(parentLotteryIV chainhash.Hash, parentUtds UndoTicketDataSlice, parentTickets []chainhash.Hash, dbTx database.Tx) (*Node, error) {
 };
 

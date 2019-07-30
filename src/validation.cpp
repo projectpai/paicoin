@@ -1649,14 +1649,14 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
         return DISCONNECT_FAILED;
     }
 
-    StakeNode stakeNode;
-    pos = pindex->GetStakePos();
-    if (!pos.IsNull()) {
-        if (!StakeReadFromDisk(stakeNode, pos, pindex->pprev->GetBlockHash())) {
-            error("DisconnectBlock(): failure reading stake data");
-            return DISCONNECT_FAILED;
-        }
-    }
+    // StakeNode stakeNode;
+    // pos = pindex->GetStakePos();
+    // if (!pos.IsNull()) {
+    //     if (!StakeReadFromDisk(stakeNode, pos, pindex->pprev->GetBlockHash())) {
+    //         error("DisconnectBlock(): failure reading stake data");
+    //         return DISCONNECT_FAILED;
+    //     }
+    // }
     //TODO use the read StakeNode info
 
     // undo transactions in reverse order
@@ -2096,13 +2096,13 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         setDirtyBlockIndex.insert(pindex);
     }
 
-    auto stakeNode = *FetchStakeNode(pindex, chainparams.GetConsensus());
+    // auto stakeNode = *FetchStakeNode(pindex, chainparams.GetConsensus());
     if(pindex->GetStakePos().IsNull()){
         CDiskBlockPos _pos;
 
-        if (!FindStakePos(state, pindex->nFile, _pos, ::GetSerializeSize(stakeNode, SER_DISK, CLIENT_VERSION) + 40))
+        if (!FindStakePos(state, pindex->nFile, _pos, ::GetSerializeSize(*pindex->pstakeNode, SER_DISK, CLIENT_VERSION) + 40))
             return error("ConnectBlock(): FindStakePos failed");
-        if (!StakeWriteToDisk(stakeNode, _pos, pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash(), chainparams.MessageStart()))
+        if (!StakeWriteToDisk(*pindex->pstakeNode, _pos, pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash(), chainparams.MessageStart()))
             return AbortNode(state, "Failed to write stake data");
 
         // update nStakePos in block index
@@ -3133,21 +3133,21 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
 
     // Before stake validation begins, a block must not contain any votes or revocations, its vote bits
     // must be 0x0001, and its ticket lottery state must be all zeroes.
-    if (nBlockHeight < consensusParams.nStakeValidationHeight) {
-        if (numVotes > 0)
-            return state.DoS(50, false, REJECT_INVALID, "votes-too-early", false, "vote transactions present before stake validation time");
+    // if (nBlockHeight < consensusParams.nStakeValidationHeight) {
+    //     if (numVotes > 0)
+    //         return state.DoS(50, false, REJECT_INVALID, "votes-too-early", false, "vote transactions present before stake validation time");
 
-        if (numRevocations > 0)
-            return state.DoS(50, false, REJECT_INVALID, "revocations-too-early", false, "revocation transactions present before stake validation time");
+    //     if (numRevocations > 0)
+    //         return state.DoS(50, false, REJECT_INVALID, "revocations-too-early", false, "revocation transactions present before stake validation time");
 
-        if (block.nVoteBits != 1)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
-            return state.DoS(50, false, REJECT_INVALID, "voteBits-too-early", false, "voteBits present before stake validation time");
+    //     if (block.nVoteBits != 1)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
+    //         return state.DoS(50, false, REJECT_INVALID, "voteBits-too-early", false, "voteBits present before stake validation time");
 
-        StakeState earlyLotteryState;
-        std::fill(earlyLotteryState.begin(), earlyLotteryState.end(), 0);
-        if (block.ticketLotteryState != earlyLotteryState)
-            return state.DoS(50, false, REJECT_INVALID, "lottery-too-early", false, "ticket lottery state non-zero before stake validation time");
-    }
+    //     StakeState earlyLotteryState;
+    //     std::fill(earlyLotteryState.begin(), earlyLotteryState.end(), 0);
+    //     if (block.ticketLotteryState != earlyLotteryState)
+    //         return state.DoS(50, false, REJECT_INVALID, "lottery-too-early", false, "ticket lottery state non-zero before stake validation time");
+    // }
 
     // Check that the number of votes in a block is within limits
     if (nBlockHeight >= consensusParams.nStakeValidationHeight)
@@ -3715,7 +3715,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     if (fCheckForPruning)
         FlushStateToDisk(chainparams, state, FLUSH_STATE_NONE); // we just allocated more disk space for block files
 
-    if (pindex->pprev == nullptr){
+    if (pindex->pprev == nullptr) {
         pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
     }
     else{
@@ -4193,7 +4193,7 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
                 if (!UndoReadFromDisk(undo, pos, pindex->pprev->GetBlockHash()))
                     return error("VerifyDB(): *** found bad undo data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
             }
-            StakeNode stake;
+            StakeNode stake(chainparams.GetConsensus());
             pos = pindex->GetStakePos();
             if (!pos.IsNull()) {
                 if (!StakeReadFromDisk(stake, pos, pindex->pprev->GetBlockHash()))
@@ -4499,6 +4499,9 @@ bool LoadGenesisBlock(const CChainParams& chainparams)
         if (!WriteBlockToDisk(block, blockPos, chainparams.MessageStart()))
             return error("%s: writing genesis block to disk failed", __func__);
         CBlockIndex *pindex = AddToBlockIndex(block);
+        assert (pindex->pprev == nullptr);
+        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+        assert(pindex->pstakeNode != nullptr);
         if (!ReceivedBlockTransactions(block, state, pindex, blockPos, chainparams.GetConsensus()))
             return error("%s: genesis block not accepted", __func__);
     } catch (const std::runtime_error& e) {
@@ -5034,18 +5037,21 @@ void MaybeFetchNewTickets(CBlockIndex* pindex, const Consensus::Params& params)
     // its block from DB.
     const auto matureBlockIndex = pindex->GetAncestor(pindex->nHeight - params.nTicketMaturity);
     if (matureBlockIndex == nullptr) {
-        assert("Unable to obtian ancestor");
+        assert(!"Unable to obtian ancestor");
         // return fmt.Errorf("unable to obtain ancestor %d blocks prior to %s "+
         //     "(height %d)", b.chainParams.TicketMaturity, node.hash, node.height)
     }
 
     CBlock matureBlock;
-    if(ReadBlockFromDisk(matureBlock, pindex, params)) {
+    if(ReadBlockFromDisk(matureBlock, matureBlockIndex, params)) {
         // Extract any ticket purchases from the block and cache them.
         pindex->newTickets = std::make_shared<HashVector>();
         for (const auto& tx : StakeSlice(matureBlock.vtx, TX_BuyTicket)){
             pindex->newTickets->push_back(tx->GetHash());
         }
+    }
+    else {
+        assert(!"Could not read block from disk");
     }
 }
 
@@ -5105,7 +5111,9 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
         // Generate the previous stake node by starting with the child stake
         // node and undoing the modifications caused by the stake details in
         // the previous block.
-        auto stakeNode = it->pstakeNode->DisconnectNode();
+        // const auto parentUtds = this->databaseUndoUpdate; //TODO get correct one from height-1
+        // const auto parentTickets = this->databaseBlockTickets; //TODO get correct one from height-1
+        auto stakeNode = it->pstakeNode->DisconnectNode(prev->pstakeNode->UndoData(), prev->pstakeNode->NewTickets());
         // stakeNode, err := n.stakeNode.DisconnectNode(prev.lotteryIV(), nil,
         // nil, dbTx)
         prev->pstakeNode = stakeNode;

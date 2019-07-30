@@ -295,7 +295,121 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const HashVector& ticketsVoted
     return connectedNode;
 }
 
-std::shared_ptr<StakeNode> StakeNode::DisconnectNode() const
+std::shared_ptr<StakeNode> StakeNode::DisconnectNode(const UndoTicketDataVector& parentUtds, const HashVector& parentTickets) const
 {
-    return nullptr;
+    // Edge case for the parent being the genesis block.
+    if (this->height == 1) {
+        return genesisNode(this->params);
+    }
+
+	// The undo ticket slice is normally stored in memory for the most
+	// recent blocks and the sidechain, but it may be the case that it
+	// is missing because it's in the mainchain and very old (thus
+	// outside the node cache).  In this case, restore this data from
+	// disk.
+	// if parentUtds == nil || parentTickets == nil {
+	// 	if dbTx == nil {
+	// 		return nil, stakeRuleError(ErrMissingDatabaseTx, "needed to "+
+	// 			"look up undo data in the database, but no dbtx passed")
+	// 	}
+
+	// 	var err error
+	// 	parentUtds, err = ticketdb.DbFetchBlockUndoData(dbTx, node.height-1)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	parentTickets, err = ticketdb.DbFetchNewTickets(dbTx, node.height-1)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+
+    const auto restoredNode =  std::make_shared<StakeNode>(
+        this->height - 1,
+        this->liveTickets,// TODO now it is a pointer to liveTickets, it needs not mutate that
+        this->missedTickets,
+        this->revokedTickets,
+        parentUtds,
+        parentTickets,
+        HashVector{},
+        this->params);
+
+    // Iterate through the block undo data and write all database
+    // changes to the respective treap, reversing all the changes
+    // added when the child block was added to the chain.
+    auto stateBuffer = HashVector{};
+    for (const auto& it : this->databaseUndoUpdate) {
+        const auto& k = it.ticketHash;
+        auto v = std::make_shared<Value>(
+            it.ticketHeight,
+            it.missed,
+            it.revoked,
+            it.spent,
+            it.expired
+        );
+
+
+        // All flags are unset; this is a newly added ticket.
+        // Remove it from the list of live tickets.
+        if (!it.missed && !it.revoked && !it.spent) {
+            // TODO check every deleteKey/put usage
+            restoredNode->liveTickets = std::make_shared<TicketTreap>(restoredNode->liveTickets->deleteKey(k));
+        }
+
+        // The ticket was missed and revoked. It needs to
+        // be moved from the revoked ticket treap to the
+        // missed ticket treap.
+        else if ( it.missed && it.revoked) {
+            v->revoked = false;
+            restoredNode->revokedTickets = std::make_shared<TicketTreap>(restoredNode->revokedTickets->deleteKey(k));
+            restoredNode->missedTickets = std::make_shared<TicketTreap>(restoredNode->missedTickets->put(k,v));
+        }
+
+        // The ticket was missed and was previously live.
+        // Remove it from the missed tickets bucket and
+        // move it to the live tickets bucket.
+        else if ( it.missed && !it.revoked) {
+            // Expired tickets could never have been
+            // winners.
+            if (!it.expired) {
+                restoredNode->nextWinners.push_back(it.ticketHash);
+                stateBuffer.push_back(it.ticketHash);
+            } else {
+                v->expired = false;
+            }
+
+            v->missed = false;
+            restoredNode->missedTickets = std::make_shared<TicketTreap>(restoredNode->missedTickets->deleteKey(k));
+            restoredNode->liveTickets = std::make_shared<TicketTreap>(restoredNode->liveTickets->put(k,v));
+        }
+
+        // The ticket was spent. Reinsert it into the live
+        // tickets treap and add it to the list of next
+        // winners.
+        else if (it.spent) {
+            v->spent = false;
+            restoredNode->nextWinners.push_back(it.ticketHash);
+            stateBuffer.push_back(it.ticketHash);
+            restoredNode->liveTickets = std::make_shared<TicketTreap>(restoredNode->liveTickets->put(k,v));
+        }
+
+        else {
+            assert(!"unknown ticket state in undo data");
+        }
+    }
+
+    if (this->height >= this->params.nStakeValidationHeight) {
+        std::string strMsg = "Very deterministic message";
+        uint256 lotteryIV = Hash(strMsg.begin(), strMsg.end()); //TODO pass this a a parameter
+        auto prng = Hash256PRNG(lotteryIV);
+        
+        const auto& idxs = prng.FindTicketIdxs(restoredNode->liveTickets->len(), restoredNode->params.nTicketsPerBlock);
+        stateBuffer.push_back(prng.StateHash());
+        //TODO implement Hash48 or find another solution to obtain the final state
+        const auto& hash = Hash160(stateBuffer.begin(),stateBuffer.end()); 
+        restoredNode->finalState = uint48();
+    }
+
+    return restoredNode;
 }
