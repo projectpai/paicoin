@@ -175,6 +175,63 @@ UniValue getnewaddress(const JSONRPCRequest& request)
     return EncodeDestination(keyID);
 }
 
+UniValue createnewaccount(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error{
+            "createnewaccount ( \"account\" )\n"
+            "\nCreates a new account.\n"
+            "The wallet must be unlocked for this request to succeed.\n"
+            "\nArguments:\n"
+            "1. \"account\"        (string) The account name for the address to be linked to.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("createnewaccount", "A")
+            + HelpExampleRpc("createnewaccount", "A")
+        };
+
+    if (request.params[0].isNull()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The account name must be provided");
+    }
+    getnewaddress(request);
+
+    return NullUniValue;
+}
+
+UniValue renameaccount(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 2)
+        throw std::runtime_error{
+            "renameaccount ( \"oldAccountName newAccountName\" )\n"
+            "\nRenames an account.\n"
+            "The wallet must be unlocked for this request to succeed.\n"
+            "\nArguments:\n"
+            "1. \"oldAccountName\"        (string) The existing account name to be renamed.\n"
+            "2. \"newAccountName\"        (string) The account new name.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("renamenewaccount", "spending savings")
+            + HelpExampleRpc("createnewaccount", "spending savings")
+        };
+
+    if (request.params[0].isNull()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The existing account name must be provided");
+    }
+    if (request.params[1].isNull()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The new account name must be provided");
+    }
+
+    auto oldAccountName = request.params[0].get_str();
+    auto newAccountName = request.params[1].get_str();
+
+    LOCK2(cs_main, pwallet->cs_wallet);
+    pwallet->RenameAddressBook(oldAccountName, newAccountName);
+    return NullUniValue;
+}
+
 CTxDestination GetAccountAddress(CWallet* const pwallet, std::string strAccount, bool bForceNew=false)
 {
     CPubKey pubKey;
@@ -4208,6 +4265,8 @@ static const CRPCCommand commands[] =
     { "wallet",             "getaddressesbyaccount",    &getaddressesbyaccount,    {"account"} },
     { "wallet",             "getbalance",               &getbalance,               {"account","minconf","include_watchonly"} },
     { "wallet",             "getnewaddress",            &getnewaddress,            {"account"} },
+    { "wallet",             "createnewaccount",         &createnewaccount,         {"account"} },
+    { "wallet",             "renameaccount",            &renameaccount,            {"oldAccount", "newAccount"} },
     { "wallet",             "getrawchangeaddress",      &getrawchangeaddress,      {} },
     { "wallet",             "getreceivedbyaccount",     &getreceivedbyaccount,     {"account","minconf"} },
     { "wallet",             "getreceivedbyaddress",     &getreceivedbyaddress,     {"address","minconf"} },
