@@ -1147,3 +1147,71 @@ UniValue importmulti(const JSONRPCRequest& mainRequest)
 
     return response;
 }
+
+UniValue importscript(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
+        throw std::runtime_error{
+            "importscript \"script\" ( rescan scanfrom )\n"
+            "\nImport a redeem script.\n"
+            "\nArguments:\n"
+            "1. \"script\"           (string, required)                             The hex-encoded script to import\n"
+            "2. rescan               (boolean, optional, default=true)              Rescans the blockchain (since the genesis block, or scanfrom block) for outputs controlled by the imported key\n"
+            "3. scanfrom             (numeric, optional, default=genesis block)     Block number for where to start rescan from\n"
+            "\nNote: This call can take minutes to complete if rescan is true.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("importscript", "\"myscript\" true 5") +
+            "\nAs a JSON-RPC call\n"
+            + HelpExampleRpc("importscript", "\"myscript\" true 5")
+        };
+
+    auto script = request.params[0].get_str();
+    if (script.empty()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Script cannot be empty");
+    }
+    if (!IsHex(script)) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMS, "Script is not correctly hex-encoded");
+    }
+
+    // Whether to perform rescan after import
+    auto rescan = true;
+    if (!request.params[1].isNull())
+        rescan = request.params[1].get_bool();
+    if (rescan && fPruneMode)
+        throw JSONRPCError(RPCErrorCode::WALLET_ERROR, "Rescan is disabled in pruned mode");
+    
+    int scanfrom = chainActive.Genesis()->nHeight;
+    if (rescan && !request.params[2].isNull()) {
+        scanfrom = request.params[2].get_int();
+        if (scanfrom < chainActive.Genesis()->nHeight || scanfrom > chainActive.Tip()->nHeight) {
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The scanfrom parameter should be a valid block height");
+        }
+    }
+
+    {
+        LOCK2(cs_main, pwallet->cs_wallet);
+
+        const auto data = ParseHex(request.params[0].get_str());
+        ImportScript(pwallet, CScript(std::begin(data), std::end(data)), "", true);
+    }
+
+    if (rescan)
+    {
+        UniValue startHeight{UniValue::VNUM};
+        startHeight.setInt(scanfrom);
+
+        UniValue params{UniValue::VARR};
+        params.push_back(std::make_pair("start_height", startHeight));
+
+        JSONRPCRequest rescanchain;
+        rescanchain.params = params;
+        rescanblockchain(rescanchain);
+    }
+
+    return NullUniValue;
+}

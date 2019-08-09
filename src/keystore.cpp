@@ -64,6 +64,20 @@ bool CBasicKeyStore::GetCScript(const CScriptID &hash, CScript& redeemScriptOut)
     return false;
 }
 
+std::vector<std::pair<CScriptID, CScript>> CBasicKeyStore::GetAllCScripts() const
+{
+    LOCK(cs_KeyStore);
+
+    std::vector<std::pair<CScriptID, CScript>> allScripts;
+    allScripts.reserve(mapScripts.size());
+
+    for (auto const& scriptIDToScript : mapScripts) {
+        allScripts.push_back(scriptIDToScript);
+    }
+
+    return allScripts;
+}
+
 static bool ExtractPubKey(const CScript &dest, CPubKey& pubKeyOut)
 {
     //TODO: Use Solver to extract this?
