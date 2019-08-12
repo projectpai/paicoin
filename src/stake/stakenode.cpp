@@ -2,6 +2,14 @@
 #include "stake/hash256prng.h"
 #include "hash.h"
 
+std::string StakeStateToString(const StakeState& stakeState)
+{
+    std::string str;
+    for (auto c : stakeState)
+        str += std::to_string((int)c) + " ";
+    return str;
+}
+
 UndoTicketDataVector StakeNode::UndoData() const
 {
     return databaseUndoUpdate;
@@ -128,16 +136,6 @@ HashVector StakeNode::Winners() const
 StakeState StakeNode::FinalState() const
 {
     return finalState;
-}
-
-std::string StakeNode::FinalStateToString() const
-{
-    std::string str;
-
-    for (auto c : finalState)
-        str += std::to_string((int)c);
-
-    return str;
 }
 
 uint32_t StakeNode::Height() const

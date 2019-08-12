@@ -263,7 +263,7 @@ public:
         nBits          = 0;
         nNonce         = 0;
         nStakeDifficulty = 0;
-        nVoteBits      = 0;
+        nVoteBits      = 1;
         nTicketPoolSize = 0;
         std::fill(ticketLotteryState.begin(), ticketLotteryState.end(), 0);
     }
