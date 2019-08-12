@@ -1850,6 +1850,15 @@ void static BuildAddrIndex(const CScript &script, const CExtDiskTxPos &pos, std:
     }
 }
 
+bool AddressExistsInIndex(const std::string& address)
+{
+    CTxDestination addrAsDest = DecodeDestination(address);
+
+    std::set<CExtDiskTxPos> addressPositions;
+    auto addressFound = FindTransactionsByDestination(addrAsDest, addressPositions);
+    return (addressFound && !addressPositions.empty());
+}
+
 /** Apply the effects of this block (with given index) on the UTXO set represented by coins.
  *  Validity checks that depend on the UTXO set are also done; ConnectBlock()
  *  can fail if those validity checks fail (among other reasons). */

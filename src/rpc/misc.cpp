@@ -10,6 +10,7 @@
 #include <key_io.h>
 #include <validation.h>
 #include <httpserver.h>
+#include <txmempool.h>
 #include <net.h>
 #include <netbase.h>
 #include <rpc/blockchain.h>
@@ -28,6 +29,7 @@
 #include <iterator>
 #include <string>
 #include <bitset>
+#include <boost/dynamic_bitset.hpp>
 #ifdef HAVE_MALLOC_INFO
 #include <malloc.h>
 #endif
@@ -94,11 +96,21 @@ UniValue existsaddress(const JSONRPCRequest& request)
             + HelpExampleRpc("existsaddress", "\"1PSSGeFHDnKNxiEyFrD1wcEaHr9hrQDDWc\"")
         };
 
-    UniValue ret{UniValue::VBOOL};
+    auto addrStr = request.params[0].get_str();
+    auto addrExists = AddressExistsInIndex(addrStr);
 
-    //TODO add implementation
+    UniValue ret{UniValue::VBOOL};
+    ret.setBool(addrExists);
 
     return ret;
+}
+
+std::string BitsetToHexStr(const boost::dynamic_bitset<uint8_t>& bitset)
+{
+    std::vector<uint8_t> bitsetVec;
+    boost::to_block_range(bitset, std::back_inserter(bitsetVec));
+
+    return HexStr(bitsetVec.data(), bitsetVec.data() + bitsetVec.size());
 }
 
 UniValue existsaddresses(const JSONRPCRequest& request)
@@ -118,15 +130,22 @@ UniValue existsaddresses(const JSONRPCRequest& request)
                                                   "{ \"address\": \"<my 2nd address>\" }]'")
         };
 
-    //TODO add implementation
+    auto addresses = request.params[0].get_array();
+    auto const& addrValues = addresses.getValues();
+    auto numValues = addrValues.size();
+    boost::dynamic_bitset<uint8_t> existsAddresses(addresses.size());
 
-    //store bool results in a bitset
-    //convert bitset to char[]
-    //and use HexStr from utilstrencodings.h to Encode the char[] to hex
-    //then return it as string
+    for (auto addrIndex = 0u; addrIndex < numValues; ++addrIndex) {
+        auto const& addrKV = addrValues[addrIndex];
+        auto const& addr = addrKV.getValues()[0].get_str();
 
-    UniValue ret{UniValue::VSTR, "00"};
+        bool addrExists = AddressExistsInIndex(addr);
+        existsAddresses[addrIndex] = addrExists ? 1 : 0;
+    }
 
+    auto bitsetAsStr = BitsetToHexStr(existsAddresses);
+
+    UniValue ret{UniValue::VSTR, bitsetAsStr};
     return ret;
 }
 
@@ -145,15 +164,27 @@ UniValue existsmempooltxs(const JSONRPCRequest& request)
             + HelpExampleRpc("existsmempooltxs", "\"<txhashblob\">")
         };
 
-    //TODO add implementation
+    std::string txHashBlob = request.params[0].get_str();
+    if ((txHashBlob.size() % 64) != 0) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid txhashblob");
+    }
 
-    //store bool results in a bitset
-    //convert bitset to char[]
-    //and use HexStr from utilstrencodings.h to Encode the char[] to hex
-    //then return it as string
+    auto numTxs = txHashBlob.size() / 64;
+    boost::dynamic_bitset<uint8_t> existsMemPoolTxs(numTxs);
+    auto hashIt = txHashBlob.data();
 
-    UniValue ret{UniValue::VSTR, "00"};
+    for (auto txIdx = 0u; txIdx < numTxs; ++txIdx, hashIt += 64) {
+        std::string txhash(hashIt, hashIt + 64);
+        auto txHashChars = ParseHex(txhash);
 
+        uint256 txHash(txHashChars);
+        auto txExists = mempool.exists(txHash);
+        existsMemPoolTxs[txIdx] = txExists ? 1 : 0;
+    }
+
+    auto bitsetAsStr = BitsetToHexStr(existsMemPoolTxs);
+
+    UniValue ret{UniValue::VSTR, bitsetAsStr};
     return ret;
 }
 
