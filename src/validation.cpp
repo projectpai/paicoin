@@ -3064,7 +3064,7 @@ static unsigned CountStakeTransactions(const CBlock& block, int& numTickets, int
 {
     numTickets = numVotes = numRevocations = 0;
 
-    auto vtx = StakeSlice(block.vtx, TX_BuyTicket);
+    auto vtx = StakeSlice(block.vtx);
     for (const auto& tx : vtx)
     {
         ETxClass txClass = ParseTxClass(*tx);
@@ -3100,9 +3100,13 @@ bool CheckProofOfStake(const CBlock& block, int64_t posLimit)
     return true;
 }
 
-CAmount calcNextRequiredStakeDifficulty(const CBlock& block, const CBlockIndex *pindexPrev)
+CAmount calcNextRequiredStakeDifficulty(const CBlock& block, const CBlockIndex *pindexPrev, const CChainParams& params)
 {
-    return 1 * COIN;
+    int blockHeight = pindexPrev->nHeight + 1;
+    if (blockHeight >= params.GetConsensus().nStakeValidationHeight)
+        return 1 * COIN;
+    else
+        return 0;
 }
 
 static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, int nBlockHeight, bool fCheckPOW = true)
@@ -3206,8 +3210,13 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     for (unsigned int i = 1; i < block.vtx.size(); i++) {
         if (block.vtx[i]->IsCoinBase())
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-multiple", false, "more than one coinbase");
-        if (i > firstRegularTxIndex && ParseTxClass(*block.vtx[i]) != TX_Regular)
-            return state.DoS(100, false, REJECT_INVALID, "transactions-not-sorted", false, "found stake transactions after regular transactions");
+        if (blockHeight >= consensusParams.nStakeValidationHeight) {
+            ETxClass txClass = ParseTxClass(*block.vtx[i]);
+            if (i > firstRegularTxIndex && txClass != TX_Regular) {
+                auto report = strprintf("transactions not sorted: found a tx of class %d at index %d; stake transactions counted as %d", (int) txClass, i, numStakeTx);
+                return state.DoS(100, false, REJECT_INVALID, "transactions-not-sorted", false, report);
+            }
+        }
     }
 
     // Check transactions
@@ -3380,25 +3389,27 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams))
         return state.DoS(100, false, REJECT_INVALID, "bad-diffbits", false, "incorrect proof of work");
 
-
-    // TODO comment out the following 3 tests to be able to debug construction of StakeNode using -fReindex
-
     // Ensure the stake difficulty specified in the block header matches the calculated difficulty based on the previous block
     // and difficulty retarget rules.
-    CAmount expectedStakeDifficulty = calcNextRequiredStakeDifficulty(block, pindexPrev);
-    if (block.nStakeDifficulty != expectedStakeDifficulty)
-        return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, "incorrect proof of stake");
+    CAmount expectedStakeDifficulty = calcNextRequiredStakeDifficulty(block, pindexPrev, params);
+    if (block.nStakeDifficulty != expectedStakeDifficulty) {
+        auto report = strprintf("incorrect stake difficulty in a block: expected %.2f, found %.2f", expectedStakeDifficulty / (float)COIN, block.nStakeDifficulty / (float)COIN);
+        return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, report);
+    }
+    /*  TODO uncomment once we have pstakeNode available and stable
 
     // Ensure the header commits to the correct pool size based on its position within the chain.
     auto expectedTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
-    if (block.nTicketPoolSize != (uint32_t) expectedTicketPoolSize)
-        return state.DoS(100, false, REJECT_INVALID, "bad-poolsize", false, "block ticket pool size does not match the expected ticket pool size");
+    if (block.nTicketPoolSize != (uint32_t) expectedTicketPoolSize) {
+        auto report = strprintf("block ticket pool size does not match the expected ticket pool size: expected %u, found %u", expectedTicketPoolSize, block.nTicketPoolSize);
+        return state.DoS(100, false, REJECT_INVALID, "bad-poolsize", false, report);
+    }
 
     // Ensure the header commits to the correct lottery state based on its position within the chain.
     auto expectedTicketLotteryState = pindexPrev->pstakeNode->FinalState();
     if (block.ticketLotteryState != expectedTicketLotteryState)
         return state.DoS(100, false, REJECT_INVALID, "bad-lotterystate", false, "block ticket lottery state does not match the expected ticket lottery state");
-
+    */
    // Check against checkpoints
     if (fCheckpointsEnabled) {
         // Don't accept any forks from the main chain prior to last checkpoint.
@@ -3572,10 +3583,6 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
             return true;
         }
 
-        // TODO check with Igor for improving this: *ppindex != nullptr ? (*ppindex)->nHeight : 0)
-        if (!CheckBlockHeader(block, state, chainparams.GetConsensus(), *ppindex != nullptr ? (*ppindex)->nHeight : 0))
-            return error("%s: Consensus::CheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
-
         // Get prev block index
         CBlockIndex* pindexPrev = nullptr;
         BlockMap::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
@@ -3584,6 +3591,11 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
         pindexPrev = (*mi).second;
         if (pindexPrev->nStatus & BLOCK_FAILED_MASK)
             return state.DoS(100, error("%s: prev block invalid", __func__), REJECT_INVALID, "bad-prevblk");
+
+        int nHeight = *ppindex ? (*ppindex)->nHeight : (pindexPrev->nHeight + 1);
+        if (!CheckBlockHeader(block, state, chainparams.GetConsensus(), nHeight))
+            return error("%s: Consensus::CheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
+
         if (!ContextualCheckBlockHeader(block, state, chainparams, pindexPrev, GetAdjustedTime()))
             return error("%s: Consensus::ContextualCheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
     }

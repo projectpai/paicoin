@@ -8,6 +8,7 @@
 #include "hash.h"
 #include "tinyformat.h"
 #include "utilstrencodings.h"
+#include "stake/staketx.h"
 #include "crypto/common.h"
 
 uint256 CBlockHeader::GetHash() const
@@ -19,10 +20,6 @@ uint256 CBlockHeader::GetHash() const
 
 std::string CBlock::ToString() const
 {
-    std::string ticketLotteryStateString;
-    for (auto c : ticketLotteryState)
-        ticketLotteryStateString += std::to_string((int)c) + " ";
-
     std::stringstream s;
     s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, "
                    "nStakeDifficulty=%s, nVoteBits=%08x, nTicketPoolSize=%u, ticketLotteryState=%s, vtx=%u)\n",
@@ -31,7 +28,7 @@ std::string CBlock::ToString() const
         hashPrevBlock.ToString(),
         hashMerkleRoot.ToString(),
         nTime, nBits, nNonce,
-        std::to_string(nStakeDifficulty), nVoteBits, nTicketPoolSize, ticketLotteryStateString,
+        std::to_string(nStakeDifficulty), nVoteBits, nTicketPoolSize, StakeStateToString(ticketLotteryState),
         vtx.size());
     for (const auto& tx : vtx) {
         s << "  " << tx->ToString() << "\n";

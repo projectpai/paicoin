@@ -63,6 +63,7 @@ typedef std::vector<VoteVersion> VoteVersionVector;
 typedef std::tuple<HashVector, HashVector, VoteVersionVector> SpentTicketsInBlock;
 
 typedef uint48 StakeState;
+std::string StakeStateToString(const StakeState& stakeState);
 
 // StakeNode is in-memory stake data for a node.  It contains a list of database
 // updates to be written in the case that the block is inserted in the main
@@ -217,9 +218,6 @@ public:
 
     // FinalState returns the final state lottery checksum of the node.
     StakeState FinalState() const;
-
-    // FinalStateToString returns the final state lottery checksum as a printable string.
-    std::string FinalStateToString() const;
 
     // Height returns the height of the node.
     uint32_t Height() const;
