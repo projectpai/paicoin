@@ -11,10 +11,12 @@ RPCs tested are:
     - setaccount
     - sendfrom (with account arguments)
     - move (with account arguments)
+    - createnewaccount
+    - renameaccount
 """
 
 from test_framework.test_framework import PAIcoinTestFramework
-from test_framework.util import assert_equal
+from test_framework.util import assert_equal, assert_raises_rpc_error
 
 class WalletAccountsTest(PAIcoinTestFramework):
     def set_test_params(self):
@@ -128,6 +130,21 @@ class WalletAccountsTest(PAIcoinTestFramework):
         
         for account in accounts:
             assert_equal(node.getbalance(account), 50)
+
+        tst_account = 'test_account'
+        node.createnewaccount(tst_account)
+        addrs = node.getaddressesbyaccount(tst_account)
+        assert len(addrs) == 1
+
+        renamed_account = 'renamed_account'
+        node.renameaccount(tst_account, renamed_account)
+        addrs = node.getaddressesbyaccount(renamed_account)
+        assert len(addrs) == 1
+        addrs = node.getaddressesbyaccount(tst_account)
+        assert len(addrs) == 0
+
+        assert_raises_rpc_error(-8, None, node.renameaccount, None, 'a')
+        assert_raises_rpc_error(-8, None, node.renameaccount, 'a', None)
 
 if __name__ == '__main__':
     WalletAccountsTest().main()
