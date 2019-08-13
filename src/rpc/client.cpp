@@ -115,6 +115,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "importpubkey", 2, "rescan" },
     { "importmulti", 0, "requests" },
     { "importmulti", 1, "options" },
+    { "importscript", 1, "rescan" },
+    { "importscript", 2, "scanfrom" },
     { "verifychain", 0, "checklevel" },
     { "verifychain", 1, "nblocks" },
     { "pruneblockchain", 0, "height" },

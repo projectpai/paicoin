@@ -37,6 +37,7 @@ public:
     virtual bool AddCScript(const CScript& redeemScript) =0;
     virtual bool HaveCScript(const CScriptID &hash) const =0;
     virtual bool GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const =0;
+    virtual std::vector<std::pair<CScriptID, CScript>> GetAllCScripts() const = 0;
 
     //! Support for Watch-only addresses
     virtual bool AddWatchOnly(const CScript &dest) =0;
@@ -96,6 +97,7 @@ public:
     bool AddCScript(const CScript& redeemScript) override;
     bool HaveCScript(const CScriptID &hash) const override;
     bool GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const override;
+    std::vector<std::pair<CScriptID, CScript>> GetAllCScripts() const override;
 
     bool AddWatchOnly(const CScript &dest) override;
     bool RemoveWatchOnly(const CScript &dest) override;

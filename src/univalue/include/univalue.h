@@ -41,6 +41,11 @@ public:
     UniValue(double val_) {
         setFloat(val_);
     }
+#if defined(__clang__)
+    UniValue(std::size_t val_) {
+        setInt(val_);
+    }
+#endif
     UniValue(const std::string& val_) {
         setStr(val_);
     }
@@ -58,6 +63,9 @@ public:
     bool setInt(uint64_t val);
     bool setInt(int64_t val);
     bool setInt(int val_) { return setInt((int64_t)val_); }
+#if defined(__clang__)
+    bool setInt(std::size_t val);
+#endif
     bool setFloat(double val);
     bool setStr(const std::string& val);
     bool setArray();
@@ -231,6 +239,15 @@ static inline std::pair<std::string,UniValue> Pair(const char *cKey, double dVal
     UniValue uVal(dVal);
     return std::make_pair(key, uVal);
 }
+
+#if defined(__clang__)
+static inline std::pair<std::string,UniValue> Pair(const char *cKey, std::size_t sizeVal)
+{
+    std::string key(cKey);
+    UniValue uVal(sizeVal);
+    return std::make_pair(key, uVal);
+}
+#endif
 
 static inline std::pair<std::string,UniValue> Pair(const char *cKey, const UniValue& uVal)
 {
