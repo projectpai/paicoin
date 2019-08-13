@@ -74,7 +74,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     genesis.nTime    = nTime;
     genesis.nBits    = nBits;
     genesis.nStakeDifficulty = 0;
-    genesis.nVoteBits = 0;
+    genesis.nVoteBits = 1;
     genesis.nTicketPoolSize = 0;
     std::fill(genesis.ticketLotteryState.begin(), genesis.ticketLotteryState.end(), 0);
     genesis.nNonce   = nNonce;

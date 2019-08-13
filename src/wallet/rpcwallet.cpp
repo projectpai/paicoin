@@ -4234,6 +4234,60 @@ UniValue getmasterpubkey(const JSONRPCRequest& request)
     return HexStr(pubkey);
 }
 
+UniValue listscripts(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || !request.params.empty())
+    {
+        throw std::runtime_error{
+            "listscripts\n"
+            "\nList all scripts that have been added to wallet.\n"
+            "\nResult:\n"
+            "\"scripts\"            (array) A list of the imported scripts\n"
+            "[\n"
+            "  {\n"
+            "    \"hash160\"        (string) The script hash\n"
+            "    \"address\"        (string) The script address\n"
+            "    \"redeemscript\"   (string) The redeem script\n"
+            "  },\n"
+            "  ...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("listscripts", "")
+            + HelpExampleRpc("listscripts", "")
+        };
+    }
+
+    std::vector<std::pair<CScriptID, CScript>> allScripts;
+    {
+        // Lock for the least amount of time
+        LOCK(pwallet->cs_wallet);
+        allScripts = pwallet->GetAllCScripts();
+    }
+    if (allScripts.empty()) {
+        return NullUniValue;
+    }
+
+    UniValue result{UniValue::VARR};
+    for (auto const& scriptPair : allScripts) {
+        auto const& scriptID = scriptPair.first;
+        auto const& script = scriptPair.second;
+
+        UniValue uniScript{UniValue::VOBJ};
+        uniScript.push_back(std::make_pair("hash160", HexStr(scriptID)));
+        uniScript.push_back(std::make_pair("address", EncodeDestination(scriptID)));
+        uniScript.push_back(std::make_pair("redeemscript", HexStr(script)));
+
+        result.push_back(uniScript);
+    }
+
+    return result;
+}
+
 extern UniValue abortrescan(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue dumpprivkey(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue importprivkey(const JSONRPCRequest& request);
@@ -4244,6 +4298,7 @@ extern UniValue importwallet(const JSONRPCRequest& request);
 extern UniValue importprunedfunds(const JSONRPCRequest& request);
 extern UniValue removeprunedfunds(const JSONRPCRequest& request);
 extern UniValue importmulti(const JSONRPCRequest& request);
+extern UniValue importscript(const JSONRPCRequest& request);
 extern UniValue rescanblockchain(const JSONRPCRequest& request);
 
 static const CRPCCommand commands[] =
@@ -4284,6 +4339,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "importprivkey",            &importprivkey,            {"privkey","label","rescan"} },
     { "wallet",             "importwallet",             &importwallet,             {"filename"} },
     { "wallet",             "importaddress",            &importaddress,            {"address","label","rescan","p2sh"} },
+    { "wallet",             "importscript",             &importscript,             {"script","rescan","scanfrom"} },
     { "wallet",             "importprunedfunds",        &importprunedfunds,        {"rawtransaction","txoutproof"} },
     { "wallet",             "importpubkey",             &importpubkey,             {"pubkey","label","rescan"} },
     { "wallet",             "keypoolrefill",            &keypoolrefill,            {"newsize"} },
@@ -4297,6 +4353,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "listunspent",              &listunspent,              {"minconf","maxconf","addresses","include_unsafe","query_options"} },
     { "wallet",             "purchaseticket",           &purchaseticket,           {"spendlimit","fromaccount","minconf","ticketaddress","numtickets","pooladdress","poolfees","expiry","comment","ticketfee"} },
     { "wallet",             "listwallets",              &listwallets,              {} },
+    { "wallet",             "listscripts",              &listscripts,              {} },
     { "wallet",             "lockunspent",              &lockunspent,              {"unlock","transactions"} },
     { "wallet",             "move",                     &movecmd,                  {"fromaccount","toaccount","amount","minconf","comment"} },
     { "wallet",             "sendfrom",                 &sendfrom,                 {"fromaccount","toaddress","amount","minconf","comment","comment_to"} },

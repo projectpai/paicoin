@@ -292,20 +292,6 @@ libpaicoin_consensus_a_SOURCES = \
   consensus/merkle.h \
   consensus/params.h \
   consensus/validation.h \
-  stake/hash256prng.cpp \
-  stake/hash256prng.h \
-  stake/hasher.cpp \
-  stake/hasher.h \
-  stake/treap/value.cpp \
-  stake/treap/value.h \
-  stake/treap/treapnode.cpp \
-  stake/treap/treapnode.h \
-  stake/treap/tickettreap.cpp \
-  stake/treap/tickettreap.h \
-  stake/stakenode.cpp \
-  stake/stakenode.h \
-  stake/staketx.cpp \
-  stake/staketx.h \
   hash.cpp \
   hash.h \
   prevector.h \
@@ -322,7 +308,22 @@ libpaicoin_consensus_a_SOURCES = \
   script/script.h \
   script/script_error.cpp \
   script/script_error.h \
+  script/standard.cpp \
   serialize.h \
+  stake/hash256prng.cpp \
+  stake/hash256prng.h \
+  stake/hasher.cpp \
+  stake/hasher.h \
+  stake/treap/value.cpp \
+  stake/treap/value.h \
+  stake/treap/treapnode.cpp \
+  stake/treap/treapnode.h \
+  stake/treap/tickettreap.cpp \
+  stake/treap/tickettreap.h \
+  stake/stakenode.cpp \
+  stake/stakenode.h \
+  stake/staketx.cpp \
+  stake/staketx.h \
   tinyformat.h \
   uint256.cpp \
   uint256.h \
@@ -486,7 +487,7 @@ if GLIBC_BACK_COMPAT
 endif
 
 libpaicoinconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
-libpaicoinconsensus_la_LIBADD = $(LIBSECP256K1)
+libpaicoinconsensus_la_LIBADD = $(LIBSECP256K1) $(BOOST_SYSTEM_LIB)
 libpaicoinconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_PAICOIN_INTERNAL
 libpaicoinconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 

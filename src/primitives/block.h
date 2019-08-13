@@ -10,6 +10,8 @@
 #include "serialize.h"
 #include "uint256.h"
 
+#include <array>
+
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
  * requirements.  When they solve the proof-of-work, they broadcast the block
@@ -59,7 +61,7 @@ public:
         nBits = 0;
         nNonce = 0;
         nStakeDifficulty = 0;
-        nVoteBits = 0;
+        nVoteBits = 1;
         nTicketPoolSize = 0;
         std::fill(ticketLotteryState.begin(), ticketLotteryState.end(), 0);
     }
