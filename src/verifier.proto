@@ -14,7 +14,6 @@ message Request {
     string msg_history_id = 1; // the id/hash of the message history chunk in which the lucky nonce was generated
     string msg_id = 2; // the id/hash of the message
     uint32 nonce = 3; // the nonce that is supposed to be checked against
-    string block_header = 4; // the block header
 }
 
 // Response message
