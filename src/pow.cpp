@@ -13,10 +13,13 @@
 #include "chain.h"
 #include "util.h"
 #include "primitives/block.h"
+#include "streams.h"
 #include "uint256.h"
+#include "utilstrencodings.h"
 #include "verification_client.h"
 #include "consensus/consensus.h"
 #include "validation.h"
+#include "version.h"
 
 /**
  * Compute the next required proof of work using the legacy Bitcoin difficulty
@@ -269,7 +272,10 @@ bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params
     // check ML proof
     std::string verificationServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
     VerificationClient client(grpc::CreateChannel(verificationServerAddress, grpc::InsecureChannelCredentials()));
-    auto result = client.Verify(std::string(block.powMsgHistoryId), std::string(block.powMsgId), block.nNonce);
+    CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
+    ssBlock << block;
+    std::string blockHeaderHex = HexStr(ssBlock.begin(), ssBlock.end());
+    auto result = client.Verify(std::string(block.powMsgHistoryId), std::string(block.powMsgId), block.nNonce, blockHeaderHex);
     int resultCode = int(result.first);
     return resultCode == pai::pouw::verification::Response::OK;
 }
