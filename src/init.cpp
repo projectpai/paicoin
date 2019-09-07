@@ -339,6 +339,8 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), PAICOIN_CONF_FILENAME));
 #ifdef PAI_BABY
     strUsage += HelpMessageOpt("-chainparams-conf=<file>", strprintf(_("Specify chainparams configuration file for PAI baby(default: %s)"), PAICOIN_CHAINPARAMS_CONF_FILENAME));
+    strUsage += HelpMessageOpt("-add-nodes=<file>", strprintf(_("Specify peer nodes file")));
+    strUsage += HelpMessageOpt("-own-ip=<ip>", strprintf(_("Specify own IP address to exclude from -add-nodes list")));
 #endif
 
     if (mode == HMM_PAICOIND)

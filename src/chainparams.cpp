@@ -492,25 +492,17 @@ public:
 
         vFixedSeeds.clear();
         vSeeds.clear();
-       
-        // nodes with support for servicebits filtering should be at the top
-#ifndef PAI_BABY
-        //vSeeds.emplace_back("52.37.189.65", false);
-        //vSeeds.emplace_back("13.59.205.159", false);
-        //vSeeds.emplace_back("52.78.224.215", false);
-        //vSeeds.emplace_back("193.112.4.118", false);
-#else
+
         for (int index = 0; index < 3; ++index)
         {
             char buf[20];
-            snprintf(buf, sizeof(buf), "TESTNET_SEED_%d", index); 
+            snprintf(buf, sizeof(buf), "TESTNET_SEED_%d", index);
             std::string seed = CHAINPARAMS_STR(buf, "");
             if (!seed.empty())
             {
                 vSeeds.emplace_back(seed, false);
             }
         }
-#endif
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
         

@@ -1900,11 +1900,41 @@ std::vector<AddedNodeInfo> CConnman::GetAddedNodeInfo()
     return ret;
 }
 
+void LoadPeerNodesFromFile(std::vector<std::string> & nodes, const std::string filename, const std::string ownIp)
+{
+    if (filename.empty())
+    {
+        return;
+    }
+
+    fs::ifstream ifs(filename);
+    if (!ifs.good())
+    {
+        LogPrintf("Error adding nodes from file: %s\n", filename.c_str());
+        throw std::runtime_error(strerror(errno));
+    }
+
+    LogPrintf("Adding nodes from file: %s\n", filename.c_str());
+
+    std::string nodeIp;
+    std::string dummy;
+    while (std::getline(ifs, nodeIp, ' '))
+    {
+        if (nodeIp != ownIp)
+        {
+            LogPrintf("Added node: %s\n", nodeIp.c_str());
+            nodes.emplace_back(nodeIp);
+        }
+        std::getline(ifs, dummy, '\n');
+    }
+}
+
 void CConnman::ThreadOpenAddedConnections()
 {
     {
         LOCK(cs_vAddedNodes);
         vAddedNodes = gArgs.GetArgs("-addnode");
+        LoadPeerNodesFromFile(vAddedNodes, gArgs.GetArg("-add-nodes", ""), gArgs.GetArg("-own-ip", ""));
     }
 
     while (true)
