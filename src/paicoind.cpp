@@ -133,6 +133,16 @@ bool AppInit(int argc, char* argv[])
             fprintf(stderr,"Error reading configuration file: %s\n", e.what());
             return false;
         }
+#ifdef PAI_BABY
+        try
+        {
+            gChainparams.ReadConfigFile(gArgs.GetArg("-chainparams-conf", PAICOIN_CHAINPARAMS_CONF_FILENAME));
+        } catch (const std::exception& e) {
+            fprintf(stderr,"Error reading chainparams configuration file: %s\n", e.what());
+            return false;
+        }
+#endif
+
         // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
         try {
             SelectParams(ChainNameFromCommandLine());

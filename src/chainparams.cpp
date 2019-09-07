@@ -545,7 +545,7 @@ public:
         for (int index = 0; index < 3; ++index)
         {
             char buf[20];
-            snprintf(buf, sizeof(buf), "TESTNET_SEED_%d", index); 
+            snprintf(buf, sizeof(buf), "TESTNET_SEED_%d", index);
             std::string seed = CHAINPARAMS_STR(buf, "");
             if (!seed.empty())
             {

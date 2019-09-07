@@ -338,6 +338,12 @@ std::string HelpMessage(HelpMessageMode mode)
         strUsage += HelpMessageOpt("-blocksonly", strprintf(_("Whether to operate in a blocks only mode (default: %u)"), DEFAULT_BLOCKSONLY));
     strUsage +=HelpMessageOpt("-assumevalid=<hex>", strprintf(_("If this block is in the chain assume that it and its ancestors are valid and potentially skip their script verification (0 to verify all, default: %s, testnet: %s)"), defaultChainParams->GetConsensus().defaultAssumeValid.GetHex(), testnetChainParams->GetConsensus().defaultAssumeValid.GetHex()));
     strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), PAICOIN_CONF_FILENAME));
+#ifdef PAI_BABY
+    strUsage += HelpMessageOpt("-chainparams-conf=<file>", strprintf(_("Specify chainparams configuration file for PAI baby(default: %s)"), PAICOIN_CHAINPARAMS_CONF_FILENAME));
+    strUsage += HelpMessageOpt("-add-nodes=<file>", strprintf(_("Specify peer nodes file")));
+    strUsage += HelpMessageOpt("-own-ip=<ip>", strprintf(_("Specify own IP address to exclude from -add-nodes list")));
+#endif
+
     if (mode == HMM_PAICOIND)
     {
 #if HAVE_DECL_DAEMON

@@ -80,6 +80,8 @@ public:
     const ChainTxData& TxData() const { return chainTxData; }
     void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout);
     bool HasGenesisBlockTxOutPoint(const COutPoint& out) const;
+    void LoadGenesisParams() const;
+    void LoadSeedNodes();
 
 public:
     const std::map<const std::string, const int> coinbaseAddrs;
