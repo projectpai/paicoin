@@ -1864,7 +1864,7 @@ UniValue computeBlocksTxFees(uint32_t startBlockHeight, uint32_t endBlockHeight)
     CAmount stdDevValue = computeStdDevAmount(txFees);
 
     UniValue blockResult{UniValue::VOBJ};
-    blockResult.push_back(Pair("number", txFees.size()));
+    blockResult.push_back(Pair("number", static_cast<uint64_t>(txFees.size())));
     blockResult.push_back(Pair("min", minValue));
     blockResult.push_back(Pair("max", maxValue));
     blockResult.push_back(Pair("mean", meanValue));
@@ -1898,7 +1898,7 @@ UniValue computeMempoolTxFees()
     CAmount stdDevValue = computeStdDevAmount(txFees);
 
     UniValue mempoolResult{UniValue::VOBJ};
-    mempoolResult.push_back(Pair("number", numFees));
+    mempoolResult.push_back(Pair("number", static_cast<uint64_t>(numFees)));
     mempoolResult.push_back(Pair("min", minValue));
     mempoolResult.push_back(Pair("max", maxValue));
     mempoolResult.push_back(Pair("mean", meanValue));

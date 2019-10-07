@@ -3772,7 +3772,7 @@ UniValue getmultisigoutinfo(const JSONRPCRequest& request)
                 int nRequired;
                 if (ExtractDestinations(redeemScript, type, addresses, nRequired)) {
                     result.push_back(Pair("m", nRequired));
-                    result.push_back(Pair("n", addresses.size()));
+                    result.push_back(Pair("n", static_cast<uint64_t>(addresses.size())));
                     auto pubkeys = UniValue{UniValue::VARR};
                     for (const auto& addr: addresses){
                         CPubKey pubkey;
@@ -3797,7 +3797,7 @@ UniValue getmultisigoutinfo(const JSONRPCRequest& request)
                 while (idx < spendingWtx.tx->vin.size() && spendingWtx.tx->vin[idx].prevout.hash != wtx.GetHash()) ++idx;
                 assert( idx < spendingWtx.tx->vin.size());
 
-                result.push_back(Pair("spentbyindex", idx));
+                result.push_back(Pair("spentbyindex", static_cast<uint64_t>(idx)));
             } else {
                 result.push_back(Pair("spent",false));
             }
