@@ -1,0 +1,44 @@
+{
+    "version": 1,
+    
+    "payment": {
+        "best-model-payment-amount": 11.22
+    },
+    
+    "ml": {
+        "dataset": {
+            "sha256": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+            "format": "MNIST",
+            "training-set-size": 0.7,
+            "test-set-size": 0.3,
+            "source": {
+                "features": "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz",
+                "labels": "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz"
+            }
+        },
+
+        "validation": {
+            "strategy": {
+                "method": "Holdout",
+                "size": 0.1
+            }
+        },
+
+        "optimizer": {
+            "type": "SGD",
+            "optimizer_initialization_parameters": {
+                "learning_rate": 0.1,
+                "momentum": 0.0
+            },
+            "tau": 12.0,
+            "epochs": 30,
+            "batch-size": 100,
+            "initializer": {
+                "name": "Xavier",
+                "parameters": {
+                    "magnitude": 2.24
+                }
+            }
+        }
+    }
+}

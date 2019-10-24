@@ -181,6 +181,8 @@ enum opcodetype
     OP_NOP9 = 0xb8,
     OP_NOP10 = 0xb9,
 
+    // a designator for the structured OP_RETURN format in which OP_RETURN is followed by OP_STRUCT rather than a push opcode
+    OP_STRUCT = 0xc0,
 
     // template matching params
     OP_SMALLINTEGER = 0xfa,
@@ -420,6 +422,7 @@ public:
 
     CScript& operator+=(const CScript& b)
     {
+        reserve(size() + b.size());
         insert(end(), b.begin(), b.end());
         return *this;
     }
@@ -567,7 +570,7 @@ public:
             pc += nSize;
         }
 
-        opcodeRet = (opcodetype)opcode;
+        opcodeRet = static_cast<opcodetype>(opcode);
         return true;
     }
 

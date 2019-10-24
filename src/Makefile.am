@@ -138,6 +138,7 @@ PAICOIN_CORE_H = \
   script/sign.h \
   script/standard.h \
   script/ismine.h \
+  script/pai_data_classifier.h \
   streams.h \
   support/allocators/secure.h \
   support/allocators/zeroafterfree.h \
@@ -310,6 +311,8 @@ libpaicoin_consensus_a_SOURCES = \
   script/script_error.cpp \
   script/script_error.h \
   serialize.h \
+  stake/staketx.cpp \
+  stake/staketx.h \
   tinyformat.h \
   uint256.cpp \
   uint256.h \

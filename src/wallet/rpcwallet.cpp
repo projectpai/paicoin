@@ -19,6 +19,7 @@
 #include "rpc/safemode.h"
 #include "rpc/server.h"
 #include "script/sign.h"
+#include "stake/staketx.h"
 #include "timedata.h"
 #include "util.h"
 #include "utilmoneystr.h"
@@ -3186,6 +3187,185 @@ UniValue generate(const JSONRPCRequest& request)
     return generateBlocks(coinbase_script, num_generate, max_tries, true);
 }
 
+UniValue payfortask(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error(
+            "payfortask ( PayForTaskRequest )\n"
+
+            "\nArguments:\n"
+            "1. payfortask_request               (json object) A json object in the following spec\n"
+            "     {\n"
+            "       \"version\": n          (numeric, required) The version number of task definition JSON.\n"
+            "\n"
+            "       \"payment\": {\n"
+            "         \"best-model-payment-amount\": x.x (numeric, required)\n"
+            "       },\n"
+            "\n"
+            "       \"ml\": {\n"
+            "         \"dataset\": {\n"
+            "           \"sha256\": \"hex\",   (string, required)\n"
+            "           \"format\": \"format\",   (string, required) Must be one of\n"
+            "               \"MNIST\"\n"
+            "           \"training-set-size\": x.x,   (numeric, required)\n"
+            "           \"test-set-size\": x.x,   (numeric, required)\n"
+            "           \"source\": {\n"
+            "             \"features\": \"url\",   (string, required, length <= 64)\n"
+            "             \"labels\": \"url\"   (string, required, length <= 64)\n"
+            "           }\n"
+            "         },\n"
+            "\n"
+            "         \"validation\": {\n"
+            "           \"strategy\": {\n"
+            "             \"method\": \"method\",   (string, required) Must be one of\n"
+            "                 \"Holdout\"\n"
+            "             \"size\": x.x   (numeric, required)\n"
+            "           }\n"
+            "         },\n"
+            "\n"
+            "         \"optimizer\": {\n"
+            "           \"type\": \"type\",   (string, required) Must be one of\n"
+            "                 \"SGD\"\n"
+            "           \"optimizer_initialization_parameters\": {\n"
+            "             \"learning_rate\": x.x,   (numeric, required)\n"
+            "             \"momentum\": x.x   (numeric, required)\n"
+            "           },\n"
+            "           \"tau\": x.x,   (numeric, required)\n"
+            "           \"epochs\": x,   (numeric, required)\n"
+            "           \"batch-size\": x,   (numeric, required)\n"
+            "           \"initializer\": {\n"
+            "             \"name\": \"name\",   (string, required) Must be one of\n"
+            "                 \"Xavier\"\n"
+            "             \"parameters\": {\n"
+            "               \"magnitude\": x.x   (numeric, required)\n"
+            "             }\n"
+            "           }\n"
+            "         }\n"
+            "       }\n"
+            "     }\n"
+            "\n"
+            "\nResult:\n"
+            "\"txid\"                  (string) The transaction id.\n"
+        );
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    if (pwallet->GetBroadcastTransactions() && !g_connman) {
+        throw JSONRPCError(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
+    }
+
+    const UniValue& oparam = request.params[0].get_obj();
+    const UniValue& oPayment = find_value(oparam, "payment");
+    const UniValue& oMl = find_value(oparam, "ml");
+    const UniValue& oDataset = find_value(oMl, "dataset");
+    const UniValue& oSource = find_value(oDataset, "source");
+    const UniValue& oValidation = find_value(oMl, "validation");
+    const UniValue& oStrategy = find_value(oValidation, "strategy");
+    const UniValue& oOptimizer = find_value(oMl, "optimizer");
+    const UniValue& oOptimizerInitialization = find_value(oOptimizer, "optimizer_initialization_parameters");
+    const UniValue& oOptimizerInitializer = find_value(oOptimizer, "initializer");
+    const UniValue& oOptimizerParameters = find_value(oOptimizerInitializer, "parameters");
+
+    PayForTaskData payForTaskData;
+    payForTaskData.version = find_value(oparam, "version").get_int();
+    payForTaskData.payment.best_model_payment_amount = AmountFromValue(find_value(oPayment, "best-model-payment-amount"));
+    payForTaskData.dataset.sha256 = ParseHashO(oDataset, "sha256");
+    payForTaskData.dataset.format = find_value(oDataset, "format").get_str() == "MNIST"
+        ? PayForTaskData::Dataset::Format::MNIST
+        : PayForTaskData::Dataset::Format::unknown;
+    payForTaskData.dataset.training_set_size = find_value(oDataset, "training-set-size").get_real();
+    payForTaskData.dataset.test_set_size = find_value(oDataset, "test-set-size").get_real();
+    payForTaskData.dataset.source.features = find_value(oSource, "features").get_str();
+    payForTaskData.dataset.source.labels = find_value(oSource, "labels").get_str();
+
+    payForTaskData.validation.strategy.method = find_value(oStrategy, "method").get_str() == "Holdout"
+        ? PayForTaskData::Validation::Strategy::Method::Holdout
+        : PayForTaskData::Validation::Strategy::Method::unknown;
+    payForTaskData.validation.strategy.size = find_value(oStrategy, "size").get_real();
+
+    payForTaskData.optimizer.type = find_value(oOptimizer, "type").get_str() == "SGD"
+        ? PayForTaskData::Optimizer::Type::SGD
+        : PayForTaskData::Optimizer::Type::unknown;
+    payForTaskData.optimizer.optimizer_initialization_parameters.learning_rate = find_value(oOptimizerInitialization, "learning_rate").get_real();
+    payForTaskData.optimizer.optimizer_initialization_parameters.momentum = find_value(oOptimizerInitialization, "momentum").get_real();
+    payForTaskData.optimizer.tau = find_value(oOptimizer, "tau").get_real();
+    payForTaskData.optimizer.epochs = find_value(oOptimizer, "epochs").get_int();
+    payForTaskData.optimizer.batch_size = find_value(oOptimizer, "batch-size").get_int();
+    payForTaskData.optimizer.initializer.name = find_value(oOptimizerInitializer, "name").get_str() == "Xavier"
+        ? PayForTaskData::Optimizer::Initializer::Name::Xavier
+        : PayForTaskData::Optimizer::Initializer::Name::unknown;
+    payForTaskData.optimizer.initializer.parameters.magnitude = find_value(oOptimizerParameters, "magnitude").get_real();
+
+    Validate(payForTaskData);
+
+    // TODO calculate fee based on estimated size
+    const auto& amountStaked = payForTaskData.payment.best_model_payment_amount;
+    const auto& txFee = CAmount{1000};
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    const auto& splitTxAddr = GetAccountAddress(pwallet, "", true);
+    CWalletTx splitTx;
+    const auto amountRequired = amountStaked + txFee;
+    SendMoney(pwallet, splitTxAddr, amountRequired, false, splitTx, CCoinControl{});
+
+    COutPoint op;
+    // look for the index of the output that pays amountStaked and use that
+    for (size_t idx = 0; idx < splitTx.tx->vout.size(); ++idx) {
+        if (splitTx.tx->vout[idx].nValue == amountRequired) {
+            op = COutPoint(splitTx.tx->GetHash(), idx);
+            break;
+        }
+    }
+    if (op.IsNull()) {
+        throw JSONRPCError(RPCErrorCode::RPC_TRANSACTION_ERROR, "Error: cannot find correct output of split transaction");
+    }
+
+    CMutableTransaction mTicketTx;
+    mTicketTx.vin.push_back(CTxIn(op));
+
+    // vout 0: declaring only the amount staked; script field is empty
+    CScript emptyScript;
+    mTicketTx.vout.push_back(CTxOut(amountStaked, emptyScript));
+
+    // vout 1: create an output which pays back the change
+    auto changeKey = CKey();
+    changeKey.MakeNewKey(false);
+    auto changeAddr = changeKey.GetPubKey().GetID();
+    CScript changeScript = GetScriptForDestination(changeAddr);
+    mTicketTx.vout.push_back(CTxOut(0, changeScript));
+
+    // vout 2: create an OP_RETURN output with task definition data
+    CScript declScript = GetScriptForPayForTaskDecl(payForTaskData);
+    mTicketTx.vout.push_back(CTxOut(0, declScript));
+
+
+    //std::string reason;
+    //if (!ValidateBuyTicketStructure(mTicketTx,reason))
+    //    throw JSONRPCError(RPCErrorCode::RPC_TRANSACTION_ERROR, "Error while constructing buy ticket transaction :" + reason);
+
+    if (!pwallet->SignTransaction(mTicketTx))
+        throw JSONRPCError(RPCErrorCode::RPC_TRANSACTION_ERROR, "Signing transaction failed");
+
+    CValidationState state;
+    CWalletTx wtx;
+    wtx.fTimeReceivedIsTxTime = true;
+    wtx.BindWallet(pwallet);
+    wtx.SetTx(MakeTransactionRef(std::move(mTicketTx)));
+    CReserveKey reservekey{pwallet};
+    if (!pwallet->CommitTransaction(wtx, reservekey, g_connman.get(), state)) {
+        throw JSONRPCError(RPCErrorCode::RPC_TRANSACTION_ERROR, "CommitTransaction failed");
+    }
+
+    return wtx.GetHash().GetHex();
+}
+
 extern UniValue abortrescan(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue dumpprivkey(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue importprivkey(const JSONRPCRequest& request);
@@ -3250,6 +3430,8 @@ static const CRPCCommand commands[] =
     { "wallet",             "walletpassphrasechange",   &walletpassphrasechange,   {"oldpassphrase","newpassphrase"} },
     { "wallet",             "walletpassphrase",         &walletpassphrase,         {"passphrase","timeout"} },
     { "wallet",             "removeprunedfunds",        &removeprunedfunds,        {"txid"} },
+
+    { "wallet",             "payfortask",               &payfortask,               {"payfortask_request"} },
 
     { "generating",         "generate",                 &generate,                 {"nblocks","maxtries"} },
 };
