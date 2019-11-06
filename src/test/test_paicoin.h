@@ -66,12 +66,17 @@ class CBlock;
 struct CMutableTransaction;
 class CScript;
 
+enum class scriptPubKeyType{
+    NoKey,
+    P2PK,
+    P2PKH,
+};
 //
 // Testing fixture that pre-creates a
 // 100-block REGTEST-mode block chain
 //
 struct TestChain100Setup : public TestingSetup {
-    TestChain100Setup();
+    TestChain100Setup(scriptPubKeyType pkType = scriptPubKeyType::P2PK);
 
     // Create a new block with just given transactions, coinbase paying to
     // scriptPubKey, and try to add it to the current chain.

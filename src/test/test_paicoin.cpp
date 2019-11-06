@@ -104,11 +104,31 @@ TestingSetup::~TestingSetup()
         fs::remove_all(pathTemp);
 }
 
-TestChain100Setup::TestChain100Setup() : TestingSetup(CBaseChainParams::REGTEST)
+TestChain100Setup::TestChain100Setup(scriptPubKeyType pkType) : TestingSetup(CBaseChainParams::REGTEST)
 {
-    // Generate a 100-block chain:
+    CScript scriptPubKey = CScript();
     coinbaseKey.MakeNewKey(true);
-    CScript scriptPubKey = CScript() <<  ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
+
+    switch (pkType)
+    {
+    case scriptPubKeyType::NoKey:
+        // do nothing use the empty script
+        break;
+
+    case scriptPubKeyType::P2PK:
+        scriptPubKey = CScript() <<  ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
+        break;
+
+    case scriptPubKeyType::P2PKH: 
+        scriptPubKey = CScript() << OP_DUP << OP_HASH160 << ToByteVector(coinbaseKey.GetPubKey().GetID()) << OP_EQUALVERIFY << OP_CHECKSIG;
+        break;
+    
+    default:
+        assert(!"Unknown scriptPubKeyType");
+        break;
+    }
+
+    // Generate a 100-block chain:
     for (int i = 0; i < COINBASE_MATURITY; i++)
     {
         std::vector<CMutableTransaction> noTxns;
