@@ -174,7 +174,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     }
 
     // Get the newly purchased tickets
-    if (nHeight >= chainparams.GetConsensus().nStakeEnabledHeight) {
+    // if (nHeight >= chainparams.GetConsensus().nStakeEnabledHeight) 
+    {
         auto& tx_class_index = mempool.mapTx.get<tx_class>();
         auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
         int nNewTickets = 0;
