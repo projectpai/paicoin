@@ -554,11 +554,11 @@ public:
             0
         };
 
-        consensus.nMinimumStakeDiff            = 20000;
+        consensus.nMinimumStakeDiff            = 0;//20000;
         consensus.nTicketPoolSize              = 64;
         consensus.nTicketsPerBlock             = 5;
         consensus.nTicketMaturity              = 8;
-        consensus.nTicketExpiry                = 205;//5 * consensus.nTicketPoolSize;
+        consensus.nTicketExpiry                = 5 * consensus.nTicketPoolSize;
         consensus.nCoinbaseMaturity            = 16;
         consensus.nSStxChangeMaturity          = 1;
         consensus.nTicketPoolSizeWeight        = 4;
@@ -567,8 +567,8 @@ public:
         consensus.nStakeDiffWindows            = 8;
         consensus.nStakeVersionInterval        = 8 * 2 * 7; // ~1 week
         consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight          = 141;//consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
-        consensus.nStakeValidationHeight       = 200;//consensus.nCoinbaseMaturity + (consensus.nTicketPoolSize * 2);
+        consensus.nStakeEnabledHeight          = 2000;//141;//consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
+        consensus.nStakeValidationHeight       = 2100;//200;//consensus.nCoinbaseMaturity + (consensus.nTicketPoolSize * 2);
         consensus.stakeBaseSigScript           = CScript();//[]byte{0x30, 0x57};
         consensus.nStakeMajorityMultiplier     = 3;
         consensus.nStakeMajorityDivisor        = 4;
