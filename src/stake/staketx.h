@@ -44,6 +44,7 @@ struct VoteData {
     uint256 blockHash;
     uint32_t blockHeight;
     uint32_t voteBits;
+    uint32_t voterStakeVersion;
 };
 
 struct RevokeTicketData {
@@ -84,6 +85,7 @@ const uint32_t txVersionIndex = 4;
 const uint32_t voteBlockHashIndex = 5;
 const uint32_t voteBlockHeightIndex = 6;
 const uint32_t voteBitsIndex = 7;
+const uint32_t voterStakeVersionIndex = 8;
 //---
 const uint32_t contribVersionIndex = 3;
 const uint32_t contribAddrIndex = 4;

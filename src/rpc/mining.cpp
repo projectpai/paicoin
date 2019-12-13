@@ -679,6 +679,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     result.push_back(Pair("votebits", strprintf("%08x", pblock->nVoteBits)));
     result.push_back(Pair("ticketpoolsize", strprintf("%08x", pblock->nTicketPoolSize)));
     result.push_back(Pair("ticketlotterystate", StakeStateToString(pblock->ticketLotteryState)));
+    result.push_back(Pair("stakeversion", strprintf("%08x", pblock->nStakeVersion)));
     result.push_back(Pair("height", static_cast<int64_t>((pindexPrev->nHeight+1))));
 
     if (!pblocktemplate->vchCoinbaseCommitment.empty() && fSupportsSegwit) {

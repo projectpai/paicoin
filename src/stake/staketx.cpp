@@ -112,7 +112,7 @@ CScript GetScriptForVoteDecl(const VoteData& data)
     int nVoteVersion = 1;
     return GetScriptForStructuredData(CLASS_Staking) << STAKE_TxDeclaration
                     << TX_Vote << nVoteVersion
-                    << ToByteVector(data.blockHash) << data.blockHeight << data.voteBits;
+                    << ToByteVector(data.blockHash) << data.blockHeight << data.voteBits << data.voterStakeVersion;
 }
 
 CScript GetScriptForRevokeTicketDecl(const RevokeTicketData& data)
@@ -186,7 +186,7 @@ bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContr
 
 bool ParseVote(const CTransaction& tx, VoteData& data)
 {
-    int numItems = 8;   // structVersion, dataClass, stakeDataClass, txClass, voteVersion, blockHash, blockHeight, voteBits
+    int numItems = 8;   // structVersion, dataClass, stakeDataClass, txClass, voteVersion, blockHash, blockHeight, voteBits, voterStakeVersion
     std::vector<std::vector<unsigned char> > items;
     if (!ParseStakeData(tx, txdeclOutputIndex, STAKE_TxDeclaration, numItems, items))
         return false;
@@ -202,6 +202,7 @@ bool ParseVote(const CTransaction& tx, VoteData& data)
     data.blockHash = uint256(items[voteBlockHashIndex]);
     data.blockHeight = (uint32_t) CScriptNum(items[voteBlockHeightIndex], false).getint();
     data.voteBits = (uint32_t) CScriptNum(items[voteBitsIndex], false).getint();
+    data.voterStakeVersion = (uint32_t) CScriptNum(items[voterStakeVersionIndex], false).getint();
     return true;
 }
 
@@ -467,7 +468,7 @@ SpentTicketsInBlock FindSpentTicketsInBlock(const CBlock& block)
                     it->vin[1].prevout.hash);
                 votes.push_back(
                     VoteVersion{
-                        static_cast<uint32_t>(voteData.nVersion),
+                        static_cast<uint32_t>(voteData.voterStakeVersion),
                         static_cast<uint16_t>(voteData.voteBits)
                         });
                 }

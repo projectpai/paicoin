@@ -112,6 +112,11 @@ CBlockIndex* CBlockIndex::GetAncestor(int height)
     return const_cast<CBlockIndex*>(static_cast<const CBlockIndex*>(this)->GetAncestor(height));
 }
 
+const CBlockIndex* CBlockIndex::GetRelativeAncestor(int distance) const
+{
+    return GetAncestor(nHeight - distance);
+}
+
 void CBlockIndex::BuildSkip()
 {
     if (pprev)

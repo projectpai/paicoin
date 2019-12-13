@@ -77,6 +77,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     genesis.nVoteBits = 1;
     genesis.nTicketPoolSize = 0;
     std::fill(genesis.ticketLotteryState.begin(), genesis.ticketLotteryState.end(), 0);
+    genesis.nStakeVersion = 0;
     genesis.nNonce   = nNonce;
     genesis.nVersion = nVersion;
     genesis.vtx.push_back(MakeTransactionRef(std::move(txNew)));
@@ -265,7 +266,7 @@ public:
         consensus.nStakeDiffAlpha              = 1;
         consensus.nStakeDiffWindowSize         = 144;
         consensus.nStakeDiffWindows            = 20;
-        consensus.nStakeVersionInterval        = 144 * 2 * 7; // ~1 week
+        consensus.nStakeVersionInterval        = 144 * 2 * 7; // ~2 weeks
         consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
         consensus.nStakeEnabledHeight          = consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
         consensus.nStakeValidationHeight       = 4096;        // ~ 14 days
@@ -423,7 +424,7 @@ public:
         consensus.nStakeDiffAlpha              = 1;
         consensus.nStakeDiffWindowSize         = 144;
         consensus.nStakeDiffWindows            = 20;
-        consensus.nStakeVersionInterval        = 144 * 2 * 7; // ~1 week
+        consensus.nStakeVersionInterval        = 144 * 2 * 7; // ~2 weeks
         consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
         consensus.nStakeEnabledHeight          = consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
         consensus.nStakeValidationHeight       = 100000;      // Arbitrary chosen into the future; height is 46261 at the moment
@@ -565,7 +566,7 @@ public:
         consensus.nStakeDiffAlpha              = 1;
         consensus.nStakeDiffWindowSize         = 8;
         consensus.nStakeDiffWindows            = 8;
-        consensus.nStakeVersionInterval        = 8 * 2 * 7; // ~1 week
+        consensus.nStakeVersionInterval        = 6 * 24; // ~1 day
         consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
         consensus.nStakeEnabledHeight          = 141;//consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
         consensus.nStakeValidationHeight       = 200;//consensus.nCoinbaseMaturity + (consensus.nTicketPoolSize * 2);

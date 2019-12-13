@@ -331,6 +331,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 pindexNew->nVoteBits      = diskindex.nVoteBits;
                 pindexNew->nTicketPoolSize = diskindex.nTicketPoolSize;
                 pindexNew->ticketLotteryState = diskindex.ticketLotteryState;
+                pindexNew->nStakeVersion  = diskindex.nStakeVersion;
                 pindexNew->nStatus        = diskindex.nStatus;
                 pindexNew->nTx            = diskindex.nTx;
 

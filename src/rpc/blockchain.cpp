@@ -105,6 +105,7 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("votebits", strprintf("%08x", blockindex->nVoteBits)));
     result.push_back(Pair("ticketpoolsize", strprintf("%08x", blockindex->nTicketPoolSize)));
     result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
+    result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
@@ -153,6 +154,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("votebits", strprintf("%08x", blockindex->nVoteBits)));
     result.push_back(Pair("ticketpoolsize", strprintf("%08x", blockindex->nTicketPoolSize)));
     result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
+    result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
