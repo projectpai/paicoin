@@ -186,7 +186,7 @@ bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContr
 
 bool ParseVote(const CTransaction& tx, VoteData& data)
 {
-    int numItems = 8;   // structVersion, dataClass, stakeDataClass, txClass, voteVersion, blockHash, blockHeight, voteBits, voterStakeVersion
+    int numItems = 9;   // structVersion, dataClass, stakeDataClass, txClass, voteVersion, blockHash, blockHeight, voteBits, voterStakeVersion
     std::vector<std::vector<unsigned char> > items;
     if (!ParseStakeData(tx, txdeclOutputIndex, STAKE_TxDeclaration, numItems, items))
         return false;
@@ -342,10 +342,10 @@ bool ValidateVoteStructure(const CTransaction &tx, std::string& reason)
         return false;
     }
 
-    // check that the first output contains vote declaration (TX_Vote, block hash, block height, vote bits)
+    // check that the first output contains vote declaration (TX_Vote, block hash, block height, vote bits, stake version)
     // validation of voting data itself is contextual and done elsewhere
-    unsigned dataSizes[] = { 0, 0, sizeof(uint256), 0, 0 }; // TX_Vote, version, blockHash, blockHeight, voteBits
-    if (!ValidateTxDeclStructure(tx, TX_Vote, 5, dataSizes, reason))
+    unsigned dataSizes[] = { 0, 0, sizeof(uint256), 0, 0, 0 }; // TX_Vote, version, blockHash, blockHeight, voteBits, stakeVersion
+    if (!ValidateTxDeclStructure(tx, TX_Vote, 6, dataSizes, reason))
         return false;
 
     // check that the rest of the outputs are payments;
