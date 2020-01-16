@@ -5,7 +5,6 @@
 
 #include "rpc/blockchain.h"
 
-#include "amount.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "checkpoints.h"
@@ -82,6 +81,68 @@ double GetDifficulty(const CBlockIndex* blockindex)
     return dDiff;
 }
 
+CAmount ComputeMeanAmount(std::vector<CAmount> const& txFees)
+{
+    if (txFees.empty()) {
+        return CAmount(0);
+    }
+
+    CAmount sumFees = std::accumulate(txFees.cbegin(), txFees.cend(), CAmount(0));
+    return sumFees / CAmount(txFees.size());
+}
+
+CAmount ComputeMedianAmount(std::vector<CAmount> txFees)
+{
+    if (txFees.empty()) {
+        return CAmount(0);
+    }
+
+    auto numFees = txFees.size();
+
+    std::sort(txFees.begin(), txFees.end(), [](const CAmount& c1, const CAmount& c2) -> bool {
+        return (c1 < c2);
+    });
+
+    size_t middleIndex = numFees / 2;
+    if ((numFees % 2) != 0) {
+        return txFees[middleIndex];
+    }
+
+    return (txFees[middleIndex] + txFees[middleIndex - 1]) / 2;
+}
+
+CAmount ComputeStdDevAmount(const std::vector<CAmount>& txFees)
+{
+    auto numFees = txFees.size();
+    if (numFees < 2) {
+        return CAmount(0);
+    }
+
+    CAmount meanValue = ComputeMeanAmount(txFees);
+    double total = 0.0;
+    for (auto const& currFee : txFees) {
+        total += pow(currFee - meanValue, 2);
+    }
+
+    double v = total / static_cast<double>((numFees - 1));
+    return static_cast<CAmount>(v);
+}
+
+UniValue FormatTxFeesInfo(const std::vector<CAmount>& txFees)
+{
+    auto result = UniValue{UniValue::VOBJ};
+    result.pushKV("number", txFees.size());
+    if (!txFees.empty()){
+        result.pushKV("min", *std::min_element(txFees.cbegin(), txFees.cend()));
+        result.pushKV("max", *std::max_element(txFees.cbegin(), txFees.cend()));
+        result.pushKV("mean", ComputeMeanAmount(txFees));
+        result.pushKV("median", ComputeMedianAmount(txFees));
+        result.pushKV("stddev", ComputeStdDevAmount(txFees));
+    }
+
+    return result;
+}
+
 UniValue blockheaderToJSON(const CBlockIndex* blockindex)
 {
     UniValue result{UniValue::VOBJ};
@@ -104,7 +165,8 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
     result.push_back(Pair("votebits", strprintf("%08x", blockindex->nVoteBits)));
     result.push_back(Pair("ticketpoolsize", strprintf("%08x", blockindex->nTicketPoolSize)));
-    result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
+    if (blockindex->pstakeNode != nullptr)
+        result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
@@ -152,7 +214,8 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
     result.push_back(Pair("votebits", strprintf("%08x", blockindex->nVoteBits)));
     result.push_back(Pair("ticketpoolsize", strprintf("%08x", blockindex->nTicketPoolSize)));
-    result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
+    if (blockindex->pstakeNode != nullptr)
+        result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
@@ -1766,62 +1829,21 @@ UniValue getinfo(const JSONRPCRequest& request)
 
 CAmount computeTransactionFee(CTransaction const& tx)
 {
-    CCoinsViewCache &view = *pcoinsTip;
-    CAmount valueIn = view.GetValueIn(tx);
-    CAmount valueOut = tx.GetValueOut();
+    auto valueIn = CAmount{0};
+    for (const auto& input : tx.vin){
+        CTransactionRef input_tx;
+        uint256 hashBlock;
+        if (!GetTransaction(input.prevout.hash, input_tx, Params().GetConsensus(), hashBlock, false, false))
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, std::string("No such blockchain transaction. Use -txindex to enable blockchain transaction queries."));
+        valueIn += input_tx->vout[input.prevout.n].nValue;
+    }
+    const auto& valueOut = tx.GetValueOut();
 
-    CAmount txFee = ((valueIn - valueOut) * 1000) / tx.GetTotalSize();
-    return txFee;
+    const auto& fee_rate = CFeeRate(valueIn - valueOut, tx.GetTotalSize());
+    return fee_rate.GetFeePerK();
 }
 
-CAmount computeMeanAmount(std::vector<CAmount> const& txFees)
-{
-    if (txFees.empty()) {
-        return CAmount(0);
-    }
-
-    CAmount sumFees = std::accumulate(txFees.cbegin(), txFees.cend(), CAmount(0));
-    return sumFees / CAmount(txFees.size());
-}
-
-CAmount computeMedianAmount(std::vector<CAmount> txFees)
-{
-    if (txFees.empty()) {
-        return CAmount(0);
-    }
-
-    auto numFees = txFees.size();
-
-    std::sort(txFees.begin(), txFees.end(), [](const CAmount& c1, const CAmount& c2) -> bool {
-        return (c1 < c2);
-    });
-
-    size_t middleIndex = numFees / 2;
-    if ((numFees % 2) != 0) {
-        return txFees[middleIndex];
-    }
-
-    return (txFees[middleIndex] + txFees[middleIndex - 1]) / 2;
-}
-
-CAmount computeStdDevAmount(std::vector<CAmount> const& txFees)
-{
-    auto numFees = txFees.size();
-    if (numFees < 2) {
-        return CAmount(0);
-    }
-
-    CAmount meanValue = computeMeanAmount(txFees);
-    double total = 0.0;
-    for (auto const& currFee : txFees) {
-        total += pow(currFee - meanValue, 2);
-    }
-
-    double v = total / static_cast<double>((numFees - 1));
-    return static_cast<CAmount>(v);
-}
-
-UniValue computeBlocksTxFees(uint32_t startBlockHeight, uint32_t endBlockHeight)
+UniValue ComputeBlocksTxFees(uint32_t startBlockHeight, uint32_t endBlockHeight, ETxClass txClass)
 {
     uint32_t currHeightU = static_cast<uint32_t>(chainActive.Tip()->nHeight);
     if (startBlockHeight > currHeightU) {
@@ -1844,68 +1866,27 @@ UniValue computeBlocksTxFees(uint32_t startBlockHeight, uint32_t endBlockHeight)
             continue;
         }
 
-        for (auto const& tx: block.vtx) {
-            if (tx->IsCoinBase()) {
-                continue;
-            }
+        auto vtx = StakeSlice(block.vtx, txClass);
+        for (const auto& tx : vtx) {
             txFees.push_back(computeTransactionFee(*tx));
         }
     }
 
-    CAmount minValue = 0;
-    CAmount maxValue = 0;
-    if (!txFees.empty()) {
-        minValue = *std::min_element(txFees.cbegin(), txFees.cend());
-        maxValue = *std::max_element(txFees.cbegin(), txFees.cend());
-    }
-
-    CAmount meanValue = computeMeanAmount(txFees);
-    CAmount medianValue = computeMedianAmount(txFees);
-    CAmount stdDevValue = computeStdDevAmount(txFees);
-
-    UniValue blockResult{UniValue::VOBJ};
-    blockResult.push_back(Pair("number", static_cast<uint64_t>(txFees.size())));
-    blockResult.push_back(Pair("min", minValue));
-    blockResult.push_back(Pair("max", maxValue));
-    blockResult.push_back(Pair("mean", meanValue));
-    blockResult.push_back(Pair("median", medianValue));
-    blockResult.push_back(Pair("stddev", stdDevValue));
-
-    return blockResult;
+    return FormatTxFeesInfo(txFees);
 }
 
 UniValue computeMempoolTxFees()
 {
-    auto mempoolTxs = mempool.infoAll();
     std::vector<CAmount> txFees;
-    txFees.reserve(mempoolTxs.size());
-
-    for (auto const& mempoolTx : mempoolTxs) {
-        auto txFee = computeTransactionFee(*(mempoolTx.tx));
-        txFees.push_back(txFee);
+    auto& tx_class_index = mempool.mapTx.get<tx_class>();
+    auto regularTxs = tx_class_index.equal_range(ETxClass::TX_Regular);
+    for (auto regular_tx_iter = regularTxs.first; regular_tx_iter != regularTxs.second; ++regular_tx_iter) {
+        auto txiter = mempool.mapTx.project<0>(regular_tx_iter);
+        const auto& fee_rate = CFeeRate(txiter->GetModifiedFee(), txiter->GetTxSize());
+        txFees.push_back(fee_rate.GetFeePerK());
     }
 
-    auto numFees = txFees.size();
-    CAmount minValue = 0;
-    CAmount maxValue = 0;
-    if (numFees > 0) {
-        minValue = *std::min_element(txFees.cbegin(), txFees.cend());
-        maxValue = *std::max_element(txFees.cbegin(), txFees.cend());
-    }
-
-    CAmount meanValue = computeMeanAmount(txFees);
-    CAmount medianValue = computeMedianAmount(txFees);
-    CAmount stdDevValue = computeStdDevAmount(txFees);
-
-    UniValue mempoolResult{UniValue::VOBJ};
-    mempoolResult.push_back(Pair("number", static_cast<uint64_t>(numFees)));
-    mempoolResult.push_back(Pair("min", minValue));
-    mempoolResult.push_back(Pair("max", maxValue));
-    mempoolResult.push_back(Pair("mean", meanValue));
-    mempoolResult.push_back(Pair("median", medianValue));
-    mempoolResult.push_back(Pair("stddev", stdDevValue));
-
-    return mempoolResult;
+    return FormatTxFeesInfo(txFees);
 }
 
 UniValue txfeeinfo(const JSONRPCRequest& request)
@@ -1997,14 +1978,14 @@ UniValue txfeeinfo(const JSONRPCRequest& request)
         auto end = currHeight - blocks;
 
         for (auto i = start; i > end; --i) {
-            auto blockFee = computeBlocksTxFees(i, i + 1);
+            auto blockFee = ComputeBlocksTxFees(i, i + 1, ETxClass::TX_Regular);
             blockFee.push_back(Pair("height", static_cast<int32_t>(i)));
 
             blockFees.push_back(blockFee);
         }
     }
 
-    UniValue rangeFees = computeBlocksTxFees(rangeStart, rangeEnd);
+    UniValue rangeFees = ComputeBlocksTxFees(rangeStart, rangeEnd, ETxClass::TX_Regular);
 
     UniValue txFeesResult{UniValue::VOBJ};
     txFeesResult.push_back(Pair("feeinfomempool", mempoolFees));

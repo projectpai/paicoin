@@ -228,6 +228,7 @@ CMutableTransaction Generator::CreateTicketPurchaseTx(const SpendableOut& spend,
 
     // create an output which pays back change
     CAmount change = spend.amount - ticketPrice - fee;
+    assert(change >= 0);
     mtx.vout.push_back(CTxOut(change, changeScript));
 
     SignTx(mtx, 0, coinbaseScript, coinbaseKey);
@@ -374,6 +375,8 @@ Generator::SpendableOut Generator::MakeSpendableOut(const CTransaction& tx, uint
 
 std::list<Generator::SpendableOut> Generator::OldestCoinOuts()
 {
+    if (spendableOuts.size() == 0)
+        return std::list<Generator::SpendableOut>{};
     const auto oldest = spendableOuts.front();
     spendableOuts.pop_front();
     return oldest;
@@ -394,7 +397,7 @@ CAmount Generator::NextRequiredStakeDifficulty()
 {
     CBlock dummyBlock;
     const auto& ticketPrice = calcNextRequiredStakeDifficulty(dummyBlock, chainActive.Tip(), Params());
-    return ticketPrice;
+    return ticketPrice == 0 ? 2e4 : ticketPrice; // nMinimumStakeDiff is set to 0 until CBlockHeader correctly serializes nStakeDifficulty
 }
 
 CBlock Generator::NextBlock(const std::string& blockName
@@ -457,6 +460,17 @@ CBlock Generator::NextBlock(const std::string& blockName
         block.vtx.resize(1);
         for (const CMutableTransaction& tx : mungerTxs)
             block.vtx.push_back(MakeTransactionRef(tx));
+
+        // Re-create coinbase transaction to be able to generate a new commitment
+        CMutableTransaction coinbaseTx;
+        coinbaseTx.vin.resize(1);
+        coinbaseTx.vin[0].prevout.SetNull();
+        coinbaseTx.vout.resize(1);
+        coinbaseTx.vout[0].scriptPubKey = coinbaseScript;
+        coinbaseTx.vout[0].nValue = 0/*nFees*/ + GetMinerSubsidy(nextHeight, chainparams.GetConsensus());
+        coinbaseTx.vin[0].scriptSig = CScript() << nextHeight << OP_0;
+        block.vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
+        GenerateCoinbaseCommitment(block, Tip(), chainparams.GetConsensus());
     }
 
     // IncrementExtraNonce creates a valid coinbase and merkleRoot
