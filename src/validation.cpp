@@ -1135,7 +1135,7 @@ CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams)
 CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
     // Voter subsidy is a portion of total block subsidy
-    return nHeight + 1 < consensusParams.nStakeValidationHeight ? 0 :
+    return nHeight < consensusParams.nStakeValidationHeight ? 0 :
         (GetTotalBlockSubsidy(nHeight, consensusParams) * consensusParams.nStakeSubsidyProportion)
         / (consensusParams.TotalSubsidyProportions() * consensusParams.nTicketsPerBlock);
 }
@@ -2099,19 +2099,28 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         setDirtyBlockIndex.insert(pindex);
     }
 
-    // auto stakeNode = *FetchStakeNode(pindex, chainparams.GetConsensus());
-    if(pindex->GetStakePos().IsNull()){
-        CDiskBlockPos _pos;
-
-        if (!FindStakePos(state, pindex->nFile, _pos, ::GetSerializeSize(*pindex->pstakeNode, SER_DISK, CLIENT_VERSION) + 40))
-            return error("ConnectBlock(): FindStakePos failed");
-        if (!StakeWriteToDisk(*pindex->pstakeNode, _pos, pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash(), chainparams.MessageStart()))
-            return AbortNode(state, "Failed to write stake data");
-
-        // update nStakePos in block index
-        pindex->nStakePos = _pos.nPos;
-        pindex->nStatus |= BLOCK_HAVE_STAKE;
+    if (pindex->nHeight == 0) {
+        assert(pindex->pprev == nullptr);
+        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
     }
+    else{
+        assert(pindex->pprev != nullptr);
+        assert(pindex->pprev->pstakeNode != nullptr);
+
+        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
+    }
+    // if(pindex->GetStakePos().IsNull()){
+    //     CDiskBlockPos _pos;
+
+    //     if (!FindStakePos(state, pindex->nFile, _pos, ::GetSerializeSize(*pindex->pstakeNode, SER_DISK, CLIENT_VERSION) + 40))
+    //         return error("ConnectBlock(): FindStakePos failed");
+    //     if (!StakeWriteToDisk(*pindex->pstakeNode, _pos, pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash(), chainparams.MessageStart()))
+    //         return AbortNode(state, "Failed to write stake data");
+
+    //     // update nStakePos in block index
+    //     pindex->nStakePos = _pos.nPos;
+    //     pindex->nStatus |= BLOCK_HAVE_STAKE;
+    // }
 
     if (fTxIndex)
         if (!pblocktree->WriteTxIndex(vPosTxid))
@@ -3155,21 +3164,21 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
 
     // Before stake validation begins, a block must not contain any votes or revocations, its vote bits
     // must be 0x0001, and its ticket lottery state must be all zeroes.
-    // if (nBlockHeight < consensusParams.nStakeValidationHeight) {
-    //     if (numVotes > 0)
-    //         return state.DoS(50, false, REJECT_INVALID, "votes-too-early", false, "vote transactions present before stake validation time");
+    if (blockHeight < consensusParams.nStakeValidationHeight) {
+        if (numVotes > 0)
+            return state.DoS(50, false, REJECT_INVALID, "votes-too-early", false, "vote transactions present before stake validation time");
 
-    //     if (numRevocations > 0)
-    //         return state.DoS(50, false, REJECT_INVALID, "revocations-too-early", false, "revocation transactions present before stake validation time");
+        if (numRevocations > 0)
+            return state.DoS(50, false, REJECT_INVALID, "revocations-too-early", false, "revocation transactions present before stake validation time");
 
-    //     if (block.nVoteBits != 1)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
-    //         return state.DoS(50, false, REJECT_INVALID, "voteBits-too-early", false, "voteBits present before stake validation time");
+        if (block.nVoteBits != 1)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
+            return state.DoS(50, false, REJECT_INVALID, "voteBits-too-early", false, "voteBits present before stake validation time");
 
-    //     StakeState earlyLotteryState;
-    //     std::fill(earlyLotteryState.begin(), earlyLotteryState.end(), 0);
-    //     if (block.ticketLotteryState != earlyLotteryState)
-    //         return state.DoS(50, false, REJECT_INVALID, "lottery-too-early", false, "ticket lottery state non-zero before stake validation time");
-    // }
+        StakeState earlyLotteryState;
+        std::fill(earlyLotteryState.begin(), earlyLotteryState.end(), 0);
+        if (block.ticketLotteryState != earlyLotteryState)
+            return state.DoS(50, false, REJECT_INVALID, "lottery-too-early", false, "ticket lottery state non-zero before stake validation time");
+    }
 
     // Check that the number of votes in a block is within limits
     if (blockHeight >= consensusParams.nStakeValidationHeight)
@@ -3405,21 +3414,22 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
         auto report = strprintf("incorrect stake difficulty in a block: expected %.2f, found %.2f", expectedStakeDifficulty / (float)COIN, block.nStakeDifficulty / (float)COIN);
         return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, report);
     }
-    /*  TODO uncomment once we have pstakeNode available and stable
 
-    // Ensure the header commits to the correct pool size based on its position within the chain.
-    auto expectedTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
-    if (block.nTicketPoolSize != (uint32_t) expectedTicketPoolSize) {
-        auto report = strprintf("block ticket pool size does not match the expected ticket pool size: expected %u, found %u", expectedTicketPoolSize, block.nTicketPoolSize);
-        return state.DoS(100, false, REJECT_INVALID, "bad-poolsize", false, report);
+    if (pindexPrev->pstakeNode != nullptr) {
+        // Ensure the header commits to the correct pool size based on its position within the chain.
+        auto expectedTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
+        if (block.nTicketPoolSize != (uint32_t)expectedTicketPoolSize) {
+            auto report = strprintf("block ticket pool size does not match the expected ticket pool size: expected %u, found %u", expectedTicketPoolSize, block.nTicketPoolSize);
+            return state.DoS(100, false, REJECT_INVALID, "bad-poolsize", false, report);
+        }
+
+        // Ensure the header commits to the correct lottery state based on its position within the chain.
+        auto expectedTicketLotteryState = pindexPrev->pstakeNode->FinalState();
+        if (block.ticketLotteryState != expectedTicketLotteryState)
+            return state.DoS(100, false, REJECT_INVALID, "bad-lotterystate", false, "block ticket lottery state does not match the expected ticket lottery state");
     }
 
-    // Ensure the header commits to the correct lottery state based on its position within the chain.
-    auto expectedTicketLotteryState = pindexPrev->pstakeNode->FinalState();
-    if (block.ticketLotteryState != expectedTicketLotteryState)
-        return state.DoS(100, false, REJECT_INVALID, "bad-lotterystate", false, "block ticket lottery state does not match the expected ticket lottery state");
-    */
-   // Check against checkpoints
+    // Check against checkpoints
     if (fCheckpointsEnabled) {
         // Don't accept any forks from the main chain prior to last checkpoint.
         // GetLastCheckpoint finds the last checkpoint in MapCheckpoints that's in our
@@ -3714,13 +3724,6 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
 
     if (fCheckForPruning)
         FlushStateToDisk(chainparams, state, FLUSH_STATE_NONE); // we just allocated more disk space for block files
-
-    if (pindex->pprev == nullptr) {
-        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
-    }
-    else{
-        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
-    }
 
     return true;
 }
@@ -4046,6 +4049,17 @@ bool static LoadBlockIndexDB(const CChainParams& chainparams)
             pindex->BuildSkip();
         if (pindex->IsValid(BLOCK_VALID_TREE) && (pindexBestHeader == nullptr || CBlockIndexWorkComparator()(pindexBestHeader, pindex)))
             pindexBestHeader = pindex;
+
+        if (pindex->nHeight == 0) {
+            assert(pindex->pprev == nullptr);
+            pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+        }
+        else{
+            assert(pindex->pprev != nullptr);
+            assert(pindex->pprev->pstakeNode != nullptr);
+
+            pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
+        }
     }
 
     // Load block file info
@@ -4193,12 +4207,12 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
                 if (!UndoReadFromDisk(undo, pos, pindex->pprev->GetBlockHash()))
                     return error("VerifyDB(): *** found bad undo data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
             }
-            StakeNode stake(chainparams.GetConsensus());
-            pos = pindex->GetStakePos();
-            if (!pos.IsNull()) {
-                if (!StakeReadFromDisk(stake, pos, pindex->pprev->GetBlockHash()))
-                    return error("VerifyDB(): *** found bad stake data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
-            }
+            // StakeNode stake(chainparams.GetConsensus());
+            // pos = pindex->GetStakePos();
+            // if (!pos.IsNull()) {
+            //     if (!StakeReadFromDisk(stake, pos, pindex->pprev->GetBlockHash()))
+            //         return error("VerifyDB(): *** found bad stake data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
+            // }
         }
         // check level 3: check for inconsistencies during memory-only disconnect of tip blocks
         if (nCheckLevel >= 3 && pindex == pindexState && (coins.DynamicMemoryUsage() + pcoinsTip->DynamicMemoryUsage()) <= nCoinCacheUsage) {
@@ -4490,18 +4504,31 @@ bool LoadGenesisBlock(const CChainParams& chainparams)
 
     try {
         CBlock &block = const_cast<CBlock&>(chainparams.GenesisBlock());
+        CBlockIndex *pindex = AddToBlockIndex(block);
+        CValidationState state;
+        assert (pindex->pprev == nullptr);
+        // pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+        // assert(pindex->pstakeNode != nullptr);
+        // assert(pindex->GetStakePos().IsNull());
+        // {
+        //     // Start new stake file
+        //     CDiskBlockPos _pos;
+        //     if (!FindStakePos(state, pindex->nFile, _pos, ::GetSerializeSize(*pindex->pstakeNode, SER_DISK, CLIENT_VERSION) + 40))
+        //         return error("%s: FindStakePos failed", __func__);
+        //     if (!StakeWriteToDisk(*pindex->pstakeNode, _pos, uint256(), chainparams.MessageStart()))
+        //         return error("%s: writing stake data for genesis block to disk failed", __func__);
+        //     // update nStakePos in block index
+        //     pindex->nStakePos = _pos.nPos;
+        //     pindex->nStatus |= BLOCK_HAVE_STAKE;
+        // }
         // Start new block file
         unsigned int nBlockSize = ::GetSerializeSize(block, SER_DISK, CLIENT_VERSION);
         CDiskBlockPos blockPos;
-        CValidationState state;
         if (!FindBlockPos(state, blockPos, nBlockSize+8, 0, block.GetBlockTime()))
             return error("%s: FindBlockPos failed", __func__);
         if (!WriteBlockToDisk(block, blockPos, chainparams.MessageStart()))
             return error("%s: writing genesis block to disk failed", __func__);
-        CBlockIndex *pindex = AddToBlockIndex(block);
-        assert (pindex->pprev == nullptr);
-        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
-        assert(pindex->pstakeNode != nullptr);
+
         if (!ReceivedBlockTransactions(block, state, pindex, blockPos, chainparams.GetConsensus()))
             return error("%s: genesis block not accepted", __func__);
     } catch (const std::runtime_error& e) {
@@ -5068,10 +5095,9 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
         // Populate the prunable ticket information as needed.
         MaybeFetchTicketInfo(pindex,params);
 
-        auto stakeNode = pindex->pprev->pstakeNode->ConnectNode(
+        auto stakeNode = pindex->pprev->pstakeNode->ConnectNode( pindex->LotteryIV(),
             pindex->ticketsVoted, pindex->ticketsRevoked, *pindex->newTickets);
-        // stakeNode, err := node.parent.stakeNode.ConnectNode(node.lotteryIV(),
-        // 		node.ticketsVoted, node.ticketsRevoked, node.newTickets)
+
         pindex->pstakeNode = stakeNode;
 
         return stakeNode;
@@ -5111,11 +5137,8 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
         // Generate the previous stake node by starting with the child stake
         // node and undoing the modifications caused by the stake details in
         // the previous block.
-        // const auto parentUtds = this->databaseUndoUpdate; //TODO get correct one from height-1
-        // const auto parentTickets = this->databaseBlockTickets; //TODO get correct one from height-1
-        auto stakeNode = it->pstakeNode->DisconnectNode(prev->pstakeNode->UndoData(), prev->pstakeNode->NewTickets());
-        // stakeNode, err := n.stakeNode.DisconnectNode(prev.lotteryIV(), nil,
-        // nil, dbTx)
+        auto stakeNode = it->pstakeNode->DisconnectNode(prev->LotteryIV(),prev->pstakeNode->UndoData(), prev->pstakeNode->NewTickets());
+        // stakeNode, err := n.stakeNode.DisconnectNode(prev.lotteryIV(), nil, nil, dbTx)
         prev->pstakeNode = stakeNode;
     }
 
@@ -5144,11 +5167,9 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
 
         // Generate the stake node by applying the stake details in the current
         // block to the previous stake node.
-        auto stakeNode = it->pprev->pstakeNode->ConnectNode(
+        auto stakeNode = it->pprev->pstakeNode->ConnectNode( it->LotteryIV(),
             it->ticketsVoted, it->ticketsRevoked, *it->newTickets);
         it->pstakeNode = stakeNode;
-        // 	stakeNode, err := n.parent.stakeNode.ConnectNode(n.lotteryIV(),
-        // 		n.ticketsVoted, n.ticketsRevoked, n.newTickets)
     }
 
     return pindex->pstakeNode;

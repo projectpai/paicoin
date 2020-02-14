@@ -28,7 +28,7 @@ class SearchOperations(PAIcoinTestFramework):
 
         # existsaddresses tests:
         # 1. valid parameters
-        x = self.nodes[0].existsaddresses("[{ 'address' : '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy'}, { 'address' : '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy'}]")
+        x = self.nodes[0].existsaddresses([{ 'address' : '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy'}, { 'address' : '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy'}])
         assert(x == "00")
         #TODO add check for an existing addresses once the command is implemented properly
 

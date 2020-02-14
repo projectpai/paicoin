@@ -332,6 +332,10 @@ public:
         return block;
     }
 
+    // LotteryIV returns the initialization vector for the deterministic PRNG used
+    // to determine winning tickets.
+    uint256 LotteryIV() const;
+
     uint256 GetBlockHash() const
     {
         return *phashBlock;
@@ -441,6 +445,8 @@ public:
             READWRITE(VARINT(nDataPos));
         if (nStatus & BLOCK_HAVE_UNDO)
             READWRITE(VARINT(nUndoPos));
+        if (nStatus & BLOCK_HAVE_STAKE)
+            READWRITE(VARINT(nStakePos));
 
         // block header
         READWRITE(this->nVersion);
