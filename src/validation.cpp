@@ -1129,19 +1129,6 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
     return true;
 }
 
-CAmount GetTotalBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
-{
-    int halvings = nHeight / consensusParams.nSubsidyHalvingInterval;
-    // Force block reward to zero when right shift is undefined.
-    if (halvings >= 64)
-        return 0;
-
-    CAmount nSubsidy = consensusParams.nTotalBlockSubsidy * COIN;
-    // Subsidy is cut in half every 210,000 blocks which will occur approximately every 4 years.
-    nSubsidy >>= halvings;
-    return nSubsidy;
-}
-
 CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
     // Miner subsidy is a portion of total block subsidy
@@ -3257,6 +3244,12 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     // The block must not contain more ticket purchases than the maximum allowed.
     if (numTickets > consensusParams.nMaxFreshStakePerBlock)
         return state.DoS(50, false, REJECT_INVALID, "too-many-tickets", false, "block contains more than the maximum allowed number of tickets per block");
+
+    // A block header must commit to the actual number of tickets purchases that
+    // are in the block.
+    if (block.nFreshStake != numTickets)
+        return state.DoS(50, false, REJECT_INVALID, "number-tickets-mismatch", false, "block header fresh stake does not match number of tickets contained in block");
+
 
     // All ticket purchases must meet the difficulty specified by the block header.
     if (!CheckProofOfStake(block, consensusParams.nMinimumStakeDiff))

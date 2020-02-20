@@ -191,6 +191,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             AddToBlock(txiter);
             ++nNewTickets;
         }
+        pblock->nFreshStake = nNewTickets;
     }
 
     // No revocation transaction should be present before this height

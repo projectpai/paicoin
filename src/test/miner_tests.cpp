@@ -1276,6 +1276,7 @@ BOOST_FIXTURE_TEST_CASE( FakeChainGenerator_stake_REGTEST, Generator)
             const auto& spend = OldestCoinOuts();
             const auto& ticketPrice = NextRequiredStakeDifficulty();
             const auto& ticketFee = CAmount(2000);
+            // TODO: it is not ok to have a regular tx before stake tx, add validation rule to prevent this
             const auto& splitAmounts = std::vector<CAmount>(ConsensusParams().nTicketsPerBlock - 1, ticketPrice + ticketFee);
             const auto& splitSpendTx = CreateSplitSpendTx(spend.front(),splitAmounts,ticketFee);
             b.vtx.push_back(MakeTransactionRef(splitSpendTx));
@@ -1302,9 +1303,11 @@ BOOST_FIXTURE_TEST_CASE( FakeChainGenerator_stake_REGTEST, Generator)
 
         auto purchaseTx =  CreateTicketPurchaseTx(spend.front(), ticketPrice, ticketFee);
         b.vtx.push_back(MakeTransactionRef(purchaseTx));
+        b.nFreshStake++;
         while(b.vtx.size() < ConsensusParams().nMaxFreshStakePerBlock + 1) {
             purchaseTx =  CreateTicketPurchaseTx(MakeSpendableOut(purchaseTx,ticketChangeOutputIndex), ticketPrice, ticketFee);
             b.vtx.push_back(MakeTransactionRef(purchaseTx));
+            b.nFreshStake++;
         }
     };
 
