@@ -3111,6 +3111,41 @@ bool CWallet::DelAddressBook(const CTxDestination& address)
     return CWalletDB(*dbw).EraseName(EncodeDestination(address));
 }
 
+bool CWallet::RenameAddressBook(const std::string& oldName, const std::string& newName)
+{
+    std::vector<std::pair<CTxDestination, CAddressBookData>> pairsToRename;
+    for (auto const& item : mapAddressBook) {
+        auto const& addrBookData = item.second;
+        if (addrBookData.name == oldName) {
+            pairsToRename.push_back(item);
+        }
+    }
+
+    if (pairsToRename.empty()) {
+        return false;
+    }
+
+    // Remove all in one sweep
+    for (auto const& pairToRename : pairsToRename) {
+        DelAddressBook(pairToRename.first);
+    }
+
+    // Add the addresses with the new account name
+    for (auto const& pairToRename : pairsToRename) {
+        auto const& dest = pairToRename.first;
+        auto const& purpose = pairToRename.second.purpose;
+        auto const& destdata = pairToRename.second.destdata;
+
+        if (SetAddressBook(dest, newName, purpose)) {
+            for (auto const& destd : destdata) {
+                AddDestData(dest, destd.first, destd.second);
+            }
+        }
+    }
+
+    return true;
+}
+
 const std::string& CWallet::GetAccountName(const CScript& scriptPubKey) const
 {
     CTxDestination address;
