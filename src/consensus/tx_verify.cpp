@@ -215,11 +215,12 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
     else if (txClass == TX_Vote)
     {
         // Check length of subsidy scriptSig.
-        if (tx.vin[voteSubsidyInputIndex].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
+        if (tx.vin[voteSubsidyInputIndex].scriptSig.size() < 2 || tx.vin[voteSubsidyInputIndex].scriptSig.size() > 100)
             return state.DoS(100, false, REJECT_INVALID, "bad-stakereward-length");
 
-        // TODO validation
         // Reward scriptSig must be set to the one specified by the network.
+        if (tx.vin[voteSubsidyInputIndex].scriptSig != Params().GetConsensus().stakeBaseSigScript)
+            return state.DoS(100, false, REJECT_INVALID, "bad-stakereward-scriptsig");
 
         // The ticket reference must not be null.
         if (tx.vin[voteStakeInputIndex].prevout.IsNull())

@@ -197,7 +197,7 @@ Generator::~Generator()
     ;
 }
 
-void Generator::SignTx(CMutableTransaction& tx, unsigned int nIn, const CScript& script, const CKey& key)
+void Generator::SignTx(CMutableTransaction& tx, unsigned int nIn, const CScript& script, const CKey& key) const
 {
     std::vector<unsigned char> vchSig;
     uint256 hash = SignatureHash(script, tx, nIn, SIGHASH_ALL, 0, SIGVERSION_BASE);
@@ -238,28 +238,26 @@ CMutableTransaction Generator::CreateTicketPurchaseTx(const SpendableOut& spend,
     return mtx;
 }
     
-CMutableTransaction Generator::CreateVoteTx(const CBlockIndex& voteBlock, const uint256& ticketTxHash)
+CMutableTransaction Generator::CreateVoteTx(const uint256& voteBlockHash, int voteBlockHeight, const uint256& ticketTxHash, uint32_t voteBits) const
 {
     CMutableTransaction mtx;
 
-    const auto& voterSubsidy = GetVoterSubsidy(voteBlock.nHeight+1/*spend height*/,Params().GetConsensus());
-    const auto& ticketPrice  = boughtTicketHashToPrice[ticketTxHash];
+    const auto& voterSubsidy = GetVoterSubsidy(voteBlockHeight+1/*spend height*/,Params().GetConsensus());
+    const auto& ticketPrice  = boughtTicketHashToPrice.at(ticketTxHash);
     const auto& contributedAmount = ticketPrice + 2 /*fee*/;
     const auto& reward = CalcContributorRemuneration( contributedAmount, ticketPrice, voterSubsidy, contributedAmount);
     // create a reward generation input
-    mtx.vin.push_back(CTxIn(COutPoint(), CScript() << 55 << OP_0/*added to avoid bad-stakereward-length; TODO set correct script*/));
+    mtx.vin.push_back(CTxIn(COutPoint(), Params().GetConsensus().stakeBaseSigScript));
 
     mtx.vin.push_back(CTxIn(COutPoint(ticketTxHash, ticketStakeOutputIndex)));
 
     // create a structured OP_RETURN output containing tx declaration and voting data
-    uint32_t voteYesBits = 0x0001;
     int voteVersion = 1;
-    VoteData voteData = { voteVersion, voteBlock.GetBlockHash(), static_cast<uint32_t>(voteBlock.nHeight), voteYesBits };
+    VoteData voteData = { voteVersion, voteBlockHash, static_cast<uint32_t>(voteBlockHeight), voteBits };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 
-    // Create an output which pays back a dummy reward
-    CScript rewardScript = GetScriptForDestination(rewardAddr);
+    // Create an output which pays back a reward
     mtx.vout.push_back(CTxOut(reward, rewardScript));
 
     SignTx(mtx, voteStakeInputIndex, stakeScript, coinbaseKey);
@@ -267,7 +265,7 @@ CMutableTransaction Generator::CreateVoteTx(const CBlockIndex& voteBlock, const 
     return mtx;
 }
 
-CMutableTransaction Generator::CreateRevocationTx(const uint256& ticketTxHash)
+CMutableTransaction Generator::CreateRevocationTx(const uint256& ticketTxHash) const
 {
     CMutableTransaction mtx;
 
@@ -280,8 +278,7 @@ CMutableTransaction Generator::CreateRevocationTx(const uint256& ticketTxHash)
     mtx.vout.push_back(CTxOut(0, declScript));
 
     // Create an output which pays back ticket price as a refund
-    CScript rewardScript = GetScriptForDestination(rewardAddr);
-    const auto& ticketPrice  = boughtTicketHashToPrice[ticketTxHash]; 
+    const auto& ticketPrice  = boughtTicketHashToPrice.at(ticketTxHash); 
     mtx.vout.push_back(CTxOut(ticketPrice, rewardScript));
 
     SignTx(mtx, revocationStakeInputIndex, stakeScript, coinbaseKey);
@@ -289,7 +286,7 @@ CMutableTransaction Generator::CreateRevocationTx(const uint256& ticketTxHash)
     return mtx;
 }
 
-CMutableTransaction Generator::CreateSpendTx(const SpendableOut& spend, const CAmount& fee)
+CMutableTransaction Generator::CreateSpendTx(const SpendableOut& spend, const CAmount& fee) const
 {
     CMutableTransaction mtx;
     // create input to fund the transaction
@@ -304,7 +301,7 @@ CMutableTransaction Generator::CreateSpendTx(const SpendableOut& spend, const CA
     return mtx;
 }
 
-CMutableTransaction Generator::CreateSplitSpendTx(const SpendableOut& spend, const std::vector<CAmount>& payments, const CAmount& fee)
+CMutableTransaction Generator::CreateSplitSpendTx(const SpendableOut& spend, const std::vector<CAmount>& payments, const CAmount& fee) const
 {
     CMutableTransaction mtx;
     // create input to fund the transaction
@@ -352,7 +349,7 @@ void Generator::SaveAllSpendableOuts(const CBlock& b)
             const auto& txClass = ParseTxClass(*tx);
             switch(txClass){
             case TX_Regular:
-                for (int i = 0; i < tx->vout.size(); ++i) { 
+                for (size_t i = 0; i < tx->vout.size(); ++i) { 
                     outs.push_back(MakeSpendableOut(*tx, i));
                 }
                 break;
@@ -368,7 +365,7 @@ void Generator::SaveAllSpendableOuts(const CBlock& b)
     spendableOuts.push_back(outs);
 }
 
-Generator::SpendableOut Generator::MakeSpendableOut(const CTransaction& tx, uint32_t indexOut)
+Generator::SpendableOut Generator::MakeSpendableOut(const CTransaction& tx, uint32_t indexOut) const
 {
     return Generator::SpendableOut{COutPoint{tx.GetHash(), indexOut}, Tip()->nHeight, tx.vout[indexOut].nValue};
 }
@@ -382,22 +379,50 @@ std::list<Generator::SpendableOut> Generator::OldestCoinOuts()
     return oldest;
 }
 
-const CBlockIndex* Generator::Tip()
+const CBlockIndex* Generator::Tip() const
 {
     const auto& tip = chainActive.Tip();
     return tip;
 }
 
-const Consensus::Params& Generator::ConsensusParams()
+const Consensus::Params& Generator::ConsensusParams() const
 {
     return Params().GetConsensus();
 }
 
-CAmount Generator::NextRequiredStakeDifficulty()
+CAmount Generator::NextRequiredStakeDifficulty() const
 {
     CBlock dummyBlock;
     const auto& ticketPrice = calcNextRequiredStakeDifficulty(dummyBlock, chainActive.Tip(), Params());
     return ticketPrice == 0 ? 2e4 : ticketPrice; // nMinimumStakeDiff is set to 0 until CBlockHeader correctly serializes nStakeDifficulty
+}
+
+void Generator::ReplaceVoteBits(CTransactionRef& tx, uint32_t voteBits) const
+{
+    // Regenerate vote tx using the same hash/height, but change the voteBits
+    CMutableTransaction voteTx = *tx;
+    assert(ParseTxClass(voteTx)==TX_Vote);
+    const auto& ticketHash = voteTx.vin[voteStakeInputIndex].prevout.hash;
+    voteTx = CreateVoteTx(Tip()->GetBlockHash(), Tip()->nHeight, ticketHash, voteBits);
+    tx = MakeTransactionRef(voteTx);
+}
+
+void Generator::ReplaceStakeBaseSigScript(CTransactionRef& tx, const CScript& sigScript) const
+{
+    CMutableTransaction voteTx = *tx;
+    assert(ParseTxClass(voteTx)==TX_Vote);
+    voteTx.vin[voteSubsidyInputIndex].scriptSig = sigScript;
+    tx = MakeTransactionRef(voteTx);
+}
+
+CScript Generator::RepeatOpCode(opcodetype opCode, uint16_t numRepeats) const
+{
+    auto result = CScript();
+    for(auto i = 0u ; i < numRepeats; ++i)
+    {
+        result << opCode;
+    }
+    return result;
 }
 
 CBlock Generator::NextBlock(const std::string& blockName
@@ -409,7 +434,7 @@ CBlock Generator::NextBlock(const std::string& blockName
     const Consensus::Params& params = chainparams.GetConsensus();
 
     TestMemPoolEntryHelper entry;
-    const auto& nextHeight = chainActive.Tip()->nHeight + 1;
+    const auto& nextHeight = Tip()->nHeight + 1;
 
     mempool.clear();
 
@@ -419,8 +444,10 @@ CBlock Generator::NextBlock(const std::string& blockName
         if (nextHeight >= params.nStakeValidationHeight){
             // Generate and add the vote transactions for the winning tickets
             const auto& winners = chainActive.Tip()->pstakeNode->Winners();
+            const auto& voteBlockHash = Tip()->GetBlockHash();
+            const auto& voteBlockHeight = Tip()->nHeight;
             for (const auto& ticket: winners) {
-                const auto& voteTx = CreateVoteTx(*chainActive.Tip(), ticket);
+                const auto& voteTx = CreateVoteTx(voteBlockHash, voteBlockHeight, ticket);
                 mempool.addUnchecked(voteTx.GetHash(), entry.Fee(0LL).SpendsCoinbase(false).FromTx(voteTx));
             }
         }
@@ -454,7 +481,6 @@ CBlock Generator::NextBlock(const std::string& blockName
     CBlock& block = pblocktemplate->block;
 
     if (munger){
-        // Replace mempool-selected txns with just coinbase plus the txns done in munger:
         mempool.clear();
         const auto& mungerTxs = munger(block);
         block.vtx.resize(1);
@@ -480,7 +506,17 @@ CBlock Generator::NextBlock(const std::string& blockName
     while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus())) ++block.nNonce;
 
     std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
-    ProcessNewBlock(chainparams, shared_pblock, true, nullptr);
+    submitblock_StateCatcher sc(shared_pblock->GetHash());
+    RegisterValidationInterface(&sc);
+    const auto bAccepted = ProcessNewBlock(chainparams, shared_pblock, true, nullptr);
+    UnregisterValidationInterface(&sc);
+    if (!bAccepted || sc.found)
+    {
+        lastValidationState = sc.state;
+    }
+    else {
+        lastValidationState = CValidationState{};
+    }
 
     CBlock result = block;
     return result;
