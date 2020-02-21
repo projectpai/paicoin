@@ -226,6 +226,11 @@ inline void UnserializeTransaction(TxType& tx, Stream& s) {
         throw std::ios_base::failure("Unknown transaction optional data");
     }
     s >> tx.nLockTime;
+    if (tx.nVersion > 4) {
+        s >> tx.nExpiry;
+    } else {
+        tx.nExpiry = 0;
+    }
 }
 
 template<typename Stream, typename TxType>
@@ -255,6 +260,9 @@ inline void SerializeTransaction(const TxType& tx, Stream& s) {
         }
     }
     s << tx.nLockTime;
+    if (tx.nVersion > 4) {
+        s << tx.nExpiry;
+    }
 }
 
 
