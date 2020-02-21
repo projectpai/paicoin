@@ -238,7 +238,9 @@ CAmount CCoinsViewCache::GetValueIn(const CTransaction& tx) const
 bool CCoinsViewCache::HaveInputs(const CTransaction& tx) const
 {
     if (!tx.IsCoinBase()) {
-        for (unsigned int i = 0; i < tx.vin.size(); i++) {
+        const auto& txClass =  ParseTxClass(tx);
+        const auto& startIndex = (txClass == TX_Vote) ? voteStakeInputIndex : 0; // first input in a vote is subsidy generation; skip it
+        for (unsigned int i = startIndex; i < tx.vin.size(); i++) {
             if (!HaveCoin(tx.vin[i].prevout)) {
                 return false;
             }

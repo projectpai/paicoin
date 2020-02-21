@@ -137,7 +137,8 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& in
         return 0;
 
     unsigned int nSigOps = 0;
-    for (unsigned int i = 0; i < tx.vin.size(); i++)
+    unsigned startInput = ParseTxClass(tx) == TX_Vote ? voteStakeInputIndex : 0;    // first input in a vote is subsidy generation; skip it
+    for (unsigned int i = startInput; i < tx.vin.size(); i++)
     {
         const Coin& coin = inputs.AccessCoin(tx.vin[i].prevout);
         assert(!coin.IsSpent());
@@ -159,7 +160,8 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
         nSigOps += GetP2SHSigOpCount(tx, inputs) * WITNESS_SCALE_FACTOR;
     }
 
-    for (unsigned int i = 0; i < tx.vin.size(); i++)
+    unsigned startInput = ParseTxClass(tx) == TX_Vote ? voteStakeInputIndex : 0;    // first input in a vote is subsidy generation; skip it
+    for (unsigned int i = startInput; i < tx.vin.size(); i++)
     {
         const Coin& coin = inputs.AccessCoin(tx.vin[i].prevout);
         assert(!coin.IsSpent());
@@ -260,6 +262,12 @@ bool isLegalScriptTypeForStake(const CScript& script)
 
 bool isLegalInputForBuyTicket(const Coin& coin, int txoutIndex)
 {
+    // TODO: we should not normally allow spending coinbases on buying tickets
+    // but as we test this on REGTEST we have no other way at the moment, because we wanted to avoid 
+    // adding another regular transaction before doing the actual ticket purchase
+    if (coin.IsCoinBase())
+        return true;
+
     // check class of containing transaction
     bool containedInLegalTxClass =
         coin.txClass == TX_Regular                          // a regular tx output, including coinbase, is a valid input
@@ -268,6 +276,7 @@ bool isLegalInputForBuyTicket(const Coin& coin, int txoutIndex)
         || coin.txClass == TX_RevokeTicket;                    // RevokeTicket refund is a valid input
     if (!containedInLegalTxClass)
         return false;
+
 
     // check if stake coin's scriptPubKey is P2PKH or P2SH
     return isLegalScriptTypeForStake(coin.out.scriptPubKey);
@@ -352,7 +361,7 @@ bool checkVoteOrRevokeTicketInputs(const CTransaction& tx, bool vote, CValidatio
     // NOTE: A ticket stake can only be spent in the block AFTER the entire ticket maturity has passed, hence the +1.
     // In case of revocations, the ticket must have been missed which can't possibly
     // happen for another block after that, hence the +2.
-    int maturityAdd = vote ? 2 : 1;
+    int maturityAdd = vote ? 1 : 2;
     int ticketMaturity = chainparams.GetConsensus().nTicketMaturity + maturityAdd;
     if (nSpendHeight - coin.nHeight < ticketMaturity)
         return state.DoS(100, false, REJECT_INVALID, badTxin + what + "-ticketstake-immature");
@@ -434,7 +443,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         // so we'll skip the checks
         if (txClass == TX_Vote && i == voteSubsidyInputIndex)
         {
-            nValueIn += GetVoterSubsidy(voteData.blockHeight, ::Params().GetConsensus());
+            nValueIn += GetVoterSubsidy(nSpendHeight/*voteData.blockHeight*/, ::Params().GetConsensus());
             continue;
         }
 

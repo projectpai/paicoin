@@ -5,6 +5,10 @@
 #ifndef PAICOIN_RPC_BLOCKCHAIN_H
 #define PAICOIN_RPC_BLOCKCHAIN_H
 
+#include "amount.h"
+#include "stake/staketx.h"
+#include <vector>
+
 class CBlock;
 class CBlockIndex;
 class UniValue;
@@ -32,6 +36,12 @@ UniValue mempoolToJSON(bool fVerbose = false);
 
 /** Block header to JSON */
 UniValue blockheaderToJSON(const CBlockIndex* blockindex);
+
+CAmount ComputeMeanAmount(const std::vector<CAmount>& txFees);
+CAmount ComputeMedianAmount(std::vector<CAmount> txFees);
+CAmount ComputeStdDevAmount(const std::vector<CAmount>& txFees);
+UniValue FormatTxFeesInfo(const std::vector<CAmount>& txFees);
+UniValue ComputeBlocksTxFees(uint32_t startBlockHeight, uint32_t endBlockHeight, ETxClass txClass);
 
 #endif
 

@@ -129,6 +129,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     nHeight = pindexPrev->nHeight + 1;
 
     pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
+    pblock->nStakeDifficulty = calcNextRequiredStakeDifficulty(*pblock,pindexPrev,chainparams);
+
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
     if (chainparams.MineBlocksOnDemand())
@@ -140,6 +142,69 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     nLockTimeCutoff = (STANDARD_LOCKTIME_VERIFY_FLAGS & LOCKTIME_MEDIAN_TIME_PAST)
                        ? nMedianTimePast
                        : pblock->GetBlockTime();
+
+	// Votes should be present after this height.
+    if (nHeight >= chainparams.GetConsensus().nStakeValidationHeight) {
+        auto& voted_hash_index = mempool.mapTx.get<voted_block_hash>();
+        auto votesForBlockHash = voted_hash_index.equal_range(pindexPrev->GetBlockHash());
+        // Check to see if the vote tx actually uses a ticket that is
+        // valid for the next block.
+        // it seems this is already done in checkAllowedVotes called from TestBlockValidity
+
+        // normally should not happen, except in case of constructing invalid block chains above StakeValidationHeight,
+        // see miner_tests.cpp (search SetBestBlock)
+        assert(pindexPrev->pstakeNode != nullptr);
+        auto winningHashes = pindexPrev->pstakeNode->Winners();
+
+        for (auto votetxiter = votesForBlockHash.first; votetxiter != votesForBlockHash.second; ++votetxiter) {
+            const auto& spentTicketHash = votetxiter->GetTx().vin[voteStakeInputIndex].prevout.hash;
+            if (std::find(winningHashes.begin(), winningHashes.end(), spentTicketHash) == winningHashes.end())
+                continue; //not a winner
+                
+            // tally votes already done in CheckBlock validation.cpp
+            // VoteData voteData;
+            // ParseVote(tx.GetTx(), voteData);
+
+            // voteData.voteBits
+
+            // tx must be included in the block
+            auto txiter = mempool.mapTx.project<0>(votetxiter);
+            AddToBlock(txiter);
+        }
+    }
+
+    // Get the newly purchased tickets
+    // if (nHeight >= chainparams.GetConsensus().nStakeEnabledHeight) 
+    {
+        auto& tx_class_index = mempool.mapTx.get<tx_class>();
+        auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+        int nNewTickets = 0;
+        for (auto tickettxiter = existingTickets.first; tickettxiter != existingTickets.second; ++tickettxiter) {
+            if (nNewTickets >= chainparams.GetConsensus().nMaxFreshStakePerBlock) //new ticket purchases not more than max allowed in block
+                break;
+            // tx must be included in the block
+            auto txiter = mempool.mapTx.project<0>(tickettxiter);
+            AddToBlock(txiter);
+            ++nNewTickets;
+        }
+    }
+
+    // No revocation transaction should be present before this height
+    if (nHeight >= chainparams.GetConsensus().nStakeValidationHeight) {
+        auto& tx_class_index = mempool.mapTx.get<tx_class>();
+        auto revocations = tx_class_index.equal_range(ETxClass::TX_RevokeTicket);
+
+        assert(pindexPrev->pstakeNode != nullptr);
+        auto missedTickets = pindexPrev->pstakeNode->MissedTickets();
+
+        for (auto revocationtxiter = revocations.first; revocationtxiter != revocations.second; ++revocationtxiter) {
+            const auto& ticketHash = revocationtxiter->GetTx().vin[revocationStakeInputIndex].prevout.hash;
+            if (std::find(missedTickets.begin(), missedTickets.end(), ticketHash) == missedTickets.end())
+                continue; // Skip all missed tickets that we've never heard of 
+            auto txiter = mempool.mapTx.project<0>(revocationtxiter);
+            AddToBlock(txiter);
+        }
+    }
 
     // Decide whether to include witness transactions
     // This is only needed in case the witness softfork activation is reverted
@@ -335,7 +400,9 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
     {
         // First try to find a new transaction in mapTx to evaluate.
         if (mi != mempool.mapTx.get<ancestor_score>().end() &&
-                SkipMapTxEntry(mempool.mapTx.project<0>(mi), mapModifiedTx, failedTx)) {
+                (SkipMapTxEntry(mempool.mapTx.project<0>(mi), mapModifiedTx, failedTx) ||
+                mi->GetTxClass() != TX_Regular) //we only deal with non-stake tx in this loop
+                ) {
             ++mi;
             continue;
         }
