@@ -284,6 +284,9 @@ bool CheckSequenceLocks(const CTransaction &tx, int flags, LockPoints* lp, bool 
         std::vector<int> prevheights;
         prevheights.resize(tx.vin.size());
         for (size_t txinIndex = 0; txinIndex < tx.vin.size(); txinIndex++) {
+            //skip stakebase coin as it does not exist
+            if (txinIndex == voteSubsidyInputIndex && ParseTxClass(tx) == TX_Vote)
+                continue;
             const CTxIn& txin = tx.vin[txinIndex];
             Coin coin;
             if (!viewMemPool.GetCoin(txin.prevout, coin)) {
@@ -426,7 +429,11 @@ static bool CheckInputsFromMempoolAndCache(const CTransaction& tx, CValidationSt
     LOCK(pool.cs);
 
     assert(!tx.IsCoinBase());
-    for (const CTxIn& txin : tx.vin) {
+    for (size_t in = 0; in < tx.vin.size(); ++in) {
+        if (in == voteSubsidyInputIndex && ParseTxClass(tx) == TX_Vote)
+            continue; //skip the stakebase as coin doesn't exist
+
+        const CTxIn& txin = tx.vin[in];
         const Coin& coin = view.AccessCoin(txin.prevout);
 
         // At this point we haven't actually checked if the coins are all
@@ -493,8 +500,12 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     std::set<uint256> setConflicts;
     {
     LOCK(pool.cs); // protect pool.mapNextTx
-    for (const CTxIn &txin : tx.vin)
+    for (size_t in = 0; in < tx.vin.size(); ++in) 
     {
+        if (ParseTxClass(tx) == TX_Vote && in == voteSubsidyInputIndex)
+            continue; //skip the stakebase as coin doesn't exist
+
+        const CTxIn& txin = tx.vin[in];
         auto itConflicting = pool.mapNextTx.find(txin.prevout);
         if (itConflicting != pool.mapNextTx.end())
         {
@@ -562,8 +573,8 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 
     // If the transaction is a ticket, ensure that it meets the next stake difficulty.
     if (txClass == TX_BuyTicket) {
-        // TODO: call the proper function to get the expected stake difficulty
-        CAmount expectedStakeDifficulty = 1 * COIN; // mp.cfg.NextStakeDifficulty()
+        CBlock dummyBlock;
+        CAmount expectedStakeDifficulty =  calcNextRequiredStakeDifficulty(dummyBlock,chainActive.Tip(),chainparams);
         if (tx.vout[ticketStakeOutputIndex].nValue < expectedStakeDifficulty)
             return state.DoS(100, false, REJECT_INVALID, "insufficient-stake");
     }
@@ -579,7 +590,11 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         view.SetBackend(viewMemPool);
 
         // do all inputs exist?
-        for (const CTxIn txin : tx.vin) {
+        for (size_t in = 0; in < tx.vin.size(); ++in) {
+            if (txClass == TX_Vote && in == voteSubsidyInputIndex)
+                continue; //skip the stakebase as coin doesn't exist
+
+            const CTxIn& txin = tx.vin[in];
             if (!pcoinsTip->HaveCoinInCache(txin.prevout)) {
                 coins_to_uncache.push_back(txin.prevout);
             }
@@ -664,7 +679,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         }
 
         // No transactions are allowed below minRelayTxFee except from disconnected blocks
-        if (!bypass_limits && nModifiedFees < ::minRelayTxFee.GetFee(nSize)) {
+        if (!bypass_limits && txClass != TX_Vote && nModifiedFees < ::minRelayTxFee.GetFee(nSize)) {
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "min relay fee not met");
         }
 
@@ -982,17 +997,19 @@ bool FindTransactionsByDestination(const CTxDestination &dest, std::set<CExtDisk
 }
 
 /** Return transaction in txOut, and if it was found inside a block, its hash is placed in hashBlock */
-bool GetTransaction(const uint256 &hash, CTransactionRef &txOut, const Consensus::Params& consensusParams, uint256 &hashBlock, bool fAllowSlow)
+bool GetTransaction(const uint256 &hash, CTransactionRef &txOut, const Consensus::Params& consensusParams, uint256 &hashBlock, bool fAllowSlow, bool fAllowMempool)
 {
     CBlockIndex *pindexSlow = nullptr;
 
     LOCK(cs_main);
 
-    CTransactionRef ptx = mempool.get(hash);
-    if (ptx)
-    {
-        txOut = ptx;
-        return true;
+    if (fAllowMempool) {
+        CTransactionRef ptx = mempool.get(hash);
+        if (ptx)
+        {
+            txOut = ptx;
+            return true;
+        }
     }
 
     if (fTxIndex) {
@@ -1041,7 +1058,8 @@ CTransactionRef GetTicket(const uint256& txHash)
 {
     CTransactionRef ticketTxPtr;
     uint256 ticketBlockHash;
-    if (GetTransaction(txHash, ticketTxPtr, Params().GetConsensus(), ticketBlockHash, true))
+    if (GetTransaction(txHash, ticketTxPtr, Params().GetConsensus(), ticketBlockHash, true
+                      ,false /*mempool search not allowed as it may cause deadlock when called  through ProcessNewBlock*/))
         return ticketTxPtr;
     else
         return nullptr;
@@ -1632,7 +1650,7 @@ int ApplyTxInUndo(Coin&& undo, CCoinsViewCache& view, const COutPoint& out)
 
 /** Undo the effects of this block (with given index) on the UTXO set represented by coins.
  *  When FAILED is returned, view is left in an indeterminate state. */
-static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* pindex, CCoinsViewCache& view)
+static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* pindex, CCoinsViewCache& view, bool bOnlyDisconnectRegularTxs = false)
 {
     bool fClean = true;
 
@@ -1660,13 +1678,19 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
     //         return DISCONNECT_FAILED;
     //     }
     // }
-    //TODO use the read StakeNode info
+    //TODO use the read StakeNode info, in case only Regular transactions are disconnected we won't need to do it
 
     // undo transactions in reverse order
     for (int i = block.vtx.size() - 1; i >= 0; i--) {
         const CTransaction &tx = *(block.vtx[i]);
+
         uint256 hash = tx.GetHash();
         bool is_coinbase = tx.IsCoinBase();
+
+        if (!is_coinbase && bOnlyDisconnectRegularTxs) {
+            const auto& txClass = ParseTxClass(tx);
+            if (txClass != TX_Regular) continue;
+        }
 
         // Check that all outputs are available and match the outputs in the block itself
         // exactly.
@@ -1698,10 +1722,40 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
         }
     }
 
-    // move best block pointer to prevout block
-    view.SetBestBlock(pindex->pprev->GetBlockHash());
+    if (!bOnlyDisconnectRegularTxs) {
+        // move best block pointer to prevout block
+        view.SetBestBlock(pindex->pprev->GetBlockHash());
+    }
 
     return fClean ? DISCONNECT_OK : DISCONNECT_UNCLEAN;
+}
+
+static bool DisconnectDisapprovedTip(CValidationState& state, const CChainParams& chainparams, DisconnectedBlockTransactions *disconnectpool)
+{
+    CBlockIndex *pindexDisapproved = chainActive.Tip();
+    assert(pindexDisapproved);
+    // Read block from disk.
+    std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>();
+    CBlock& block = *pblock;
+    if (!ReadBlockFromDisk(block, pindexDisapproved, chainparams.GetConsensus()))
+        return AbortNode(state, "Failed to read block");
+    CCoinsViewCache view(pcoinsTip);
+    assert(view.GetBestBlock() == pindexDisapproved->GetBlockHash());
+    if (DisconnectBlock(block, pindexDisapproved, view, true /*bOnlyDisconnectRegularTxs*/) != DISCONNECT_OK)
+        return error("DisconnectDisapprovedTip(): DisconnectBlock %s failed", pindexDisapproved->GetBlockHash().ToString());
+    bool flushed = view.Flush();
+    assert(flushed);
+
+    assert (disconnectpool != nullptr);
+
+    for ( auto it = block.vtx.crbegin(); it != block.vtx.crend(); ++it ) {
+        if (TX_Regular == ParseTxClass(**it))
+            disconnectpool->addTransaction(*it);
+        else // once we find a stake transaction we can break, we want to skip all stake txs and coinbase
+            break;
+    }
+
+    return true;
 }
 
 void static FlushBlockFile(bool fFinalize = false)
@@ -1965,6 +2019,16 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         nLockTimeFlags |= LOCKTIME_VERIFY_SEQUENCE;
     }
 
+    if (pindex->nHeight > 1 && pindex->nVoteBits != 1) {
+        DisconnectedBlockTransactions disconnectedPool;
+        if (!DisconnectDisapprovedTip(state,chainparams, &disconnectedPool)){
+            UpdateMempoolForReorg(disconnectedPool, false);
+        }
+        else {
+            UpdateMempoolForReorg(disconnectedPool, true); //add the disconnected back to mempool
+        }
+    }
+
     // Get the script flags for this block
     unsigned int flags = GetBlockScriptFlags(pindex, chainparams.GetConsensus());
 
@@ -2106,7 +2170,6 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     else{
         assert(pindex->pprev != nullptr);
         assert(pindex->pprev->pstakeNode != nullptr);
-
         pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
     }
     // if(pindex->GetStakePos().IsNull()){

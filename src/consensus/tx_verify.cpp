@@ -215,11 +215,12 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
     else if (txClass == TX_Vote)
     {
         // Check length of subsidy scriptSig.
-        if (tx.vin[voteSubsidyInputIndex].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
+        if (tx.vin[voteSubsidyInputIndex].scriptSig.size() < 2 || tx.vin[voteSubsidyInputIndex].scriptSig.size() > 100)
             return state.DoS(100, false, REJECT_INVALID, "bad-stakereward-length");
 
-        // TODO validation
         // Reward scriptSig must be set to the one specified by the network.
+        if (tx.vin[voteSubsidyInputIndex].scriptSig != Params().GetConsensus().stakeBaseSigScript)
+            return state.DoS(100, false, REJECT_INVALID, "bad-stakereward-scriptsig");
 
         // The ticket reference must not be null.
         if (tx.vin[voteStakeInputIndex].prevout.IsNull())
@@ -262,6 +263,12 @@ bool isLegalScriptTypeForStake(const CScript& script)
 
 bool isLegalInputForBuyTicket(const Coin& coin, int txoutIndex)
 {
+    // TODO: we should not normally allow spending coinbases on buying tickets
+    // but as we test this on REGTEST we have no other way at the moment, because we wanted to avoid 
+    // adding another regular transaction before doing the actual ticket purchase
+    if (coin.IsCoinBase())
+        return true;
+
     // check class of containing transaction
     bool containedInLegalTxClass =
         coin.txClass == TX_Regular                          // a regular tx output, including coinbase, is a valid input
@@ -270,6 +277,7 @@ bool isLegalInputForBuyTicket(const Coin& coin, int txoutIndex)
         || coin.txClass == TX_RevokeTicket;                    // RevokeTicket refund is a valid input
     if (!containedInLegalTxClass)
         return false;
+
 
     // check if stake coin's scriptPubKey is P2PKH or P2SH
     return isLegalScriptTypeForStake(coin.out.scriptPubKey);

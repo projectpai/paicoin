@@ -269,7 +269,7 @@ public:
         consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
         consensus.nStakeEnabledHeight          = consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
         consensus.nStakeValidationHeight       = 4096;        // ~ 14 days
-        consensus.stakeBaseSigScript           = CScript();//[]byte{0x00, 0x00};
+        consensus.stakeBaseSigScript           = CScript() << 0x00 << 0x00;
         consensus.nStakeMajorityMultiplier     = 3;
         consensus.nStakeMajorityDivisor        = 4;
         //organization related parameters
@@ -427,7 +427,7 @@ public:
         consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
         consensus.nStakeEnabledHeight          = consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
         consensus.nStakeValidationHeight       = 100000;      // Arbitrary chosen into the future; height is 46261 at the moment
-        consensus.stakeBaseSigScript           = CScript();//[]byte{0x00, 0x00};
+        consensus.stakeBaseSigScript           = CScript() << 0x00 << 0x00;
         consensus.nStakeMajorityMultiplier     = 3;
         consensus.nStakeMajorityDivisor        = 4;
         //organization related parameters
@@ -569,7 +569,7 @@ public:
         consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
         consensus.nStakeEnabledHeight          = 2000;//141;//consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
         consensus.nStakeValidationHeight       = 2100;//200;//consensus.nCoinbaseMaturity + (consensus.nTicketPoolSize * 2);
-        consensus.stakeBaseSigScript           = CScript();//[]byte{0x30, 0x57};
+        consensus.stakeBaseSigScript           = CScript() << 0x73 << 0x57;
         consensus.nStakeMajorityMultiplier     = 3;
         consensus.nStakeMajorityDivisor        = 4;
         //organization related parameters

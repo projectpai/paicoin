@@ -2181,7 +2181,11 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
                     continue;
                 }
 
-                bool fSpendableIn = ((mine & ISMINE_SPENDABLE) != ISMINE_NO) || (coinControl && coinControl->fAllowWatchOnly && (mine & ISMINE_WATCH_SOLVABLE) != ISMINE_NO);
+                // TODO: we are now setting every output of a stake tx as not spendable, but some should be spendable
+                // for example: the change ouput of a buy ticket transaction. We need to correct this
+                const auto& bStakeTx = IsStakeTx(ParseTxClass(*(pcoin->tx)));
+
+                bool fSpendableIn = !bStakeTx && (((mine & ISMINE_SPENDABLE) != ISMINE_NO) || (coinControl && coinControl->fAllowWatchOnly && (mine & ISMINE_WATCH_SOLVABLE) != ISMINE_NO));
                 bool fSolvableIn = (mine & (ISMINE_SPENDABLE | ISMINE_WATCH_SOLVABLE)) != ISMINE_NO;
 
                 vCoins.push_back(COutput(pcoin, i, nDepth, fSpendableIn, fSolvableIn, safeTx));
@@ -3109,6 +3113,41 @@ bool CWallet::DelAddressBook(const CTxDestination& address)
 
     CWalletDB(*dbw).ErasePurpose(EncodeDestination(address));
     return CWalletDB(*dbw).EraseName(EncodeDestination(address));
+}
+
+bool CWallet::RenameAddressBook(const std::string& oldName, const std::string& newName)
+{
+    std::vector<std::pair<CTxDestination, CAddressBookData>> pairsToRename;
+    for (auto const& item : mapAddressBook) {
+        auto const& addrBookData = item.second;
+        if (addrBookData.name == oldName) {
+            pairsToRename.push_back(item);
+        }
+    }
+
+    if (pairsToRename.empty()) {
+        return false;
+    }
+
+    // Remove all in one sweep
+    for (auto const& pairToRename : pairsToRename) {
+        DelAddressBook(pairToRename.first);
+    }
+
+    // Add the addresses with the new account name
+    for (auto const& pairToRename : pairsToRename) {
+        auto const& dest = pairToRename.first;
+        auto const& purpose = pairToRename.second.purpose;
+        auto const& destdata = pairToRename.second.destdata;
+
+        if (SetAddressBook(dest, newName, purpose)) {
+            for (auto const& destd : destdata) {
+                AddDestData(dest, destd.first, destd.second);
+            }
+        }
+    }
+
+    return true;
 }
 
 const std::string& CWallet::GetAccountName(const CScript& scriptPubKey) const
