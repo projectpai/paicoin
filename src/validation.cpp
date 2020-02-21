@@ -4270,6 +4270,7 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
                 if (!UndoReadFromDisk(undo, pos, pindex->pprev->GetBlockHash()))
                     return error("VerifyDB(): *** found bad undo data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
             }
+
             // StakeNode stake(chainparams.GetConsensus());
             // pos = pindex->GetStakePos();
             // if (!pos.IsNull()) {
