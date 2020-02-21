@@ -22,14 +22,15 @@ std::string CBlock::ToString() const
 {
     std::stringstream s;
     s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, "
-                   "nStakeDifficulty=%s, nVoteBits=%08x, nTicketPoolSize=%u, ticketLotteryState=%s, vtx=%u)\n",
+                   "nStakeDifficulty=%s, nVoteBits=%08x, nTicketPoolSize=%u, ticketLotteryState=%s,"
+                   "nFreshStake=%u, nStakeVersion=%u, vtx=%u)\n",
         GetHash().ToString(),
         nVersion,
         hashPrevBlock.ToString(),
         hashMerkleRoot.ToString(),
         nTime, nBits, nNonce,
         std::to_string(nStakeDifficulty), nVoteBits, nTicketPoolSize, StakeStateToString(ticketLotteryState),
-        vtx.size());
+        nFreshStake,  nStakeVersion, vtx.size());
     for (const auto& tx : vtx) {
         s << "  " << tx->ToString() << "\n";
     }

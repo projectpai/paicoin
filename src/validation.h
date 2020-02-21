@@ -278,12 +278,11 @@ void ThreadScriptCheck();
 /** Check whether we are doing an initial block download (synchronizing from disk or network) */
 bool IsInitialBlockDownload();
 /** Retrieve a transaction (from memory pool, or from disk, if possible) */
-bool GetTransaction(const uint256 &hash, CTransactionRef &tx, const Consensus::Params& params, uint256 &hashBlock, bool fAllowSlow = false);
+bool GetTransaction(const uint256 &hash, CTransactionRef &tx, const Consensus::Params& params, uint256 &hashBlock, bool fAllowSlow = false, bool fAllowMempool = true);
 /** Retrieve a ticket transaction */
 CTransactionRef GetTicket(const uint256 &ticketTxHash);
 /** Find the best known block, and make it the tip of the block chain */
 bool ActivateBestChain(CValidationState& state, const CChainParams& chainparams, std::shared_ptr<const CBlock> pblock = std::shared_ptr<const CBlock>());
-CAmount GetTotalBlockSubsidy(int nHeight, const Consensus::Params& consensusParams);
 CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams);
 CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams);
 CAmount CalcContributorRemuneration(CAmount contributedAmount, CAmount totalStake, CAmount subsidy, CAmount contributionSum);
@@ -420,6 +419,9 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
 /** Check whether witness commitments are required for block. */
 bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
 
+/** Check whether hardfork rules are applicable to a block. */
+bool IsHybridConsensusForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
+
 /** When there are blocks in the active chain with missing data, rewind the chainstate and remove them from the block index */
 bool RewindBlockIndex(const CChainParams& params);
 
@@ -503,9 +505,5 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
 /** Check existence of address in the address index */
 bool AddressExistsInIndex(const std::string& address);
 
-/** 
- * Get the next stake difficulty
-*/
-CAmount calcNextRequiredStakeDifficulty(const CBlock& block, const CBlockIndex *pindexPrev, const CChainParams& params);
 
 #endif // PAICOIN_VALIDATION_H

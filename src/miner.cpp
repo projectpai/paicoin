@@ -129,7 +129,15 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     nHeight = pindexPrev->nHeight + 1;
 
     pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
-    pblock->nStakeDifficulty = calcNextRequiredStakeDifficulty(*pblock,pindexPrev,chainparams);
+    const auto& hybridForkEnabled = IsHybridConsensusForkEnabled(pindexPrev,chainparams.GetConsensus());
+    if (hybridForkEnabled)
+        pblock->nVersion |= HARDFORK_VERSION_BIT;
+
+    pblock->nStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev,chainparams.GetConsensus());
+    if (pindexPrev->pstakeNode != nullptr) {
+        pblock->ticketLotteryState = pindexPrev->pstakeNode->FinalState();
+        pblock->nTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
+    }
 
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
@@ -187,6 +195,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             AddToBlock(txiter);
             ++nNewTickets;
         }
+        pblock->nFreshStake = nNewTickets;
     }
 
     // No revocation transaction should be present before this height

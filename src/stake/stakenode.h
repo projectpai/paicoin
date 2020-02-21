@@ -224,13 +224,11 @@ public:
 
     // ConnectNode connects a stake node to the node and returns a pointer
     // to the stake node of the child.
-    std::shared_ptr<StakeNode> ConnectNode(const HashVector& ticketsVoted, const HashVector& revokedTickets, const HashVector& newTickets) const;
-    // func (sn *Node) ConnectNode(lotteryIV chainhash.Hash, ticketsVoted, revokedTickets, newTickets []chainhash.Hash) (*Node, error) {
+    std::shared_ptr<StakeNode> ConnectNode(const uint256& lotteryIV, const HashVector& ticketsVoted, const HashVector& revokedTickets, const HashVector& newTickets) const;
 
     // DisconnectNode disconnects a stake node from the node and returns a pointer
     // to the stake node of the parent.
-    std::shared_ptr<StakeNode> DisconnectNode(const UndoTicketDataVector& parentUtds, const HashVector& parentTickets) const;
-    // func (sn *Node) DisconnectNode(parentLotteryIV chainhash.Hash, parentUtds UndoTicketDataSlice, parentTickets []chainhash.Hash, dbTx database.Tx) (*Node, error) {
+    std::shared_ptr<StakeNode> DisconnectNode(const uint256& parentLotteryIV, const UndoTicketDataVector& parentUtds, const HashVector& parentTickets) const;
 };
 
 #endif // PAICOIN_STAKE_STAKENODE_H

@@ -9,7 +9,7 @@ import time
 from test_framework.test_framework import PAIcoinTestFramework
 from test_framework.util import (
     assert_equal,
-    assert_raises_jsonrpc,
+    assert_raises_rpc_error,
 )
 
 RANDOM_COINBASE_ADDRESS = 'MeLRHX4aF9Yrkpwzg2xegnAWVyGQBcDwML'
@@ -66,7 +66,7 @@ class WalletTest(PAIcoinTestFramework):
         assert_equal(self.nodes[0].getbalance("*"), 1500)
         assert_equal(self.nodes[0].getbalance("*", 1), 1500)
         assert_equal(self.nodes[0].getbalance("*", 1, True), 1500)
-        assert_raises_jsonrpc(-8, "getbalance minconf option is only currently supported if an account is specified", self.nodes[0].getbalance, minconf='1')
+        assert_raises_rpc_error(-8, "getbalance minconf option is only currently supported if an account is specified", self.nodes[0].getbalance, minconf='1')
 
         # Send 1490 BTC from 0 to 1 and 1510 BTC from 1 to 0.
         txs = create_transactions(self.nodes[0], self.nodes[1].getnewaddress(), 1490, [Decimal('0.01')])
@@ -81,7 +81,7 @@ class WalletTest(PAIcoinTestFramework):
 
         # NOTE: Skip below test until newer getbalance implementation that handles '*' as a dummy first argument gets merged in
         # First argument of getbalance must be set to "*"
-        # assert_raises_jsonrpc(-32, "dummy first argument must be excluded or set to \"*\"", self.nodes[1].getbalance, "")
+        # assert_raises_rpc_error(-32, "dummy first argument must be excluded or set to \"*\"", self.nodes[1].getbalance, "")
 
         self.log.info("Test getbalance and getunconfirmedbalance with unconfirmed inputs")
 

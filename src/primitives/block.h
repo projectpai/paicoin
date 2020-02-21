@@ -12,6 +12,7 @@
 
 #include <array>
 
+static const int HARDFORK_VERSION_BIT = 0x80000000;
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
  * requirements.  When they solve the proof-of-work, they broadcast the block
@@ -23,17 +24,21 @@ class CBlockHeader
 {
 public:
     // header
-    int32_t nVersion;
-    uint256 hashPrevBlock;
-    uint256 hashMerkleRoot;
-    uint32_t nTime;
-    uint32_t nBits;
-    uint32_t nNonce;
-    int64_t nStakeDifficulty;
-    uint32_t nVoteBits;
-    uint32_t nTicketPoolSize;
-    uint48  ticketLotteryState;
-
+    int32_t    nVersion;
+    uint256    hashPrevBlock;
+    uint256    hashMerkleRoot;
+    uint32_t   nTime;
+    uint32_t   nBits;
+    uint32_t   nNonce;
+    int64_t    nStakeDifficulty;
+    uint32_t   nVoteBits;
+    uint32_t   nTicketPoolSize;
+    uint48     ticketLotteryState;
+    uint16_t   nVoters;
+    uint8_t    nFreshStake;
+    uint8_t    nRevocations;
+    int8_t     extraData[32];
+    uint32_t   nStakeVersion;
 
     CBlockHeader()
     {
@@ -50,6 +55,18 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+        // serialization of stake fields activates when Hybrid PoW/PoS deploys
+        if (this->nVersion & HARDFORK_VERSION_BIT) {
+            READWRITE(nStakeDifficulty);
+            READWRITE(nVoteBits);
+            READWRITE(nTicketPoolSize);
+            READWRITE(ticketLotteryState);
+            READWRITE(nVoters);
+            READWRITE(nFreshStake);
+            READWRITE(nRevocations);
+            READWRITE(FLATDATA(extraData));
+            READWRITE(nStakeVersion);
+        }
     }
 
     void SetNull()
@@ -63,7 +80,12 @@ public:
         nStakeDifficulty = 0;
         nVoteBits = 1;
         nTicketPoolSize = 0;
-        std::fill(ticketLotteryState.begin(), ticketLotteryState.end(), 0);
+        ticketLotteryState.SetNull();
+        nVoters = 0;
+        nFreshStake = 0;
+        nRevocations = 0;
+        std::fill(std::begin(extraData), std::end(extraData), 0);
+        nStakeVersion = 0;
     }
 
     bool IsNull() const
@@ -128,6 +150,8 @@ public:
         block.nStakeDifficulty = nStakeDifficulty;
         block.nTicketPoolSize = nTicketPoolSize;
         block.ticketLotteryState = ticketLotteryState;
+        block.nFreshStake    = nFreshStake;
+        block.nStakeVersion  = nStakeVersion;
         return block;
     }
 

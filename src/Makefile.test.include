@@ -60,6 +60,7 @@ PAICOIN_TESTS =\
   test/pmt_tests.cpp \
   test/policyestimator_tests.cpp \
   test/pow_tests.cpp \
+  test/stake_difficulty_tests.cpp \
   test/prevector_tests.cpp \
   test/raii_event_tests.cpp \
   test/random_tests.cpp \
@@ -79,6 +80,7 @@ PAICOIN_TESTS =\
   test/test_paicoin.cpp \
   test/test_paicoin.h \
   test/test_paicoin_main.cpp \
+  test/ticket_purchase_tests.cpp \
   test/timedata_tests.cpp \
   test/torcontrol_tests.cpp \
   test/transaction_tests.cpp \

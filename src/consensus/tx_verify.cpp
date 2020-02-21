@@ -215,11 +215,12 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
     else if (txClass == TX_Vote)
     {
         // Check length of subsidy scriptSig.
-        if (tx.vin[voteSubsidyInputIndex].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
+        if (tx.vin[voteSubsidyInputIndex].scriptSig.size() < 2 || tx.vin[voteSubsidyInputIndex].scriptSig.size() > 100)
             return state.DoS(100, false, REJECT_INVALID, "bad-stakereward-length");
 
-        // TODO validation
         // Reward scriptSig must be set to the one specified by the network.
+        if (tx.vin[voteSubsidyInputIndex].scriptSig != Params().GetConsensus().stakeBaseSigScript)
+            return state.DoS(100, false, REJECT_INVALID, "bad-stakereward-scriptsig");
 
         // The ticket reference must not be null.
         if (tx.vin[voteStakeInputIndex].prevout.IsNull())
@@ -262,6 +263,12 @@ bool isLegalScriptTypeForStake(const CScript& script)
 
 bool isLegalInputForBuyTicket(const Coin& coin, int txoutIndex)
 {
+    // TODO: we should not normally allow spending coinbases on buying tickets
+    // but as we test this on REGTEST we have no other way at the moment, because we wanted to avoid 
+    // adding another regular transaction before doing the actual ticket purchase
+    if (coin.IsCoinBase())
+        return true;
+
     // check class of containing transaction
     bool containedInLegalTxClass =
         coin.txClass == TX_Regular                          // a regular tx output, including coinbase, is a valid input
@@ -270,6 +277,7 @@ bool isLegalInputForBuyTicket(const Coin& coin, int txoutIndex)
         || coin.txClass == TX_RevokeTicket;                    // RevokeTicket refund is a valid input
     if (!containedInLegalTxClass)
         return false;
+
 
     // check if stake coin's scriptPubKey is P2PKH or P2SH
     return isLegalScriptTypeForStake(coin.out.scriptPubKey);
@@ -392,13 +400,32 @@ bool checkVoteOrRevokeTicketInputs(const CTransaction& tx, bool vote, CValidatio
         CTxDestination dest;
         if (!ExtractDestination(tx.vout[i].scriptPubKey, dest) || !IsValidDestination(dest))
             return state.DoS(100, false, REJECT_INVALID, what + "-invalid-payment-address");
+        
+        if (dest.which() != contrib.whichAddr)
+            return state.DoS(100, false, REJECT_INVALID, what + "-incorrect-address-type");
+
         const uint160& addr = dest.which() == 1 ? boost::get<CKeyID>(dest) : boost::get<CScriptID>(dest);
         if (addr != contrib.rewardAddr)
             return state.DoS(100, false, REJECT_INVALID, what + "-incorrect-payment-address");
 
         // Check if the payment amount is as expected
+        // Also consider fee limits, if enabled.
         CAmount paymentAmount = CalcContributorRemuneration(contrib.contributedAmount, stakedAmount, subsidy, contributionSum);
-        if (tx.vout[i].nValue != paymentAmount)
+
+        CAmount feeLimit{-1};
+        if (vote && contrib.hasVoteFeeLimits())
+            feeLimit = contrib.voteFeeLimits();
+        if (!vote && contrib.hasRevokeFeeLimits())
+            feeLimit = contrib.revokeFeeLimits();
+
+        if (feeLimit > -1) {
+            CAmount lowLimit{0};
+            if (feeLimit < paymentAmount)
+                lowLimit = paymentAmount - feeLimit;
+            if (tx.vout[i].nValue < lowLimit)
+                return state.DoS(100, false, REJECT_INVALID, what + "-output-pays-less-than-expected");
+        }
+        else if (tx.vout[i].nValue != paymentAmount)
             return state.DoS(100, false, REJECT_INVALID, what + "-bad-payment-amount");
     }
 
@@ -436,7 +463,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         // so we'll skip the checks
         if (txClass == TX_Vote && i == voteSubsidyInputIndex)
         {
-            nValueIn += GetVoterSubsidy(voteData.blockHeight, ::Params().GetConsensus());
+            nValueIn += GetVoterSubsidy(nSpendHeight/*voteData.blockHeight*/, ::Params().GetConsensus());
             continue;
         }
 

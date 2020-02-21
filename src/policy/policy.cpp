@@ -115,8 +115,18 @@ bool IsStandardTx(const CTransaction& tx, std::string& reason, const bool witnes
         }
     }
 
+    // if the transaction is a ticket purchase,
+    // then allow for zero or dust change
+    std::string buyTicketValidationReason;
+    bool isTicketPurchase = ValidateBuyTicketStructure(tx, buyTicketValidationReason);
+    auto isTicketPurchaseChangeOutput = [&](const size_t& index) -> bool {
+        return (isTicketPurchase && (index > 2) && (index % 2 == 1));
+    };
+
     txnouttype whichType;
-    for (const CTxOut& txout : tx.vout) {
+    for (size_t i = 0; i < tx.vout.size(); ++i) {
+        const CTxOut& txout = tx.vout[i];
+
         if (!::IsStandard(txout.scriptPubKey, whichType, witnessEnabled)) {
             reason = "scriptpubkey";
             return false;
@@ -125,7 +135,7 @@ bool IsStandardTx(const CTransaction& tx, std::string& reason, const bool witnes
         if ((whichType == TX_MULTISIG) && (!fIsBareMultisigStd)) {
             reason = "bare-multisig";
             return false;
-        } else if (IsDust(txout, ::dustRelayFee)) {
+        } else if (!isTicketPurchaseChangeOutput(i) && IsDust(txout, ::dustRelayFee)) {
             reason = "dust";
             return false;
         }
@@ -155,8 +165,19 @@ bool AreInputsStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
     if (tx.IsCoinBase())
         return true; // Coinbases don't use vin normally
 
+    bool vote = (ParseTxClass(tx) == TX_Vote);
+    const CScript& stakeBaseSigScript = Params().GetConsensus().stakeBaseSigScript;
+
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
+        // the stakebase signature must be the one in the consensus rules
+        if (vote && i == voteSubsidyInputIndex) {
+            if (tx.vin[i].scriptSig != stakeBaseSigScript)
+                return false;
+
+            continue;
+        }
+
         const CTxOut& prev = mapInputs.AccessCoin(tx.vin[i].prevout).out;
 
         std::vector<std::vector<unsigned char> > vSolutions;

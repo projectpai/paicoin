@@ -44,6 +44,7 @@
 #include "versionbits.h"
 #include "warnings.h"
 #include "stake/stakenode.h"
+#include "stake/stakeversion.h"
 
 #include <atomic>
 #include <sstream>
@@ -284,6 +285,9 @@ bool CheckSequenceLocks(const CTransaction &tx, int flags, LockPoints* lp, bool 
         std::vector<int> prevheights;
         prevheights.resize(tx.vin.size());
         for (size_t txinIndex = 0; txinIndex < tx.vin.size(); txinIndex++) {
+            //skip stakebase coin as it does not exist
+            if (txinIndex == voteSubsidyInputIndex && ParseTxClass(tx) == TX_Vote)
+                continue;
             const CTxIn& txin = tx.vin[txinIndex];
             Coin coin;
             if (!viewMemPool.GetCoin(txin.prevout, coin)) {
@@ -426,7 +430,11 @@ static bool CheckInputsFromMempoolAndCache(const CTransaction& tx, CValidationSt
     LOCK(pool.cs);
 
     assert(!tx.IsCoinBase());
-    for (const CTxIn& txin : tx.vin) {
+    for (size_t in = 0; in < tx.vin.size(); ++in) {
+        if (in == voteSubsidyInputIndex && ParseTxClass(tx) == TX_Vote)
+            continue; //skip the stakebase as coin doesn't exist
+
+        const CTxIn& txin = tx.vin[in];
         const Coin& coin = view.AccessCoin(txin.prevout);
 
         // At this point we haven't actually checked if the coins are all
@@ -493,8 +501,12 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     std::set<uint256> setConflicts;
     {
     LOCK(pool.cs); // protect pool.mapNextTx
-    for (const CTxIn &txin : tx.vin)
+    for (size_t in = 0; in < tx.vin.size(); ++in) 
     {
+        if (ParseTxClass(tx) == TX_Vote && in == voteSubsidyInputIndex)
+            continue; //skip the stakebase as coin doesn't exist
+
+        const CTxIn& txin = tx.vin[in];
         auto itConflicting = pool.mapNextTx.find(txin.prevout);
         if (itConflicting != pool.mapNextTx.end())
         {
@@ -562,8 +574,8 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 
     // If the transaction is a ticket, ensure that it meets the next stake difficulty.
     if (txClass == TX_BuyTicket) {
-        // TODO: call the proper function to get the expected stake difficulty
-        CAmount expectedStakeDifficulty = 1 * COIN; // mp.cfg.NextStakeDifficulty()
+        CBlock dummyBlock;
+        CAmount expectedStakeDifficulty =  CalculateNextRequiredStakeDifficulty(chainActive.Tip(),chainparams.GetConsensus());
         if (tx.vout[ticketStakeOutputIndex].nValue < expectedStakeDifficulty)
             return state.DoS(100, false, REJECT_INVALID, "insufficient-stake");
     }
@@ -579,7 +591,11 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         view.SetBackend(viewMemPool);
 
         // do all inputs exist?
-        for (const CTxIn txin : tx.vin) {
+        for (size_t in = 0; in < tx.vin.size(); ++in) {
+            if (txClass == TX_Vote && in == voteSubsidyInputIndex)
+                continue; //skip the stakebase as coin doesn't exist
+
+            const CTxIn& txin = tx.vin[in];
             if (!pcoinsTip->HaveCoinInCache(txin.prevout)) {
                 coins_to_uncache.push_back(txin.prevout);
             }
@@ -664,7 +680,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         }
 
         // No transactions are allowed below minRelayTxFee except from disconnected blocks
-        if (!bypass_limits && nModifiedFees < ::minRelayTxFee.GetFee(nSize)) {
+        if (!bypass_limits && txClass != TX_Vote && nModifiedFees < ::minRelayTxFee.GetFee(nSize)) {
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "min relay fee not met");
         }
 
@@ -982,17 +998,19 @@ bool FindTransactionsByDestination(const CTxDestination &dest, std::set<CExtDisk
 }
 
 /** Return transaction in txOut, and if it was found inside a block, its hash is placed in hashBlock */
-bool GetTransaction(const uint256 &hash, CTransactionRef &txOut, const Consensus::Params& consensusParams, uint256 &hashBlock, bool fAllowSlow)
+bool GetTransaction(const uint256 &hash, CTransactionRef &txOut, const Consensus::Params& consensusParams, uint256 &hashBlock, bool fAllowSlow, bool fAllowMempool)
 {
     CBlockIndex *pindexSlow = nullptr;
 
     LOCK(cs_main);
 
-    CTransactionRef ptx = mempool.get(hash);
-    if (ptx)
-    {
-        txOut = ptx;
-        return true;
+    if (fAllowMempool) {
+        CTransactionRef ptx = mempool.get(hash);
+        if (ptx)
+        {
+            txOut = ptx;
+            return true;
+        }
     }
 
     if (fTxIndex) {
@@ -1041,7 +1059,8 @@ CTransactionRef GetTicket(const uint256& txHash)
 {
     CTransactionRef ticketTxPtr;
     uint256 ticketBlockHash;
-    if (GetTransaction(txHash, ticketTxPtr, Params().GetConsensus(), ticketBlockHash, true))
+    if (GetTransaction(txHash, ticketTxPtr, Params().GetConsensus(), ticketBlockHash, true
+                      ,false /*mempool search not allowed as it may cause deadlock when called  through ProcessNewBlock*/))
         return ticketTxPtr;
     else
         return nullptr;
@@ -1111,19 +1130,6 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
     return true;
 }
 
-CAmount GetTotalBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
-{
-    int halvings = nHeight / consensusParams.nSubsidyHalvingInterval;
-    // Force block reward to zero when right shift is undefined.
-    if (halvings >= 64)
-        return 0;
-
-    CAmount nSubsidy = consensusParams.nTotalBlockSubsidy * COIN;
-    // Subsidy is cut in half every 210,000 blocks which will occur approximately every 4 years.
-    nSubsidy >>= halvings;
-    return nSubsidy;
-}
-
 CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
     // Miner subsidy is a portion of total block subsidy
@@ -1135,7 +1141,7 @@ CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams)
 CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
     // Voter subsidy is a portion of total block subsidy
-    return nHeight + 1 < consensusParams.nStakeValidationHeight ? 0 :
+    return nHeight < consensusParams.nStakeValidationHeight ? 0 :
         (GetTotalBlockSubsidy(nHeight, consensusParams) * consensusParams.nStakeSubsidyProportion)
         / (consensusParams.TotalSubsidyProportions() * consensusParams.nTicketsPerBlock);
 }
@@ -1632,7 +1638,7 @@ int ApplyTxInUndo(Coin&& undo, CCoinsViewCache& view, const COutPoint& out)
 
 /** Undo the effects of this block (with given index) on the UTXO set represented by coins.
  *  When FAILED is returned, view is left in an indeterminate state. */
-static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* pindex, CCoinsViewCache& view)
+static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* pindex, CCoinsViewCache& view, bool bOnlyDisconnectRegularTxs = false)
 {
     bool fClean = true;
 
@@ -1660,13 +1666,19 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
     //         return DISCONNECT_FAILED;
     //     }
     // }
-    //TODO use the read StakeNode info
+    //TODO use the read StakeNode info, in case only Regular transactions are disconnected we won't need to do it
 
     // undo transactions in reverse order
     for (int i = block.vtx.size() - 1; i >= 0; i--) {
         const CTransaction &tx = *(block.vtx[i]);
+
         uint256 hash = tx.GetHash();
         bool is_coinbase = tx.IsCoinBase();
+
+        if (!is_coinbase && bOnlyDisconnectRegularTxs) {
+            const auto& txClass = ParseTxClass(tx);
+            if (txClass != TX_Regular) continue;
+        }
 
         // Check that all outputs are available and match the outputs in the block itself
         // exactly.
@@ -1698,10 +1710,40 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
         }
     }
 
-    // move best block pointer to prevout block
-    view.SetBestBlock(pindex->pprev->GetBlockHash());
+    if (!bOnlyDisconnectRegularTxs) {
+        // move best block pointer to prevout block
+        view.SetBestBlock(pindex->pprev->GetBlockHash());
+    }
 
     return fClean ? DISCONNECT_OK : DISCONNECT_UNCLEAN;
+}
+
+static bool DisconnectDisapprovedTip(CValidationState& state, const CChainParams& chainparams, DisconnectedBlockTransactions *disconnectpool)
+{
+    CBlockIndex *pindexDisapproved = chainActive.Tip();
+    assert(pindexDisapproved);
+    // Read block from disk.
+    std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>();
+    CBlock& block = *pblock;
+    if (!ReadBlockFromDisk(block, pindexDisapproved, chainparams.GetConsensus()))
+        return AbortNode(state, "Failed to read block");
+    CCoinsViewCache view(pcoinsTip);
+    assert(view.GetBestBlock() == pindexDisapproved->GetBlockHash());
+    if (DisconnectBlock(block, pindexDisapproved, view, true /*bOnlyDisconnectRegularTxs*/) != DISCONNECT_OK)
+        return error("DisconnectDisapprovedTip(): DisconnectBlock %s failed", pindexDisapproved->GetBlockHash().ToString());
+    bool flushed = view.Flush();
+    assert(flushed);
+
+    assert (disconnectpool != nullptr);
+
+    for ( auto it = block.vtx.crbegin(); it != block.vtx.crend(); ++it ) {
+        if (TX_Regular == ParseTxClass(**it))
+            disconnectpool->addTransaction(*it);
+        else // once we find a stake transaction we can break, we want to skip all stake txs and coinbase
+            break;
+    }
+
+    return true;
 }
 
 void static FlushBlockFile(bool fFinalize = false)
@@ -1965,6 +2007,16 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         nLockTimeFlags |= LOCKTIME_VERIFY_SEQUENCE;
     }
 
+    if (pindex->nHeight > 1 && pindex->nVoteBits != 1) {
+        DisconnectedBlockTransactions disconnectedPool;
+        if (!DisconnectDisapprovedTip(state,chainparams, &disconnectedPool)){
+            UpdateMempoolForReorg(disconnectedPool, false);
+        }
+        else {
+            UpdateMempoolForReorg(disconnectedPool, true); //add the disconnected back to mempool
+        }
+    }
+
     // Get the script flags for this block
     unsigned int flags = GetBlockScriptFlags(pindex, chainparams.GetConsensus());
 
@@ -1991,9 +2043,22 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
     std::vector<PrecomputedTransactionData> txdata;
     txdata.reserve(block.vtx.size()); // Required so that pointers to individual PrecomputedTransactionData don't get invalidated
-    for (unsigned int i = 0; i < block.vtx.size(); i++)
+
+    // the order in which the validation must occur takes into account the fact that
+    // the stake transactions are at the beginning of the block and the ticket purchases
+    // might be funded by regular transactions at the end of the block
+
+    std::vector<unsigned int> reorderedIndexes, reorderedStakes;
+    for (unsigned int i = 0; i < block.vtx.size(); ++i)
+        if (ParseTxClass(*(block.vtx[i])) == TX_Regular)
+            reorderedIndexes.push_back(i);
+        else
+            reorderedStakes.push_back(i);
+    reorderedIndexes.insert(reorderedIndexes.end(), std::make_move_iterator(reorderedStakes.begin()), std::make_move_iterator(reorderedStakes.end()));
+
+    for (unsigned int i = 0; i < reorderedIndexes.size(); i++)
     {
-        const CTransaction &tx = *(block.vtx[i]);
+        const CTransaction &tx = *(block.vtx[reorderedIndexes[i]]);
 
         nInputs += tx.vin.size();
 
@@ -2099,19 +2164,28 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         setDirtyBlockIndex.insert(pindex);
     }
 
-    // auto stakeNode = *FetchStakeNode(pindex, chainparams.GetConsensus());
-    if(pindex->GetStakePos().IsNull()){
-        CDiskBlockPos _pos;
-
-        if (!FindStakePos(state, pindex->nFile, _pos, ::GetSerializeSize(*pindex->pstakeNode, SER_DISK, CLIENT_VERSION) + 40))
-            return error("ConnectBlock(): FindStakePos failed");
-        if (!StakeWriteToDisk(*pindex->pstakeNode, _pos, pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash(), chainparams.MessageStart()))
-            return AbortNode(state, "Failed to write stake data");
-
-        // update nStakePos in block index
-        pindex->nStakePos = _pos.nPos;
-        pindex->nStatus |= BLOCK_HAVE_STAKE;
+    if (pindex->nHeight == 0) {
+        assert(pindex->pprev == nullptr);
+        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
     }
+    else{
+        assert(pindex->pprev != nullptr);
+        assert(pindex->pprev->pstakeNode != nullptr);
+
+        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
+    }
+    // if(pindex->GetStakePos().IsNull()){
+    //     CDiskBlockPos _pos;
+
+    //     if (!FindStakePos(state, pindex->nFile, _pos, ::GetSerializeSize(*pindex->pstakeNode, SER_DISK, CLIENT_VERSION) + 40))
+    //         return error("ConnectBlock(): FindStakePos failed");
+    //     if (!StakeWriteToDisk(*pindex->pstakeNode, _pos, pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash(), chainparams.MessageStart()))
+    //         return AbortNode(state, "Failed to write stake data");
+
+    //     // update nStakePos in block index
+    //     pindex->nStakePos = _pos.nPos;
+    //     pindex->nStatus |= BLOCK_HAVE_STAKE;
+    // }
 
     if (fTxIndex)
         if (!pblocktree->WriteTxIndex(vPosTxid))
@@ -3112,15 +3186,6 @@ bool CheckProofOfStake(const CBlock& block, int64_t posLimit)
     return true;
 }
 
-CAmount calcNextRequiredStakeDifficulty(const CBlock& block, const CBlockIndex *pindexPrev, const CChainParams& params)
-{
-    int blockHeight = pindexPrev->nHeight + 1;
-    if (blockHeight >= params.GetConsensus().nStakeValidationHeight)
-        return 1 * COIN;
-    else
-        return params.GetConsensus().nMinimumStakeDiff;
-}
-
 static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, int nBlockHeight, bool fCheckPOW = true)
 {
     // Check proof of work matches claimed amount
@@ -3155,21 +3220,21 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
 
     // Before stake validation begins, a block must not contain any votes or revocations, its vote bits
     // must be 0x0001, and its ticket lottery state must be all zeroes.
-    // if (nBlockHeight < consensusParams.nStakeValidationHeight) {
-    //     if (numVotes > 0)
-    //         return state.DoS(50, false, REJECT_INVALID, "votes-too-early", false, "vote transactions present before stake validation time");
+    if (blockHeight < consensusParams.nStakeValidationHeight) {
+        if (numVotes > 0)
+            return state.DoS(50, false, REJECT_INVALID, "votes-too-early", false, "vote transactions present before stake validation time");
 
-    //     if (numRevocations > 0)
-    //         return state.DoS(50, false, REJECT_INVALID, "revocations-too-early", false, "revocation transactions present before stake validation time");
+        if (numRevocations > 0)
+            return state.DoS(50, false, REJECT_INVALID, "revocations-too-early", false, "revocation transactions present before stake validation time");
 
-    //     if (block.nVoteBits != 1)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
-    //         return state.DoS(50, false, REJECT_INVALID, "voteBits-too-early", false, "voteBits present before stake validation time");
+        if (block.nVoteBits != 1)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
+            return state.DoS(50, false, REJECT_INVALID, "voteBits-too-early", false, "voteBits present before stake validation time");
 
-    //     StakeState earlyLotteryState;
-    //     std::fill(earlyLotteryState.begin(), earlyLotteryState.end(), 0);
-    //     if (block.ticketLotteryState != earlyLotteryState)
-    //         return state.DoS(50, false, REJECT_INVALID, "lottery-too-early", false, "ticket lottery state non-zero before stake validation time");
-    // }
+        StakeState earlyLotteryState;
+        std::fill(earlyLotteryState.begin(), earlyLotteryState.end(), 0);
+        if (block.ticketLotteryState != earlyLotteryState)
+            return state.DoS(50, false, REJECT_INVALID, "lottery-too-early", false, "ticket lottery state non-zero before stake validation time");
+    }
 
     // Check that the number of votes in a block is within limits
     if (blockHeight >= consensusParams.nStakeValidationHeight)
@@ -3184,6 +3249,12 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     // The block must not contain more ticket purchases than the maximum allowed.
     if (numTickets > consensusParams.nMaxFreshStakePerBlock)
         return state.DoS(50, false, REJECT_INVALID, "too-many-tickets", false, "block contains more than the maximum allowed number of tickets per block");
+
+    // A block header must commit to the actual number of tickets purchases that
+    // are in the block.
+    if (block.nFreshStake != numTickets)
+        return state.DoS(50, false, REJECT_INVALID, "number-tickets-mismatch", false, "block header fresh stake does not match number of tickets contained in block");
+
 
     // All ticket purchases must meet the difficulty specified by the block header.
     if (!CheckProofOfStake(block, consensusParams.nMinimumStakeDiff))
@@ -3329,6 +3400,12 @@ bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& pa
     return (VersionBitsState(pindexPrev, params, Consensus::DEPLOYMENT_SEGWIT, versionbitscache) == THRESHOLD_ACTIVE);
 }
 
+bool IsHybridConsensusForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
+{
+    AssertLockHeld(cs_main);
+    return (params.HybridConsensusForkTime >= 0 && pindexPrev && pindexPrev->GetMedianTimePast() >= params.HybridConsensusForkTime && pindexPrev->nHeight >= params.BIP65Height);
+}
+
 // Compute at which vout of the block's coinbase transaction the witness
 // commitment occurs, or -1 if not found.
 static int GetWitnessCommitmentIndex(const CBlock& block)
@@ -3392,34 +3469,44 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
 {
     assert(pindexPrev != nullptr);
     const int nHeight = pindexPrev->nHeight + 1;
+    const Consensus::Params& consensusParams = params.GetConsensus();
+    const bool hybridForkEnabled = IsHybridConsensusForkEnabled(pindexPrev, consensusParams);
 
     // Check proof of work
-    const Consensus::Params& consensusParams = params.GetConsensus();
     if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams))
         return state.DoS(100, false, REJECT_INVALID, "bad-diffbits", false, "incorrect proof of work");
 
     // Ensure the stake difficulty specified in the block header matches the calculated difficulty based on the previous block
     // and difficulty retarget rules.
-    CAmount expectedStakeDifficulty = calcNextRequiredStakeDifficulty(block, pindexPrev, params);
-    if (block.nStakeDifficulty != expectedStakeDifficulty) {
-        auto report = strprintf("incorrect stake difficulty in a block: expected %.2f, found %.2f", expectedStakeDifficulty / (float)COIN, block.nStakeDifficulty / (float)COIN);
-        return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, report);
-    }
-    /*  TODO uncomment once we have pstakeNode available and stable
-
-    // Ensure the header commits to the correct pool size based on its position within the chain.
-    auto expectedTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
-    if (block.nTicketPoolSize != (uint32_t) expectedTicketPoolSize) {
-        auto report = strprintf("block ticket pool size does not match the expected ticket pool size: expected %u, found %u", expectedTicketPoolSize, block.nTicketPoolSize);
-        return state.DoS(100, false, REJECT_INVALID, "bad-poolsize", false, report);
+    if (hybridForkEnabled) {
+        CAmount expectedStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev, params.GetConsensus());
+        if (block.nStakeDifficulty != expectedStakeDifficulty) {
+            auto report = strprintf("incorrect stake difficulty in a block: expected %.2f, found %.2f", expectedStakeDifficulty / (float)COIN, block.nStakeDifficulty / (float)COIN);
+            return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, report);
+        }
     }
 
-    // Ensure the header commits to the correct lottery state based on its position within the chain.
-    auto expectedTicketLotteryState = pindexPrev->pstakeNode->FinalState();
-    if (block.ticketLotteryState != expectedTicketLotteryState)
-        return state.DoS(100, false, REJECT_INVALID, "bad-lotterystate", false, "block ticket lottery state does not match the expected ticket lottery state");
-    */
-   // Check against checkpoints
+    auto expectedStakeVersion = calcStakeVersion(pindexPrev, params.GetConsensus());
+    if (block.nStakeVersion != expectedStakeVersion) {
+        auto report = strprintf("incorrect stake version in a block: expected %d, found %d", expectedStakeVersion, block.nStakeVersion);
+        return state.DoS(100, false, REJECT_INVALID, "bad-stakever", false, report);
+    }
+
+    if (pindexPrev->pstakeNode != nullptr) {
+        // Ensure the header commits to the correct pool size based on its position within the chain.
+        auto expectedTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
+        if (block.nTicketPoolSize != (uint32_t)expectedTicketPoolSize) {
+            auto report = strprintf("block ticket pool size does not match the expected ticket pool size: expected %u, found %u", expectedTicketPoolSize, block.nTicketPoolSize);
+            return state.DoS(100, false, REJECT_INVALID, "bad-poolsize", false, report);
+        }
+
+        // Ensure the header commits to the correct lottery state based on its position within the chain.
+        auto expectedTicketLotteryState = pindexPrev->pstakeNode->FinalState();
+        if (block.ticketLotteryState != expectedTicketLotteryState)
+            return state.DoS(100, false, REJECT_INVALID, "bad-lotterystate", false, "block ticket lottery state does not match the expected ticket lottery state");
+    }
+
+    // Check against checkpoints
     if (fCheckpointsEnabled) {
         // Don't accept any forks from the main chain prior to last checkpoint.
         // GetLastCheckpoint finds the last checkpoint in MapCheckpoints that's in our
@@ -3436,6 +3523,13 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     // Check timestamp
     if (block.GetBlockTime() > nAdjustedTime + MAX_FUTURE_BLOCK_TIME)
         return state.Invalid(false, REJECT_INVALID, "time-too-new", "block timestamp too far in the future");
+
+    if (hybridForkEnabled) {
+        if (block.nVersion & HARDFORK_VERSION_BIT)
+            return true;
+        return state.Invalid(false, REJECT_OBSOLETE, strprintf("bad-version(0x%08x)", block.nVersion),
+                             strprintf("rejected nVersion=0x%08x block", block.nVersion));
+    }
 
     // Reject outdated version blocks when 95% (75% on testnet) of the network has upgraded:
     // check for version 2, 3 and 4 upgrades
@@ -3714,13 +3808,6 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
 
     if (fCheckForPruning)
         FlushStateToDisk(chainparams, state, FLUSH_STATE_NONE); // we just allocated more disk space for block files
-
-    if (pindex->pprev == nullptr) {
-        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
-    }
-    else{
-        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
-    }
 
     return true;
 }
@@ -4046,6 +4133,17 @@ bool static LoadBlockIndexDB(const CChainParams& chainparams)
             pindex->BuildSkip();
         if (pindex->IsValid(BLOCK_VALID_TREE) && (pindexBestHeader == nullptr || CBlockIndexWorkComparator()(pindexBestHeader, pindex)))
             pindexBestHeader = pindex;
+
+        if (pindex->nHeight == 0) {
+            assert(pindex->pprev == nullptr);
+            pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+        }
+        else{
+            assert(pindex->pprev != nullptr);
+            assert(pindex->pprev->pstakeNode != nullptr);
+
+            pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
+        }
     }
 
     // Load block file info
@@ -4193,12 +4291,12 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
                 if (!UndoReadFromDisk(undo, pos, pindex->pprev->GetBlockHash()))
                     return error("VerifyDB(): *** found bad undo data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
             }
-            StakeNode stake(chainparams.GetConsensus());
-            pos = pindex->GetStakePos();
-            if (!pos.IsNull()) {
-                if (!StakeReadFromDisk(stake, pos, pindex->pprev->GetBlockHash()))
-                    return error("VerifyDB(): *** found bad stake data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
-            }
+            // StakeNode stake(chainparams.GetConsensus());
+            // pos = pindex->GetStakePos();
+            // if (!pos.IsNull()) {
+            //     if (!StakeReadFromDisk(stake, pos, pindex->pprev->GetBlockHash()))
+            //         return error("VerifyDB(): *** found bad stake data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
+            // }
         }
         // check level 3: check for inconsistencies during memory-only disconnect of tip blocks
         if (nCheckLevel >= 3 && pindex == pindexState && (coins.DynamicMemoryUsage() + pcoinsTip->DynamicMemoryUsage()) <= nCoinCacheUsage) {
@@ -4490,18 +4588,31 @@ bool LoadGenesisBlock(const CChainParams& chainparams)
 
     try {
         CBlock &block = const_cast<CBlock&>(chainparams.GenesisBlock());
+        CBlockIndex *pindex = AddToBlockIndex(block);
+        CValidationState state;
+        assert (pindex->pprev == nullptr);
+        // pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+        // assert(pindex->pstakeNode != nullptr);
+        // assert(pindex->GetStakePos().IsNull());
+        // {
+        //     // Start new stake file
+        //     CDiskBlockPos _pos;
+        //     if (!FindStakePos(state, pindex->nFile, _pos, ::GetSerializeSize(*pindex->pstakeNode, SER_DISK, CLIENT_VERSION) + 40))
+        //         return error("%s: FindStakePos failed", __func__);
+        //     if (!StakeWriteToDisk(*pindex->pstakeNode, _pos, uint256(), chainparams.MessageStart()))
+        //         return error("%s: writing stake data for genesis block to disk failed", __func__);
+        //     // update nStakePos in block index
+        //     pindex->nStakePos = _pos.nPos;
+        //     pindex->nStatus |= BLOCK_HAVE_STAKE;
+        // }
         // Start new block file
         unsigned int nBlockSize = ::GetSerializeSize(block, SER_DISK, CLIENT_VERSION);
         CDiskBlockPos blockPos;
-        CValidationState state;
         if (!FindBlockPos(state, blockPos, nBlockSize+8, 0, block.GetBlockTime()))
             return error("%s: FindBlockPos failed", __func__);
         if (!WriteBlockToDisk(block, blockPos, chainparams.MessageStart()))
             return error("%s: writing genesis block to disk failed", __func__);
-        CBlockIndex *pindex = AddToBlockIndex(block);
-        assert (pindex->pprev == nullptr);
-        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
-        assert(pindex->pstakeNode != nullptr);
+
         if (!ReceivedBlockTransactions(block, state, pindex, blockPos, chainparams.GetConsensus()))
             return error("%s: genesis block not accepted", __func__);
     } catch (const std::runtime_error& e) {
@@ -5068,10 +5179,9 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
         // Populate the prunable ticket information as needed.
         MaybeFetchTicketInfo(pindex,params);
 
-        auto stakeNode = pindex->pprev->pstakeNode->ConnectNode(
+        auto stakeNode = pindex->pprev->pstakeNode->ConnectNode( pindex->LotteryIV(),
             pindex->ticketsVoted, pindex->ticketsRevoked, *pindex->newTickets);
-        // stakeNode, err := node.parent.stakeNode.ConnectNode(node.lotteryIV(),
-        // 		node.ticketsVoted, node.ticketsRevoked, node.newTickets)
+
         pindex->pstakeNode = stakeNode;
 
         return stakeNode;
@@ -5111,11 +5221,8 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
         // Generate the previous stake node by starting with the child stake
         // node and undoing the modifications caused by the stake details in
         // the previous block.
-        // const auto parentUtds = this->databaseUndoUpdate; //TODO get correct one from height-1
-        // const auto parentTickets = this->databaseBlockTickets; //TODO get correct one from height-1
-        auto stakeNode = it->pstakeNode->DisconnectNode(prev->pstakeNode->UndoData(), prev->pstakeNode->NewTickets());
-        // stakeNode, err := n.stakeNode.DisconnectNode(prev.lotteryIV(), nil,
-        // nil, dbTx)
+        auto stakeNode = it->pstakeNode->DisconnectNode(prev->LotteryIV(),prev->pstakeNode->UndoData(), prev->pstakeNode->NewTickets());
+        // stakeNode, err := n.stakeNode.DisconnectNode(prev.lotteryIV(), nil, nil, dbTx)
         prev->pstakeNode = stakeNode;
     }
 
@@ -5144,11 +5251,9 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
 
         // Generate the stake node by applying the stake details in the current
         // block to the previous stake node.
-        auto stakeNode = it->pprev->pstakeNode->ConnectNode(
+        auto stakeNode = it->pprev->pstakeNode->ConnectNode( it->LotteryIV(),
             it->ticketsVoted, it->ticketsRevoked, *it->newTickets);
         it->pstakeNode = stakeNode;
-        // 	stakeNode, err := n.parent.stakeNode.ConnectNode(n.lotteryIV(),
-        // 		n.ticketsVoted, n.ticketsRevoked, n.newTickets)
     }
 
     return pindex->pstakeNode;

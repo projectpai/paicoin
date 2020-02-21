@@ -62,6 +62,8 @@ struct Params {
     int BIP65Height;
     /** Block height at which BIP66 becomes active */
     int BIP66Height;
+    /** Earliest block median time past at which hardfork may become active */
+    int64_t HybridConsensusForkTime;
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
@@ -98,7 +100,8 @@ struct Params {
     uint32_t nTicketExpiry;
     // CoinbaseMaturity is the number of blocks required before newly mined
     // coins (coinbase transactions) can be spent.
-    uint16_t nCoinbaseMaturity;
+    // uint16_t nCoinbaseMaturity; We have a constant for this purpose in consensus.h, COINBASE_MATURITY
+
     // Maturity for spending SStx change outputs.
     uint16_t nSStxChangeMaturity;
     // TicketPoolSizeWeight is the multiplicative weight applied to the
@@ -122,11 +125,11 @@ struct Params {
     uint8_t nMaxFreshStakePerBlock;
     // StakeEnabledHeight is the height in which the first ticket could possibly
     // mature.
-    int64_t nStakeEnabledHeight;
+    int32_t nStakeEnabledHeight;
     // StakeValidationHeight is the height at which votes (SSGen) are required
     // to add a new block to the top of the blockchain. This height is the
     // first block that will be voted on, but will include in itself no votes.
-    int64_t nStakeValidationHeight;
+    int32_t nStakeValidationHeight;
     // StakeBaseSigScript is the consensus stakebase signature script for all
     // votes on the network. This isn't signed in any way, so without forcing
     // it to be this value miners/daemons could freely change it.

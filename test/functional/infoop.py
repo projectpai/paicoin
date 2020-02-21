@@ -26,6 +26,7 @@ class InfoOPTest(PAIcoinTestFramework):
         self.num_nodes = 1
         self.enable_mocktime()
         self.setup_clean_chain = True
+        self.extra_args = [['-txindex']] # needed for txfeeinfo
 
     def enable_mocktime (self):
         self.mocktime = 1529934120 # Monday, June 25, 2018 1:42:00 PM GMT
@@ -201,6 +202,10 @@ class InfoOPTest(PAIcoinTestFramework):
         chain_node = self.nodes[0]
         assert chain_node
 
+        # make a tx to have smth in mempool
+        newaddr = chain_node.getnewaddress()
+        tx = chain_node.sendtoaddress(newaddr,0.1)
+
         result = chain_node.txfeeinfo(3, 1, 3)
         assert result is not None
 
@@ -213,16 +218,27 @@ class InfoOPTest(PAIcoinTestFramework):
         assert 'median' in fim.keys()
         assert 'stddev' in fim.keys()
 
+        # generate block with tx
+        chain_node.generate(1)
+        self.sync_all()
+
+        blocks = chain_node.getblockchaininfo()['blocks']
+        rangeStart = blocks - 2
+        rangeEnd = blocks + 1
+
+        result = chain_node.txfeeinfo(3, rangeStart, rangeEnd)
+        assert result is not None
+
         assert 'feeinfoblocks' in result.keys()
         assert len(result['feeinfoblocks']) == 3
-        for block in result['feeinfoblocks']:
-            assert 'height' in block
-            assert 'number' in block
-            assert 'min' in block
-            assert 'max' in block
-            assert 'mean' in block
-            assert 'median' in block
-            assert 'stddev' in block
+        block  = result['feeinfoblocks'][0] # only last block has a transaction
+        assert 'height' in block
+        assert 'number' in block
+        assert 'min' in block
+        assert 'max' in block
+        assert 'mean' in block
+        assert 'median' in block
+        assert 'stddev' in block
         
         assert 'feeinforange' in result.keys()
         fir = result['feeinforange']
