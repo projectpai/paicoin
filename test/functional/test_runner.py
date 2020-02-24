@@ -164,7 +164,6 @@ EXTENDED_SCRIPTS = [
     'replace-by-fee.py',
     'stake_api.py',
     'infoop.py',
-    'searchapi.py',
 ]
 
 # Place EXTENDED_SCRIPTS first since it has the 3 longest running tests
