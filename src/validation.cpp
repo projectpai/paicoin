@@ -3477,22 +3477,21 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
         auto report = strprintf("incorrect stake difficulty in a block: expected %.2f, found %.2f", expectedStakeDifficulty / (float)COIN, block.nStakeDifficulty / (float)COIN);
         return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, report);
     }
+    /*  TODO uncomment once we have pstakeNode available and stable
 
-    if (pindexPrev->pstakeNode != nullptr) {
-        // Ensure the header commits to the correct pool size based on its position within the chain.
-        auto expectedTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
-        if (block.nTicketPoolSize != (uint32_t)expectedTicketPoolSize) {
-            auto report = strprintf("block ticket pool size does not match the expected ticket pool size: expected %u, found %u", expectedTicketPoolSize, block.nTicketPoolSize);
-            return state.DoS(100, false, REJECT_INVALID, "bad-poolsize", false, report);
-        }
-
-        // Ensure the header commits to the correct lottery state based on its position within the chain.
-        auto expectedTicketLotteryState = pindexPrev->pstakeNode->FinalState();
-        if (block.ticketLotteryState != expectedTicketLotteryState)
-            return state.DoS(100, false, REJECT_INVALID, "bad-lotterystate", false, "block ticket lottery state does not match the expected ticket lottery state");
+    // Ensure the header commits to the correct pool size based on its position within the chain.
+    auto expectedTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
+    if (block.nTicketPoolSize != (uint32_t) expectedTicketPoolSize) {
+        auto report = strprintf("block ticket pool size does not match the expected ticket pool size: expected %u, found %u", expectedTicketPoolSize, block.nTicketPoolSize);
+        return state.DoS(100, false, REJECT_INVALID, "bad-poolsize", false, report);
     }
 
-    // Check against checkpoints
+    // Ensure the header commits to the correct lottery state based on its position within the chain.
+    auto expectedTicketLotteryState = pindexPrev->pstakeNode->FinalState();
+    if (block.ticketLotteryState != expectedTicketLotteryState)
+        return state.DoS(100, false, REJECT_INVALID, "bad-lotterystate", false, "block ticket lottery state does not match the expected ticket lottery state");
+    */
+   // Check against checkpoints
     if (fCheckpointsEnabled) {
         // Don't accept any forks from the main chain prior to last checkpoint.
         // GetLastCheckpoint finds the last checkpoint in MapCheckpoints that's in our
@@ -5158,9 +5157,10 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
         // Populate the prunable ticket information as needed.
         MaybeFetchTicketInfo(pindex,params);
 
-        auto stakeNode = pindex->pprev->pstakeNode->ConnectNode( pindex->LotteryIV(),
+        auto stakeNode = pindex->pprev->pstakeNode->ConnectNode(
             pindex->ticketsVoted, pindex->ticketsRevoked, *pindex->newTickets);
-
+        // stakeNode, err := node.parent.stakeNode.ConnectNode(node.lotteryIV(),
+        // 		node.ticketsVoted, node.ticketsRevoked, node.newTickets)
         pindex->pstakeNode = stakeNode;
 
         return stakeNode;
@@ -5200,8 +5200,11 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
         // Generate the previous stake node by starting with the child stake
         // node and undoing the modifications caused by the stake details in
         // the previous block.
-        auto stakeNode = it->pstakeNode->DisconnectNode(prev->LotteryIV(),prev->pstakeNode->UndoData(), prev->pstakeNode->NewTickets());
-        // stakeNode, err := n.stakeNode.DisconnectNode(prev.lotteryIV(), nil, nil, dbTx)
+        // const auto parentUtds = this->databaseUndoUpdate; //TODO get correct one from height-1
+        // const auto parentTickets = this->databaseBlockTickets; //TODO get correct one from height-1
+        auto stakeNode = it->pstakeNode->DisconnectNode(prev->pstakeNode->UndoData(), prev->pstakeNode->NewTickets());
+        // stakeNode, err := n.stakeNode.DisconnectNode(prev.lotteryIV(), nil,
+        // nil, dbTx)
         prev->pstakeNode = stakeNode;
     }
 
@@ -5230,9 +5233,11 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
 
         // Generate the stake node by applying the stake details in the current
         // block to the previous stake node.
-        auto stakeNode = it->pprev->pstakeNode->ConnectNode( it->LotteryIV(),
+        auto stakeNode = it->pprev->pstakeNode->ConnectNode(
             it->ticketsVoted, it->ticketsRevoked, *it->newTickets);
         it->pstakeNode = stakeNode;
+        // 	stakeNode, err := n.parent.stakeNode.ConnectNode(n.lotteryIV(),
+        // 		n.ticketsVoted, n.ticketsRevoked, n.newTickets)
     }
 
     return pindex->pstakeNode;
