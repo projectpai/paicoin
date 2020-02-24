@@ -284,9 +284,6 @@ bool CheckSequenceLocks(const CTransaction &tx, int flags, LockPoints* lp, bool 
         std::vector<int> prevheights;
         prevheights.resize(tx.vin.size());
         for (size_t txinIndex = 0; txinIndex < tx.vin.size(); txinIndex++) {
-            //skip stakebase coin as it does not exist
-            if (txinIndex == voteSubsidyInputIndex && ParseTxClass(tx) == TX_Vote)
-                continue;
             const CTxIn& txin = tx.vin[txinIndex];
             Coin coin;
             if (!viewMemPool.GetCoin(txin.prevout, coin)) {
@@ -429,11 +426,7 @@ static bool CheckInputsFromMempoolAndCache(const CTransaction& tx, CValidationSt
     LOCK(pool.cs);
 
     assert(!tx.IsCoinBase());
-    for (size_t in = 0; in < tx.vin.size(); ++in) {
-        if (in == voteSubsidyInputIndex && ParseTxClass(tx) == TX_Vote)
-            continue; //skip the stakebase as coin doesn't exist
-
-        const CTxIn& txin = tx.vin[in];
+    for (const CTxIn& txin : tx.vin) {
         const Coin& coin = view.AccessCoin(txin.prevout);
 
         // At this point we haven't actually checked if the coins are all
@@ -500,12 +493,8 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     std::set<uint256> setConflicts;
     {
     LOCK(pool.cs); // protect pool.mapNextTx
-    for (size_t in = 0; in < tx.vin.size(); ++in) 
+    for (const CTxIn &txin : tx.vin)
     {
-        if (ParseTxClass(tx) == TX_Vote && in == voteSubsidyInputIndex)
-            continue; //skip the stakebase as coin doesn't exist
-
-        const CTxIn& txin = tx.vin[in];
         auto itConflicting = pool.mapNextTx.find(txin.prevout);
         if (itConflicting != pool.mapNextTx.end())
         {
@@ -573,8 +562,8 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 
     // If the transaction is a ticket, ensure that it meets the next stake difficulty.
     if (txClass == TX_BuyTicket) {
-        CBlock dummyBlock;
-        CAmount expectedStakeDifficulty =  calcNextRequiredStakeDifficulty(dummyBlock,chainActive.Tip(),chainparams);
+        // TODO: call the proper function to get the expected stake difficulty
+        CAmount expectedStakeDifficulty = 1 * COIN; // mp.cfg.NextStakeDifficulty()
         if (tx.vout[ticketStakeOutputIndex].nValue < expectedStakeDifficulty)
             return state.DoS(100, false, REJECT_INVALID, "insufficient-stake");
     }
@@ -590,11 +579,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         view.SetBackend(viewMemPool);
 
         // do all inputs exist?
-        for (size_t in = 0; in < tx.vin.size(); ++in) {
-            if (txClass == TX_Vote && in == voteSubsidyInputIndex)
-                continue; //skip the stakebase as coin doesn't exist
-
-            const CTxIn& txin = tx.vin[in];
+        for (const CTxIn txin : tx.vin) {
             if (!pcoinsTip->HaveCoinInCache(txin.prevout)) {
                 coins_to_uncache.push_back(txin.prevout);
             }
@@ -679,7 +664,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         }
 
         // No transactions are allowed below minRelayTxFee except from disconnected blocks
-        if (!bypass_limits && txClass != TX_Vote && nModifiedFees < ::minRelayTxFee.GetFee(nSize)) {
+        if (!bypass_limits && nModifiedFees < ::minRelayTxFee.GetFee(nSize)) {
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "min relay fee not met");
         }
 
@@ -997,19 +982,17 @@ bool FindTransactionsByDestination(const CTxDestination &dest, std::set<CExtDisk
 }
 
 /** Return transaction in txOut, and if it was found inside a block, its hash is placed in hashBlock */
-bool GetTransaction(const uint256 &hash, CTransactionRef &txOut, const Consensus::Params& consensusParams, uint256 &hashBlock, bool fAllowSlow, bool fAllowMempool)
+bool GetTransaction(const uint256 &hash, CTransactionRef &txOut, const Consensus::Params& consensusParams, uint256 &hashBlock, bool fAllowSlow)
 {
     CBlockIndex *pindexSlow = nullptr;
 
     LOCK(cs_main);
 
-    if (fAllowMempool) {
-        CTransactionRef ptx = mempool.get(hash);
-        if (ptx)
-        {
-            txOut = ptx;
-            return true;
-        }
+    CTransactionRef ptx = mempool.get(hash);
+    if (ptx)
+    {
+        txOut = ptx;
+        return true;
     }
 
     if (fTxIndex) {
@@ -1058,8 +1041,7 @@ CTransactionRef GetTicket(const uint256& txHash)
 {
     CTransactionRef ticketTxPtr;
     uint256 ticketBlockHash;
-    if (GetTransaction(txHash, ticketTxPtr, Params().GetConsensus(), ticketBlockHash, true
-                      ,false /*mempool search not allowed as it may cause deadlock when called  through ProcessNewBlock*/))
+    if (GetTransaction(txHash, ticketTxPtr, Params().GetConsensus(), ticketBlockHash, true))
         return ticketTxPtr;
     else
         return nullptr;
