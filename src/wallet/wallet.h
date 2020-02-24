@@ -1002,6 +1002,8 @@ public:
 
     bool DelAddressBook(const CTxDestination& address);
 
+    bool RenameAddressBook(const std::string& oldName, const std::string& newName);
+
     const std::string& GetAccountName(const CScript& scriptPubKey) const;
 
     void Inventory(const uint256 &hash) override
