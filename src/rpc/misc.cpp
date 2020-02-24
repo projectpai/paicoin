@@ -153,18 +153,17 @@ UniValue existsmempooltxs(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
-            "existsmempooltxs \"txhashes\"\n"
+            "existsmempooltxs \"txhashblob\"\n"
             "\nTest for the existence of the provided txs in the mempool.\n"
             "\nArguments:\n"
-            "1. \"txhashes\"    (array, required)   Array of hashes to check\n"
+            "1. \"txhashblob\"     (string, required) Blob containing the hashes to check\n"
             "\nResult:\n"
             "   Bool blob showing if txs exist in the mempool or not"
             "\nExamples:\n"
-            + HelpExampleCli("existsmempooltxs", "[\"txhash1\", \"txhash2\"]")
-            + HelpExampleRpc("existsmempooltxs", "[\"txhash1\", \"txhash2\"]")
+            + HelpExampleCli("existsmempooltxs", "\"<txhashblob\">")
+            + HelpExampleRpc("existsmempooltxs", "\"<txhashblob\">")
         };
 
-    // TODO read the array containing tx hashes, txhashblob is obsolete in Decred
     std::string txHashBlob = request.params[0].get_str();
     if ((txHashBlob.size() % 64) != 0) {
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid txhashblob");
@@ -677,7 +676,7 @@ static const CRPCCommand commands[] =
     { "util",               "validateaddress",        &validateaddress,        {"address"} }, /* uses wallet if enabled */
     { "util",               "existsaddress",          &existsaddress,          {"address"} },
     { "util",               "existsaddresses",        &existsaddresses,        {"addresses"} },
-    { "util",               "existsmempooltxs",       &existsmempooltxs,       {"txhashes"} },
+    { "util",               "existsmempooltxs",       &existsmempooltxs,       {"txhashblob"} },
     { "util",               "createmultisig",         &createmultisig,         {"nrequired","keys"} },
     { "util",               "verifymessage",          &verifymessage,          {"address","signature","message"} },
     { "util",               "signmessagewithprivkey", &signmessagewithprivkey, {"privkey","message"} },
