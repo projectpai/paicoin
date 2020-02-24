@@ -13,7 +13,6 @@
 #include "scheduler.h"
 #include "txdb.h"
 #include "txmempool.h"
-#include "script/standard.h"
 
 #include <boost/thread.hpp>
 
@@ -67,17 +66,12 @@ class CBlock;
 struct CMutableTransaction;
 class CScript;
 
-enum class scriptPubKeyType{
-    NoKey,
-    P2PK,
-    P2PKH,
-};
 //
 // Testing fixture that pre-creates a
 // 100-block REGTEST-mode block chain
 //
 struct TestChain100Setup : public TestingSetup {
-    TestChain100Setup(scriptPubKeyType pkType = scriptPubKeyType::P2PK);
+    TestChain100Setup();
 
     // Create a new block with just given transactions, coinbase paying to
     // scriptPubKey, and try to add it to the current chain.
@@ -88,87 +82,6 @@ struct TestChain100Setup : public TestingSetup {
 
     std::vector<CTransaction> coinbaseTxns; // For convenience, coinbase transactions
     CKey coinbaseKey; // private/public key needed to spend coinbase transactions
-};
-
-class Generator: public TestingSetup
-{
-public:
-    explicit Generator(const std::string& chainName = CBaseChainParams::REGTEST);
-    ~Generator();
-
-    struct SpendableOut {
-        COutPoint prevOut;
-        int       blockHeight;
-        // uint32_t  blockIndex;
-        CAmount   amount;
-    };
-
-    // struct StakeTicket {
-    //     CTransactionRef tx;
-    //     uint32_t  blockHeight;
-    //     uint32_t  blockIndex;
-    // };
-    typedef std::function<std::vector<CMutableTransaction>(const CBlock&)> MungerType;
-
-    CBlock NextBlock(const std::string& blockName
-                    , const SpendableOut* spend
-                    , const std::list<SpendableOut>& ticketSpends
-                    , const MungerType& munger = MungerType());
-    CMutableTransaction CreateTicketPurchaseTx(const SpendableOut& spend, const CAmount& ticketPrice, const CAmount& fee);
-    CMutableTransaction CreateVoteTx(const CBlockIndex& voteBlock, const uint256& ticketTxHash);
-    CMutableTransaction CreateRevocationTx(const uint256& ticketTxHash);
-    CMutableTransaction CreateSpendTx(const SpendableOut& spend, const CAmount& fee);
-    CMutableTransaction CreateSplitSpendTx(const SpendableOut& spend, const std::vector<CAmount>& payments, const CAmount& fee);
-    
-    const CBlockIndex* Tip();
-    const Consensus::Params& ConsensusParams();
-    CAmount NextRequiredStakeDifficulty();
-
-    SpendableOut MakeSpendableOut(const CTransaction& tx, uint32_t indexOut);
-    void SaveAllSpendableOuts(const CBlock& b);
-    void SaveSpendableOuts(const CBlock& b, uint32_t indexBlock, const std::vector<uint32_t>& indicesTxOut);
-    void SaveCoinbaseOut(const CBlock& b);
-    std::list<SpendableOut> OldestCoinOuts();
-
-private:
-    void SignTx(CMutableTransaction& tx, unsigned int nIn, const CScript& script, const CKey& key);
-
-    // keep keys, addr and scripts as references to the coinbase ones to be
-    // in case we need to make separate ones
-    const CKey  coinbaseKey;
-    const CKey& stakeKey;
-    const CKey& rewardKey;
-    const CKey& changeKey;
-
-    const CKeyID  coinbaseAddr;
-    const CKeyID& stakeAddr;
-    const CKeyID& rewardAddr;
-    const CKeyID& changeAddr;
-
-    const CScript  coinbaseScript;
-    const CScript& stakeScript;
-    const CScript& rewardScript;
-    const CScript& changeScript;
-
-    std::string tipName;
-    // std::map<uint256,CBlock&> blocks;//           map[chainhash.Hash]*wire.MsgBlock
-    // std::map<uint256,uint32_t> blockHeights;//     map[chainhash.Hash]uint32
-    // std::map<std::string,CBlock&> blocksByName;//     map[string]*wire.MsgBlock
-
-    // Used for tracking spendable coinbase outputs.
-    std::list<std::list<SpendableOut>> spendableOuts;//     [][]SpendableOut
-    // prevCollectedHash chainhash.Hash
-
-    // // Used for tracking the live ticket pool and revocations.
-    // originalParents map[chainhash.Hash]chainhash.Hash
-    // std::vector<CTransactionRef> immatureTickets;
-    // std::vector<CTransactionRef> liveTickets;
-    // std::vector<CTransactionRef> expiredTickets;
-    // std::map<uint256, std::vector<StakeTicket>> wonTickets;//      map[chainhash.Hash][]*stakeTicket
-    // std::map<uint256, std::vector<StakeTicket>> revokedTickets;//  map[chainhash.Hash][]*stakeTicket
-    // missedVotes     map[chainhash.Hash]*stakeTicket
-
-    std::map<uint256, CAmount> boughtTicketHashToPrice;
 };
 
 class CTxMemPoolEntry;

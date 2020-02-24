@@ -32,7 +32,6 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFe
     nModFeesWithDescendants = nFee;
 
     feeDelta = 0;
-    txClass = ParseTxClass(*tx);
 
     nCountWithAncestors = 1;
     nSizeWithAncestors = GetTxSize();

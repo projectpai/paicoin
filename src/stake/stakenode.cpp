@@ -60,7 +60,7 @@ bool StakeNode::ExistsLiveTicket(const uint256& ticket) const
 
 HashVector StakeNode::LiveTickets() const
 {
-    HashVector tickets{};
+    HashVector tickets{static_cast<size_t>(liveTickets->len())};
 
     liveTickets->forEach(
         [&tickets](const uint256& key, const ValuePtr&) {
@@ -84,7 +84,7 @@ bool StakeNode::ExistsMissedTicket(const uint256& ticket) const
 
 HashVector StakeNode::MissedTickets() const
 {
-    HashVector tickets{};
+    HashVector tickets{static_cast<size_t>(missedTickets->len())};
 
     missedTickets->forEach(
         [&tickets](const uint256& key, const ValuePtr&) {
@@ -103,7 +103,7 @@ bool StakeNode::ExistsRevokedTicket(const uint256& ticket) const
 
 HashVector StakeNode::RevokedTickets() const
 {
-    HashVector tickets{};
+    HashVector tickets{static_cast<size_t>(revokedTickets->len())};
 
     revokedTickets->forEach(
         [&tickets](const uint256& key, const ValuePtr&) {
@@ -172,7 +172,7 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const HashVector& ticketsVoted
         // Iterate through all possible winners and construct the undo data,
         // updating the live and missed ticket treaps as necessary.  We need
         // to copy the value here so we don't modify it in the previous treap.
-        for (const auto& it : nextWinners) {
+        for (const auto& it : ticketsVoted) {
             auto value = connectedNode->liveTickets->get(it);
             assert(value != nullptr);
 
@@ -186,13 +186,13 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const HashVector& ticketsVoted
             if (end(ticketsVoted) != std::find(begin(ticketsVoted),end(ticketsVoted),it)) {
                 value->spent = true;
                 value->missed = false;
-                connectedNode->liveTickets = std::make_shared<TicketTreap>(connectedNode->liveTickets->deleteKey(it));
+                connectedNode->liveTickets->deleteKey(it);
             }
             else{
                 value->spent = false;
                 value->missed = true;
-                connectedNode->liveTickets = std::make_shared<TicketTreap>(connectedNode->liveTickets->deleteKey(it));
-                connectedNode->missedTickets = std::make_shared<TicketTreap>(connectedNode->missedTickets->put(it,value));
+                connectedNode->liveTickets->deleteKey(it);
+                connectedNode->missedTickets->put(it,value);
             }
 
             connectedNode->databaseUndoUpdate.push_back(
@@ -212,8 +212,8 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const HashVector& ticketsVoted
                 auto v = std::make_shared<Value>(*value);
                 v->missed = true;
                 v->expired = true;
-                connectedNode->liveTickets = std::make_shared<TicketTreap>(connectedNode->liveTickets->deleteKey(treapKey));
-                connectedNode->missedTickets = std::make_shared<TicketTreap>(connectedNode->missedTickets->put(treapKey, v));
+                connectedNode->liveTickets->deleteKey(treapKey);
+                connectedNode->missedTickets->put(treapKey, v);
 
                 connectedNode->databaseUndoUpdate.push_back(UndoTicketData{
                     treapKey,
@@ -234,8 +234,8 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const HashVector& ticketsVoted
             auto value = connectedNode->missedTickets->get(it);
 
             value->revoked = true;
-            connectedNode->missedTickets = std::make_shared<TicketTreap>(connectedNode->missedTickets->deleteKey(it));
-            connectedNode->revokedTickets = std::make_shared<TicketTreap>(connectedNode->revokedTickets->put(it,value));
+            connectedNode->missedTickets->deleteKey(it);
+            connectedNode->revokedTickets->put(it,value);
 
             connectedNode->databaseUndoUpdate.push_back(UndoTicketData{
                 it,
@@ -258,7 +258,7 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const HashVector& ticketsVoted
             false,
             false
         );
-        connectedNode->liveTickets = std::make_shared<TicketTreap>(connectedNode->liveTickets->put(k,v));
+        connectedNode->liveTickets->put(k,v);
 
         connectedNode->databaseUndoUpdate.push_back(UndoTicketData{
             it,
