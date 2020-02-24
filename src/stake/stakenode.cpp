@@ -148,7 +148,7 @@ std::unique_ptr<StakeNode> StakeNode::genesisNode(const Consensus::Params& param
     return std::unique_ptr<StakeNode>(new StakeNode(params));
 }
 
-std::shared_ptr<StakeNode> StakeNode::ConnectNode(const uint256& lotteryIV, const HashVector& ticketsVoted, const HashVector& revokedTickets, const HashVector& newTickets) const
+std::shared_ptr<StakeNode> StakeNode::ConnectNode(const HashVector& ticketsVoted, const HashVector& revokedTickets, const HashVector& newTickets) const
 {
     const auto connectedNode =  std::make_shared<StakeNode>(
         this->height + 1,
@@ -274,6 +274,8 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const uint256& lotteryIV, cons
     // winners at the block before StakeValidationHeight.
     if (connectedNode->height >= connectedNode->params.nStakeValidationHeight - 1 ) {
         // Find the next set of winners.
+        std::string strMsg = "Very deterministic message";
+        uint256 lotteryIV = Hash(strMsg.begin(), strMsg.end()); //TODO pass this a a parameter
         auto prng = Hash256PRNG(lotteryIV);
         const auto& idxs = prng.FindTicketIdxs(connectedNode->liveTickets->len(), connectedNode->params.nTicketsPerBlock);
 
@@ -285,14 +287,15 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const uint256& lotteryIV, cons
             stateBuffer.push_back(it);
         }
         stateBuffer.push_back(prng.StateHash());
-        const auto& hex = Hash(stateBuffer.begin(),stateBuffer.end()).GetHex();
-        connectedNode->finalState.SetHex(hex);
+        //TODO implement Hash48 or find another solution to obtain the final state
+        const auto& hash = Hash160(stateBuffer.begin(),stateBuffer.end()); 
+        connectedNode->finalState = uint48();
     }
 
     return connectedNode;
 }
 
-std::shared_ptr<StakeNode> StakeNode::DisconnectNode(const uint256& parentLotteryIV, const UndoTicketDataVector& parentUtds, const HashVector& parentTickets) const
+std::shared_ptr<StakeNode> StakeNode::DisconnectNode(const UndoTicketDataVector& parentUtds, const HashVector& parentTickets) const
 {
     // Edge case for the parent being the genesis block.
     if (this->height == 1) {
@@ -397,12 +400,15 @@ std::shared_ptr<StakeNode> StakeNode::DisconnectNode(const uint256& parentLotter
     }
 
     if (this->height >= this->params.nStakeValidationHeight) {
-        auto prng = Hash256PRNG(parentLotteryIV);
+        std::string strMsg = "Very deterministic message";
+        uint256 lotteryIV = Hash(strMsg.begin(), strMsg.end()); //TODO pass this a a parameter
+        auto prng = Hash256PRNG(lotteryIV);
         
         const auto& idxs = prng.FindTicketIdxs(restoredNode->liveTickets->len(), restoredNode->params.nTicketsPerBlock);
         stateBuffer.push_back(prng.StateHash());
-        const auto& hex = Hash(stateBuffer.begin(),stateBuffer.end()).GetHex();
-        restoredNode->finalState.SetHex(hex);
+        //TODO implement Hash48 or find another solution to obtain the final state
+        const auto& hash = Hash160(stateBuffer.begin(),stateBuffer.end()); 
+        restoredNode->finalState = uint48();
     }
 
     return restoredNode;
