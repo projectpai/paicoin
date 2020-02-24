@@ -159,6 +159,12 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "purchaseticket", 6, "poolfees" },
     { "purchaseticket", 7, "expiry" },
     { "purchaseticket", 9, "ticketfee" },
+    { "generatevote", 1, "height" },
+    { "generatevote", 3, "votebits" },
+    { "ticketfeeinfo", 0, "blocks" },
+    { "ticketfeeinfo", 1, "windows" },
+    { "ticketvwap", 0, "start" },
+    { "ticketvwap", 1, "end" },
     // Echo with conversion (For testing only)
     { "echojson", 0, "arg0" },
     { "echojson", 1, "arg1" },
