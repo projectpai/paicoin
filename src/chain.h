@@ -441,8 +441,6 @@ public:
             READWRITE(VARINT(nDataPos));
         if (nStatus & BLOCK_HAVE_UNDO)
             READWRITE(VARINT(nUndoPos));
-        if (nStatus & BLOCK_HAVE_STAKE)
-            READWRITE(VARINT(nStakePos));
 
         // block header
         READWRITE(this->nVersion);

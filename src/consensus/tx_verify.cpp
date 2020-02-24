@@ -436,7 +436,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         // so we'll skip the checks
         if (txClass == TX_Vote && i == voteSubsidyInputIndex)
         {
-            nValueIn += GetVoterSubsidy(nSpendHeight/*voteData.blockHeight*/, ::Params().GetConsensus());
+            nValueIn += GetVoterSubsidy(voteData.blockHeight, ::Params().GetConsensus());
             continue;
         }
 
