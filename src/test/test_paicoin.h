@@ -14,6 +14,8 @@
 #include "txdb.h"
 #include "txmempool.h"
 #include "script/standard.h"
+#include <consensus/validation.h>
+#include <validationinterface.h>
 
 #include <boost/thread.hpp>
 
@@ -96,6 +98,14 @@ public:
     explicit Generator(const std::string& chainName = CBaseChainParams::REGTEST);
     ~Generator();
 
+    // voteBitNo and voteBitYes represent no and yes votes, respectively, on
+    // whether or not to approve the previous block.
+    static const uint32_t voteNoBits  = 0x0000;
+    static const uint32_t voteYesBits = 0x0001;
+
+    static const uint16_t minStakebaseScriptLen = 2;
+    static const uint16_t maxStakebaseScriptLen = 100;
+
     struct SpendableOut {
         COutPoint prevOut;
         int       blockHeight;
@@ -103,35 +113,59 @@ public:
         CAmount   amount;
     };
 
+    class submitblock_StateCatcher : public CValidationInterface
+    {
+    public:
+        uint256 hash;
+        bool found;
+        CValidationState state;
+
+        explicit submitblock_StateCatcher(const uint256 &hashIn) : hash{hashIn}, found{false} {}
+
+    protected:
+        void BlockChecked(const CBlock& block, const CValidationState& stateIn) override {
+            if (block.GetHash() != hash)
+                return;
+            found = true;
+            state = stateIn;
+        }
+    };
+
     // struct StakeTicket {
     //     CTransactionRef tx;
     //     uint32_t  blockHeight;
     //     uint32_t  blockIndex;
     // };
-    typedef std::function<std::vector<CMutableTransaction>(const CBlock&)> MungerType;
+    typedef std::function<void(CBlock&)> MungerType;
 
     CBlock NextBlock(const std::string& blockName
                     , const SpendableOut* spend
                     , const std::list<SpendableOut>& ticketSpends
                     , const MungerType& munger = MungerType());
     CMutableTransaction CreateTicketPurchaseTx(const SpendableOut& spend, const CAmount& ticketPrice, const CAmount& fee);
-    CMutableTransaction CreateVoteTx(const CBlockIndex& voteBlock, const uint256& ticketTxHash);
-    CMutableTransaction CreateRevocationTx(const uint256& ticketTxHash);
-    CMutableTransaction CreateSpendTx(const SpendableOut& spend, const CAmount& fee);
-    CMutableTransaction CreateSplitSpendTx(const SpendableOut& spend, const std::vector<CAmount>& payments, const CAmount& fee);
+    CMutableTransaction CreateVoteTx(const uint256& voteBlockHash, int voteBlockHeight, const uint256& ticketTxHash, uint32_t voteBits = voteYesBits) const;
+    CMutableTransaction CreateRevocationTx(const uint256& ticketTxHash) const;
+    CMutableTransaction CreateSpendTx(const SpendableOut& spend, const CAmount& fee) const;
+    CMutableTransaction CreateSplitSpendTx(const SpendableOut& spend, const std::vector<CAmount>& payments, const CAmount& fee) const;
     
-    const CBlockIndex* Tip();
-    const Consensus::Params& ConsensusParams();
-    CAmount NextRequiredStakeDifficulty();
+    const CBlockIndex* Tip() const;
+    const Consensus::Params& ConsensusParams() const;
+    CAmount NextRequiredStakeDifficulty() const;
+    const CValidationState& LastValidationState() const { return lastValidationState;}
 
-    SpendableOut MakeSpendableOut(const CTransaction& tx, uint32_t indexOut);
+    SpendableOut MakeSpendableOut(const CTransaction& tx, uint32_t indexOut) const;
     void SaveAllSpendableOuts(const CBlock& b);
     void SaveSpendableOuts(const CBlock& b, uint32_t indexBlock, const std::vector<uint32_t>& indicesTxOut);
     void SaveCoinbaseOut(const CBlock& b);
+
+    void ReplaceVoteBits(CTransactionRef& tx, uint32_t voteBits) const;
+    void ReplaceStakeBaseSigScript(CTransactionRef& tx, const CScript& sigScript) const;
+    CScript RepeatOpCode(opcodetype opCode, uint16_t numRepeats) const;
+
     std::list<SpendableOut> OldestCoinOuts();
 
 private:
-    void SignTx(CMutableTransaction& tx, unsigned int nIn, const CScript& script, const CKey& key);
+    void SignTx(CMutableTransaction& tx, unsigned int nIn, const CScript& script, const CKey& key) const;
 
     // keep keys, addr and scripts as references to the coinbase ones to be
     // in case we need to make separate ones
@@ -169,6 +203,8 @@ private:
     // missedVotes     map[chainhash.Hash]*stakeTicket
 
     std::map<uint256, CAmount> boughtTicketHashToPrice;
+
+    CValidationState lastValidationState;
 };
 
 class CTxMemPoolEntry;
