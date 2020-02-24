@@ -332,6 +332,10 @@ public:
         return block;
     }
 
+    // LotteryIV returns the initialization vector for the deterministic PRNG used
+    // to determine winning tickets.
+    uint256 LotteryIV() const;
+
     uint256 GetBlockHash() const
     {
         return *phashBlock;

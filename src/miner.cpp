@@ -130,6 +130,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
     pblock->nStakeDifficulty = calcNextRequiredStakeDifficulty(*pblock,pindexPrev,chainparams);
+    if (pindexPrev->pstakeNode != nullptr) {
+        pblock->ticketLotteryState = pindexPrev->pstakeNode->FinalState();
+        pblock->nTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
+    }
 
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
