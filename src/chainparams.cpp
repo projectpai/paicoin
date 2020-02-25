@@ -569,7 +569,7 @@ public:
         consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
         consensus.nStakeEnabledHeight          = 2000;//141;//consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
         consensus.nStakeValidationHeight       = 2100;//200;//consensus.nCoinbaseMaturity + (consensus.nTicketPoolSize * 2);
-        consensus.stakeBaseSigScript           = CScript();//[]byte{0x30, 0x57};
+        consensus.stakeBaseSigScript           = CScript() << 0x73 << 0x57;
         consensus.nStakeMajorityMultiplier     = 3;
         consensus.nStakeMajorityDivisor        = 4;
         //organization related parameters
