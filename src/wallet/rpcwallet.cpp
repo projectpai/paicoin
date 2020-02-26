@@ -3143,14 +3143,16 @@ UniValue purchaseticket(const JSONRPCRequest& request)
             if (!IsValidDestination(ticketAddress)) {
                 throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid ticket address");
             }
-        } else {
-            // Generate a new key that is added to wallet
-            CPubKey newKey;
-            if (!pwallet->GetKeyFromPool(newKey)) {
-                throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
-            }
-            ticketAddress = newKey.GetID();
         }
+    }
+
+    if (!IsValidDestination(ticketAddress)) {
+        // Generate a new key that is added to wallet
+        CPubKey newKey;
+        if (!pwallet->GetKeyFromPool(newKey)) {
+            throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+        }
+        ticketAddress = newKey.GetID();
     }
 
     // Number of tickets
@@ -3389,7 +3391,7 @@ UniValue generatevote(const JSONRPCRequest& request)
     CMutableTransaction mVoteTx;
 
     // create a reward generation input
-    mVoteTx.vin.push_back(CTxIn(COutPoint(), CScript() << 55 << OP_0));
+    mVoteTx.vin.push_back(CTxIn(COutPoint(), Params().GetConsensus().stakeBaseSigScript));
     mVoteTx.vin.push_back(CTxIn(COutPoint(tickethash, ticketStakeOutputIndex)));
 
     // create a structured OP_RETURN output containing tx declaration and voting data

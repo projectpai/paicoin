@@ -37,9 +37,11 @@ class WalletTicketOperations(PAIcoinTestFramework):
             tx = self.nodes[node_idx].gettransaction(txid)
             decoded = self.nodes[node_idx].decoderawtransaction(tx["hex"])
 
-            assert(len(decoded["vin"]) == 1)
-            paying_op = (decoded["vin"][0]["txid"], decoded["vin"][0]["vout"])
-            payedValue = self.getOutpointValue(node_idx, paying_op)
+            # atm purchases are funded using FundTransaction, the intermediary tx has been eliminated
+            # assert(len(decoded["vin"]) == 1)
+            # paying_op = (decoded["vin"][0]["txid"], decoded["vin"][0]["vout"])
+            # payedValue = self.getOutpointValue(node_idx, paying_op)
+            # print("payed", payedValue)
 
             assert(len(decoded["vout"]) == 4) # Buy Decl + Stake payment + reward for contribution 1 + change for contribution 1
 
@@ -48,7 +50,7 @@ class WalletTicketOperations(PAIcoinTestFramework):
             assert(buyDeclOut["scriptPubKey"]["type"] == "structdata")
 
             stakePaymentOut = decoded["vout"][1]
-            assert(payedValue > stakePaymentOut["value"])
+            # assert(payedValue > stakePaymentOut["value"])
             assert(stakePaymentOut["value"] > 0.0) # TODO this must be equal to ticket price: estimatestakediff
             assert(stakePaymentOut["scriptPubKey"]["type"] == "pubkeyhash")
             assert(len(stakePaymentOut["scriptPubKey"]["addresses"]))
@@ -66,7 +68,8 @@ class WalletTicketOperations(PAIcoinTestFramework):
             assert(asm[4] == "1") #STAKE_TicketContribution
             assert(asm[5] == "1") #ContribVersion
             # asm[6] is the reward address
-            assert(payedValue * COIN == Decimal(asm[7])) # contribAmount
+            # assert(payedValue * COIN == Decimal(asm[7])) # contribAmount
+            assert( Decimal(asm[7]) > stakePaymentOut["value"]) #TODO add a more exact test when the fee value is known
 
             changeFor1stContribOut = decoded["vout"][3]
             assert(changeFor1stContribOut["value"] >= 0.0)
@@ -77,14 +80,26 @@ class WalletTicketOperations(PAIcoinTestFramework):
         #prepare some coins
         self.nodes[0].generate(1)
         self.sync_all()
-        self.nodes[1].generate(101)
+        self.nodes[1].generate(201)
         self.sync_all()
-        self.nodes[1].sendtoaddress(self.nodes[0].getnewaddress(),5.1)
-        self.nodes[1].sendtoaddress(self.nodes[0].getnewaddress(),5.2)
-        self.nodes[1].sendtoaddress(self.nodes[0].getnewaddress(),5.3)
+        print( self.nodes[1].getbalance())
+        address = self.nodes[0].getnewaddress()
+        # TODO investigate why we need so much coin
+        self.nodes[1].sendtoaddress(address,15000)
+        self.nodes[1].sendtoaddress(address,15000)
+        self.nodes[1].sendtoaddress(address,15000)
+        self.nodes[1].sendtoaddress(address,15000)
+        self.nodes[1].sendtoaddress(address,15000)
+        self.nodes[1].sendtoaddress(address,15000)
+        self.nodes[1].sendtoaddress(address,15000)
+        self.nodes[1].sendtoaddress(address,15000)
+        self.nodes[1].sendtoaddress(address,15000)
+        self.nodes[1].generate(1)
         self.sync_all()
-        self.nodes[0].generate(5)
+        self.nodes[0].generate(1)
         self.sync_all()
+        print( self.nodes[1].getbalance())
+        print(self.nodes[0].getbalance())
 
 
         # getticketfee tests:
@@ -102,28 +117,34 @@ class WalletTicketOperations(PAIcoinTestFramework):
         assert(len(txids) == 1)
         self.validatePurchaseTicketTx(txids, 0)
         total_purchased_tickets = txids
+        print(self.nodes[0].getbalance())
 
         txids = self.nodes[0].purchaseticket("default", 2.3)
         assert(len(txids) == 1)
         self.validatePurchaseTicketTx(txids, 0)
         total_purchased_tickets.extend(txids)
+        print(self.nodes[0].getbalance())
+        print( self.nodes[1].getbalance())
 
         minconf = 2
         txids = self.nodes[0].purchaseticket("default", 2.3, minconf)
         assert(len(txids) == 1)
         self.validatePurchaseTicketTx(txids, 0)
         total_purchased_tickets.extend(txids)
+        print(self.nodes[0].getbalance())
 
         ticketaddr = self.nodes[0].getnewaddress()
         assert(len(txids) == 1)
         txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr)
         self.validatePurchaseTicketTx(txids, 0, ticketaddr)
         total_purchased_tickets.extend(txids)
+        print(self.nodes[0].getbalance())
 
         txids = self.nodes[0].purchaseticket("default", 2.3, 1, "") # a new ticketaddr is generated automatically
         assert(len(txids) == 1)
         self.validatePurchaseTicketTx(txids, 0)
         total_purchased_tickets.extend(txids)
+        print(self.nodes[0].getbalance())
 
         tickets_to_buy = 2
         txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr, tickets_to_buy) # buy multiple tickets
@@ -175,7 +196,8 @@ class WalletTicketOperations(PAIcoinTestFramework):
         assert_equal(len(tickets["hashes"]), len(total_purchased_tickets))
         assert(set(tickets["hashes"]) == set(total_purchased_tickets))
 
-        self.nodes[0].generate(15)
+        nTicketMaturity = 8 # as in chainparams
+        self.nodes[0].generate(7)
         self.sync_all()
 
         # not yet matured need to have 16 confirmations
