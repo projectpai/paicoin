@@ -9,7 +9,7 @@ import time
 from test_framework.test_framework import PAIcoinTestFramework
 from test_framework.util import (
     assert_equal,
-    assert_raises_jsonrpc,
+    assert_raises_rpc_error,
 )
 
 RANDOM_COINBASE_ADDRESS = 'MeLRHX4aF9Yrkpwzg2xegnAWVyGQBcDwML'
@@ -43,9 +43,6 @@ class WalletTest(PAIcoinTestFramework):
         self.num_nodes = 2
         self.setup_clean_chain = True
 
-    def skip_test_if_missing_module(self):
-        self.skip_if_no_wallet()
-
     def run_test(self):
         # Check that nodes don't own any UTXOs
         assert_equal(len(self.nodes[0].listunspent()), 0)
@@ -66,7 +63,7 @@ class WalletTest(PAIcoinTestFramework):
         assert_equal(self.nodes[0].getbalance("*"), 1500)
         assert_equal(self.nodes[0].getbalance("*", 1), 1500)
         assert_equal(self.nodes[0].getbalance("*", 1, True), 1500)
-        assert_raises_jsonrpc(-8, "getbalance minconf option is only currently supported if an account is specified", self.nodes[0].getbalance, minconf='1')
+        assert_raises_rpc_error(-8, "getbalance minconf option is only currently supported if an account is specified", self.nodes[0].getbalance, minconf='1')
 
         # Send 1490 BTC from 0 to 1 and 1510 BTC from 1 to 0.
         txs = create_transactions(self.nodes[0], self.nodes[1].getnewaddress(), 1490, [Decimal('0.01')])
