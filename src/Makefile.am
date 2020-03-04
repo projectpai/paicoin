@@ -173,7 +173,12 @@ PAICOIN_CORE_H = \
   zmq/zmqabstractnotifier.h \
   zmq/zmqconfig.h\
   zmq/zmqnotificationinterface.h \
-  zmq/zmqpublishnotifier.h
+  zmq/zmqpublishnotifier.h \
+  coinbase_utils.h \
+  coinbase_keyhandler.h \
+  coinbase_address.h \
+  coinbase_index.h \
+  coinbase_txhandler.h
 
 
 obj/build.h: FORCE
@@ -224,6 +229,10 @@ libpaicoin_server_a_SOURCES = \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
+  coinbase_keyhandler.cpp \
+  coinbase_index.cpp \
+  coinbase_txhandler.cpp \
+  coinbase_utils.cpp \
   $(PAICOIN_CORE_H)
 
 if ENABLE_ZMQ

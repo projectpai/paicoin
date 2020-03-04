@@ -155,6 +155,7 @@ EXTENDED_SCRIPTS = [
     'notifications.py',
     'invalidateblock.py',
     'replace-by-fee.py',
+    'coinbase_index.py',
 ]
 
 # Place EXTENDED_SCRIPTS first since it has the 3 longest running tests
