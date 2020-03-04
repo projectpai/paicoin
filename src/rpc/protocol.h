@@ -39,6 +39,7 @@ enum class RPCErrorCode
     VERIFY_REJECTED             = -26, //!< Transaction or block was rejected by network rules
     VERIFY_ALREADY_IN_CHAIN     = -27, //!< Transaction already in chain
     IN_WARMUP                   = -28, //!< Client still warming up
+    METHOD_DEPRECATED           = -32, //!< RPC method is deprecated
 
     //! Aliases for backward compatibility
     TRANSACTION_ERROR           = VERIFY_ERROR,

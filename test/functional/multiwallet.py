@@ -7,6 +7,7 @@
 Verify that a paicoind node can load multiple wallet files
 """
 import os
+import shutil
 
 from test_framework.test_framework import PAIcoinTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error
@@ -26,6 +27,11 @@ class MultiWalletTest(PAIcoinTestFramework):
         # should not initialize if wallet file is a directory
         os.mkdir(os.path.join(self.options.tmpdir, 'node0', 'regtest', 'w11'))
         self.assert_start_raises_init_error(0, ['-wallet=w11'], 'Error loading wallet w11. -wallet filename must be a regular file.')
+
+        # should not initialize if one wallet is a copy of another
+        shutil.copyfile(os.path.join(self.options.tmpdir, 'node0', 'regtest', 'w2'),
+                        os.path.join(self.options.tmpdir, 'node0', 'regtest', 'w22'))
+        self.assert_start_raises_init_error(0, ['-wallet=w2', '-wallet=w22'], 'duplicates fileid')
 
         # should not initialize if wallet file is a symlink
         os.symlink(os.path.join(self.options.tmpdir, 'node0', 'regtest', 'w1'), os.path.join(self.options.tmpdir, 'node0', 'regtest', 'w12'))
@@ -73,6 +79,10 @@ class MultiWalletTest(PAIcoinTestFramework):
         w1.generate(1)
         assert_equal(w2.getbalance(), 1)
         assert_equal(w3.getbalance(), 2)
+
+        batch = w1.batch([w1.getblockchaininfo.get_request(), w1.getwalletinfo.get_request()])
+        assert_equal(batch[0]["result"]["chain"], "regtest")
+        assert_equal(batch[1]["result"]["walletname"], "w1")
 
 if __name__ == '__main__':
     MultiWalletTest().main()
