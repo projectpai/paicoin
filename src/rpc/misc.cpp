@@ -176,9 +176,8 @@ UniValue existsmempooltxs(const JSONRPCRequest& request)
 
     for (auto txIdx = 0u; txIdx < numTxs; ++txIdx, hashIt += 64) {
         std::string txhash(hashIt, hashIt + 64);
-        auto txHashChars = ParseHex(txhash);
+        const auto& txHash = uint256S(txhash);
 
-        uint256 txHash(txHashChars);
         auto txExists = mempool.exists(txHash);
         existsMemPoolTxs[txIdx] = txExists ? 1 : 0;
     }

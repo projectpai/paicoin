@@ -168,6 +168,7 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     if (blockindex->pstakeNode != nullptr)
         result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
     result.push_back(Pair("freshstake", blockindex->nFreshStake));
+    result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
@@ -218,6 +219,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     if (blockindex->pstakeNode != nullptr)
         result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
     result.push_back(Pair("freshstake", blockindex->nFreshStake));
+    result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
@@ -1868,9 +1870,13 @@ UniValue ComputeBlocksTxFees(uint32_t startBlockHeight, uint32_t endBlockHeight,
             continue;
         }
 
-        auto vtx = StakeSlice(block.vtx, txClass);
-        for (const auto& tx : vtx) {
-            txFees.push_back(computeTransactionFee(*tx));
+        for (size_t i=1; i<block.vtx.size(); i++) // skip coinbase
+        {
+            const auto& tx = *block.vtx[i];
+            auto txCl = ParseTxClass(tx);
+            if (txCl == txClass) {
+                txFees.push_back(computeTransactionFee(tx));
+            }
         }
     }
 
@@ -1964,12 +1970,6 @@ UniValue txfeeinfo(const JSONRPCRequest& request)
     // Validations
     if (blocks > currHeight) {
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter for blocks");
-    }
-    if (rangeStart > rangeEnd) {
-        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Range start is larger than range end");
-    }
-    if (rangeEnd > currHeight) {
-        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Range end is out of bounds");
     }
 
     UniValue mempoolFees = computeMempoolTxFees();

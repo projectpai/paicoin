@@ -17,8 +17,10 @@ from test_framework import util
 
 class SearchAPITest(PAIcoinTestFramework):
     def set_test_params(self):
+        self.setup_clean_chain = True
         self.num_nodes = 1
         self.enable_mocktime()
+        self.extra_args = [['-addrindex']] 
 
     def enable_mocktime (self):
         self.mocktime = 1529934120 # Monday, June 25, 2018 1:42:00 PM GMT
@@ -38,6 +40,7 @@ class SearchAPITest(PAIcoinTestFramework):
         txid = self.nodes[0].sendtoaddress(newaddress, 1)
         assert txid is not None
 
+        self.nodes[0].generate(1)
         self.sync_all()
 
         existsaddr = self.nodes[0].existsaddress(newaddress)
@@ -47,20 +50,21 @@ class SearchAPITest(PAIcoinTestFramework):
         assert not existsaddr
 
     def test_existsaddresses(self):
-        newaddresses = [self.nodes[0].getnewaddress(), self.nodes[0].getnewaddress()]
+        newaddresses = [{'address': self.nodes[0].getnewaddress()}, { 'address' : self.nodes[0].getnewaddress()}]
         assert newaddresses is not None
 
         for newaddr in newaddresses:
-            txid = self.nodes[0].sendtoaddress(newaddr, 1)
+            txid = self.nodes[0].sendtoaddress(newaddr['address'], 1)
             assert txid is not None
 
+        self.nodes[0].generate(1)
         self.sync_all()
 
         existaddrs = self.nodes[0].existsaddresses(newaddresses)
         assert existaddrs is not None
         assert existaddrs == "03" # first 2 bits of a byte showing that both addresses exist
 
-        existsaddrs = self.nodes[0].existsaddresses(["{'address' : 'aaaaa'"])
+        existsaddrs = self.nodes[0].existsaddresses([{'address' : 'aaaaa'}])
         assert existsaddrs is not None
         assert existsaddrs == "00"
 
@@ -71,7 +75,7 @@ class SearchAPITest(PAIcoinTestFramework):
         txid = self.nodes[0].sendtoaddress(newaddress, 1)
         assert txid is not None
 
-        self.sync_all()
+        # self.sync_all()
 
         txhashblob = txid + ("00" * 32) # append one invalid tx hash
         existmempooltxs = self.nodes[0].existsmempooltxs(txhashblob)

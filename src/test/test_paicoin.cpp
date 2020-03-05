@@ -222,7 +222,7 @@ CMutableTransaction Generator::CreateTicketPurchaseTx(const SpendableOut& spend,
     mtx.vout.push_back(CTxOut(ticketPrice, stakeScript));
 
     // create an OP_RETURN push containing a dummy address to send rewards to, and the amount contributed to stake
-    TicketContribData ticketContribData = { 1, rewardAddr, ticketPrice + fee };
+    const auto& ticketContribData = TicketContribData{ 1, rewardAddr, ticketPrice + fee };
     CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
     mtx.vout.push_back(CTxOut(0, contributorInfoScript));
 
@@ -393,7 +393,7 @@ const Consensus::Params& Generator::ConsensusParams() const
 CAmount Generator::NextRequiredStakeDifficulty() const
 {
     CBlock dummyBlock;
-    const auto& ticketPrice = calcNextRequiredStakeDifficulty(dummyBlock, chainActive.Tip(), Params());
+    const auto& ticketPrice = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), Params().GetConsensus());
     return ticketPrice == 0 ? 2e4 : ticketPrice; // nMinimumStakeDiff is set to 0 until CBlockHeader correctly serializes nStakeDifficulty
 }
 

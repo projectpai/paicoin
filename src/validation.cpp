@@ -44,6 +44,7 @@
 #include "versionbits.h"
 #include "warnings.h"
 #include "stake/stakenode.h"
+#include "stake/stakeversion.h"
 
 #include <atomic>
 #include <sstream>
@@ -574,7 +575,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     // If the transaction is a ticket, ensure that it meets the next stake difficulty.
     if (txClass == TX_BuyTicket) {
         CBlock dummyBlock;
-        CAmount expectedStakeDifficulty =  calcNextRequiredStakeDifficulty(dummyBlock,chainActive.Tip(),chainparams);
+        CAmount expectedStakeDifficulty =  CalculateNextRequiredStakeDifficulty(chainActive.Tip(),chainparams.GetConsensus());
         if (tx.vout[ticketStakeOutputIndex].nValue < expectedStakeDifficulty)
             return state.DoS(100, false, REJECT_INVALID, "insufficient-stake");
     }
@@ -3466,10 +3467,16 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
 
     // Ensure the stake difficulty specified in the block header matches the calculated difficulty based on the previous block
     // and difficulty retarget rules.
-    CAmount expectedStakeDifficulty = calcNextRequiredStakeDifficulty(block, pindexPrev, params);
+    CAmount expectedStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev, params.GetConsensus());
     if (block.nStakeDifficulty != expectedStakeDifficulty) {
         auto report = strprintf("incorrect stake difficulty in a block: expected %.2f, found %.2f", expectedStakeDifficulty / (float)COIN, block.nStakeDifficulty / (float)COIN);
         return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, report);
+    }
+
+    auto expectedStakeVersion = calcStakeVersion(pindexPrev, params.GetConsensus());
+    if (block.nStakeVersion != expectedStakeVersion) {
+        auto report = strprintf("incorrect stake version in a block: expected %d, found %d", expectedStakeVersion, block.nStakeVersion);
+        return state.DoS(100, false, REJECT_INVALID, "bad-stakever", false, report);
     }
 
     if (pindexPrev->pstakeNode != nullptr) {

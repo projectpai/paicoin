@@ -227,6 +227,7 @@ public:
     uint32_t nTicketPoolSize;
     StakeState ticketLotteryState;
     uint8_t nFreshStake;
+    uint32_t nStakeVersion;
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t nSequenceId;
@@ -268,6 +269,7 @@ public:
         nTicketPoolSize = 0;
         std::fill(ticketLotteryState.begin(), ticketLotteryState.end(), 0);
         nFreshStake = 0;
+        nStakeVersion  = 0;
     }
 
     CBlockIndex()
@@ -288,7 +290,8 @@ public:
         nVoteBits      = block.nVoteBits;
         nTicketPoolSize = block.nTicketPoolSize;
         ticketLotteryState = block.ticketLotteryState;
-        nFreshStake = block.nFreshStake;
+        nFreshStake    = block.nFreshStake;
+        nStakeVersion  = block.nStakeVersion;
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -333,6 +336,7 @@ public:
         block.nTicketPoolSize = nTicketPoolSize;
         block.ticketLotteryState = ticketLotteryState;
         block.nFreshStake = nFreshStake;
+        block.nStakeVersion = nStakeVersion;
         return block;
     }
 
@@ -408,6 +412,7 @@ public:
     //! Efficiently find an ancestor of this block.
     CBlockIndex* GetAncestor(int height);
     const CBlockIndex* GetAncestor(int height) const;
+    const CBlockIndex* GetRelativeAncestor(int distance) const;
 
     void PopulateTicketInfo(const SpentTicketsInBlock& spentTicketsInBlock);
 };
@@ -474,7 +479,8 @@ public:
         block.nVoteBits       = nVoteBits;
         block.nTicketPoolSize = nTicketPoolSize;
         block.ticketLotteryState = ticketLotteryState;
-        block.nFreshStake = nFreshStake;
+        block.nFreshStake     = nFreshStake;
+        block.nStakeVersion   = nStakeVersion;
         return block.GetHash();
     }
 

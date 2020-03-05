@@ -60,4 +60,21 @@ int64_t EstimateSupply(const Consensus::Params&, int64_t height);
 
 CAmount GetTotalBlockSubsidy(int nHeight, const Consensus::Params& consensusParams);
 
+// estimateNextStakeDifficulty estimates the next stake difficulty by pretending
+// the provided number of tickets will be purchased in the remainder of the
+// interval unless the flag to use max tickets is set in which case it will use
+// the max possible number of tickets that can be purchased in the remainder of
+// the interval.
+//
+// The stake difficulty algorithm is selected based on the active rules.
+//
+// This function differs from the exported EstimateNextStakeDifficulty in that
+// the exported version uses the current best chain as the block node while this
+// function accepts any block node.
+//
+// This function MUST be called with the chain state lock held (for writes).
+
+// Note: only the newer algorithm estimateNextStakeDifficultyV2 is ported
+int64_t EstimateNextStakeDifficulty(const CBlockIndex* pindexLast, int newTickets, bool useMaxTickets, const Consensus::Params& params);
+
 #endif // PAICOIN_POW_H

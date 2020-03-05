@@ -104,7 +104,7 @@ CScript GetScriptForTicketContrib(const TicketContribData& data)
     int nContribVersion = 1;
     return GetScriptForStructuredData(CLASS_Staking) << STAKE_TicketContribution
                     << nContribVersion
-                    << ToByteVector(data.rewardAddr) << data.contributedAmount;
+                    << ToByteVector(data.rewardAddr) << data.whichAddr << data.contributedAmount;
 }
 
 CScript GetScriptForVoteDecl(const VoteData& data)
@@ -112,7 +112,7 @@ CScript GetScriptForVoteDecl(const VoteData& data)
     int nVoteVersion = 1;
     return GetScriptForStructuredData(CLASS_Staking) << STAKE_TxDeclaration
                     << TX_Vote << nVoteVersion
-                    << ToByteVector(data.blockHash) << data.blockHeight << data.voteBits;
+                    << ToByteVector(data.blockHash) << data.blockHeight << data.voteBits << data.voterStakeVersion;
 }
 
 CScript GetScriptForRevokeTicketDecl(const RevokeTicketData& data)
@@ -169,7 +169,7 @@ bool IsStakeTx(ETxClass eTxClass)
 
 bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContribData& data)
 {
-    int numItems = 6;   // structVersion, dataClass, stakeDataClass, contribVersion, rewardAddr, contribAmount
+    int numItems = 7;   // structVersion, dataClass, stakeDataClass, contribVersion, rewardAddr, whichAddr, contribAmount
     std::vector<std::vector<unsigned char> > items;
     if (!ParseStakeData(tx, txoutIndex, STAKE_TicketContribution, numItems, items))
         return false;
@@ -179,6 +179,7 @@ bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContr
         return false;
 
     data.rewardAddr = uint160(items[contribAddrIndex]);
+    data.whichAddr = CScriptNum(items[contribAddrTypeIndex],false).getint();
     data.contributedAmount = CScriptNum(items[contribAmountIndex], false).getint(); // CScriptNum can handle 32-byte integers; is that enough?
     //data.contributedAmount = base_blob<64>(items[contribAmountIndex]).GetUint64(0); // this parses uint64 but not int64
     return true;
@@ -186,7 +187,7 @@ bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContr
 
 bool ParseVote(const CTransaction& tx, VoteData& data)
 {
-    int numItems = 8;   // structVersion, dataClass, stakeDataClass, txClass, voteVersion, blockHash, blockHeight, voteBits
+    int numItems = 9;   // structVersion, dataClass, stakeDataClass, txClass, voteVersion, blockHash, blockHeight, voteBits, voterStakeVersion
     std::vector<std::vector<unsigned char> > items;
     if (!ParseStakeData(tx, txdeclOutputIndex, STAKE_TxDeclaration, numItems, items))
         return false;
@@ -202,6 +203,7 @@ bool ParseVote(const CTransaction& tx, VoteData& data)
     data.blockHash = uint256(items[voteBlockHashIndex]);
     data.blockHeight = (uint32_t) CScriptNum(items[voteBlockHeightIndex], false).getint();
     data.voteBits = (uint32_t) CScriptNum(items[voteBitsIndex], false).getint();
+    data.voterStakeVersion = (uint32_t) CScriptNum(items[voterStakeVersionIndex], false).getint();
     return true;
 }
 
@@ -290,8 +292,8 @@ bool ValidateBuyTicketStructure(const CTransaction &tx, std::string& reason)
         // even-indexed outputs should be reward addresses
         else
         {
-            unsigned dataSizes[] = { 0, sizeof(uint160), 0 };     // version, 20-bytes address hash, contributed amount
-            if (!ValidateDataTxoutStructure(tx, txoutIndex, 3, dataSizes, nullptr, reason))
+            unsigned dataSizes[] = { 0, sizeof(uint160), 0, 0 };     // version, 20-bytes address hash, addrType, contributed amount
+            if (!ValidateDataTxoutStructure(tx, txoutIndex, 4, dataSizes, nullptr, reason))
                 return false;
         }
     }
@@ -341,10 +343,10 @@ bool ValidateVoteStructure(const CTransaction &tx, std::string& reason)
         return false;
     }
 
-    // check that the first output contains vote declaration (TX_Vote, block hash, block height, vote bits)
+    // check that the first output contains vote declaration (TX_Vote, block hash, block height, vote bits, stake version)
     // validation of voting data itself is contextual and done elsewhere
-    unsigned dataSizes[] = { 0, 0, sizeof(uint256), 0, 0 }; // TX_Vote, version, blockHash, blockHeight, voteBits
-    if (!ValidateTxDeclStructure(tx, TX_Vote, 5, dataSizes, reason))
+    unsigned dataSizes[] = { 0, 0, sizeof(uint256), 0, 0, 0 }; // TX_Vote, version, blockHash, blockHeight, voteBits, stakeVersion
+    if (!ValidateTxDeclStructure(tx, TX_Vote, 6, dataSizes, reason))
         return false;
 
     // check that the rest of the outputs are payments;
@@ -467,7 +469,7 @@ SpentTicketsInBlock FindSpentTicketsInBlock(const CBlock& block)
                     it->vin[1].prevout.hash);
                 votes.push_back(
                     VoteVersion{
-                        static_cast<uint32_t>(voteData.nVersion),
+                        static_cast<uint32_t>(voteData.voterStakeVersion),
                         static_cast<uint16_t>(voteData.voteBits)
                         });
                 }

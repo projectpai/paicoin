@@ -400,6 +400,10 @@ bool checkVoteOrRevokeTicketInputs(const CTransaction& tx, bool vote, CValidatio
         CTxDestination dest;
         if (!ExtractDestination(tx.vout[i].scriptPubKey, dest) || !IsValidDestination(dest))
             return state.DoS(100, false, REJECT_INVALID, what + "-invalid-payment-address");
+        
+        if (dest.which() != contrib.whichAddr)
+            return state.DoS(100, false, REJECT_INVALID, what + "-incorrect-address-type");
+
         const uint160& addr = dest.which() == 1 ? boost::get<CKeyID>(dest) : boost::get<CScriptID>(dest);
         if (addr != contrib.rewardAddr)
             return state.DoS(100, false, REJECT_INVALID, what + "-incorrect-payment-address");

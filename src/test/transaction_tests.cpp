@@ -880,7 +880,7 @@ BOOST_AUTO_TEST_CASE(test_ValidateDataScript)
 //        std::cout << reason << std::endl;
 }
 
-CMutableTransaction CreateDummyBuyTicket()
+CMutableTransaction CreateDummyBuyTicket(const TicketContribData& contribData)
 {
     CMutableTransaction mtx;
 
@@ -901,12 +901,7 @@ CMutableTransaction CreateDummyBuyTicket()
     mtx.vout.push_back(CTxOut(dummyStakeAmount, stakeScript));
 
     // create an OP_RETURN push containing a dummy address to send rewards to, and the amount contributed to stake
-    auto rewardKey = CKey();
-    rewardKey.MakeNewKey(false);
-    auto rewardAddr = rewardKey.GetPubKey().GetID();
-    CAmount contributedAmount = 123;
-    TicketContribData ticketContribData = { 1, rewardAddr, contributedAmount };
-    CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
+    CScript contributorInfoScript = GetScriptForTicketContrib(contribData);
     mtx.vout.push_back(CTxOut(0, contributorInfoScript));
 
     // create an output which pays back dummy change
@@ -935,7 +930,8 @@ CMutableTransaction CreateDummyVote()
     uint256 dummyBlockHash = uint256();
     uint32_t dummyBlockHeight = 55;
     uint32_t dummyVoteBits = 0x0001;
-    VoteData voteData = { 1, dummyBlockHash, dummyBlockHeight, dummyVoteBits };
+    uint32_t dummyVoteStakeVerion = 1;
+    VoteData voteData = { 1, dummyBlockHash, dummyBlockHeight, dummyVoteBits, dummyVoteStakeVerion};
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 
@@ -982,14 +978,32 @@ BOOST_AUTO_TEST_CASE(test_ValidateStakeTransactions)
     std::string reason;
     bool ok;
 
-    CMutableTransaction txBuyTicket = CreateDummyBuyTicket();
-    BOOST_CHECK(ok = ValidateBuyTicketStructure(txBuyTicket, reason));
-    if (!ok)
-        std::cout << reason << std::endl;
-    TicketContribData contribData;
-    BOOST_CHECK(ok = ParseTicketContrib(txBuyTicket, 2, contribData));
-    if (!ok)
-        std::cout << "Couldn't parse ticket contribution data" << std::endl;
+    auto rewardKey = CKey();
+    rewardKey.MakeNewKey(false);
+    auto rewardAddr = rewardKey.GetPubKey().GetID();
+    
+    // test p2pkh and p2sh
+    auto rewardAddresses = {
+        CTxDestination(rewardAddr),
+        CTxDestination(CScriptID(rewardAddr))
+    };
+    for (const auto& addr : rewardAddresses)
+    {
+        CAmount contributedAmount = 123;
+        const auto& ticketContribData = TicketContribData{1, addr, contributedAmount};
+
+        CMutableTransaction txBuyTicket = CreateDummyBuyTicket(ticketContribData);
+        BOOST_CHECK(ok = ValidateBuyTicketStructure(txBuyTicket, reason));
+        if (!ok)
+            std::cout << reason << std::endl;
+        TicketContribData contribData;
+        BOOST_CHECK(ok = ParseTicketContrib(txBuyTicket, 2, contribData));
+        if (!ok)
+            std::cout << "Couldn't parse ticket contribution data" << std::endl;
+        
+        BOOST_CHECK(contribData.whichAddr == addr.which());
+        BOOST_CHECK(contribData == ticketContribData);
+    }
 
     CMutableTransaction txVote = CreateDummyVote();
     BOOST_CHECK(ok = ValidateVoteStructure(txVote, reason));

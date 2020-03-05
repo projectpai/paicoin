@@ -46,7 +46,10 @@ class StakeAPITest(PAIcoinTestFramework):
 
         result = chain_node.estimatestakediff()
         assert result is not None
-        assert 'user' not in result.keys()
+        assert 'min' in result.keys()
+        assert 'max' in result.keys()
+        assert 'expected' in result.keys()
+        assert(result['user'] == 0)
 
         util.assert_raises_rpc_error(-8, None, chain_node.estimatestakediff, -1)
         util.assert_raises_rpc_error(-1, None, chain_node.estimatestakediff, 1, 5)
@@ -123,13 +126,14 @@ class StakeAPITest(PAIcoinTestFramework):
         util.assert_raises_rpc_error(-8, None, chain_node.getstakeversions, "aa", -1)
         util.assert_raises_rpc_error(-8, None, chain_node.getstakeversions, "zz", -1)
 
+        info = self.nodes[0].getblockchaininfo()
         numBlocks = 1
-        result = chain_node.getstakeversions("aa", numBlocks)
+        result = chain_node.getstakeversions(info['bestblockhash'], numBlocks)
         assert result is not None
         assert self._check_getstakeversions_result(result, numBlocks)
 
         numBlocks = 3
-        result = chain_node.getstakeversions("bb", numBlocks)
+        result = chain_node.getstakeversions(info['bestblockhash'], numBlocks)
         assert result is not None
         assert self._check_getstakeversions_result(result, numBlocks)
 

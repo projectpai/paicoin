@@ -889,7 +889,7 @@ CMutableTransaction CreateDummyBuyTicket( const CTransaction& prevTx, uint32_t n
     mtx.vout.push_back(CTxOut(ticketPrice, stakeScript));
 
     // create an OP_RETURN push containing a dummy address to send rewards to, and the amount contributed to stake
-    TicketContribData ticketContribData = { 1, rewardAddr, contribution };
+    const auto& ticketContribData = TicketContribData{ 1, rewardAddr, contribution };
     CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
     mtx.vout.push_back(CTxOut(0, contributorInfoScript));
 
@@ -913,7 +913,8 @@ CMutableTransaction CreateDummyVote(const uint256& txBuyTicketHash, const uint25
 
     // create a structured OP_RETURN output containing tx declaration and dummy voting data
     uint32_t dummyVoteBits = 0x0001;
-    VoteData voteData = { 1, blockHashToVoteOn, blockHeight, dummyVoteBits };
+    uint32_t voterStakeVersion = 0;
+    VoteData voteData = { 1, blockHashToVoteOn, blockHeight, dummyVoteBits, voterStakeVersion };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 
@@ -963,7 +964,6 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
     const auto& stakeEnabledHeight = chainparams.GetConsensus().nStakeEnabledHeight;
     const auto& stakeValidationHeight = chainparams.GetConsensus().nStakeValidationHeight;
     const auto& minimumStakeDiff = chainparams.GetConsensus().nMinimumStakeDiff + 2e4;
-    const auto& ticketMaturity = chainparams.GetConsensus().nTicketMaturity;
     const auto& ticketExpiry = chainparams.GetConsensus().nTicketExpiry;
     const auto& maxFreshTicketsPerBlock = chainparams.GetConsensus().nMaxFreshStakePerBlock;
 
@@ -1281,7 +1281,7 @@ BOOST_FIXTURE_TEST_CASE( FakeChainGenerator_stake_REGTEST, Generator)
             const auto& splitSpendTx = CreateSplitSpendTx(spend.front(),splitAmounts,ticketFee);
             b.vtx.push_back(MakeTransactionRef(splitSpendTx));
 
-            for (int i = 0; i <  splitSpendTx.vout.size(); ++i) {
+            for (size_t i = 0; i <  splitSpendTx.vout.size(); ++i) {
                 const auto& purchaseTx =  CreateTicketPurchaseTx(MakeSpendableOut(splitSpendTx,i), ticketPrice, ticketFee);
                 b.vtx.push_back(MakeTransactionRef(purchaseTx));
             }
@@ -1343,18 +1343,14 @@ BOOST_FIXTURE_TEST_CASE( FakeChainGenerator_stake_REGTEST, Generator)
     }
     BOOST_CHECK_EQUAL(Tip()->nHeight, ConsensusParams().nStakeValidationHeight - 1);
 
-    // NOTE: using the current chainparams seems not feasible to purchase tickets after nStakeValidationHeight
-    // - ticket price is increased to 1*COIN and coinbase values has halved 9 times
-    // - in these conditions all matured spendable outputs summed up are not enough for one ticket
-    // - we rely on buying the max amount of ticket before this height at the lower price
-
     // we should see votes being added to the block
     {
-        const auto& b = NextBlock("bsm",nullptr, {});
+        const auto ticketOuts = OldestCoinOuts();
+        const auto& b = NextBlock("bsm", nullptr, ticketOuts);
         SaveAllSpendableOuts(b);
         BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
         //coinbase tx + all winning votes
-        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + Tip()->pstakeNode->Winners().size());
+        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + Tip()->pstakeNode->Winners().size() + ticketOuts.size());
     }
 
     auto DropSomeVotes = [this](CBlock& b)
@@ -1376,47 +1372,43 @@ BOOST_FIXTURE_TEST_CASE( FakeChainGenerator_stake_REGTEST, Generator)
 
     // build a block where only the majority of votes are kept
     {
-        const auto& b = NextBlock("bsm", nullptr, {}, DropSomeVotes);
+        const auto ticketOuts = OldestCoinOuts();
+        const auto& b = NextBlock("bsm", nullptr, ticketOuts, DropSomeVotes);
         SaveAllSpendableOuts(b);
         BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
         //coinbase tx + a majority of votes
-        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + ((ConsensusParams().nTicketsPerBlock / 2) + 1));
+        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + ((ConsensusParams().nTicketsPerBlock / 2) + 1) + ticketOuts.size());
     }
 
-    // TODO: uncomment the following test after the stakeDifficulty gets implemented, these rely on buying tickets after nStakeValidationHeight
-    // which is not possible atm
+    auto PurchaseMaxTicketsMinVotes = [this](CBlock& b)
+    {
+        const auto& majority = (ConsensusParams().nTicketsPerBlock / 2) + 1;
+        b.vtx.erase(b.vtx.begin() + majority + 1, b.vtx.end());
 
-    // auto PurchaseMaxTicketsMinVotes = [this](CBlock& b)
-    // {
-    //     const auto& winners = Tip()->pstakeNode->Winners();
-    //     const auto& majority = (ConsensusParams().nTicketsPerBlock / 2) + 1;
+        const auto& spend = OldestCoinOuts();
+        const auto& ticketPrice = NextRequiredStakeDifficulty();
+        const auto& ticketFee = CAmount(2);
+        auto purchaseTx =  CreateTicketPurchaseTx(spend.front(), ticketPrice, ticketFee);
+        b.vtx.push_back(MakeTransactionRef(purchaseTx));
+        b.nFreshStake++;
+        while(b.vtx.size() < ConsensusParams().nMaxFreshStakePerBlock + majority + 1u) {
+            purchaseTx =  CreateTicketPurchaseTx(MakeSpendableOut(purchaseTx,ticketChangeOutputIndex), ticketPrice, ticketFee);
+            b.vtx.push_back(MakeTransactionRef(purchaseTx));
+            b.nFreshStake++;
+        }
+    };
 
-    //     const auto& voteBlockHash = Tip()->GetBlockHash();
-    //     const auto& voteBlockHeight = Tip()->nHeight;
-    //     b.vtx.erase(b.vtx.begin() + majority + 1, b.vtx.end());
-
-    //     const auto& spend = OldestCoinOuts();
-    //     const auto& ticketPrice = NextRequiredStakeDifficulty();
-    //     const auto& ticketFee = CAmount(2);
-    //     auto purchaseTx =  CreateTicketPurchaseTx(spend.front(), ticketPrice, ticketFee);
-    //     b.vtx.push_back(MakeTransactionRef(purchaseTx));
-    //     while(b.vtx.size() < ConsensusParams().nMaxFreshStakePerBlock + majority + 1) {
-    //         purchaseTx =  CreateTicketPurchaseTx(MakeSpendableOut(purchaseTx,ticketChangeOutputIndex), ticketPrice, ticketFee);
-    //         b.vtx.push_back(MakeTransactionRef(purchaseTx));
-    //     }
-    // };
-
-    // // re-construct only a majority of votes and purchase max tickets
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, {}, PurchaseMaxTicketsMinVotes);
-    //     SaveCoinbaseOut(b); //calling SaveAllSpendableOuts here would also save the already spent outs of the split tx
-    //     BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
-    //     //coinbase tx + a majority of votes + ticket purchases tx
-    //     BOOST_CHECK_EQUAL(b.vtx.size(), 1 + ((ConsensusParams().nTicketsPerBlock / 2) + 1) + ConsensusParams().nMaxFreshStakePerBlock );
-    // }
+    // re-construct only a majority of votes and purchase max tickets
+    {
+        const auto& b = NextBlock("bsm", nullptr, {}, PurchaseMaxTicketsMinVotes);
+        SaveCoinbaseOut(b); //calling SaveAllSpendableOuts here would also save the already spent outs of the split tx
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+        //coinbase tx + a majority of votes + ticket purchases tx
+        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + ((ConsensusParams().nTicketsPerBlock / 2) + 1) + ConsensusParams().nMaxFreshStakePerBlock );
+    }
 
 
-    const auto& heightExpiredBecomeMissed = ConsensusParams().nTicketExpiry + ConsensusParams().nStakeEnabledHeight;
+    const auto& heightExpiredBecomeMissed = static_cast<int>(ConsensusParams().nTicketExpiry + ConsensusParams().nStakeEnabledHeight);
     while (Tip()->nHeight < heightExpiredBecomeMissed + 10 /*add to pass the expiration height*/)
     {
         const auto& nWinners = Tip()->pstakeNode->Winners().size(); 
@@ -1424,12 +1416,13 @@ BOOST_FIXTURE_TEST_CASE( FakeChainGenerator_stake_REGTEST, Generator)
         // check that we have revocations after the expected height
         BOOST_CHECK(nRevocations > 0 || Tip()->nHeight < heightExpiredBecomeMissed);
 
-        const auto& b = NextBlock("bsm", nullptr, {});
+        const auto ticketOuts = OldestCoinOuts();
+        const auto& b = NextBlock("bsm", nullptr, ticketOuts);
         SaveCoinbaseOut(b); //calling SaveAllSpendableOuts here would also save the already spent outs of the split tx
         BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
 
         // coinbase tx + all winning votes + all missed (revocations)
-        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + nWinners + nRevocations);
+        BOOST_CHECK_EQUAL(b.vtx.size(), 1 + nWinners + nRevocations + ticketOuts.size());
     }
 }
 
@@ -1465,12 +1458,12 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
     // - ticket price is increased to 1*COIN and coinbase values has halved 9 times
     // - in these conditions all matured spendable outputs summed up are not enough for one ticket
     // - we rely on buying the max amount of ticket before this height at the lower price
-    auto ticketSpends = std::list<Generator::SpendableOut>{};//OldestCoinOuts(); //we can use this for more test since blocks should be rejected
+    auto ticketSpends = OldestCoinOuts(); //we can use this for more test since blocks should be rejected
 
     // Attempt to add block where vote has a null ticket reference hash.
     {
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-            [this](CBlock& b) {
+            [](CBlock& b) {
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 CMutableTransaction firstVoteTx = *b.vtx[1]; //0 is coinbase
                 const auto& txClass = ParseTxClass(firstVoteTx);
@@ -1486,260 +1479,263 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
     // TODO: uncomment the following test after the stakeDifficulty gets implemented, these rely on buying tickets after nStakeValidationHeight
     // which is not possible atm
 
-    // // Attempt to add block with too many votes.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             const auto& numberOfWinners = Tip()->pstakeNode->Winners().size();
-    //             const auto& initialSize = b.vtx.size();
-    //             BOOST_CHECK_GE(initialSize, 1 + numberOfWinners);
+    // Attempt to add block with too many votes.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                const auto& numberOfWinners = Tip()->pstakeNode->Winners().size();
+                const auto& initialSize = b.vtx.size();
+                BOOST_CHECK_GE(initialSize, 1 + numberOfWinners);
 
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners]), TX_Vote);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners+1]), TX_BuyTicket);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners]), TX_Vote);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners+1]), TX_BuyTicket);
 
-    //             CMutableTransaction copyFirstVoteTx = *b.vtx[1];
-    //             copyFirstVoteTx.vin[voteStakeInputIndex].prevout.hash = Tip()->pstakeNode->LiveTickets()[0];
-    //             b.vtx.emplace(b.vtx.begin() + numberOfWinners, MakeTransactionRef(copyFirstVoteTx) );
+                CMutableTransaction copyFirstVoteTx = *b.vtx[1];
+                copyFirstVoteTx.vin[voteStakeInputIndex].prevout.hash = Tip()->pstakeNode->LiveTickets()[0];
+                b.vtx.emplace(b.vtx.begin() + numberOfWinners, MakeTransactionRef(copyFirstVoteTx) );
 
-    //             BOOST_CHECK_GE(b.vtx.size(), initialSize + 1);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners]), TX_Vote);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners+1]), TX_Vote);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners+2]), TX_BuyTicket);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "too-many-votes");
-    // }
+                BOOST_CHECK_GE(b.vtx.size(), initialSize + 1);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners]), TX_Vote);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners+1]), TX_Vote);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners+2]), TX_BuyTicket);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "too-many-votes");
+    }
 
-    // // Attempt to add block with too few votes.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             const auto& numberOfWinners = Tip()->pstakeNode->Winners().size();
-    //             BOOST_CHECK_EQUAL(numberOfWinners, ConsensusParams().nTicketsPerBlock);
+    // Attempt to add block with too few votes.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                const auto& numberOfWinners = Tip()->pstakeNode->Winners().size();
+                BOOST_CHECK_EQUAL(numberOfWinners, ConsensusParams().nTicketsPerBlock);
 
-    //             const auto& majority = (ConsensusParams().nTicketsPerBlock / 2) + 1;
+                const auto& majority = (ConsensusParams().nTicketsPerBlock / 2) + 1;
 
-    //             const auto& initialSize = b.vtx.size();
-    //             BOOST_CHECK_GE(initialSize, 1 + numberOfWinners);
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[majority]), TX_Vote);
+                const auto& initialSize = b.vtx.size();
+                BOOST_CHECK_GE(initialSize, 1 + numberOfWinners);
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[majority]), TX_Vote);
 
-    //             //leave only the coinbase and less than majority of votes
-    //             b.vtx.erase(b.vtx.begin() + 1, b.vtx.begin() + majority + 1);
-    //             BOOST_CHECK_GE(b.vtx.size(), initialSize - majority);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[majority]), TX_BuyTicket);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "too-few-votes");
-    // }
+                //leave only the coinbase and less than majority of votes
+                b.vtx.erase(b.vtx.begin() + 1, b.vtx.begin() + majority + 1);
+                BOOST_CHECK_GE(b.vtx.size(), initialSize - majority);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[majority]), TX_BuyTicket);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "too-few-votes");
+    }
 
-    // // Attempt to add block with a ticket voting on the parent of the actual
-    // // block it should be voting for.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             CMutableTransaction firstVoteTx = *b.vtx[1]; //0 is coinbase
-    //             const auto& txClass = ParseTxClass(firstVoteTx);
-    //             BOOST_CHECK_EQUAL(txClass, TX_Vote);
-    //             const auto& ticketHash = firstVoteTx.vin[voteStakeInputIndex].prevout.hash;
-    //             /*use prev block hash and height*/
-    //             firstVoteTx = CreateVoteTx( Tip()->pprev->GetBlockHash()
-    //                                       , Tip()->pprev->nHeight
-    //                                       , ticketHash);
-    //             b.vtx[1] = MakeTransactionRef(firstVoteTx);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-for-wrong-block");
-    // }
+    // Attempt to add block with a ticket voting on the parent of the actual
+    // block it should be voting for.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                CMutableTransaction firstVoteTx = *b.vtx[1]; //0 is coinbase
+                const auto& txClass = ParseTxClass(firstVoteTx);
+                BOOST_CHECK_EQUAL(txClass, TX_Vote);
+                const auto& ticketHash = firstVoteTx.vin[voteStakeInputIndex].prevout.hash;
+                /*use prev block hash and height*/
+                firstVoteTx = CreateVoteTx( Tip()->pprev->GetBlockHash()
+                                          , Tip()->pprev->nHeight
+                                          , ticketHash);
+                b.vtx[1] = MakeTransactionRef(firstVoteTx);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-for-wrong-block");
+    }
 
-    // // Attempt to add block with a ticket voting on the correct block hash,
-    // // but the wrong block height.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             CMutableTransaction firstVoteTx = *b.vtx[1]; //0 is coinbase
-    //             const auto& txClass = ParseTxClass(firstVoteTx);
-    //             BOOST_CHECK_EQUAL(txClass, TX_Vote);
-    //             const auto& ticketHash = firstVoteTx.vin[voteStakeInputIndex].prevout.hash;
-    //             firstVoteTx = CreateVoteTx( Tip()->GetBlockHash() /* use correct block hash */
-    //                                       , Tip()->pprev->nHeight /*use prev block height*/
-    //                                       , ticketHash);
-    //             b.vtx[1] = MakeTransactionRef(firstVoteTx);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-for-wrong-block");
-    // }
+    // Attempt to add block with a ticket voting on the correct block hash,
+    // but the wrong block height.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                CMutableTransaction firstVoteTx = *b.vtx[1]; //0 is coinbase
+                const auto& txClass = ParseTxClass(firstVoteTx);
+                BOOST_CHECK_EQUAL(txClass, TX_Vote);
+                const auto& ticketHash = firstVoteTx.vin[voteStakeInputIndex].prevout.hash;
+                firstVoteTx = CreateVoteTx( Tip()->GetBlockHash() /* use correct block hash */
+                                          , Tip()->pprev->nHeight /*use prev block height*/
+                                          , ticketHash);
+                b.vtx[1] = MakeTransactionRef(firstVoteTx);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-for-wrong-block");
+    }
 
-    // // Attempt to add block with a ticket voting on the correct block height,
-    // // but the wrong block hash.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             CMutableTransaction firstVoteTx = *b.vtx[1]; //0 is coinbase
-    //             const auto& txClass = ParseTxClass(firstVoteTx);
-    //             BOOST_CHECK_EQUAL(txClass, TX_Vote);
-    //             const auto& ticketHash = firstVoteTx.vin[voteStakeInputIndex].prevout.hash;
-    //             firstVoteTx = CreateVoteTx( Tip()->pprev->GetBlockHash() /*use prev block hash*/
-    //                                       , Tip()->nHeight /*use correct block height*/
-    //                                       , ticketHash);
-    //             b.vtx[1] = MakeTransactionRef(firstVoteTx);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-for-wrong-block");
-    // }
+    // Attempt to add block with a ticket voting on the correct block height,
+    // but the wrong block hash.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                CMutableTransaction firstVoteTx = *b.vtx[1]; //0 is coinbase
+                const auto& txClass = ParseTxClass(firstVoteTx);
+                BOOST_CHECK_EQUAL(txClass, TX_Vote);
+                const auto& ticketHash = firstVoteTx.vin[voteStakeInputIndex].prevout.hash;
+                firstVoteTx = CreateVoteTx( Tip()->pprev->GetBlockHash() /*use prev block hash*/
+                                          , Tip()->nHeight /*use correct block height*/
+                                          , ticketHash);
+                b.vtx[1] = MakeTransactionRef(firstVoteTx);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-for-wrong-block");
+    }
     
-    // // Attempt to add block with incorrect votebits set.
-    // // Everyone votes Yes, but block header says No.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             b.nVoteBits &= ~voteYesBits;
-    //             // Leaving vote bits as is since all blocks from the generator have
-    //             // votes set to Yes by default
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
-    // }
+    // Attempt to add block with incorrect votebits set.
+    // Everyone votes Yes, but block header says No.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [](CBlock& b) {
+                b.nVoteBits &= ~voteYesBits;
+                // Leaving vote bits as is since all blocks from the generator have
+                // votes set to Yes by default
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
+    }
 
-    // // Attempt to add block with incorrect votebits set.
-    // // Everyone votes No, but block header says Yes.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-    //             b.nVoteBits |= voteYesBits;
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             for (int i = 1; i <= 5; ++i) {
-    //                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-    //                 ReplaceVoteBits(b.vtx[i],voteNoBits);
-    //             }
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
-    // }
+    // Attempt to add block with incorrect votebits set.
+    // Everyone votes No, but block header says Yes.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+                b.nVoteBits |= voteYesBits;
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                for (int i = 1; i <= 5; ++i) {
+                    BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
+                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                }
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
+    }
 
-    // // Attempt to add block with incorrect votebits set.
-    // // 3x No 2x Yes, but block header says Yes.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-    //             b.nVoteBits |= voteYesBits;
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             for (int i = 1; i <= 3; ++i) {
-    //                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-    //                 ReplaceVoteBits(b.vtx[i],voteNoBits);
-    //             }
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
-    // }
+    // Attempt to add block with incorrect votebits set.
+    // 3x No 2x Yes, but block header says Yes.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+                b.nVoteBits |= voteYesBits;
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                for (int i = 1; i <= 3; ++i) {
+                    BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
+                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                }
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
+    }
 
-    // // Attempt to add block with incorrect votebits set.
-    // // 2x No 3x Yes, but block header says No.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-    //             b.nVoteBits &= ~voteYesBits;
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             for (int i = 1; i <= 2; ++i) {
-    //                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-    //                 ReplaceVoteBits(b.vtx[i],voteNoBits);
-    //             }
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
-    // }
+    // Attempt to add block with incorrect votebits set.
+    // 2x No 3x Yes, but block header says No.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+                b.nVoteBits &= ~voteYesBits;
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                for (int i = 1; i <= 2; ++i) {
+                    BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
+                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                }
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
+    }
 
-    // // Attempt to add block with incorrect votebits set.
-    // // 4x Voters
-    // // 2x No 2x Yes, but block header says Yes
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-    //             b.nVoteBits |= voteYesBits;
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             for (int i = 1; i <= 2; ++i) {
-    //                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-    //                 ReplaceVoteBits(b.vtx[i],voteNoBits);
-    //             }
-    //             // leave 3 and 4 with Yes
-    //             // drop the 5th
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
-    //             b.vtx.erase(b.vtx.begin()+5);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_BuyTicket);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
-    // }
+    // Attempt to add block with incorrect votebits set.
+    // 4x Voters
+    // 2x No 2x Yes, but block header says Yes
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+                b.nVoteBits |= voteYesBits;
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                for (int i = 1; i <= 2; ++i) {
+                    BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
+                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                }
+                // leave 3 and 4 with Yes
+                // drop the 5th
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
+                b.vtx.erase(b.vtx.begin()+5);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_BuyTicket);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
+    }
 
-    // // Attempt to add block with incorrect votebits set.
-    // // 3x Voters
-    // // 2x No 1x Yes, but block header says Yes
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-    //             b.nVoteBits |= voteYesBits;
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             for (int i = 1; i <= 2; ++i) {
-    //                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-    //                 ReplaceVoteBits(b.vtx[i],voteNoBits);
-    //             }
-    //             // leave 1 with Yes
-    //             // drop the 4th and 5th
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_Vote);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
-    //             b.vtx.erase(b.vtx.begin()+4,b.vtx.begin()+6);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_BuyTicket);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
-    // }
+    // Attempt to add block with incorrect votebits set.
+    // 3x Voters
+    // 2x No 1x Yes, but block header says Yes
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+                b.nVoteBits |= voteYesBits;
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                for (int i = 1; i <= 2; ++i) {
+                    BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
+                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                }
+                // leave 1 with Yes
+                // drop the 4th and 5th
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_Vote);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
+                b.vtx.erase(b.vtx.begin()+4,b.vtx.begin()+6);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_BuyTicket);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
+    }
 
-    // // Attempt to add block with incorrect votebits set.
-    // // 3x Voters
-    // // 1x No 2x Yes, but block header says No
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-    //             b.nVoteBits &= ~voteYesBits;
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[1]), TX_Vote);
-    //             ReplaceVoteBits(b.vtx[1],voteNoBits);
-    //             // leave 2 with Yes
-    //             // drop the 4th and 5th
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_Vote);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
-    //             b.vtx.erase(b.vtx.begin()+4,b.vtx.begin()+6);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_BuyTicket);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
-    // }
+    // Attempt to add block with incorrect votebits set.
+    // 3x Voters
+    // 1x No 2x Yes, but block header says No
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+                b.nVoteBits &= ~voteYesBits;
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[1]), TX_Vote);
+                ReplaceVoteBits(b.vtx[1],voteNoBits);
+                // leave 2 with Yes
+                // drop the 4th and 5th
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_Vote);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
+                b.vtx.erase(b.vtx.begin()+4,b.vtx.begin()+6);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_BuyTicket);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "header-votebits-incorrect");
+    }
 
-    // // ---------------------------------------------------------------------
-    // // Stake ticket difficulty tests.
-    // // ---------------------------------------------------------------------
+    // ---------------------------------------------------------------------
+    // Stake ticket difficulty tests.
+    // ---------------------------------------------------------------------
 
+    // TODO: uncomment when nMinimumStakeDiff is increased
+    //      the following test fails because the nMinimumStakeDiff is set to zero at, and we artificially set it to 2e4
+    //      ticketPrice - 1 is actually larger then the required stake and block is accepted
     // // Attempt to add block with a bad ticket purchase commitment.
     // {
     //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
@@ -1761,7 +1757,10 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
     //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "stake-too-low");
     // }
 
-    // // Create block with ticket purchase below required ticket price.
+    // TODO: check if still relevant
+    //       the following test reject the block, but not because stake is too low, but because
+    //       the signature of the purchase tx doesn't check, cause we altered the value after generating it
+    // Create block with ticket purchase below required ticket price.
     // {
     //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
     //         [this, &ticketSpends](CBlock& b) {
@@ -1784,7 +1783,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
     //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "stake-too-low");
     // }
 
-    // // Create block with stake transaction below pos limit.
+    // Create block with stake transaction below pos limit.
     // {
     //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
     //         [this, &ticketSpends](CBlock& b) {
@@ -1807,274 +1806,274 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
     //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "stake-too-low");
     // }
 
-    // // ---------------------------------------------------------------------
-    // // Revocation tests.
-    // // ---------------------------------------------------------------------
-    // // Create valid block that misses a vote.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[1]), TX_Vote);
-    //             // drop the 5th
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_Vote);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
-    //             b.vtx.erase(b.vtx.begin()+5);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_BuyTicket);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash()); // accepted
-    //     ticketSpends = OldestCoinOuts();
-    // }
+    // ---------------------------------------------------------------------
+    // Revocation tests.
+    // ---------------------------------------------------------------------
+    // Create valid block that misses a vote.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[1]), TX_Vote);
+                // drop the 5th
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_Vote);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
+                b.vtx.erase(b.vtx.begin()+5);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_BuyTicket);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash()); // accepted
+        ticketSpends = OldestCoinOuts();
+    }
 
-    // // Create block that has a revocation for a voted ticket.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
+    // Create block that has a revocation for a voted ticket.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
 
-    //             auto& firstVoteTx = b.vtx[1];
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*firstVoteTx), TX_Vote);
-    //             const auto& ticketHashOfFirstVote = firstVoteTx->vin[voteStakeInputIndex].prevout.hash;
-    //             // create a new revocation for the voted ticket
-    //             const auto& revocationTx = CreateRevocationTx(ticketHashOfFirstVote);
-    //             b.vtx.push_back(MakeTransactionRef(revocationTx));
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-ticket-reference-in-revocation");
-    // }
+                auto& firstVoteTx = b.vtx[1];
+                BOOST_CHECK_EQUAL(ParseTxClass(*firstVoteTx), TX_Vote);
+                const auto& ticketHashOfFirstVote = firstVoteTx->vin[voteStakeInputIndex].prevout.hash;
+                // create a new revocation for the voted ticket
+                const auto& revocationTx = CreateRevocationTx(ticketHashOfFirstVote);
+                b.vtx.push_back(MakeTransactionRef(revocationTx));
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-ticket-reference-in-revocation");
+    }
 
-    // // Create block that has a revocation with more payees than expected.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this, &ticketSpends](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+    // Create block that has a revocation with more payees than expected.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this, &ticketSpends](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
 
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5 + ticketSpends.size()]), TX_BuyTicket);
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5 + ticketSpends.size()]), TX_BuyTicket);
 
-    //             auto& firstRevocationTx = b.vtx[5 + ticketSpends.size() + 1];
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*firstRevocationTx), TX_RevokeTicket);
+                auto& firstRevocationTx = b.vtx[5 + ticketSpends.size() + 1];
+                BOOST_CHECK_EQUAL(ParseTxClass(*firstRevocationTx), TX_RevokeTicket);
 
-    //             // Re create revocation tx
-    //             const auto& ticketHash = firstRevocationTx->vin[revocationStakeInputIndex].prevout.hash;
-    //             auto revocationTx = CreateRevocationTx(ticketHash);
-    //             revocationTx.vout.push_back(revocationTx.vout[0]);
-    //             firstRevocationTx = MakeTransactionRef(revocationTx);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-revocation-structure");
-    // }
+                // Re create revocation tx
+                const auto& ticketHash = firstRevocationTx->vin[revocationStakeInputIndex].prevout.hash;
+                auto revocationTx = CreateRevocationTx(ticketHash);
+                revocationTx.vout.push_back(revocationTx.vout[0]);
+                firstRevocationTx = MakeTransactionRef(revocationTx);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-revocation-structure");
+    }
 
-    // // Create block that has a revocation paying more than the original
-    // // amount to the committed address.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this, &ticketSpends](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+    // Create block that has a revocation paying more than the original
+    // amount to the committed address.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this, &ticketSpends](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
 
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5 + ticketSpends.size()]), TX_BuyTicket);
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5 + ticketSpends.size()]), TX_BuyTicket);
 
-    //             auto& firstRevocationTx = b.vtx[5 + ticketSpends.size() + 1];
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*firstRevocationTx), TX_RevokeTicket);
+                auto& firstRevocationTx = b.vtx[5 + ticketSpends.size() + 1];
+                BOOST_CHECK_EQUAL(ParseTxClass(*firstRevocationTx), TX_RevokeTicket);
 
-    //             // Re create revocation tx
-    //             const auto& ticketHash = firstRevocationTx->vin[revocationStakeInputIndex].prevout.hash;
-    //             auto revocationTx = CreateRevocationTx(ticketHash);
-    //             revocationTx.vout[revocationRefundOutputIndex].nValue++;
-    //             firstRevocationTx = MakeTransactionRef(revocationTx);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "revocation-bad-payment-amount");
-    // }
+                // Re create revocation tx
+                const auto& ticketHash = firstRevocationTx->vin[revocationStakeInputIndex].prevout.hash;
+                auto revocationTx = CreateRevocationTx(ticketHash);
+                revocationTx.vout[revocationRefundOutputIndex].nValue++;
+                firstRevocationTx = MakeTransactionRef(revocationTx);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "revocation-bad-payment-amount");
+    }
 
-    // // Create block that has a revocation using a corrupted pay-to-address
-    // // script.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends,
-    //         [this, &ticketSpends](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+    // Create block that has a revocation using a corrupted pay-to-address
+    // script.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [this, &ticketSpends](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
 
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5 + ticketSpends.size()]), TX_BuyTicket);
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5 + ticketSpends.size()]), TX_BuyTicket);
 
-    //             auto& firstRevocationTx = b.vtx[5 + ticketSpends.size() + 1];
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*firstRevocationTx), TX_RevokeTicket);
+                auto& firstRevocationTx = b.vtx[5 + ticketSpends.size() + 1];
+                BOOST_CHECK_EQUAL(ParseTxClass(*firstRevocationTx), TX_RevokeTicket);
 
-    //             // Re create revocation tx
-    //             const auto& ticketHash = firstRevocationTx->vin[revocationStakeInputIndex].prevout.hash;
-    //             auto revocationTx = CreateRevocationTx(ticketHash);
-    //             revocationTx.vout[revocationRefundOutputIndex].scriptPubKey[8] &= ~0x55; 
-    //             firstRevocationTx = MakeTransactionRef(revocationTx);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "revocation-incorrect-payment-address");
-    // }
+                // Re create revocation tx
+                const auto& ticketHash = firstRevocationTx->vin[revocationStakeInputIndex].prevout.hash;
+                auto revocationTx = CreateRevocationTx(ticketHash);
+                revocationTx.vout[revocationRefundOutputIndex].scriptPubKey[8] &= ~0x55; 
+                firstRevocationTx = MakeTransactionRef(revocationTx);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "revocation-incorrect-payment-address");
+    }
 
-    // // Create block that contains a revocation due to previous missed vote.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, ticketSpends);
-    //     BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash()); // accepted
-    //     // check that last one is the revocation
-    //     BOOST_CHECK_EQUAL(ParseTxClass(**b.vtx.crbegin()), TX_RevokeTicket);
-    //     // check that the last but one is a purchase
-    //     BOOST_CHECK_EQUAL(ParseTxClass(**(b.vtx.crbegin()+1)), TX_BuyTicket);
-    //     ticketSpends = OldestCoinOuts();
-    // }
+    // Create block that contains a revocation due to previous missed vote.
+    {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends);
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash()); // accepted
+        // check that last one is the revocation
+        BOOST_CHECK_EQUAL(ParseTxClass(**b.vtx.crbegin()), TX_RevokeTicket);
+        // check that the last but one is a purchase
+        BOOST_CHECK_EQUAL(ParseTxClass(**(b.vtx.crbegin()+1)), TX_BuyTicket);
+        ticketSpends = OldestCoinOuts();
+    }
 
-    // // ---------------------------------------------------------------------
-    // // Stakebase script tests.
-    // // ---------------------------------------------------------------------
+    // ---------------------------------------------------------------------
+    // Stakebase script tests.
+    // ---------------------------------------------------------------------
 
-    // // Create block that has a stakebase script that is smaller than the
-    // // minimum allowed length.
-    // {
-    //     const auto& b = NextBlock("bss0", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             const auto& tooSmallScript = RepeatOpCode(OP_0, minStakebaseScriptLen - 1);
-    //             ReplaceStakeBaseSigScript(b.vtx[1], tooSmallScript);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); //rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-stakereward-length");
-    // }
+    // Create block that has a stakebase script that is smaller than the
+    // minimum allowed length.
+    {
+        const auto& b = NextBlock("bss0", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                const auto& tooSmallScript = RepeatOpCode(OP_0, minStakebaseScriptLen - 1);
+                ReplaceStakeBaseSigScript(b.vtx[1], tooSmallScript);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); //rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-stakereward-length");
+    }
 
-    // // Create block that has a stakebase script that is larger than the
-    // // maximum allowed length.
-    // {
-    //     const auto& b = NextBlock("bss1", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             const auto& tooLargeScript = RepeatOpCode(OP_0, maxStakebaseScriptLen + 1);
-    //             ReplaceStakeBaseSigScript(b.vtx[1], tooLargeScript);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); //rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-stakereward-length");
-    // }
+    // Create block that has a stakebase script that is larger than the
+    // maximum allowed length.
+    {
+        const auto& b = NextBlock("bss1", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                const auto& tooLargeScript = RepeatOpCode(OP_0, maxStakebaseScriptLen + 1);
+                ReplaceStakeBaseSigScript(b.vtx[1], tooLargeScript);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); //rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-stakereward-length");
+    }
 
-    // // Add a block with a stake transaction with a signature script that is
-    // // not the required script, but is otherwise a valid script.
-    // {
-    //     const auto& b = NextBlock("bss2", nullptr, ticketSpends,
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             auto badScript = Params().GetConsensus().stakeBaseSigScript;
-    //             badScript << 0x00;
-    //             ReplaceStakeBaseSigScript(b.vtx[1], badScript);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); //rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-stakereward-scriptsig");
-    // }
+    // Add a block with a stake transaction with a signature script that is
+    // not the required script, but is otherwise a valid script.
+    {
+        const auto& b = NextBlock("bss2", nullptr, ticketSpends,
+            [this](CBlock& b) {
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                auto badScript = Params().GetConsensus().stakeBaseSigScript;
+                badScript << 0x00;
+                ReplaceStakeBaseSigScript(b.vtx[1], badScript);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); //rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-stakereward-scriptsig");
+    }
 
-    // // Attempt to add a block with a bad vote payee output.
-    // {
-    //     const auto& b = NextBlock("bss3", nullptr, ticketSpends,
-    //         [this, &ticketSpends](CBlock& b) {
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[1]), TX_Vote);
+    // Attempt to add a block with a bad vote payee output.
+    {
+        const auto& b = NextBlock("bss3", nullptr, ticketSpends,
+            [](CBlock& b) {
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[1]), TX_Vote);
 
-    //             CMutableTransaction voteTx = *b.vtx[1];
-    //             BOOST_CHECK_EQUAL(ParseTxClass(voteTx),TX_Vote);
+                CMutableTransaction voteTx = *b.vtx[1];
+                BOOST_CHECK_EQUAL(ParseTxClass(voteTx),TX_Vote);
 
-    //             voteTx.vout[voteRewardOutputIndex].scriptPubKey[8] ^= 0x55;
-    //             b.vtx[1] = MakeTransactionRef(voteTx);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-incorrect-payment-address");
-    // }
+                voteTx.vout[voteRewardOutputIndex].scriptPubKey[8] ^= 0x55;
+                b.vtx[1] = MakeTransactionRef(voteTx);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-incorrect-payment-address");
+    }
 
-    // // Attempt to add a block with an incorrect vote payee output amount.
-    // {
-    //     const auto& b = NextBlock("bss3", nullptr, ticketSpends,
-    //         [this, &ticketSpends](CBlock& b) {
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[1]), TX_Vote);
+    // Attempt to add a block with an incorrect vote payee output amount.
+    {
+        const auto& b = NextBlock("bss3", nullptr, ticketSpends,
+            [](CBlock& b) {
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[1]), TX_Vote);
 
-    //             CMutableTransaction voteTx = *b.vtx[1];
-    //             BOOST_CHECK_EQUAL(ParseTxClass(voteTx),TX_Vote);
+                CMutableTransaction voteTx = *b.vtx[1];
+                BOOST_CHECK_EQUAL(ParseTxClass(voteTx),TX_Vote);
 
-    //             voteTx.vout[voteRewardOutputIndex].nValue++;
-    //             b.vtx[1] = MakeTransactionRef(voteTx);
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-bad-payment-amount");
-    // }
+                voteTx.vout[voteRewardOutputIndex].nValue++;
+                b.vtx[1] = MakeTransactionRef(voteTx);
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-bad-payment-amount");
+    }
 
     // ---------------------------------------------------------------------
     // Disapproval tests.
     // ---------------------------------------------------------------------
 
-    // // Add a block which will be disapproved 
-    // auto spendableOutFromDisapprovedBlock = SpendableOut{};
-    // {
-    //     const auto& b = NextBlock("bdsp1", &*ticketSpends.cbegin(), {});
-    //     BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash()); // accepted
-    //     // index of the spendtx is 6, it is after the coinbase(0) and the votetx([1-5])
-    //     spendableOutFromDisapprovedBlock = MakeSpendableOut(*b.vtx[6],0);
-    // }
+    // Add a block which will be disapproved 
+    auto spendableOutFromDisapprovedBlock = SpendableOut{};
+    {
+        const auto& b = NextBlock("bdsp1", &*ticketSpends.cbegin(), {});
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash()); // accepted
+        // index of the spendtx is 6, it is after the coinbase(0) and the votetx([1-5])
+        spendableOutFromDisapprovedBlock = MakeSpendableOut(*b.vtx[6],0);
+    }
 
-    // // Attempt to add block with a ticket purchase using output from
-    // // disapproved block.
-    // {
-    //     const auto& b = NextBlock("bsm", nullptr, {spendableOutFromDisapprovedBlock},
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-    //             // Header says No and all vote say No
-    //             b.nVoteBits &= ~voteYesBits;
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             for(int i = 1; i <= 5; ++i)
-    //             {
-    //                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-    //                 ReplaceVoteBits(b.vtx[i],voteNoBits);
-    //             }
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash());
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-txns-inputs-missingorspent");
-    // }
+    // Attempt to add block with a ticket purchase using output from
+    // disapproved block.
+    {
+        const auto& b = NextBlock("bsm", nullptr, {spendableOutFromDisapprovedBlock},
+            [this](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+                // Header says No and all vote say No
+                b.nVoteBits &= ~voteYesBits;
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                for(int i = 1; i <= 5; ++i)
+                {
+                    BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
+                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                }
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash());
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-txns-inputs-missingorspent");
+    }
 
-    // // create another block to be disapproved
-    // {
-    //     const auto& b = NextBlock("bdsp2", &*ticketSpends.cbegin(), {});
-    //     BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash()); // accepted
-    //     // index of the spendtx is 6, it is after the coinbase(0) and the votetx([1-5])
-    //     spendableOutFromDisapprovedBlock = MakeSpendableOut(*b.vtx[6],0);
-    // }
+    // create another block to be disapproved
+    {
+        const auto& b = NextBlock("bdsp2", &*ticketSpends.cbegin(), {});
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash()); // accepted
+        // index of the spendtx is 6, it is after the coinbase(0) and the votetx([1-5])
+        spendableOutFromDisapprovedBlock = MakeSpendableOut(*b.vtx[6],0);
+    }
 
-    // // Attempt to add block with a regular transaction using output
-    // // from disapproved block.
-    // {
-    //     const auto& b = NextBlock("bsm", &spendableOutFromDisapprovedBlock, {},
-    //         [this](CBlock& b) {
-    //             BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-    //             // Header says No and all vote say No
-    //             b.nVoteBits &= ~voteYesBits;
-    //             BOOST_CHECK(b.vtx[0]->IsCoinBase());
-    //             for(int i = 1; i <= 5; ++i)
-    //             {
-    //                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-    //                 ReplaceVoteBits(b.vtx[i],voteNoBits);
-    //             }
-    //         }
-    //     );
-    //     BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash());
-    //     BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-txns-inputs-missingorspent");
-    // }
+    // Attempt to add block with a regular transaction using output
+    // from disapproved block.
+    {
+        const auto& b = NextBlock("bsm", &spendableOutFromDisapprovedBlock, {},
+            [this](CBlock& b) {
+                BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
+                // Header says No and all vote say No
+                b.nVoteBits &= ~voteYesBits;
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+                for(int i = 1; i <= 5; ++i)
+                {
+                    BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
+                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                }
+            }
+        );
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash());
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "bad-txns-inputs-missingorspent");
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
