@@ -33,6 +33,7 @@ public:
     uint32_t nVoteBits;
     uint32_t nTicketPoolSize;
     uint48  ticketLotteryState;
+    uint8_t nFreshStake;
 
 
     CBlockHeader()
@@ -64,6 +65,7 @@ public:
         nVoteBits = 1;
         nTicketPoolSize = 0;
         std::fill(ticketLotteryState.begin(), ticketLotteryState.end(), 0);
+        nFreshStake = 0;
     }
 
     bool IsNull() const
@@ -128,6 +130,7 @@ public:
         block.nStakeDifficulty = nStakeDifficulty;
         block.nTicketPoolSize = nTicketPoolSize;
         block.ticketLotteryState = ticketLotteryState;
+        block.nFreshStake = nFreshStake;
         return block;
     }
 

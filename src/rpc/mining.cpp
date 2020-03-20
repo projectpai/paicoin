@@ -680,6 +680,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     result.push_back(Pair("ticketpoolsize", strprintf("%08x", pblock->nTicketPoolSize)));
     result.push_back(Pair("ticketlotterystate", StakeStateToString(pblock->ticketLotteryState)));
     result.push_back(Pair("height", static_cast<int64_t>((pindexPrev->nHeight+1))));
+    result.push_back(Pair("freshstake", pblock->nFreshStake));
 
     if (!pblocktemplate->vchCoinbaseCommitment.empty() && fSupportsSegwit) {
         result.push_back(Pair("default_witness_commitment", HexStr(pblocktemplate->vchCoinbaseCommitment)));
