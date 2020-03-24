@@ -3,10 +3,11 @@
 
 #include <string>
 #include "script/pai_data_classifier.h"
+#include "script/standard.h"
+#include "pubkey.h"
 #include "stakenode.h"
 
 class CTransaction;
-class CScript;
 class CBlock;
 
 // ======================================================================
@@ -34,8 +35,29 @@ struct BuyTicketData {
 };
 
 struct TicketContribData {
+    TicketContribData()
+    {;}
+    explicit TicketContribData(int version, const CTxDestination& reward, const CAmount& amount)
+    {
+        nVersion = version;
+
+        assert(IsValidDestination(reward));
+        whichAddr = reward.which();
+        if (whichAddr == 1)
+            rewardAddr = boost::get<const CKeyID>(reward);
+        else if(whichAddr == 2)
+            rewardAddr = boost::get<const CScriptID>(reward);
+
+        contributedAmount = amount;
+    }
+    friend bool operator==(const TicketContribData& l, const TicketContribData& r)
+    {
+        return std::tie(l.nVersion, l.rewardAddr, l.whichAddr, l.contributedAmount)
+            == std::tie(r.nVersion, r.rewardAddr, r.whichAddr, r.contributedAmount);
+    }
     int nVersion;
     uint160 rewardAddr;
+    int whichAddr;
     CAmount contributedAmount;
 };
 
@@ -44,6 +66,7 @@ struct VoteData {
     uint256 blockHash;
     uint32_t blockHeight;
     uint32_t voteBits;
+    uint32_t voterStakeVersion;
 };
 
 struct RevokeTicketData {
@@ -84,10 +107,12 @@ const uint32_t txVersionIndex = 4;
 const uint32_t voteBlockHashIndex = 5;
 const uint32_t voteBlockHeightIndex = 6;
 const uint32_t voteBitsIndex = 7;
+const uint32_t voterStakeVersionIndex = 8;
 //---
 const uint32_t contribVersionIndex = 3;
 const uint32_t contribAddrIndex = 4;
-const uint32_t contribAmountIndex = 5;
+const uint32_t contribAddrTypeIndex = 5;
+const uint32_t contribAmountIndex = 6;
 
 enum ETxClass {         // these values must not be changed (they are stored in scripts), so only appending is allowed
     TX_Regular,

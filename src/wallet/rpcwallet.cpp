@@ -27,6 +27,7 @@
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
 #include "wallet/fees.h"
+#include "pow.h"
 
 #include <init.h>  // For StartShutdown
 
@@ -3205,7 +3206,12 @@ UniValue purchaseticket(const JSONRPCRequest& request)
 
     // TODO Calculate the current ticket price.
     //ticketPrice, err := w.NextStakeDifficulty()
-    const auto& ticketPrice = CAmount{34500};
+    auto ticketPrice = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), Params().GetConsensus());
+    if (ticketPrice == 0) {
+        // the above still yields 0 because of nMinimumStakeDiff
+        // TODO remove this if after setting that above zero
+        ticketPrice = CAmount{34500};
+    }
 
     // Ensure the ticket price does not exceed the spend limit if set.
     if (ticketPrice > nSpendLimit)
@@ -3281,7 +3287,7 @@ UniValue purchaseticket(const JSONRPCRequest& request)
                         rewardAddress = newKey.GetID();
                     }
                     const auto& contributedAmount = neededPerTicket; // in case no pool is used, this is equal to the price
-                    TicketContribData ticketContribData = { 1, rewardAddress, contributedAmount };
+                    const auto& ticketContribData = TicketContribData{ 1, rewardAddress, contributedAmount };
                     CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
                     mTicketTx.vout.push_back(CTxOut(0, contributorInfoScript));
 
@@ -3408,7 +3414,12 @@ UniValue generatevote(const JSONRPCRequest& request)
     const auto& ticketPriceAtPurchase = ticketTxPtr->vout[ticketStakeOutputIndex].nValue;
     for ( const auto& contrib : contributions){
         const auto& reward = CalcContributorRemuneration( contrib.contributedAmount, ticketPriceAtPurchase, subsidy, contributionSum);
-        CScript rewardScript = GetScriptForDestination(contrib.rewardAddr);
+        CScript rewardScript;
+        if (contrib.whichAddr == 1) {
+            rewardScript = GetScriptForDestination(CKeyID(contrib.rewardAddr));
+        } else {
+            rewardScript = GetScriptForDestination(CScriptID(contrib.rewardAddr));
+        }
         mVoteTx.vout.push_back(CTxOut(reward, rewardScript));
     }
 

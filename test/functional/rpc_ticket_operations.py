@@ -255,8 +255,14 @@ class TicketOperations(PAIcoinTestFramework):
 
         nHeightExpiredBecomeMissed = nTicketExpiry + nStakeEnabledHeight
         assert(nHeightExpiredBecomeMissed > nStakeValidationHeight)
+        nMaxFreshStakePerBlock = 2
 
         for blkidx in range(nStakeValidationHeight, nHeightExpiredBecomeMissed + 10):
+            # purchase tickets
+            print("purchase ", nMaxFreshStakePerBlock, " at ", blkidx)
+            txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, nMaxFreshStakePerBlock))
+            assert(len(txs[-1])==nMaxFreshStakePerBlock)
+            # winners vote
             winners = self.nodes[0].winningtickets()
             assert(len(winners['tickets'])==nTicketsPerBlock)
             blockhash = chainInfo['bestblockhash']
@@ -268,10 +274,10 @@ class TicketOperations(PAIcoinTestFramework):
             self.sync_all()
             chainInfo = self.nodes[0].getblockchaininfo()
             assert(chainInfo['blocks'] == blkidx)
-            print("generated block ", blkidx)
+            # print("generated block ", blkidx)
 
             x = self.nodes[0].missedtickets()
-            print("missed", x)
+            # print("missed", x)
             assert(blkidx < nHeightExpiredBecomeMissed or len(x["tickets"]) > 0) # we expect missed tickets 
         
 

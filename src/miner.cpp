@@ -129,7 +129,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     nHeight = pindexPrev->nHeight + 1;
 
     pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
-    pblock->nStakeDifficulty = calcNextRequiredStakeDifficulty(*pblock,pindexPrev,chainparams);
+    pblock->nStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev,chainparams.GetConsensus());
     if (pindexPrev->pstakeNode != nullptr) {
         pblock->ticketLotteryState = pindexPrev->pstakeNode->FinalState();
         pblock->nTicketPoolSize = pindexPrev->pstakeNode->PoolSize();

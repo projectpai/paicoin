@@ -122,11 +122,11 @@ struct Params {
     uint8_t nMaxFreshStakePerBlock;
     // StakeEnabledHeight is the height in which the first ticket could possibly
     // mature.
-    int64_t nStakeEnabledHeight;
+    int32_t nStakeEnabledHeight;
     // StakeValidationHeight is the height at which votes (SSGen) are required
     // to add a new block to the top of the blockchain. This height is the
     // first block that will be voted on, but will include in itself no votes.
-    int64_t nStakeValidationHeight;
+    int32_t nStakeValidationHeight;
     // StakeBaseSigScript is the consensus stakebase signature script for all
     // votes on the network. This isn't signed in any way, so without forcing
     // it to be this value miners/daemons could freely change it.
