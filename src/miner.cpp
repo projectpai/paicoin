@@ -129,6 +129,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     nHeight = pindexPrev->nHeight + 1;
 
     pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
+    const auto& hybridForkEnabled = IsHybridConsensusForkEnabled(pindexPrev,chainparams.GetConsensus());
+    if (hybridForkEnabled)
+        pblock->nVersion |= HARDFORK_VERSION_BIT;
+
     pblock->nStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev,chainparams.GetConsensus());
     if (pindexPrev->pstakeNode != nullptr) {
         pblock->ticketLotteryState = pindexPrev->pstakeNode->FinalState();

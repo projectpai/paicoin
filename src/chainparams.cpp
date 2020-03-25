@@ -60,7 +60,7 @@
 #   include "arith_uint256.h"
 #endif // MINE_FOR_THE_GENESIS_BLOCK
 
-static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
+static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int64_t nStakeDiff, int32_t nVersion, const CAmount& genesisReward)
 {
     CMutableTransaction txNew;
     txNew.nVersion = 1;
@@ -73,7 +73,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     CBlock genesis;
     genesis.nTime    = nTime;
     genesis.nBits    = nBits;
-    genesis.nStakeDifficulty = 0;
+    genesis.nStakeDifficulty = nStakeDiff;
     genesis.nVoteBits = 1;
     genesis.nTicketPoolSize = 0;
     std::fill(genesis.ticketLotteryState.begin(), genesis.ticketLotteryState.end(), 0);
@@ -89,11 +89,11 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
 /**
  * Build the genesis block.
  */
-static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const char* signature)
+static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int64_t nStakeDiff, int32_t nVersion, const CAmount& genesisReward, const char* signature)
 {
     const char* pszTimestamp = GENESIS_BLOCK_TIMESTAMP_STRING;
     const CScript genesisOutputScript = CScript() << OP_HASH160 << ParseHex(signature) << OP_EQUAL;
-    return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
+    return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nStakeDiff, nVersion, genesisReward);
 }
 
 void CChainParams::UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout)
@@ -135,6 +135,7 @@ public:
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
+        consensus.HybridConsensusForkTime = -1; // Never
         consensus.powLimit = MAINNET_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -163,6 +164,30 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
 
+        // stake parameters
+        consensus.nMinimumStakeDiff            = COIN * 2;
+        consensus.nTicketPoolSize              = 8192;
+        consensus.nTicketsPerBlock             = 5;
+        consensus.nTicketMaturity              = 256;
+        consensus.nTicketExpiry                = 5 * consensus.nTicketPoolSize;
+        // consensus.nCoinbaseMaturity            = 256;
+        consensus.nSStxChangeMaturity          = 1;
+        consensus.nTicketPoolSizeWeight        = 4;
+        consensus.nStakeDiffAlpha              = 1;
+        consensus.nStakeDiffWindowSize         = 144;
+        consensus.nStakeDiffWindows            = 20;
+        consensus.nStakeVersionInterval        = 144 * 2 * 7; // ~2 weeks
+        consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
+        consensus.nStakeEnabledHeight          = 356;         //consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
+        consensus.nStakeValidationHeight       = 4096;        // ~ 14 days
+        consensus.stakeBaseSigScript           = CScript() << 0x00 << 0x00;
+        consensus.nStakeMajorityMultiplier     = 3;
+        consensus.nStakeMajorityDivisor        = 4;
+        //organization related parameters
+        consensus.organizationPkScript         = CScript(); //uint256S("TODO add some predef")
+        consensus.nOrganizationPkScriptVersion = 0;
+        consensus.vBlockOneLedger              = {}; //TODO update with smtg resembling BlockOneLedgerMainNet in premine.go 
+
         /**
          * The message start string is designed to be unlikely to occur in normal data.
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
@@ -178,7 +203,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, MAINNET_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> MAINNET_GENESIS_BLOCK_POW_BITS);
 
@@ -201,7 +226,7 @@ public:
 
 #else
 
-        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, MAINNET_GENESIS_BLOCK_NONCE, MAINNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
+        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, MAINNET_GENESIS_BLOCK_NONCE, MAINNET_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
@@ -254,29 +279,6 @@ public:
                         //   (the tx=... number in the SetBestChain debug.log lines)
             0.00368     // * estimated number of transactions per second after that timestamp
         };
-
-        consensus.nMinimumStakeDiff            = COIN * 2;
-        consensus.nTicketPoolSize              = 8192;
-        consensus.nTicketsPerBlock             = 5;
-        consensus.nTicketMaturity              = 256;
-        consensus.nTicketExpiry                = 5 * consensus.nTicketPoolSize;
-        consensus.nCoinbaseMaturity            = 256;
-        consensus.nSStxChangeMaturity          = 1;
-        consensus.nTicketPoolSizeWeight        = 4;
-        consensus.nStakeDiffAlpha              = 1;
-        consensus.nStakeDiffWindowSize         = 144;
-        consensus.nStakeDiffWindows            = 20;
-        consensus.nStakeVersionInterval        = 144 * 2 * 7; // ~2 weeks
-        consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight          = consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
-        consensus.nStakeValidationHeight       = 4096;        // ~ 14 days
-        consensus.stakeBaseSigScript           = CScript() << 0x00 << 0x00;
-        consensus.nStakeMajorityMultiplier     = 3;
-        consensus.nStakeMajorityDivisor        = 4;
-        //organization related parameters
-        consensus.organizationPkScript         = CScript(); //uint256S("TODO add some predef")
-        consensus.nOrganizationPkScriptVersion = 0;
-        consensus.vBlockOneLedger              = {}; //TODO update with smtg resembling BlockOneLedgerMainNet in premine.go 
     }
 };
 
@@ -296,6 +298,7 @@ public:
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
+        consensus.HybridConsensusForkTime = -1; // Never
         consensus.powLimit = TESTNET_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -324,6 +327,30 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000000b13e58c76917eb3b416fc284e36641d952a96c3422b0808d828646");
 
+        // stake parameters
+        consensus.nMinimumStakeDiff            = COIN * 0.2;
+        consensus.nTicketPoolSize              = 1024;
+        consensus.nTicketsPerBlock             = 5;
+        consensus.nTicketMaturity              = 16;
+        consensus.nTicketExpiry                = 6 * consensus.nTicketPoolSize;
+        // consensus.nCoinbaseMaturity            = 16;
+        consensus.nSStxChangeMaturity          = 1;
+        consensus.nTicketPoolSizeWeight        = 4;
+        consensus.nStakeDiffAlpha              = 1;
+        consensus.nStakeDiffWindowSize         = 144;
+        consensus.nStakeDiffWindows            = 20;
+        consensus.nStakeVersionInterval        = 144 * 2 * 7; // ~2 weeks
+        consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
+        consensus.nStakeEnabledHeight          = 116;         // consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
+        consensus.nStakeValidationHeight       = 768;         // Arbitrary chosen into the future; height is 46261 at the moment
+        consensus.stakeBaseSigScript           = CScript() << 0x00 << 0x00;
+        consensus.nStakeMajorityMultiplier     = 3;
+        consensus.nStakeMajorityDivisor        = 4;
+        //organization related parameters
+        consensus.organizationPkScript         = CScript(); //uint256S("TODO add some predef")
+        consensus.nOrganizationPkScriptVersion = 0;
+        consensus.vBlockOneLedger              = {}; //TODO update with smtg resembling BlockOneLedgerTestNet3 in premine.go 
+
         pchMessageStart[0] = 0x0b;
         pchMessageStart[1] = 0x09;
         pchMessageStart[2] = 0x11;
@@ -334,7 +361,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, TESTNET_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> TESTNET_GENESIS_BLOCK_POW_BITS);
 
@@ -357,7 +384,7 @@ public:
 
 #else
 
-        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, TESTNET_GENESIS_BLOCK_NONCE, TESTNET_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
+        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, TESTNET_GENESIS_BLOCK_NONCE, TESTNET_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
@@ -412,29 +439,6 @@ public:
                         //   (the tx=... number in the SetBestChain debug.log lines)
             0.00293     // * estimated number of transactions per second after that timestamp
         };
-
-        consensus.nMinimumStakeDiff            = COIN * 0.2;
-        consensus.nTicketPoolSize              = 1024;
-        consensus.nTicketsPerBlock             = 5;
-        consensus.nTicketMaturity              = 16;
-        consensus.nTicketExpiry                = 6 * consensus.nTicketPoolSize;
-        consensus.nCoinbaseMaturity            = 16;
-        consensus.nSStxChangeMaturity          = 1;
-        consensus.nTicketPoolSizeWeight        = 4;
-        consensus.nStakeDiffAlpha              = 1;
-        consensus.nStakeDiffWindowSize         = 144;
-        consensus.nStakeDiffWindows            = 20;
-        consensus.nStakeVersionInterval        = 144 * 2 * 7; // ~2 weeks
-        consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight          = consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
-        consensus.nStakeValidationHeight       = 768;//100000;      // Arbitrary chosen into the future; height is 46261 at the moment
-        consensus.stakeBaseSigScript           = CScript() << 0x00 << 0x00;
-        consensus.nStakeMajorityMultiplier     = 3;
-        consensus.nStakeMajorityDivisor        = 4;
-        //organization related parameters
-        consensus.organizationPkScript         = CScript(); //uint256S("TODO add some predef")
-        consensus.nOrganizationPkScriptVersion = 0;
-        consensus.vBlockOneLedger              = {}; //TODO update with smtg resembling BlockOneLedgerTestNet3 in premine.go 
     }
 };
 
@@ -456,6 +460,7 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
+        consensus.HybridConsensusForkTime = 1500;
         consensus.powLimit = REGTEST_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -482,6 +487,30 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x00");
 
+        // stake paramters
+        consensus.nMinimumStakeDiff            = 20000;
+        consensus.nTicketPoolSize              = 64;
+        consensus.nTicketsPerBlock             = 5;
+        consensus.nTicketMaturity              = 8;
+        consensus.nTicketExpiry                = 5 * consensus.nTicketPoolSize;
+        // consensus.nCoinbaseMaturity            = 16;
+        consensus.nSStxChangeMaturity          = 1;
+        consensus.nTicketPoolSizeWeight        = 4;
+        consensus.nStakeDiffAlpha              = 1;
+        consensus.nStakeDiffWindowSize         = 8;
+        consensus.nStakeDiffWindows            = 8;
+        consensus.nStakeVersionInterval        = 6 * 24; // ~1 day
+        consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
+        consensus.nStakeEnabledHeight          = 2000;//141;//consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
+        consensus.nStakeValidationHeight       = 2100;//200;//consensus.nCoinbaseMaturity + (consensus.nTicketPoolSize * 2);
+        consensus.stakeBaseSigScript           = CScript() << 0x73 << 0x57;
+        consensus.nStakeMajorityMultiplier     = 3;
+        consensus.nStakeMajorityDivisor        = 4;
+        //organization related parameters
+        consensus.organizationPkScript         = CScript(); //uint256S("TODO add some predef")
+        consensus.nOrganizationPkScriptVersion = 0;
+        consensus.vBlockOneLedger              = {}; //TODO update with smtg resembling BlockOneLedgerRegNet in premine.go 
+
         pchMessageStart[0] = 0xff;
         pchMessageStart[1] = 0xd1;
         pchMessageStart[2] = 0xd6;
@@ -492,7 +521,7 @@ public:
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 
-        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, REGTEST_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
+        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, REGTEST_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
 
         arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> REGTEST_GENESIS_BLOCK_POW_BITS);
 
@@ -517,7 +546,7 @@ public:
 
         // TODO: Update the values below with the nonce from the above mining for the genesis block
         //       This should only be done once, after the mining and prior to production release
-        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, REGTEST_GENESIS_BLOCK_NONCE, REGTEST_GENESIS_BLOCK_NBITS, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
+        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, REGTEST_GENESIS_BLOCK_NONCE, REGTEST_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
 
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
@@ -554,29 +583,6 @@ public:
             0,
             0
         };
-
-        consensus.nMinimumStakeDiff            = 0;//20000;
-        consensus.nTicketPoolSize              = 64;
-        consensus.nTicketsPerBlock             = 5;
-        consensus.nTicketMaturity              = 8;
-        consensus.nTicketExpiry                = 5 * consensus.nTicketPoolSize;
-        consensus.nCoinbaseMaturity            = 16;
-        consensus.nSStxChangeMaturity          = 1;
-        consensus.nTicketPoolSizeWeight        = 4;
-        consensus.nStakeDiffAlpha              = 1;
-        consensus.nStakeDiffWindowSize         = 8;
-        consensus.nStakeDiffWindows            = 8;
-        consensus.nStakeVersionInterval        = 6 * 24; // ~1 day
-        consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight          = 2000;//141;//consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
-        consensus.nStakeValidationHeight       = 2100;//200;//consensus.nCoinbaseMaturity + (consensus.nTicketPoolSize * 2);
-        consensus.stakeBaseSigScript           = CScript() << 0x73 << 0x57;
-        consensus.nStakeMajorityMultiplier     = 3;
-        consensus.nStakeMajorityDivisor        = 4;
-        //organization related parameters
-        consensus.organizationPkScript         = CScript(); //uint256S("TODO add some predef")
-        consensus.nOrganizationPkScriptVersion = 0;
-        consensus.vBlockOneLedger              = {}; //TODO update with smtg resembling BlockOneLedgerRegNet in premine.go 
     }
 };
 

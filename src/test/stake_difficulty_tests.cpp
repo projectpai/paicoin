@@ -40,12 +40,9 @@ struct EstimateSDiffTest
 
 static void loopTicketInfo(CChain& fakeChain, const std::vector<TicketInfo>& vTicketInfo, const Consensus::Params& params)
 {
-    // const auto& stakeEnabledHeight = params.nStakeEnabledHeight;
     const auto& stakeValidationHeight = params.nStakeValidationHeight;
     const auto& ticketMaturity = params.nTicketMaturity;
-    // const auto& ticketExpiry = params.nTicketExpiry;
     const auto& ticketsPerBlock = params.nTicketsPerBlock;
-    // const auto& maxFreshTicketsPerBlock = params.nMaxFreshStakePerBlock;
 
     // immatureTickets track which height the purchased tickets will
     // mature and thus be eligible for admission to the live ticket
@@ -274,30 +271,30 @@ BOOST_AUTO_TEST_CASE(get_next_required_stake_diff_MAIN)
             291317641,
         },
         // NOTE: our SubsidyHalvingInterval is much larger than Decred's SubsidyReductionInterval
-        // these numbers would never work, we need to come up with an entire different set
-        // {
-        //     // Next retarget is at 4176.  Post stake validation
-        //     // height.
-        //     "29th retarget interval, 100% demand",
-        //     {
-        //         {256, 0, minStakeDiff},   // 256
-        //         {2047, 20, minStakeDiff}, // 2303
-        //         {144, 20, 208418769},     // 2447
-        //         {144, 20, 231326567},     // 2591
-        //         {144, 20, 272451490},     // 2735
-        //         {144, 20, 339388424},     // 2879
-        //         {144, 20, 445827839},     // 3023
-        //         {144, 20, 615949254},     // 3167
-        //         {144, 20, 892862990},     // 3311
-        //         {144, 20, 1354989669},    // 3455
-        //         {144, 20, 2148473276},    // 3599
-        //         {144, 20, 3552797658},    // 3743
-        //         {144, 20, 6116808441},    // 3887
-        //         {144, 20, 10947547379},   // 4031
-        //         {144, 20, 20338554623},   // 4175
-        //     },
-        //     22097687698,
-        // },
+        // we changed some of the values
+        {
+            // Next retarget is at 4176.  Post stake validation
+            // height.
+            "29th retarget interval, 100% demand",
+            {
+                {256, 0, minStakeDiff},   // 256
+                {2047, 20, minStakeDiff}, // 2303
+                {144, 20, 208418769},     // 2447
+                {144, 20, 231326567},     // 2591
+                {144, 20, 272451490},     // 2735
+                {144, 20, 339388424},     // 2879
+                {144, 20, 445827839},     // 3023
+                {144, 20, 615949254},     // 3167
+                {144, 20, 892862990},     // 3311
+                {144, 20, 1354989669},    // 3455
+                {144, 20, 2148473276},    // 3599
+                {144, 20, 3552797658},    // 3743
+                {144, 20, 6116808441},    // 3887
+                {144, 20, 10947547379},   // 4031
+                {144, 20, 20338554623},   // 4175
+            },
+            38776057578/*22097687698*/,
+        },
         {
             // Next retarget is at 4176.  Post stake validation
             // height.
@@ -309,32 +306,32 @@ BOOST_AUTO_TEST_CASE(get_next_required_stake_diff_MAIN)
             minStakeDiff,
         },
         // NOTE: our SubsidyHalvingInterval is much larger than Decred's SubsidyReductionInterval
-        // these numbers would never work, we need to come up with an entire different set
-        // {
-        //     // Next retarget is at 4464.  Post stake validation
-        //     // height.
-        //     "31st retarget interval, waning demand",
-        //     {
-        //         {256, 0, minStakeDiff},   // 256
-        //         {2047, 20, minStakeDiff}, // 2303
-        //         {144, 20, 208418769},     // 2447
-        //         {144, 20, 231326567},     // 2591
-        //         {144, 20, 272451490},     // 2735
-        //         {144, 20, 339388424},     // 2879
-        //         {144, 20, 445827839},     // 3023
-        //         {144, 20, 615949254},     // 3167
-        //         {144, 20, 892862990},     // 3311
-        //         {144, 20, 1354989669},    // 3455
-        //         {144, 20, 2148473276},    // 3599
-        //         {144, 20, 3552797658},    // 3743
-        //         {144, 13, 6116808441},    // 3887
-        //         {144, 0, 10645659768},    // 4031
-        //         {144, 0, 18046712136},    // 4175
-        //         {144, 0, 22097687698},    // 4319
-        //         {144, 0, 22152524112},    // 4463
-        //     },
-        //     22207360526,
-        // },
+        // we changed some of the values
+        {
+            // Next retarget is at 4464.  Post stake validation
+            // height.
+            "31st retarget interval, waning demand",
+            {
+                {256, 0, minStakeDiff},   // 256
+                {2047, 20, minStakeDiff}, // 2303
+                {144, 20, 208418769},     // 2447
+                {144, 20, 231326567},     // 2591
+                {144, 20, 272451490},     // 2735
+                {144, 20, 339388424},     // 2879
+                {144, 20, 445827839},     // 3023
+                {144, 20, 615949254},     // 3167
+                {144, 20, 892862990},     // 3311
+                {144, 20, 1354989669},    // 3455
+                {144, 20, 2148473276},    // 3599
+                {144, 20, 3552797658},    // 3743
+                {144, 13, 6116808441},    // 3887
+                {144, 0, 10645659768},    // 4031
+                {144, 0, 18046712136},    // 4175
+                {144, 0, 30264574684/*22097687698*/}, // 4319
+                {144, 0, 49999799442/*22152524112*/}, // 4463
+            },
+            81751984465/*22207360526*/,
+        },
     };
 
     CalculateSDiffLoop(tests, params);
@@ -483,31 +480,31 @@ BOOST_AUTO_TEST_CASE(estimate_next_stake_diff_MAIN)
             true,
             291317641,
         },
-        // {
-        //     // Next retarget is at 4176.  Post stake validation
-        //     // height.
-        //     "29th retarget interval, 100% demand, 10th block",
-        //     {
-        //         {256, 0, minStakeDiffMainNet},   // 256
-        //         {2047, 20, minStakeDiffMainNet}, // 2303
-        //         {144, 20, 208418769},            // 2447
-        //         {144, 20, 231326567},            // 2591
-        //         {144, 20, 272451490},            // 2735
-        //         {144, 20, 339388424},            // 2879
-        //         {144, 20, 445827839},            // 3023
-        //         {144, 20, 615949254},            // 3167
-        //         {144, 20, 892862990},            // 3311
-        //         {144, 20, 1354989669},           // 3455
-        //         {144, 20, 2148473276},           // 3599
-        //         {144, 20, 3552797658},           // 3743
-        //         {144, 20, 6116808441},           // 3887
-        //         {144, 20, 10947547379},          // 4031
-        //         {10, 20, 20338554623},           // 4041
-        //     },
-        //     0,
-        //     true,
-        //     22097687698,
-        // },
+        {
+            // Next retarget is at 4176.  Post stake validation
+            // height.
+            "29th retarget interval, 100% demand, 10th block",
+            {
+                {256, 0, minStakeDiffMainNet},   // 256
+                {2047, 20, minStakeDiffMainNet}, // 2303
+                {144, 20, 208418769},            // 2447
+                {144, 20, 231326567},            // 2591
+                {144, 20, 272451490},            // 2735
+                {144, 20, 339388424},            // 2879
+                {144, 20, 445827839},            // 3023
+                {144, 20, 615949254},            // 3167
+                {144, 20, 892862990},            // 3311
+                {144, 20, 1354989669},           // 3455
+                {144, 20, 2148473276},           // 3599
+                {144, 20, 3552797658},           // 3743
+                {144, 20, 6116808441},           // 3887
+                {144, 20, 10947547379},          // 4031
+                {10, 20, 20338554623},           // 4041
+            },
+            0,
+            true,
+            38771084217/*22097687698*/,
+        },
         {
             // Next retarget is at 4176.  Post stake validation
             // height.
@@ -521,33 +518,33 @@ BOOST_AUTO_TEST_CASE(estimate_next_stake_diff_MAIN)
             false,
             minStakeDiffMainNet,
         },
-        // {
-        //     // Next retarget is at 4464.  Post stake validation
-        //     // height.
-        //     "31st retarget interval, waning demand, 117th block",
-        //     {
-        //         {256, 0, minStakeDiffMainNet},   // 256
-        //         {2047, 20, minStakeDiffMainNet}, // 2303
-        //         {144, 20, 208418769},            // 2447
-        //         {144, 20, 231326567},            // 2591
-        //         {144, 20, 272451490},            // 2735
-        //         {144, 20, 339388424},            // 2879
-        //         {144, 20, 445827839},            // 3023
-        //         {144, 20, 615949254},            // 3167
-        //         {144, 20, 892862990},            // 3311
-        //         {144, 20, 1354989669},           // 3455
-        //         {144, 20, 2148473276},           // 3599
-        //         {144, 20, 3552797658},           // 3743
-        //         {144, 13, 6116808441},           // 3887
-        //         {144, 0, 10645659768},           // 4031
-        //         {144, 0, 18046712136},           // 4175
-        //         {144, 0, 22097687698},           // 4319
-        //         {117, 0, 22152524112},           // 4436
-        //     },
-        //     0,
-        //     false,
-        //     22207360526,
-        // },
+        {
+            // Next retarget is at 4464.  Post stake validation
+            // height.
+            "31st retarget interval, waning demand, 117th block",
+            {
+                {256, 0, minStakeDiffMainNet},   // 256
+                {2047, 20, minStakeDiffMainNet}, // 2303
+                {144, 20, 208418769},            // 2447
+                {144, 20, 231326567},            // 2591
+                {144, 20, 272451490},            // 2735
+                {144, 20, 339388424},            // 2879
+                {144, 20, 445827839},            // 3023
+                {144, 20, 615949254},            // 3167
+                {144, 20, 892862990},            // 3311
+                {144, 20, 1354989669},           // 3455
+                {144, 20, 2148473276},           // 3599
+                {144, 20, 3552797658},           // 3743
+                {144, 13, 6116808441},           // 3887
+                {144, 0, 10645659768},           // 4031
+                {144, 0, 18046712136},           // 4175
+                {144, 0, 30264574684/*22097687698*/}, // 4319
+                {117, 0, 49999799442/*22152524112*/}, // 4436
+            },
+            0,
+            false,
+            81751984465/*22207360526*/,
+        },
     };
 
     EstimateSDiffLoop(tests, params);
@@ -572,19 +569,17 @@ BOOST_FIXTURE_TEST_CASE(estimate_next_stake_diff_TEST, TestingSetup_TEST)
     const auto& testNetParams = Params().GetConsensus();
     const auto& minStakeDiffTestNet = testNetParams.nMinimumStakeDiff;
     const auto& tests = std::vector<EstimateSDiffTest>{
-        // TODO this returns the nStakeDiff of the genesis block which in our case is 
-        //      initialized with zero
-        // {
-        //     // Regardless of claiming tickets will be purchased, the
-        //     // resulting stake difficulty should be the minimum
-        //     // because the first retarget is before the start
-        //     // height.
-        //     "genesis block",
-        //     {{0, 0, minStakeDiffTestNet}},
-        //     2860,
-        //     false,
-        //     minStakeDiffTestNet,
-        // },
+        {
+            // Regardless of claiming tickets will be purchased, the
+            // resulting stake difficulty should be the minimum
+            // because the first retarget is before the start
+            // height.
+            "genesis block",
+            {{0, 0, minStakeDiffTestNet}},
+            2860,
+            false,
+            minStakeDiffTestNet,
+        },
         {
             // Next retarget is at 144.  Regardless of claiming
             // tickets will be purchased, the resulting stake
@@ -800,7 +795,6 @@ BOOST_FIXTURE_TEST_CASE(estimate_next_stake_diff_TEST, TestingSetup_TEST)
     };
 
     EstimateSDiffLoop(tests, testNetParams);
-
 }
 
 BOOST_AUTO_TEST_SUITE_END()

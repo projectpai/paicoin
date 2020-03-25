@@ -162,13 +162,16 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("bits", strprintf("%08x", blockindex->nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-    result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
-    result.push_back(Pair("votebits", strprintf("%08x", blockindex->nVoteBits)));
-    result.push_back(Pair("ticketpoolsize", strprintf("%08x", blockindex->nTicketPoolSize)));
-    if (blockindex->pstakeNode != nullptr)
-        result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
-    result.push_back(Pair("freshstake", blockindex->nFreshStake));
-    result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
+    // if (blockindex->pstakeNode != nullptr)
+    //     result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
+    if (IsHybridConsensusForkEnabled(blockindex, Params().GetConsensus())) {
+        result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
+        result.push_back(Pair("votebits", strprintf("%08x", blockindex->nVoteBits)));
+        result.push_back(Pair("ticketpoolsize", strprintf("%08x", blockindex->nTicketPoolSize)));
+        result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->ticketLotteryState)));
+        result.push_back(Pair("freshstake", blockindex->nFreshStake));
+        result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
+    }
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
@@ -213,13 +216,18 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-    result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
-    result.push_back(Pair("votebits", strprintf("%08x", blockindex->nVoteBits)));
-    result.push_back(Pair("ticketpoolsize", strprintf("%08x", blockindex->nTicketPoolSize)));
-    if (blockindex->pstakeNode != nullptr)
-        result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
-    result.push_back(Pair("freshstake", blockindex->nFreshStake));
-    result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
+    // if (blockindex->pstakeNode != nullptr)
+    //     result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
+    // result.push_back(Pair("freshstake", blockindex->nFreshStake));
+    // result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
+    if (IsHybridConsensusForkEnabled(blockindex, Params().GetConsensus())) {
+        result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
+        result.push_back(Pair("votebits", strprintf("%08x", blockindex->nVoteBits)));
+        result.push_back(Pair("ticketpoolsize", strprintf("%08x", blockindex->nTicketPoolSize)));
+        result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->ticketLotteryState)));
+        result.push_back(Pair("freshstake", blockindex->nFreshStake));
+        result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
+    }
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));

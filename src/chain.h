@@ -464,6 +464,7 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+        READWRITE(nStakeDifficulty);
     }
 
     uint256 GetBlockHash() const

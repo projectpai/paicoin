@@ -9,6 +9,7 @@
 #include "chain.h"
 #include "primitives/block.h"
 #include "uint256.h"
+#include "consensus/consensus.h"
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {
@@ -99,7 +100,7 @@ int64_t CalculateNextRequiredStakeDifficulty(const CBlockIndex* pindexLast, cons
         nextHeight = pindexLast->nHeight + 1;
     }
 
-    const auto& stakeDiffStartHeight = params.nCoinbaseMaturity + 1;
+    const auto& stakeDiffStartHeight = COINBASE_MATURITY + 1;
     if (nextHeight < stakeDiffStartHeight) {
         return params.nMinimumStakeDiff;
     }
@@ -298,7 +299,7 @@ int64_t EstimateNextStakeDifficulty(const CBlockIndex* pindexLast, int newTicket
 
     // Stake difficulty before any tickets could possibly be purchased is
     // the minimum value.
-    const auto& stakeDiffStartHeight = int64_t(params.nCoinbaseMaturity) + 1;
+    const auto& stakeDiffStartHeight = int64_t(COINBASE_MATURITY) + 1;
     if (nextRetargetHeight < stakeDiffStartHeight) {
         return params.nMinimumStakeDiff;
     }
