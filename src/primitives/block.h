@@ -67,7 +67,13 @@ public:
             READWRITE(FLATDATA(extraData));
             READWRITE(nStakeVersion);
         }
+        else if (ser_action.ForRead())
+        {
+           SetReadStakeDefaultBeforeFork(); 
+        }
     }
+
+    void SetReadStakeDefaultBeforeFork();
 
     void SetNull()
     {
