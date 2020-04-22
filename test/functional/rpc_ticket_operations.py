@@ -115,8 +115,9 @@ class TicketOperations(PAIcoinTestFramework):
         # # getticketpoolvalue tests:
         # # 1. valid parameters
         x = self.nodes[0].getticketpoolvalue()
-        ticketPrice = 0.00034500 # TODO replace this hardcoded value with a calculated one once it is available also in purchaseticket
-        assert(float(x) == ticketPrice * len(txs[0])) # all live tickets have payed the same price
+        ticketPrice = self.nodes[0].getstakedifficulty()
+        currentTicketPrice = float(ticketPrice["current"])
+        assert(float(x) == currentTicketPrice * len(txs[0])) # all live tickets have payed the same price
         # # 2. invalid parameters
         assert_raises_rpc_error(-1, None, self.nodes[0].getticketpoolvalue, 'param')
         assert_raises_rpc_error(-1, None, self.nodes[0].getticketpoolvalue, "param1", "param2")
@@ -176,9 +177,9 @@ class TicketOperations(PAIcoinTestFramework):
         # ticketvwap tests:
         # 1. valid parameters
         x = self.nodes[0].ticketvwap()
-        assert(x == 0.000)
+        assert(float(x) == currentTicketPrice)
         x = self.nodes[0].ticketvwap(10)    # set start
-        assert(x == 0.000)
+        assert(float(x) == currentTicketPrice)
         x = self.nodes[0].ticketvwap(10, 20) # set start and stop
         assert(x == 0.000)
         # TODO make this test have valid input and output once the command is implemented
@@ -229,17 +230,25 @@ class TicketOperations(PAIcoinTestFramework):
         assert(x == { "tickets": [] })
 
         # build the chain up to nStakeValidationHeight - 1
-        nMaxFreshStakePerBlock = 11
         txs = []
         for blkidx in range(nStakeEnabledHeight + 2 , nStakeValidationHeight):
-            print("purchase ", nMaxFreshStakePerBlock, " at ", blkidx)
-            txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, nMaxFreshStakePerBlock))
-            assert(len(txs[-1])==nMaxFreshStakePerBlock)
+            # purchase tickets until an empirical found blockindex
+            # we cannot purchase after that because the ticketPrice increases too much and we do not 
+            # support yet multiple funding inputs to our ticket purchasing transactions
+            # TODO try to go further when multiple inputs are supported
+            if blkidx < 2067:
+                # funds = self.nodes[0].getbalance()
+                # print("funds:", funds)
+                # ticketPrice = self.nodes[0].getstakedifficulty()
+                # print("ticketPrice", ticketPrice)
+                print("purchase", nMaxFreshStakePerBlock, "at", blkidx)
+                txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, nMaxFreshStakePerBlock))
+                assert(len(txs[-1])==nMaxFreshStakePerBlock)
 
-            x = self.nodes[0].ticketfeeinfo() # we should see the fee info for mempool before calling generate
-            assert(x['feeinfomempool']['number'] == nMaxFreshStakePerBlock)
-            assert(len(x['feeinfoblocks']) == 0)
-            assert(len(x['feeinfowindows']) == 0)
+                x = self.nodes[0].ticketfeeinfo() # we should see the fee info for mempool before calling generate
+                assert(x['feeinfomempool']['number'] == nMaxFreshStakePerBlock)
+                assert(len(x['feeinfoblocks']) == 0)
+                assert(len(x['feeinfowindows']) == 0)
             
             self.nodes[0].generate(1)
             self.sync_all()
@@ -255,13 +264,8 @@ class TicketOperations(PAIcoinTestFramework):
 
         nHeightExpiredBecomeMissed = nTicketExpiry + nStakeEnabledHeight
         assert(nHeightExpiredBecomeMissed > nStakeValidationHeight)
-        nMaxFreshStakePerBlock = 2
 
         for blkidx in range(nStakeValidationHeight, nHeightExpiredBecomeMissed + 10):
-            # purchase tickets
-            print("purchase ", nMaxFreshStakePerBlock, " at ", blkidx)
-            txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, nMaxFreshStakePerBlock))
-            assert(len(txs[-1])==nMaxFreshStakePerBlock)
             # winners vote
             winners = self.nodes[0].winningtickets()
             assert(len(winners['tickets'])==nTicketsPerBlock)

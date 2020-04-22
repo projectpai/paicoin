@@ -21,18 +21,18 @@ from test_framework.mininode import COIN
 class WalletTicketOperations(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
-        self.num_nodes = 2
+        self.num_nodes = 1
 
-    def setup_network(self, split=False):
-        super().setup_network()
-        connect_nodes_bi(self.nodes,0,1)
+    # def setup_network(self, split=False):
+    #     super().setup_network()
+    #     connect_nodes_bi(self.nodes,0,1)
 
     def getOutpointValue(self, node_idx, outputPoint):
         rawtx = self.nodes[node_idx].getrawtransaction(outputPoint[0])
         decoded = self.nodes[node_idx].decoderawtransaction(rawtx)
         return decoded["vout"][outputPoint[1]]["value"]
 
-    def validatePurchaseTicketTx(self, txids, node_idx, ticketAddress = None):
+    def validatePurchaseTicketTx(self, txids, node_idx, minTicketPrice, ticketAddress = None):
         for txid in txids:
             tx = self.nodes[node_idx].gettransaction(txid)
             decoded = self.nodes[node_idx].decoderawtransaction(tx["hex"])
@@ -51,7 +51,7 @@ class WalletTicketOperations(PAIcoinTestFramework):
 
             stakePaymentOut = decoded["vout"][1]
             # assert(payedValue > stakePaymentOut["value"])
-            assert(stakePaymentOut["value"] > 0.0) # TODO this must be equal to ticket price: estimatestakediff
+            assert(stakePaymentOut["value"] >= minTicketPrice)
             assert(stakePaymentOut["scriptPubKey"]["type"] == "pubkeyhash")
             assert(len(stakePaymentOut["scriptPubKey"]["addresses"]))
             if ticketAddress != None:
@@ -80,27 +80,9 @@ class WalletTicketOperations(PAIcoinTestFramework):
         #prepare some coins
         self.nodes[0].generate(1)
         self.sync_all()
-        self.nodes[1].generate(201)
-        self.sync_all()
-        print( self.nodes[1].getbalance())
         address = self.nodes[0].getnewaddress()
-        # TODO investigate why we need so much coin
-        self.nodes[1].sendtoaddress(address,15000)
-        self.nodes[1].sendtoaddress(address,15000)
-        self.nodes[1].sendtoaddress(address,15000)
-        self.nodes[1].sendtoaddress(address,15000)
-        self.nodes[1].sendtoaddress(address,15000)
-        self.nodes[1].sendtoaddress(address,15000)
-        self.nodes[1].sendtoaddress(address,15000)
-        self.nodes[1].sendtoaddress(address,15000)
-        self.nodes[1].sendtoaddress(address,15000)
-        self.nodes[1].generate(1)
+        self.nodes[0].generate(201)
         self.sync_all()
-        self.nodes[0].generate(1)
-        self.sync_all()
-        print( self.nodes[1].getbalance())
-        print(self.nodes[0].getbalance())
-
 
         # getticketfee tests:
         # 1. valid parameters
@@ -110,65 +92,60 @@ class WalletTicketOperations(PAIcoinTestFramework):
         # 2. invalid parameters
         assert_raises_rpc_error(-1, None, self.nodes[0].getticketfee, "param1")
         assert_raises_rpc_error(-1, None, self.nodes[0].getticketfee, "param1", "param2")
+        
+        estimate = self.nodes[0].estimatestakediff()
 
         # purchaseticket tests:
         # 1. valid parameters
         txids = self.nodes[0].purchaseticket("", 1.5)
         assert(len(txids) == 1)
-        self.validatePurchaseTicketTx(txids, 0)
+        self.validatePurchaseTicketTx(txids, 0, estimate["min"])
         total_purchased_tickets = txids
-        print(self.nodes[0].getbalance())
 
         txids = self.nodes[0].purchaseticket("default", 2.3)
         assert(len(txids) == 1)
-        self.validatePurchaseTicketTx(txids, 0)
+        self.validatePurchaseTicketTx(txids, 0, estimate["min"])
         total_purchased_tickets.extend(txids)
-        print(self.nodes[0].getbalance())
-        print( self.nodes[1].getbalance())
 
         minconf = 2
         txids = self.nodes[0].purchaseticket("default", 2.3, minconf)
         assert(len(txids) == 1)
-        self.validatePurchaseTicketTx(txids, 0)
+        self.validatePurchaseTicketTx(txids, 0, estimate["min"])
         total_purchased_tickets.extend(txids)
-        print(self.nodes[0].getbalance())
 
         ticketaddr = self.nodes[0].getnewaddress()
         assert(len(txids) == 1)
         txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr)
-        self.validatePurchaseTicketTx(txids, 0, ticketaddr)
+        self.validatePurchaseTicketTx(txids, 0, estimate["min"], ticketaddr)
         total_purchased_tickets.extend(txids)
-        print(self.nodes[0].getbalance())
 
         txids = self.nodes[0].purchaseticket("default", 2.3, 1, "") # a new ticketaddr is generated automatically
         assert(len(txids) == 1)
-        self.validatePurchaseTicketTx(txids, 0)
+        self.validatePurchaseTicketTx(txids, 0, estimate["min"])
         total_purchased_tickets.extend(txids)
-        print(self.nodes[0].getbalance())
 
         tickets_to_buy = 2
         txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr, tickets_to_buy) # buy multiple tickets
         assert(len(txids) == 2)
-        self.validatePurchaseTicketTx(txids, 0, ticketaddr)
+        self.validatePurchaseTicketTx(txids, 0, estimate["min"], ticketaddr)
         total_purchased_tickets.extend(txids)
 
         expiry = 500
         tickets_to_buy = 1
         txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr, tickets_to_buy, "", 0.0, expiry)
         assert(len(txids) == 1)
-        self.validatePurchaseTicketTx(txids, 0, ticketaddr)
+        self.validatePurchaseTicketTx(txids, 0, estimate["min"], ticketaddr)
         total_purchased_tickets.extend(txids)
 
         ticketFeeRate = 0.5 # TODO this is unused at the moment, update this value to a valid one
         txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr, tickets_to_buy, "", 0.0, expiry, "unused", ticketFeeRate)
         assert(len(txids) == 1)
-        self.validatePurchaseTicketTx(txids, 0, ticketaddr)
+        self.validatePurchaseTicketTx(txids, 0, estimate["min"], ticketaddr)
         total_purchased_tickets.extend(txids)
 
         # 2. invalid parameters
         assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket)
-        # TODO adjust the spendlimit value using estimatestakediff, now it uses a hardcoded ticketPrice
-        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket,"", 0.00034) # ticket price above spend limit (-8)
+        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket,"", 0.95 * float(estimate["min"])) # ticket price above spend limit (-8)
         assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1")
         assert_raises_rpc_error(-3, None, self.nodes[0].purchaseticket, "param1", "param2")
         assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1", 1, "param2")

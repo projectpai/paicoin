@@ -3173,15 +3173,6 @@ bool CheckProofOfStake(const CBlock& block, int64_t posLimit)
     return true;
 }
 
-CAmount calcNextRequiredStakeDifficulty(const CBlock& block, const CBlockIndex *pindexPrev, const CChainParams& params)
-{
-    int blockHeight = pindexPrev->nHeight + 1;
-    if (blockHeight >= params.GetConsensus().nStakeValidationHeight)
-        return 1 * COIN;
-    else
-        return params.GetConsensus().nMinimumStakeDiff;
-}
-
 static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, int nBlockHeight, bool fCheckPOW = true)
 {
     // Check proof of work matches claimed amount
@@ -3396,6 +3387,12 @@ bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& pa
     return (VersionBitsState(pindexPrev, params, Consensus::DEPLOYMENT_SEGWIT, versionbitscache) == THRESHOLD_ACTIVE);
 }
 
+bool IsHybridConsensusForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
+{
+    AssertLockHeld(cs_main);
+    return (params.HybridConsensusForkTime >= 0 && pindexPrev && pindexPrev->GetMedianTimePast() >= params.HybridConsensusForkTime && pindexPrev->nHeight >= params.BIP65Height);
+}
+
 // Compute at which vout of the block's coinbase transaction the witness
 // commitment occurs, or -1 if not found.
 static int GetWitnessCommitmentIndex(const CBlock& block)
@@ -3459,18 +3456,21 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
 {
     assert(pindexPrev != nullptr);
     const int nHeight = pindexPrev->nHeight + 1;
+    const Consensus::Params& consensusParams = params.GetConsensus();
+    const bool hybridForkEnabled = IsHybridConsensusForkEnabled(pindexPrev, consensusParams);
 
     // Check proof of work
-    const Consensus::Params& consensusParams = params.GetConsensus();
     if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams))
         return state.DoS(100, false, REJECT_INVALID, "bad-diffbits", false, "incorrect proof of work");
 
     // Ensure the stake difficulty specified in the block header matches the calculated difficulty based on the previous block
     // and difficulty retarget rules.
-    CAmount expectedStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev, params.GetConsensus());
-    if (block.nStakeDifficulty != expectedStakeDifficulty) {
-        auto report = strprintf("incorrect stake difficulty in a block: expected %.2f, found %.2f", expectedStakeDifficulty / (float)COIN, block.nStakeDifficulty / (float)COIN);
-        return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, report);
+    if (hybridForkEnabled) {
+        CAmount expectedStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev, params.GetConsensus());
+        if (block.nStakeDifficulty != expectedStakeDifficulty) {
+            auto report = strprintf("incorrect stake difficulty in a block: expected %.2f, found %.2f", expectedStakeDifficulty / (float)COIN, block.nStakeDifficulty / (float)COIN);
+            return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, report);
+        }
     }
 
     auto expectedStakeVersion = calcStakeVersion(pindexPrev, params.GetConsensus());
@@ -3510,6 +3510,13 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     // Check timestamp
     if (block.GetBlockTime() > nAdjustedTime + MAX_FUTURE_BLOCK_TIME)
         return state.Invalid(false, REJECT_INVALID, "time-too-new", "block timestamp too far in the future");
+
+    if (hybridForkEnabled) {
+        if (block.nVersion & HARDFORK_VERSION_BIT)
+            return true;
+        return state.Invalid(false, REJECT_OBSOLETE, strprintf("bad-version(0x%08x)", block.nVersion),
+                             strprintf("rejected nVersion=0x%08x block", block.nVersion));
+    }
 
     // Reject outdated version blocks when 95% (75% on testnet) of the network has upgraded:
     // check for version 2, 3 and 4 upgrades

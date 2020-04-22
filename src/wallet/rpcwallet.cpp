@@ -3204,14 +3204,7 @@ UniValue purchaseticket(const JSONRPCRequest& request)
     if (nExpiry > 0  && nExpiry <= chainActive.Height() + 1)
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "expiry height must be above next block height");
 
-    // TODO Calculate the current ticket price.
-    //ticketPrice, err := w.NextStakeDifficulty()
     auto ticketPrice = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), Params().GetConsensus());
-    if (ticketPrice == 0) {
-        // the above still yields 0 because of nMinimumStakeDiff
-        // TODO remove this if after setting that above zero
-        ticketPrice = CAmount{34500};
-    }
 
     // Ensure the ticket price does not exceed the spend limit if set.
     if (ticketPrice > nSpendLimit)

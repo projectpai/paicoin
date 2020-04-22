@@ -394,7 +394,7 @@ CAmount Generator::NextRequiredStakeDifficulty() const
 {
     CBlock dummyBlock;
     const auto& ticketPrice = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), Params().GetConsensus());
-    return ticketPrice == 0 ? 2e4 : ticketPrice; // nMinimumStakeDiff is set to 0 until CBlockHeader correctly serializes nStakeDifficulty
+    return ticketPrice;
 }
 
 void Generator::ReplaceVoteBits(CTransactionRef& tx, uint32_t voteBits) const
