@@ -34,7 +34,17 @@ Build PAI Coin Core
         git clone https://github.com/projectpai/paicoin
         cd paicoin
 
-2.  Build paicoin-core:
+2. If you have Catalina 10.15 or a higher version, then you must run this command:
+
+	If you have XCode installed:
+
+	export CPATH=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+
+	If you have only the command-line tools:
+
+	CPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/
+
+3.  Build paicoin-core:
 
     Configure and build the headless paicoin binaries as well as the GUI (if Qt is found).
 
@@ -47,11 +57,11 @@ Build PAI Coin Core
         CONFIG_SITE=`pwd`/depends/`build-aux/config.guess`/share/config.site ./configure
         make
 
-3.  It is recommended to build and run the unit tests:
+4.  It is recommended to build and run the unit tests:
 
         make check
 
-4.  You can also create a .dmg that contains the .app bundle (optional):
+5.  You can also create a .dmg that contains the .app bundle (optional):
 
         make deploy
 
