@@ -332,6 +332,8 @@ libpaicoin_consensus_a_SOURCES = \
   stake/stakenode.h \
   stake/staketx.cpp \
   stake/staketx.h \
+  stake/stakeversion.cpp \
+  stake/stakeversion.h \
   tinyformat.h \
   uint256.cpp \
   uint256.h \

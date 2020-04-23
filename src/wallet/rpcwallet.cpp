@@ -3166,6 +3166,15 @@ UniValue purchaseticket(const JSONRPCRequest& request)
     if (!request.params[3].isNull())
         ticketAddress = request.params[3].get_str();
 
+    if (!IsValidDestination(ticketAddress)) {
+        // Generate a new key that is added to wallet
+        CPubKey newKey;
+        if (!pwallet->GetKeyFromPool(newKey)) {
+            throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+        }
+        ticketAddress = newKey.GetID();
+    }
+
     // Number of tickets
     int nNumTickets{1};
     if (!request.params[4].isNull())
@@ -3249,6 +3258,7 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
     if (!request.params[2].isNull()) {
         if (!request.params[2].isStr())
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid passphrase.");
+
 
         passphrase.clear();
         passphrase.reserve(100);
