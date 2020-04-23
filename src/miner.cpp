@@ -182,11 +182,14 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     }
 
     // Get the newly purchased tickets
+    CTxMemPool::setEntries ticketAncestors;
     // if (nHeight >= chainparams.GetConsensus().nStakeEnabledHeight) 
     {
         auto& tx_class_index = mempool.mapTx.get<tx_class>();
         auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
         int nNewTickets = 0;
+        uint64_t nNoLimit = std::numeric_limits<uint64_t>::max();
+        std::string dummy;
         for (auto tickettxiter = existingTickets.first; tickettxiter != existingTickets.second; ++tickettxiter) {
             if (nNewTickets >= chainparams.GetConsensus().nMaxFreshStakePerBlock) //new ticket purchases not more than max allowed in block
                 break;
@@ -194,6 +197,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             auto txiter = mempool.mapTx.project<0>(tickettxiter);
             AddToBlock(txiter);
             ++nNewTickets;
+
+            // store all unconfirmed ancestors in order to include them in this block
+            mempool.CalculateMemPoolAncestors(*txiter, ticketAncestors, nNoLimit, nNoLimit, nNoLimit, nNoLimit, dummy, false);
+            onlyUnconfirmed(ticketAncestors);
         }
         pblock->nFreshStake = nNewTickets;
     }
@@ -214,6 +221,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             AddToBlock(txiter);
         }
     }
+
+    // Add all the funding transactions that are in the mempool for the ticket just included
+    // TODO: verify the case where a ticket is funded by other stake transaction spendable output
+    for (auto& ticketIter : ticketAncestors)
+        AddToBlock(ticketIter);
 
     // Decide whether to include witness transactions
     // This is only needed in case the witness softfork activation is reverted
