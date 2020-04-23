@@ -3250,7 +3250,6 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
         if (!request.params[2].isStr())
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid passphrase.");
 
-
         passphrase.clear();
         passphrase.reserve(100);
         passphrase = request.params[2].get_str().c_str();
