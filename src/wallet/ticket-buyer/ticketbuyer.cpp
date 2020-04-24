@@ -20,6 +20,7 @@ CTicketBuyer::~CTicketBuyer()
     if (configured.load())
         ::UnregisterValidationInterface(this);
 
+    stop();
     shouldRun.store(false);
 
     // make sure that the thead doesn't remain

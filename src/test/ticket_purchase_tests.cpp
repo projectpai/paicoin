@@ -37,7 +37,7 @@ public:
     {
         CreateAndProcessBlock({}, GetScriptForRawPubKey(coinbaseKey.GetPubKey()));
         ::bitdb.MakeMock();
-        wallet.reset(new CWallet(std::unique_ptr<CWalletDBWrapper>(new CWalletDBWrapper(&bitdb, "wallet_test.dat"))));
+        wallet.reset(new CWallet(std::unique_ptr<CWalletDBWrapper>(new CWalletDBWrapper(&bitdb, "ticket_purchase_test.dat"))));
         bool firstRun;
         wallet->LoadWallet(firstRun);
         AddKey(*wallet, coinbaseKey);
@@ -883,7 +883,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
     CPubKey vspPubKey;
 
     {
-        LOCK2(cs_main, wallet->cs_wallet);
+        LOCK(wallet->cs_wallet);
         BOOST_CHECK(wallet->GetKeyFromPool(ticketPubKey));
         BOOST_CHECK(wallet->GetKeyFromPool(vspPubKey));
     }
@@ -1029,8 +1029,6 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
     for (size_t i = 0; static_cast<int>(i) < cfg.limit; ++i)
         CheckTicketPurchase(latestTestTxns[1 + i], {TicketContribData(1, vspKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees), TicketContribData(1, ticketKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees)});
 
-    LOCK2(cs_main, wallet->cs_wallet);
-
     tb->stop();
 }
 
@@ -1041,7 +1039,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_encrypted, TicketPurchaseTestingSetup)
     CPubKey vspPubKey;
 
     {
-        LOCK2(cs_main, wallet->cs_wallet);
+        LOCK(wallet->cs_wallet);
         BOOST_CHECK(wallet->GetKeyFromPool(ticketPubKey));
         BOOST_CHECK(wallet->GetKeyFromPool(vspPubKey));
         wallet->EncryptWallet(passphrase);
@@ -1091,8 +1089,6 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_encrypted, TicketPurchaseTestingSetup)
     // TODO: Add amount validation
     for (size_t i = 0; static_cast<int>(i) < cfg.limit; ++i)
         CheckTicketPurchase(latestTestTxns[1 + i], {TicketContribData(1, vspKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees), TicketContribData(1, ticketKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees)});
-
-    LOCK2(cs_main, wallet->cs_wallet);
 
     tb->stop();
 }

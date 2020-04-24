@@ -808,6 +808,10 @@ public:
 
     ~CWallet()
     {
+        if (ticketBuyer.get() != nullptr) {
+            ticketBuyer->stop();
+            ticketBuyer.reset();
+        }
         delete pwalletdbEncryption;
         pwalletdbEncryption = nullptr;
     }
