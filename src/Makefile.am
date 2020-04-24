@@ -139,9 +139,7 @@ PAICOIN_CORE_H = \
   script/sign.h \
   script/standard.h \
   script/ismine.h \
-  stake/stakepoolfee.cpp \
   stake/stakepoolfee.h \
-  stake/stakeversion.cpp \
   stake/stakeversion.h \
   streams.h \
   support/allocators/secure.h \
@@ -194,7 +192,6 @@ libpaicoin_server_a_SOURCES = \
   addrman.cpp \
   bloom.cpp \
   blockencodings.cpp \
-  chain.cpp \
   checkpoints.cpp \
   consensus/tx_verify.cpp \
   httprpc.cpp \
@@ -295,7 +292,6 @@ libpaicoin_consensus_a_SOURCES = \
   arith_uint256.cpp \
   arith_uint256.h \
   chain.cpp \
-  chain.h \
   consensus/merkle.cpp \
   consensus/merkle.h \
   consensus/params.h \
@@ -361,6 +357,7 @@ libpaicoin_common_a_SOURCES = \
   scheduler.cpp \
   script/sign.cpp \
   script/standard.cpp \
+  stake/stakepoolfee.cpp \
   warnings.cpp \
   $(PAICOIN_CORE_H)
 
