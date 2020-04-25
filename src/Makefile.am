@@ -254,6 +254,7 @@ libpaicoin_wallet_a_SOURCES = \
   wallet/ticket-buyer/ticketbuyer.cpp \
   wallet/wallet.cpp \
   wallet/walletdb.cpp \
+  stake/stakepoolfee.cpp \
   $(PAICOIN_CORE_H)
 
 # crypto primitives library
