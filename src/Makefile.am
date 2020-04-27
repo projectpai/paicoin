@@ -288,6 +288,7 @@ libpaicoin_consensus_a_SOURCES = \
   amount.h \
   arith_uint256.cpp \
   arith_uint256.h \
+  chainparams.cpp \
   consensus/merkle.cpp \
   consensus/merkle.h \
   consensus/params.h \
@@ -338,7 +339,6 @@ libpaicoin_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES)
 libpaicoin_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpaicoin_common_a_SOURCES = \
   base58.cpp \
-  chainparams.cpp \
   coins.cpp \
   compressor.cpp \
   core_read.cpp \
