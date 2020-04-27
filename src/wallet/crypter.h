@@ -132,6 +132,7 @@ protected:
     bool EncryptKeys(CKeyingMaterial& vMasterKeyIn);
 
     bool Unlock(const CKeyingMaterial& vMasterKeyIn);
+    bool VerifyMasterKey(const CKeyingMaterial& vMasterKeyIn);
     CryptedKeyMap mapCryptedKeys;
 
 public:

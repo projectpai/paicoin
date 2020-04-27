@@ -131,7 +131,7 @@ CAmount ComputeStdDevAmount(const std::vector<CAmount>& txFees)
 UniValue FormatTxFeesInfo(const std::vector<CAmount>& txFees)
 {
     auto result = UniValue{UniValue::VOBJ};
-    result.pushKV("number", txFees.size());
+    result.pushKV("number", static_cast<int>(txFees.size()));
     if (!txFees.empty()){
         result.pushKV("min", *std::min_element(txFees.cbegin(), txFees.cend()));
         result.pushKV("max", *std::max_element(txFees.cbegin(), txFees.cend()));
@@ -1013,7 +1013,7 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
 
     CCoinsStats stats;
     FlushStateToDisk();
-    if (GetUTXOStats(pcoinsdbview, stats)) {
+    if (GetUTXOStats(dynamic_cast<CCoinsView*>(pcoinsdbview), stats)) {
         ret.push_back(Pair("height", static_cast<int64_t>(stats.nHeight)));
         ret.push_back(Pair("bestblock", stats.hashBlock.GetHex()));
         ret.push_back(Pair("transactions", static_cast<int64_t>(stats.nTransactions)));
@@ -1683,7 +1683,7 @@ UniValue getcoinsupply(const JSONRPCRequest& request)
 
     CCoinsStats stats;
     FlushStateToDisk();
-    if (GetUTXOStats(pcoinsdbview, stats)) {
+    if (GetUTXOStats(dynamic_cast<CCoinsView*>(pcoinsdbview), stats)) {
         ret = ValueFromAmount(stats.nTotalAmount);
     } else {
         throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Unable to read UTXO set");

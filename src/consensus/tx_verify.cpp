@@ -409,8 +409,23 @@ bool checkVoteOrRevokeTicketInputs(const CTransaction& tx, bool vote, CValidatio
             return state.DoS(100, false, REJECT_INVALID, what + "-incorrect-payment-address");
 
         // Check if the payment amount is as expected
+        // Also consider fee limits, if enabled.
         CAmount paymentAmount = CalcContributorRemuneration(contrib.contributedAmount, stakedAmount, subsidy, contributionSum);
-        if (tx.vout[i].nValue != paymentAmount)
+
+        CAmount feeLimit{-1};
+        if (vote && contrib.hasVoteFeeLimits())
+            feeLimit = contrib.voteFeeLimits();
+        if (!vote && contrib.hasRevokeFeeLimits())
+            feeLimit = contrib.revokeFeeLimits();
+
+        if (feeLimit > -1) {
+            CAmount lowLimit{0};
+            if (feeLimit < paymentAmount)
+                lowLimit = paymentAmount - feeLimit;
+            if (tx.vout[i].nValue < lowLimit)
+                return state.DoS(100, false, REJECT_INVALID, what + "-output-pays-less-than-expected");
+        }
+        else if (tx.vout[i].nValue != paymentAmount)
             return state.DoS(100, false, REJECT_INVALID, what + "-bad-payment-amount");
     }
 

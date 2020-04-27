@@ -2043,9 +2043,22 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
     std::vector<PrecomputedTransactionData> txdata;
     txdata.reserve(block.vtx.size()); // Required so that pointers to individual PrecomputedTransactionData don't get invalidated
-    for (unsigned int i = 0; i < block.vtx.size(); i++)
+
+    // the order in which the validation must occur takes into account the fact that
+    // the stake transactions are at the beginning of the block and the ticket purchases
+    // might be funded by regular transactions at the end of the block
+
+    std::vector<unsigned int> reorderedIndexes, reorderedStakes;
+    for (unsigned int i = 0; i < block.vtx.size(); ++i)
+        if (ParseTxClass(*(block.vtx[i])) == TX_Regular)
+            reorderedIndexes.push_back(i);
+        else
+            reorderedStakes.push_back(i);
+    reorderedIndexes.insert(reorderedIndexes.end(), std::make_move_iterator(reorderedStakes.begin()), std::make_move_iterator(reorderedStakes.end()));
+
+    for (unsigned int i = 0; i < reorderedIndexes.size(); i++)
     {
-        const CTransaction &tx = *(block.vtx[i]);
+        const CTransaction &tx = *(block.vtx[reorderedIndexes[i]]);
 
         nInputs += tx.vin.size();
 

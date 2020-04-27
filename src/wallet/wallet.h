@@ -18,6 +18,8 @@
 #include "wallet/crypter.h"
 #include "wallet/walletdb.h"
 #include "wallet/rpcwallet.h"
+#include "utilmemory.h"
+#include "wallet/ticket-buyer/ticketbuyer.h"
 
 #include <algorithm>
 #include <atomic>
@@ -643,6 +645,36 @@ private:
 };
 
 
+class CWalletError {
+public:
+    enum Code {
+        SUCCESSFUL                = 0,
+        TYPE_ERROR                = -3,
+        INVALID_ADDRESS_OR_KEY    = -5,
+        INVALID_PARAMETER         = -8,
+        VERIFY_ERROR              = -25,
+
+        TRANSACTION_ERROR         = VERIFY_ERROR,
+
+        CLIENT_P2P_DISABLED       = -31,
+
+        WALLET_ERROR              = -4,
+        WALLET_INSUFFICIENT_FUNDS = -6,
+        WALLET_KEYPOOL_RAN_OUT    = -12,
+        WALLET_UNLOCK_NEEDED      = -13
+    };
+
+    Code code;
+    std::string message;
+
+    CWalletError() : code(Code::SUCCESSFUL) {}
+
+    void Load(Code code, std::string message) {
+        this->code = code;
+        this->message = message;
+    }
+};
+
 /** 
  * A CWallet is an extension of a keystore, which also maintains a set of transactions and balances,
  * and provides the ability to create new transactions.
@@ -718,6 +750,8 @@ private:
 
     std::unique_ptr<CWalletDBWrapper> dbw;
 
+    std::unique_ptr<CTicketBuyer> ticketBuyer;
+
 public:
     /*
      * Main wallet lock.
@@ -755,19 +789,29 @@ public:
     unsigned int nMasterKeyMaxID;
 
     // Create wallet with dummy database handle
-    CWallet(): dbw(new CWalletDBWrapper())
+    CWallet() :
+        dbw(new CWalletDBWrapper()),
+        ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
+        ticketBuyer = MakeUnique<CTicketBuyer>(this);
         SetNull();
     }
 
     // Create wallet with passed-in database handle
-    explicit CWallet(std::unique_ptr<CWalletDBWrapper> dbw_in) : dbw(std::move(dbw_in))
+    explicit CWallet(std::unique_ptr<CWalletDBWrapper> dbw_in) :
+        dbw(std::move(dbw_in)),
+        ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
+        ticketBuyer = MakeUnique<CTicketBuyer>(this);
         SetNull();
     }
 
     ~CWallet()
     {
+        if (ticketBuyer.get() != nullptr) {
+            ticketBuyer->stop();
+            ticketBuyer.reset();
+        }
         delete pwalletdbEncryption;
         pwalletdbEncryption = nullptr;
     }
@@ -893,6 +937,7 @@ public:
 
     bool Unlock(const SecureString& strWalletPassphrase);
     bool ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase, const SecureString& strNewWalletPassphrase);
+    bool VerifyWalletPassphrase(const SecureString& strWalletPassphrase);
     bool EncryptWallet(const SecureString& strWalletPassphrase);
 
     void GetKeyBirthTimes(std::map<CTxDestination, int64_t> &mapKeyBirth) const;
@@ -954,6 +999,9 @@ public:
     static CFeeRate minTxFee;
     static CFeeRate fallbackFee;
     static CFeeRate m_discard_rate;
+
+    // wallet's ticket fee rate
+    CFeeRate ticketFeeRate;
 
     bool NewKeyPool();
     size_t KeypoolCountExternalKeys();
@@ -1104,6 +1152,51 @@ public:
        caller must ensure the current wallet version is correct before calling
        this function). */
     bool SetHDMasterKey(const CPubKey& key);
+
+    /* Creates a transaction that is gathering sparse funds from the wallet in order to
+       provide unique UTXOs to all the tickets being purchased in one batch.
+       - fromAccount: The account to use for funding
+       - ticketPrice: The amount needed for each ticket as its staked value
+       - ticketFee: The amount needed for each ticket as a transaction fee
+       - vspFee: The VSP fee (optional, default =  0)
+       - numTickets: The number of tickets to purchase (optional, default = 1)
+       - feeRate: The transaction fee rate (PAI/kB) to use (overrides current fees if larger than them) (optional, default = -1)
+       In case of success, the wallet transaction's hash is returned.
+       In case of error, the wallet transaction's hash is not valid. Check the error object for the reason. */
+    std::pair<uint256, CWalletError>
+    CreateTicketPurchaseSplitTx(std::string fromAccount,
+                                CAmount ticketPrice,
+                                CAmount ticketFee,
+                                CAmount vspFee = 0,
+                                int numTickets = 1,
+                                CAmount feeRate = -1);
+
+    /* Initiates the purchase of tickets
+       It funds and creates the corresponding transactions, as well as it sends them to the memory pool.
+       - fromAccount: The account to use for purchase
+       - spendlimit: Limit on the amount to spend on ticket
+       - minConf: Minimum number of block confirmations required
+       - ticketAddress: Override the ticket address to which voting rights are given
+       - numTickets: The number of tickets to purchase
+       - vspAddress: The address to pay stake pool fees to
+       - vspFeePercent: The percent from the voter subsidy to pay to the stake pool
+       - expiry: Height at which the purchase tickets expire
+       - feeRate: The transaction fee rate (PAI/kB) to use (overrides current fees if larger than them) (optional, default = -1)
+       In case of success, the returned vector contains the transactions hex.
+       In case of error, the returned vector is empty. Check the error object for the reason. */
+    std::pair<std::vector<std::string>, CWalletError>
+    PurchaseTicket(std::string fromAccount,
+                   CAmount spendLimit,
+                   int minConf,
+                   std::string ticketAddress,
+                   unsigned int numTickets,
+                   std::string vspAddress,
+                   double vspFeePercent,
+                   int64_t expiry,
+                   CAmount feeRate = -1);
+
+     /* Returns the ticket buyer */
+     CTicketBuyer* GetTicketBuyer() { return ticketBuyer.get(); }
 };
 
 /** A key allocated from the key pool. */

@@ -35,9 +35,10 @@ struct BuyTicketData {
 };
 
 struct TicketContribData {
-    TicketContribData()
-    {;}
-    explicit TicketContribData(int version, const CTxDestination& reward, const CAmount& amount)
+
+    TicketContribData() {}
+
+    explicit TicketContribData(int version, const CTxDestination& reward, const CAmount& amount, uint8_t voteFees = TicketContribData::NoFees, uint8_t revokeFees = TicketContribData::NoFees)
     {
         nVersion = version;
 
@@ -49,16 +50,110 @@ struct TicketContribData {
             rewardAddr = boost::get<const CScriptID>(reward);
 
         contributedAmount = amount;
+
+        if (voteFees <= MaxFees)
+            this->voteFees = voteFees;
+        else
+            this->voteFees = NoFees;
+
+        if (revokeFees <= MaxFees)
+            this->revokeFees = revokeFees;
+        else
+            this->revokeFees = NoFees;
     }
+
     friend bool operator==(const TicketContribData& l, const TicketContribData& r)
     {
-        return std::tie(l.nVersion, l.rewardAddr, l.whichAddr, l.contributedAmount)
-            == std::tie(r.nVersion, r.rewardAddr, r.whichAddr, r.contributedAmount);
+        return std::tie(l.nVersion, l.rewardAddr, l.whichAddr, l.contributedAmount, l.voteFees, l.revokeFees)
+            == std::tie(r.nVersion, r.rewardAddr, r.whichAddr, r.contributedAmount, r.voteFees, r.revokeFees);
     }
+
     int nVersion;
     uint160 rewardAddr;
     int whichAddr;
     CAmount contributedAmount;
+
+    // fee limits indicate how much of the vote or revoke output amount is allowed to be spent as fees.
+    // The PAIcoin implementation of fee limits is slightly different than Decred's.
+    // The value that is stored in voteFees and revokeFees represents the log2 value of the actual limit.
+    // This means that in order to calculate the actual limit, the value must be shifted left with the specified number of bits.
+    // Convenience methods are provided, see below.
+    // The maximum value that can be specified is 63 (0x3F). This means that all the amount in the output can be used as fees.
+    // A value larger that 63 means that no fees are allowed.
+
+    // For convenience, please use hasVoteFeeLimits() or hasRevokeFeeLimits() to detect whether the ticket enabled the
+    // fee limits and voteFeeLimits() or revokeFeeLimits() to get the actual value to compare against, rather than the log2
+    // representation.
+
+    static const uint8_t MaxFees;   // the maximum value that is allowed for fees (in log2 representation).
+                                    // Any value larger that this means, no fees allowed.
+    static const uint8_t NoFees;    // Convenience value representing no fees allowed (please note that during
+                                    // validations, any value equal or larger than this implies no fees allowed).
+
+
+    // returns true whether the fee limits are enabled.
+    // If false, do not allow for fee limits.
+
+    bool hasVoteFeeLimits()
+    {
+        return voteFees <= MaxFees;
+    }
+
+    bool hasRevokeFeeLimits()
+    {
+        return revokeFees <= MaxFees;
+    }
+
+    // get the absolute value for the fee limit
+    // Notice that, since the fee limit is in terms of a log2 value, and amounts are int64_t, the value of 63 is interpreted to
+    // mean allow spending the entire amount as a fee.
+    // This allows fast left shifts to be used to calculate the fee limit while preventing degenerate cases such as negative numbers
+    // for 63.
+    // Any larger value is interpreted as not allowing fees, thus throwing a range exception. However, this case should have been
+    // already filtered out by the user with hasVoteFeeLimits() or hasRevokeFeeLimits().
+
+    CAmount voteFeeLimits()
+    {
+        if (!hasVoteFeeLimits())
+            throw std::range_error("vote fees are not allowed");
+
+        if (voteFees == MaxFees)
+            return MAX_MONEY;
+
+        return std::min(static_cast<CAmount>(1) << voteFees, MAX_MONEY);
+    }
+
+    CAmount revokeFeeLimits()
+    {
+        if (!hasRevokeFeeLimits())
+            throw std::range_error("revoke fees are not allowed");
+
+        if (revokeFees == MaxFees)
+            return MAX_MONEY;
+
+        return std::min(static_cast<CAmount>(1) << revokeFees, MAX_MONEY);
+    }
+
+    // convert an absolute amount to a log2 representation.
+    // Careful, this only returns approximate values!
+
+    static uint8_t feeFromAmount(CAmount amount)
+    {
+        if (amount >= MAX_MONEY)
+            return MaxFees;
+
+        uint8_t r = 0;
+        while (amount > 1) {
+            amount >>= 1;
+            ++r;
+        }
+        return r;
+    }
+
+    // use the above helper methods rather than direct access
+
+    uint8_t voteFees;
+    uint8_t revokeFees;
 };
 
 struct VoteData {
@@ -113,6 +208,8 @@ const uint32_t contribVersionIndex = 3;
 const uint32_t contribAddrIndex = 4;
 const uint32_t contribAddrTypeIndex = 5;
 const uint32_t contribAmountIndex = 6;
+const uint32_t contribVoteFeesIndex = 7;
+const uint32_t contribRevokeFeesIndex = 8;
 
 enum ETxClass {         // these values must not be changed (they are stored in scripts), so only appending is allowed
     TX_Regular,
@@ -131,6 +228,12 @@ bool ValidateStakeTxStructure(const CTransaction& tx, std::string& reason);
 bool ValidateBuyTicketStructure(const CTransaction& tx, std::string& reason);
 bool ValidateVoteStructure(const CTransaction& tx, std::string& reason);
 bool ValidateRevokeTicketStructure(const CTransaction& tx, std::string& reason);
+
+size_t GetEstimatedP2PKHTxInSize(bool compressed = true);
+size_t GetEstimatedP2PKHTxOutSize();
+size_t GetEstimatedBuyTicketDeclTxOutSize();
+size_t GetEstimatedTicketContribTxOutSize();
+size_t GetEstimatedSizeOfBuyTicketTx(bool useVsp);
 
 // ==============================
 
