@@ -8,6 +8,8 @@
 CTicketBuyerConfig::CTicketBuyerConfig() :
     buyTickets(false),
     maintain(0),
+    votingAddress(CNoDestination()),
+    poolFeeAddress(CNoDestination()),
     poolFees(0.0),
     limit(1)
 {
@@ -18,8 +20,10 @@ void CTicketBuyerConfig::ParseCommandline()
     if (gArgs.IsArgSet("-tbbalancetomaintainabsolute"))
         maintain = gArgs.GetArg("-tbbalancetomaintainabsolute", 0);
 
-    if (gArgs.IsArgSet("-tbvotingaddress"))
-        votingAddress = gArgs.GetArg("-tbvotingaddress", "");
+    if (gArgs.IsArgSet("-tbvotingaddress")) {
+        std::string addr = gArgs.GetArg("-tbvotingaddress", "");
+        votingAddress = DecodeDestination(addr);
+    }
 
     if (gArgs.IsArgSet("-tblimit"))
         limit = static_cast<int>(gArgs.GetArg("-tblimit", 0));

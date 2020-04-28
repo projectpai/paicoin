@@ -3162,19 +3162,33 @@ UniValue purchaseticket(const JSONRPCRequest& request)
         nMinDepth = request.params[2].get_int();
 
     // Ticket address
-    std::string ticketAddress;
+    std::string ticketAddr;
     if (!request.params[3].isNull())
-        ticketAddress = request.params[3].get_str();
+        ticketAddr = request.params[3].get_str();
+    CTxDestination ticketAddress{CNoDestination()};
+    if (!ticketAddr.empty()) {
+        ticketAddress = DecodeDestination(ticketAddr);
+        if (!IsValidDestination(ticketAddress))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid ticket address.");
+    }
 
     // Number of tickets
-    int nNumTickets{1};
+    int numTickets{1};
     if (!request.params[4].isNull())
-        nNumTickets = request.params[4].get_int();
-    
+        numTickets = request.params[4].get_int();
+    if (numTickets < 0)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid number of tickets.");
+
     // Pool address
-    std::string poolAddress;
+    std::string poolAddr;
     if (!request.params[5].isNull())
-        poolAddress = request.params[5].get_str();
+        poolAddr = request.params[5].get_str();
+    CTxDestination poolAddress{CNoDestination()};
+    if (!poolAddr.empty()) {
+        poolAddress = DecodeDestination(poolAddr);
+        if (!IsValidDestination(poolAddress))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool address.");
+    }
 
     double dfPoolFee{0.0};
     if (!request.params[6].isNull())
@@ -3186,11 +3200,11 @@ UniValue purchaseticket(const JSONRPCRequest& request)
         nExpiry = request.params[7].get_int();
 
     // Ticket Fee
-    CAmount ticketFeeIncrement;
+    CAmount ticketFeeIncrement{0};
     if (!request.params[9].isNull())
         ticketFeeIncrement = AmountFromValue(request.params[9]);
 
-    const auto&& r = pwallet->PurchaseTicket(strAccount, nSpendLimit, nMinDepth, ticketAddress, nNumTickets, poolAddress, dfPoolFee, nExpiry, ticketFeeIncrement);
+    const auto&& r = pwallet->PurchaseTicket(strAccount, nSpendLimit, nMinDepth, ticketAddress, static_cast<unsigned int>(numTickets), poolAddress, dfPoolFee, nExpiry, ticketFeeIncrement);
     if (r.first.size() == 0 && r.second.code != CWalletError::SUCCESSFUL)
         throw JSONRPCErrorFromWalletError(r.second);
 
@@ -3282,26 +3296,24 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
         votingAccount = AccountFromValue(request.params[3]);
 
     // Voting address
-    std::string votingAddress;
-    if (!request.params[4].isNull()) {
-        if (!request.params[4].isStr())
-            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid voting address.");
-
-        votingAddress = request.params[4].get_str();
-
-        if (votingAddress.length() > 0 && !IsValidDestination(DecodeDestination(votingAddress)))
+    std::string votingAddr;
+    if (!request.params[4].isNull())
+        votingAddr = request.params[4].get_str();
+    CTxDestination votingAddress{CNoDestination()};
+    if (!votingAddr.empty()) {
+        votingAddress = DecodeDestination(votingAddr);
+        if (!IsValidDestination(votingAddress))
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid voting address.");
     }
 
     // Pool fee address
-    std::string poolFeeAddress;
-    if (!request.params[5].isNull()) {
-        if (!request.params[5].isStr())
-            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool fee address.");
-
-        poolFeeAddress = request.params[5].get_str();
-
-        if (poolFeeAddress.length() > 0 && !IsValidDestination(DecodeDestination(poolFeeAddress)))
+    std::string poolFeeAddr;
+    if (!request.params[5].isNull())
+        poolFeeAddr = request.params[5].get_str();
+    CTxDestination poolFeeAddress{CNoDestination()};
+    if (!poolFeeAddr.empty()) {
+        poolFeeAddress = DecodeDestination(poolFeeAddr);
+        if (!IsValidDestination(poolFeeAddress))
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool fee address.");
     }
 
@@ -3420,8 +3432,8 @@ UniValue ticketbuyerconfig(const JSONRPCRequest& request)
     result.push_back(Pair("account", cfg.account));
     result.push_back(Pair("maintain", cfg.maintain));
     result.push_back(Pair("votingAccount", cfg.votingAccount));
-    result.push_back(Pair("votingAddress", cfg.votingAddress));
-    result.push_back(Pair("poolFeeAddress", cfg.poolFeeAddress));
+    result.push_back(Pair("votingAddress", EncodeDestination(cfg.votingAddress)));
+    result.push_back(Pair("poolFeeAddress", EncodeDestination(cfg.poolFeeAddress)));
     result.push_back(Pair("poolFees", cfg.poolFees));
     result.push_back(Pair("limit", cfg.limit));
     result.push_back(Pair("minConf", cfg.minConf));
@@ -3520,13 +3532,16 @@ UniValue setticketbuyervotingaddress(const JSONRPCRequest& request)
     if (request.fHelp)
         return true;
 
-    std::string votingAddress;
+    std::string votingAddr;
     if (!request.params[0].isStr())
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid voting address.");
 
-    votingAddress = request.params[0].get_str();
+    votingAddr = request.params[0].get_str();
 
-    if (votingAddress.length() > 0 && !IsValidDestination(DecodeDestination(votingAddress)))
+    CTxDestination votingAddress{CNoDestination()};
+    if (!votingAddr.empty())
+        votingAddress = DecodeDestination(votingAddr);
+    if (!IsValidDestination(votingAddress))
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid voting address.");
 
     CTicketBuyer *tb = pwallet->GetTicketBuyer();
@@ -3563,13 +3578,16 @@ UniValue setticketbuyerpooladdress(const JSONRPCRequest& request)
     if (request.fHelp)
         return true;
 
-    std::string poolAddress;
+    std::string poolAddr;
     if (!request.params[0].isStr())
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool address.");
 
-    poolAddress = request.params[0].get_str();
+    poolAddr = request.params[0].get_str();
 
-    if (poolAddress.length() > 0 && !IsValidDestination(DecodeDestination(poolAddress)))
+    CTxDestination poolAddress{CNoDestination()};
+    if (!poolAddr.empty())
+        poolAddress = DecodeDestination(poolAddr);
+    if (!IsValidDestination(poolAddress))
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool address.");
 
     CTicketBuyer *tb = pwallet->GetTicketBuyer();

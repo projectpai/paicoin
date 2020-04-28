@@ -58,7 +58,7 @@ public:
 
         CPubKey ticketPubKey;
         BOOST_CHECK(wallet->GetKeyFromPool(ticketPubKey));
-        const CTxDestination ticketKeyId = ticketPubKey.GetID();
+        CTxDestination ticketKeyId = ticketPubKey.GetID();
 
         const CAmount ticketPrice = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), Params().GetConsensus());
         CFeeRate feeRate{100000};
@@ -79,7 +79,7 @@ public:
         CTransactionRef splitTx = splitWTx->tx;
         BOOST_CHECK(splitTx.get() != nullptr);
 
-        BOOST_CHECK_GE(splitTx->vout.size(), 1);
+        BOOST_CHECK_GE(splitTx->vout.size(), 1U);
         BOOST_CHECK_GE(splitTx->vout[0].nValue, ticketPrice + ticketFee);
 
         // ticket
@@ -198,7 +198,7 @@ public:
 
             std::map<uint256, CWalletTx>::const_iterator mi = wallet->mapWallet.find(mtx.vin[1].prevout.hash);
             BOOST_CHECK(mi != wallet->mapWallet.end());
-            BOOST_CHECK(mtx.vin[1].prevout.n < mi->second.tx->vout.size());
+            BOOST_CHECK(mtx.vin[1].prevout.n < static_cast<uint32_t>(mi->second.tx->vout.size()));
 
             CTransaction tx(mtx);
             const CScript& scriptPubKey = mi->second.tx->vout[tx.vin[1].prevout.n].scriptPubKey;
@@ -569,17 +569,17 @@ BOOST_AUTO_TEST_CASE(ticket_contrib_data_serialization)
 // test the ticket purchase estimated sizes of inputs and outputs
 BOOST_AUTO_TEST_CASE(ticket_purchase_estimated_sizes)
 {
-    BOOST_CHECK_EQUAL(GetEstimatedP2PKHTxInSize(), static_cast<size_t>(148));
-    BOOST_CHECK_EQUAL(GetEstimatedP2PKHTxInSize(false), static_cast<size_t>(180));
+    BOOST_CHECK_EQUAL(GetEstimatedP2PKHTxInSize(), 148U);
+    BOOST_CHECK_EQUAL(GetEstimatedP2PKHTxInSize(false), 180U);
 
-    BOOST_CHECK_EQUAL(GetEstimatedP2PKHTxOutSize(), static_cast<size_t>(34));
+    BOOST_CHECK_EQUAL(GetEstimatedP2PKHTxOutSize(), 34U);
 
-    BOOST_CHECK_EQUAL(GetEstimatedBuyTicketDeclTxOutSize(), static_cast<size_t>(16));
+    BOOST_CHECK_EQUAL(GetEstimatedBuyTicketDeclTxOutSize(), 16U);
 
-    BOOST_CHECK_EQUAL(GetEstimatedTicketContribTxOutSize(), static_cast<size_t>(50));
+    BOOST_CHECK_EQUAL(GetEstimatedTicketContribTxOutSize(), 50U);
 
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(true), static_cast<size_t>(524));
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(false), static_cast<size_t>(292));
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(true), 524U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(false), 292U);
 }
 
 // test the split transaction for funding a ticket purchase
@@ -610,9 +610,9 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
     const CWalletTx* splitTxSingle = wallet.get()->GetWalletTx(splitTxHash);
     BOOST_CHECK(splitTxSingle != nullptr);
 
-    BOOST_CHECK_EQUAL(splitTxSingle->tx->vin.size(), static_cast<size_t>(1));
+    BOOST_CHECK_EQUAL(splitTxSingle->tx->vin.size(), 1U);
 
-    BOOST_CHECK_EQUAL(splitTxSingle->tx->vout.size(), static_cast<size_t>(2)); // ticket + change
+    BOOST_CHECK_EQUAL(splitTxSingle->tx->vout.size(), 2U); // ticket + change
 
     neededPerTicket = 100 * COIN + 1 * COIN; // ticket price + ticket fee
 
@@ -626,7 +626,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
     const CWalletTx* splitTxMultiple = wallet.get()->GetWalletTx(splitTxHash);
     BOOST_CHECK(splitTxMultiple != nullptr);
 
-    BOOST_CHECK_EQUAL(splitTxMultiple->tx->vout.size(), static_cast<size_t>(10 + 1)); // tickets + change
+    BOOST_CHECK_EQUAL(splitTxMultiple->tx->vout.size(), 10U + 1U); // tickets + change
 
     neededPerTicket = 10 * COIN + 1 * COIN; // ticket price + ticket fee
 
@@ -641,7 +641,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
     const CWalletTx* splitTxVspSingle = wallet.get()->GetWalletTx(splitTxHash);
     BOOST_CHECK(splitTxVspSingle != nullptr);
 
-    BOOST_CHECK_EQUAL(splitTxVspSingle->tx->vout.size(), static_cast<size_t>(2 + 1)); // user + VSP + change
+    BOOST_CHECK_EQUAL(splitTxVspSingle->tx->vout.size(), 2U + 1U); // user + VSP + change
 
     neededPerTicket = 100 * COIN + 1 * COIN; // ticket price + ticket fee
 
@@ -656,7 +656,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
     const CWalletTx* splitTxVspMultiple = wallet.get()->GetWalletTx(splitTxHash);
     BOOST_CHECK(splitTxVspMultiple != nullptr);
 
-    BOOST_CHECK_EQUAL(splitTxVspMultiple->tx->vout.size(), static_cast<size_t>(10 * 2 + 1)); // users + VSPs + change
+    BOOST_CHECK_EQUAL(splitTxVspMultiple->tx->vout.size(), 10U * 2U + 1U); // users + VSPs + change
 
     neededPerTicket = 10 * COIN + 1 * COIN; // ticket price + ticket fee
 
@@ -694,13 +694,11 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
 
     CPubKey ticketPubKey;
     BOOST_CHECK(wallet->GetKeyFromPool(ticketPubKey));
-    const CTxDestination ticketKeyId = ticketPubKey.GetID();
-    const std::string ticketAddress{EncodeDestination(ticketKeyId)};
+    CTxDestination ticketKeyId = ticketPubKey.GetID();
 
     CPubKey vspPubKey;
     BOOST_CHECK(wallet->GetKeyFromPool(vspPubKey));
-    const CTxDestination vspKeyId = vspPubKey.GetID();
-    const std::string vspAddress{EncodeDestination(vspKeyId)};
+    CTxDestination vspKeyId = vspPubKey.GetID();
 
     const CAmount spendLimit{100000 * COIN};
     const CAmount feeRate{1 * COIN};
@@ -720,11 +718,11 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
 
         // Inputs
 
-        BOOST_CHECK_EQUAL(tx.vin.size(), static_cast<size_t>(useVsp ? 2 : 1)); // (vsp) + user
+        BOOST_CHECK_EQUAL(tx.vin.size(), useVsp ? 2U : 1U); // (vsp) + user
 
         // Outputs
 
-        BOOST_CHECK_EQUAL(tx.vout.size(), static_cast<size_t>(useVsp ? 6 : 4)); // declaration + stake + (vsp commitment + vsp change +) user commitment + user change
+        BOOST_CHECK_EQUAL(tx.vout.size(), useVsp ? 6U : 4U); // declaration + stake + (vsp commitment + vsp change +) user commitment + user change
 
         // check ticket declaration
         BOOST_CHECK_EQUAL(ParseTxClass(tx), TX_BuyTicket);
@@ -782,10 +780,10 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
     {
         txHashes.clear();
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", 100000 * COIN, 1, ticketAddress, 10000, "", 0.0, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", 100000 * COIN, 1, ticketKeyId, 10000, CNoDestination(), 0.0, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", 100 * COIN, 1, ticketAddress, 10000, "", 0.0, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", 100 * COIN, 1, ticketKeyId, 10000, CNoDestination(), 0.0, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
     }
 
@@ -795,10 +793,10 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
     {
         txHashes.clear();
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketAddress, 1, "", 0.0, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, 1, CNoDestination(), 0.0, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
-        BOOST_CHECK_EQUAL(txHashes.size(), static_cast<size_t>(1));
+        BOOST_CHECK_EQUAL(txHashes.size(), 1U);
 
         uint256 txHash = uint256S(txHashes[0]);
 
@@ -809,10 +807,10 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
     {
         txHashes.clear();
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketAddress, 1, vspAddress, vspFeePercent, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, 1, vspKeyId, vspFeePercent, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
-        BOOST_CHECK_EQUAL(txHashes.size(), static_cast<size_t>(1));
+        BOOST_CHECK_EQUAL(txHashes.size(), 1U);
 
         uint256 txHash = uint256S(txHashes[0]);
 
@@ -825,7 +823,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
 
         unsigned int numTickets{10};
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketAddress, numTickets, "", 0.0, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, numTickets, CNoDestination(), 0.0, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
         BOOST_CHECK_EQUAL(txHashes.size(), static_cast<size_t>(numTickets));
@@ -842,7 +840,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
 
         unsigned int numTickets{10};
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketAddress, numTickets, vspAddress, vspFeePercent, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, numTickets, vspKeyId, vspFeePercent, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
         BOOST_CHECK_EQUAL(txHashes.size(), static_cast<size_t>(numTickets));
@@ -860,7 +858,7 @@ void CheckTicketPurchase(const CTransaction& tx, std::vector<TicketContribData> 
 
     BOOST_CHECK_MESSAGE(ValidateBuyTicketStructure(tx, reason), ((reason.size() > 0) ? reason : "ValidateBuyTicketStructure"));
 
-    for (uint32_t i = 2; i < ticketContribDatas.size(); ++i) {
+    for (uint32_t i = 2; i < static_cast<uint32_t>(ticketContribDatas.size()); ++i) {
         TicketContribData tcd;
         TicketContribData expectedTcd = ticketContribDatas[i];
 
@@ -888,16 +886,14 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
         BOOST_CHECK(wallet->GetKeyFromPool(vspPubKey));
     }
 
-    const CTxDestination ticketKeyId = ticketPubKey.GetID();
-    const std::string ticketAddress{EncodeDestination(ticketKeyId)};
+    CTxDestination ticketKeyId = ticketPubKey.GetID();
 
-    const CTxDestination vspKeyId = vspPubKey.GetID();
-    const std::string vspAddress{EncodeDestination(vspKeyId)};
+    CTxDestination vspKeyId = vspPubKey.GetID();
 
     ExtendChain(Params().GetConsensus().nStakeEnabledHeight + 1 - chainActive.Height());
 
-    BOOST_CHECK_GE(chainActive.Tip()->nTx, 1);
-    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, 0);
+    BOOST_CHECK_GE(chainActive.Tip()->nTx, 1U);
+    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, 0U);
 
     CTicketBuyer* tb = wallet->GetTicketBuyer();
     BOOST_CHECK(tb != nullptr);
@@ -910,8 +906,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
 
     cfg.account = "";
     cfg.votingAccount = "";
-    cfg.votingAddress = ticketAddress;
-    cfg.poolFeeAddress = "";
+    cfg.votingAddress = ticketKeyId;
+    cfg.poolFeeAddress = CNoDestination();
     cfg.poolFees = 0.0;
     cfg.limit = 1;
     cfg.passphrase = "";
@@ -926,8 +922,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
 
     ExtendChain(1);
 
-    BOOST_CHECK_GE(chainActive.Tip()->nTx, 1);
-    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, 0);
+    BOOST_CHECK_GE(chainActive.Tip()->nTx, 1U);
+    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, 0U);
 
     // Single ticket, no VSP
 
@@ -942,13 +938,13 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     ExtendChain(1);
 
-    BOOST_CHECK_GE(chainActive.Tip()->nTx, 1 + 1 + 1);
-    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, 1);
+    BOOST_CHECK_GE(chainActive.Tip()->nTx, 1U + 1U + 1U);
+    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, 1U);
 
-    BOOST_CHECK_EQUAL(latestTestTxns.size(), 2);
+    BOOST_CHECK_EQUAL(latestTestTxns.size(), 2U);
 
     BOOST_CHECK_EQUAL(ParseTxClass(latestTestTxns[0]), TX_Regular);
-    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), 1 + 1);
+    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), 1U + 1U);
 
     // TODO: Add amount validation
     CheckTicketPurchase(latestTestTxns[1], {TicketContribData(1, ticketKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees)});
@@ -961,7 +957,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
     ExtendChain(5); // since no purchases are made prior to the interval switch,
                     // make sure that the tests do not overlap with this switch.
 
-    cfg.poolFeeAddress = vspAddress;
+    cfg.poolFeeAddress = vspKeyId;
     cfg.poolFees = 5.0;
 
     tb->start();
@@ -971,11 +967,11 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     ExtendChain(1);
 
-    BOOST_CHECK_GE(chainActive.Tip()->nTx, 1 + 1 + 1);
-    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, 1);
+    BOOST_CHECK_GE(chainActive.Tip()->nTx, 1U + 1U + 1U);
+    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, 1U);
 
     BOOST_CHECK_EQUAL(ParseTxClass(latestTestTxns[0]), TX_Regular);
-    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), 1 + 1 + 1);
+    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), 1U + 1U + 1U);
 
     // TODO: Add amount validation
     CheckTicketPurchase(latestTestTxns[1], {TicketContribData(1, vspKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees), TicketContribData(1, ticketKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees)});
@@ -984,7 +980,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
 
     tb->stop();
 
-    cfg.poolFeeAddress = "";
+    cfg.poolFeeAddress = CNoDestination();
     cfg.poolFees = 0.0;
     cfg.limit = 5;
 
@@ -995,11 +991,11 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     ExtendChain(1);
 
-    BOOST_CHECK_GE(chainActive.Tip()->nTx, 1 + 1 + cfg.limit);
-    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, cfg.limit);
+    BOOST_CHECK_GE(chainActive.Tip()->nTx, static_cast<unsigned int>(1 + 1 + cfg.limit));
+    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, static_cast<uint8_t>(cfg.limit));
 
     BOOST_CHECK_EQUAL(ParseTxClass(latestTestTxns[0]), TX_Regular);
-    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), cfg.limit + 1);
+    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), static_cast<size_t>(cfg.limit + 1));
 
     // TODO: Add amount validation
     for (size_t i = 0; static_cast<int>(i) < cfg.limit; ++i)
@@ -1009,7 +1005,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
 
     tb->stop();
 
-    cfg.poolFeeAddress = vspAddress;
+    cfg.poolFeeAddress = vspKeyId;
     cfg.poolFees = 5.0;
 
     tb->start();
@@ -1019,11 +1015,11 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     ExtendChain(1);
 
-    BOOST_CHECK_GE(chainActive.Tip()->nTx, 1 + 1 + cfg.limit);
-    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, cfg.limit);
+    BOOST_CHECK_GE(chainActive.Tip()->nTx, static_cast<unsigned int>(1 + 1 + cfg.limit));
+    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, static_cast<uint8_t>(cfg.limit));
 
     BOOST_CHECK_EQUAL(ParseTxClass(latestTestTxns[0]), TX_Regular);
-    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), 2 * cfg.limit + 1);
+    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), static_cast<size_t>(2 * cfg.limit + 1));
 
     // TODO: Add amount validation
     for (size_t i = 0; static_cast<int>(i) < cfg.limit; ++i)
@@ -1045,11 +1041,9 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_encrypted, TicketPurchaseTestingSetup)
         wallet->EncryptWallet(passphrase);
     }
 
-    const CTxDestination ticketKeyId = ticketPubKey.GetID();
-    const std::string ticketAddress{EncodeDestination(ticketKeyId)};
+    CTxDestination ticketKeyId = ticketPubKey.GetID();
 
-    const CTxDestination vspKeyId = vspPubKey.GetID();
-    const std::string vspAddress{EncodeDestination(vspKeyId)};
+    CTxDestination vspKeyId = vspPubKey.GetID();
 
     ExtendChain(Params().GetConsensus().nStakeValidationHeight + 1 - chainActive.Height() + 7); // since no purchases are made right before the interval switch,
                                                                                                 // make sure that the tests do not overlap with this switch.
@@ -1065,8 +1059,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_encrypted, TicketPurchaseTestingSetup)
 
     cfg.account = "";
     cfg.votingAccount = "";
-    cfg.votingAddress = ticketAddress;
-    cfg.poolFeeAddress = vspAddress;
+    cfg.votingAddress = ticketKeyId;
+    cfg.poolFeeAddress = vspKeyId;
     cfg.poolFees = 5.0;
     cfg.limit = 5;
     cfg.passphrase = passphrase;
@@ -1080,11 +1074,11 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_encrypted, TicketPurchaseTestingSetup)
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     ExtendChain(1);
 
-    BOOST_CHECK_GE(chainActive.Tip()->nTx, 1 + 1 + cfg.limit);
-    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, cfg.limit);
+    BOOST_CHECK_GE(chainActive.Tip()->nTx, static_cast<unsigned int>(1 + 1 + cfg.limit));
+    BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, static_cast<uint8_t>(cfg.limit));
 
     BOOST_CHECK_EQUAL(ParseTxClass(latestTestTxns[0]), TX_Regular);
-    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), 2 * cfg.limit + 1);
+    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), static_cast<size_t>(2 * cfg.limit + 1));
 
     // TODO: Add amount validation
     for (size_t i = 0; static_cast<int>(i) < cfg.limit; ++i)
@@ -1123,13 +1117,13 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
 
     CPubKey ticketPubKey;
     BOOST_CHECK(wallet->GetKeyFromPool(ticketPubKey));
-    const CTxDestination ticketKeyId = ticketPubKey.GetID();
-    const std::string ticketAddress{EncodeDestination(ticketKeyId)};
+    CTxDestination ticketKeyId = ticketPubKey.GetID();
+    std::string ticketAddress{EncodeDestination(ticketKeyId)};
 
     CPubKey vspPubKey;
     BOOST_CHECK(wallet->GetKeyFromPool(vspPubKey));
-    const CTxDestination vspKeyId = vspPubKey.GetID();
-    const std::string vspAddress{EncodeDestination(vspKeyId)};
+    CTxDestination vspKeyId = vspPubKey.GetID();
+    std::string vspAddress{EncodeDestination(vspKeyId)};
 
     CTicketBuyer* tb = wallet->GetTicketBuyer();
     BOOST_CHECK(tb != nullptr);
@@ -1162,8 +1156,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
     BOOST_CHECK_EQUAL(cfg.account, "abc");
     BOOST_CHECK_EQUAL(cfg.maintain, 12300000000);
     BOOST_CHECK_EQUAL(cfg.votingAccount, "");
-    BOOST_CHECK_EQUAL(cfg.votingAddress, ticketAddress);
-    BOOST_CHECK_EQUAL(cfg.poolFeeAddress, vspAddress);
+    BOOST_CHECK(cfg.votingAddress == ticketKeyId);
+    BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 5.0);
     BOOST_CHECK_EQUAL(cfg.limit, 5);
 
@@ -1191,8 +1185,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
     BOOST_CHECK_EQUAL(cfg.account, "def");
     BOOST_CHECK_EQUAL(cfg.maintain, 12400000000);
     BOOST_CHECK_EQUAL(cfg.votingAccount, "");
-    BOOST_CHECK_EQUAL(cfg.votingAddress, "");
-    BOOST_CHECK_EQUAL(cfg.poolFeeAddress, "");
+    BOOST_CHECK(cfg.votingAddress.which() == 0);
+    BOOST_CHECK(cfg.poolFeeAddress.which() == 0);
     BOOST_CHECK_EQUAL(cfg.poolFees, 0.0);
     BOOST_CHECK_EQUAL(cfg.limit, 1);
 
@@ -1208,8 +1202,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
     BOOST_CHECK_EQUAL(cfg.account, "fromaccount");
     BOOST_CHECK_EQUAL(cfg.votingAccount, "votingaccount");
     BOOST_CHECK_EQUAL(cfg.maintain, 12500000000);
-    BOOST_CHECK_EQUAL(cfg.votingAddress, ticketAddress);
-    BOOST_CHECK_EQUAL(cfg.poolFeeAddress, vspAddress);
+    BOOST_CHECK(cfg.votingAddress == ticketKeyId);
+    BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 10.0);
     BOOST_CHECK_EQUAL(cfg.limit, 8);
 
@@ -1238,8 +1232,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
     BOOST_CHECK_EQUAL(cfg.account, "fromaccount");
     BOOST_CHECK_EQUAL(cfg.votingAccount, "votingaccount");
     BOOST_CHECK_EQUAL(cfg.maintain, 12500000000);
-    BOOST_CHECK_EQUAL(cfg.votingAddress, ticketAddress);
-    BOOST_CHECK_EQUAL(cfg.poolFeeAddress, vspAddress);
+    BOOST_CHECK(cfg.votingAddress == ticketKeyId);
+    BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 10.0);
     BOOST_CHECK_EQUAL(cfg.limit, 8);
     BOOST_CHECK_EQUAL(cfg.passphrase, passphrase);

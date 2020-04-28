@@ -1188,9 +1188,9 @@ public:
     PurchaseTicket(std::string fromAccount,
                    CAmount spendLimit,
                    int minConf,
-                   std::string ticketAddress,
+                   CTxDestination ticketAddress,
                    unsigned int numTickets,
-                   std::string vspAddress,
+                   CTxDestination vspAddress,
                    double vspFeePercent,
                    int64_t expiry,
                    CAmount feeRate = -1);

@@ -7,6 +7,7 @@
 
 #include "amount.h"
 #include "support/allocators/secure.h"
+#include "key_io.h"
 
 // The ticket buyer (TB) configuration
 class CTicketBuyerConfig {
@@ -25,10 +26,10 @@ public:
     std::string votingAccount;
 
     // Address to assign voting rights; overrides VotingAccount
-    std::string votingAddress;
+    CTxDestination votingAddress;
 
     // Commitment address for stakepool fees
-    std::string poolFeeAddress;
+    CTxDestination poolFeeAddress;
 
     // Stakepool fee percentage (between 0-100)
     double poolFees;

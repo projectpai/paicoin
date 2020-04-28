@@ -1674,7 +1674,7 @@ std::pair<uint256, CWalletError> CWallet::CreateTicketPurchaseSplitTx(std::strin
     return std::make_pair(wtx.GetHash(), error);
 }
 
-std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::string fromAccount, CAmount spendLimit, int minConf, std::string ticketAddress, unsigned int numTickets, std::string vspAddress, double vspFeePercent, int64_t expiry, CAmount feeRate)
+std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::string fromAccount, CAmount spendLimit, int minConf, CTxDestination ticketAddress, unsigned int numTickets, CTxDestination vspAddress, double vspFeePercent, int64_t expiry, CAmount feeRate)
 {
     std::vector<std::string> results;
     CWalletError error;
@@ -1698,37 +1698,17 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
         return std::make_pair(results, error);
     }
 
-    CTxDestination ticketAddr;
-    if (!ticketAddress.empty()) {
-        ticketAddr = DecodeDestination(ticketAddress);
-        if (!IsValidDestination(ticketAddr)) {
-            error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Invalid ticket address");
-            return std::make_pair(results, error);
-        }
-    }
-
-    if (!IsValidDestination(ticketAddr)) {
+    if (!IsValidDestination(ticketAddress)) {
         // Generate a new key that is added to wallet
         CPubKey newKey;
         if (!GetKeyFromPool(newKey)) {
             error.Load(CWalletError::WALLET_KEYPOOL_RAN_OUT, "Keypool ran out, please call keypoolrefill first");
             return std::make_pair(results, error);
         }
-        ticketAddr = newKey.GetID();
+        ticketAddress = newKey.GetID();
     }
 
-    CTxDestination vspAddr;
-    bool useVsp{false};
-    if (!vspAddress.empty()) {
-        vspAddr = DecodeDestination(vspAddress);
-
-        useVsp = IsValidDestination(vspAddr);
-
-        if (!useVsp) {
-            error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Invalid pool address");
-            return std::make_pair(results, error);
-        }
-    }
+    bool useVsp{IsValidDestination(vspAddress)};
 
     // Check sanity of pool fee percent
     if (useVsp && ! IsValidPoolFeePercent(vspFeePercent)) {
@@ -1759,7 +1739,7 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
         return std::make_pair(results, error);
     }
 
-    // check ticketAddr type, only P2PKH and P2SH are accepted
+    // check ticketAddress type, only P2PKH and P2SH are accepted
     // seems to always be the case while the address is valid
 
     // TODO Make sure this is handled correctly
@@ -1841,7 +1821,7 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
         mTicketTx.vout.push_back(declTxOut);
 
         // total ticket stake payment
-        CScript ticketScript = GetScriptForDestination(ticketAddr);
+        CScript ticketScript = GetScriptForDestination(ticketAddress);
         CTxOut ticketAddrTxOut(ticketPrice, ticketScript);
         mTicketTx.vout.push_back(ticketAddrTxOut);
 
@@ -1857,7 +1837,7 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
 
             // contribution output
             const auto& contributedAmount = vspFee;
-            TicketContribData ticketContribData{1, vspAddr, contributedAmount, TicketContribData::NoFees, TicketContribData::NoFees};
+            TicketContribData ticketContribData{1, vspAddress, contributedAmount, TicketContribData::NoFees, TicketContribData::NoFees};
             CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
             mTicketTx.vout.push_back(CTxOut(0, contributorInfoScript));
 
@@ -1867,7 +1847,7 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
                 error.Load(CWalletError::TRANSACTION_ERROR, "Invalid change value for the VSP");
                 return std::make_pair(results, error);
             }
-            CScript changeScript = GetScriptForDestination(vspAddr);
+            CScript changeScript = GetScriptForDestination(vspAddress);
             mTicketTx.vout.push_back(CTxOut(change, changeScript));
         }
 
