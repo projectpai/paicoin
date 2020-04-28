@@ -27,7 +27,7 @@ class MultinodeHybridConsensusFork(PAIcoinTestFramework):
         connect_nodes_bi(self.nodes,0,1)
 
     def run_test(self):
-        HybridForkHeight = 1352
+        HybridForkHeight = 1501 # in chainparams.cpp -> consensus.HybridConsensusHeight = 1500;
         StakeValidationHeight = 2100
         MinimumStakeDiff = Decimal('0.0002')
 
@@ -58,13 +58,13 @@ class MultinodeHybridConsensusFork(PAIcoinTestFramework):
         stakeDiff = self.nodes[0].getstakedifficulty()
         assert(stakeDiff['current'] == MinimumStakeDiff)
 
-        self.nodes[0].generate(300)
+        self.nodes[0].generate(400)
         self.sync_all()
 
         nMaxFreshStakePerBlock = 20
         txaddress = self.nodes[0].getnewaddress()
         txs = []
-        for blkidx in range(HybridForkHeight + 301, StakeValidationHeight):
+        for blkidx in range(HybridForkHeight + 401, StakeValidationHeight):
             print("purchase", nMaxFreshStakePerBlock, "at", blkidx)
             txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, nMaxFreshStakePerBlock))
             assert(len(txs[-1])==nMaxFreshStakePerBlock)

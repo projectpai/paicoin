@@ -28,7 +28,7 @@ class MultinodeHybridConsensusForkWithTickets(PAIcoinTestFramework):
 
     def run_test(self):
         MinimumStakeDiff = Decimal('0.0002')
-        HybridForkHeight = 1352
+        HybridForkHeight = 1501 # in chainparams.cpp -> consensus.HybridConsensusHeight = 1500;
         BlockHeightBeforeBuy = 900
         assert(BlockHeightBeforeBuy < HybridForkHeight)
 
