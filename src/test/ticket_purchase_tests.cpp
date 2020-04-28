@@ -138,14 +138,9 @@ public:
         const int height = tip->nHeight;
         BOOST_CHECK_GT(height, 0);
 
-        // TODO: Change this!!!
-        const int ticketHeight = chainActive.Height() - consensus.nTicketMaturity - 1;
-        BOOST_CHECK_GT(ticketHeight, 1);
-
-        const CBlockIndex* ticketBlockIndex = chainActive[ticketHeight];
-        BOOST_CHECK(ticketBlockIndex != nullptr);
-
         std::vector<uint256> voteHashes;
+
+        std::string reason;
 
         // votes
 
@@ -164,7 +159,9 @@ public:
             BOOST_CHECK(ticket != nullptr);
             BOOST_CHECK(ticket->tx != nullptr);
 
-            const CAmount ticketPrice = CalculateNextRequiredStakeDifficulty(ticketBlockIndex->pprev, consensus);
+            BOOST_CHECK(ValidateBuyTicketStructure(*(ticket->tx), reason));
+
+            const CAmount ticketPrice = ticket->tx->vout[ticketStakeOutputIndex].nValue;
             BOOST_CHECK(MoneyRange(ticketPrice));
 
             TicketContribData ticketContribData;
