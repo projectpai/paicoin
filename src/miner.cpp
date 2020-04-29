@@ -222,10 +222,39 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         }
     }
 
-    // Add all the funding transactions that are in the mempool for the ticket just included
+    // Add all the funding (ancestor) transactions that are in the mempool for the ticket just included.
+    // Make sure that the funding transactions are ordered themselves by ancestry, if needed.
     // TODO: verify the case where a ticket is funded by other stake transaction spendable output
-    for (auto& ticketIter : ticketAncestors)
-        AddToBlock(ticketIter);
+    std::vector<CTxMemPool::txiter> reorderedTicketAncestors;
+    for (auto& ticketAncestorIter : ticketAncestors)
+        reorderedTicketAncestors.push_back(ticketAncestorIter);
+    const size_t reorderedTicketAncestorsSize = reorderedTicketAncestors.size();
+    if (reorderedTicketAncestorsSize > 0) {
+        CTxMemPool::txiter b;
+        uint256 hash;
+        bool swapped;
+        do {
+            swapped = false;
+            for (size_t i = 0; (i < reorderedTicketAncestorsSize - 1) && (!swapped); ++i) {
+                for (size_t j = i + 1; (j < reorderedTicketAncestorsSize) && (!swapped); ++j) {
+                    hash = reorderedTicketAncestors[j]->GetTx().GetHash();
+                    for (auto& input: reorderedTicketAncestors[i]->GetTx().vin)
+                        if (input.prevout.hash == hash) {
+                            b = reorderedTicketAncestors[i];
+                            reorderedTicketAncestors[i] = reorderedTicketAncestors[j];
+                            reorderedTicketAncestors[j] = b;
+
+                            swapped = true;
+
+                            break;
+                        }
+                }
+            }
+        } while (swapped);
+
+        for (auto& reorderedTicketAncestorIter : reorderedTicketAncestors)
+            AddToBlock(reorderedTicketAncestorIter);
+    }
 
     // Decide whether to include witness transactions
     // This is only needed in case the witness softfork activation is reverted
