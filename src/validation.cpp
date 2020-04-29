@@ -3403,7 +3403,7 @@ bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& pa
 bool IsHybridConsensusForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
 {
     AssertLockHeld(cs_main);
-    return (params.HybridConsensusForkTime >= 0 && pindexPrev && pindexPrev->GetMedianTimePast() >= params.HybridConsensusForkTime && pindexPrev->nHeight >= params.BIP65Height);
+    return (params.HybridConsensusHeight >= 0 && pindexPrev && pindexPrev->nHeight >= params.HybridConsensusHeight);
 }
 
 // Compute at which vout of the block's coinbase transaction the witness
@@ -3470,7 +3470,6 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     assert(pindexPrev != nullptr);
     const int nHeight = pindexPrev->nHeight + 1;
     const Consensus::Params& consensusParams = params.GetConsensus();
-    const bool hybridForkEnabled = IsHybridConsensusForkEnabled(pindexPrev, consensusParams);
 
     // Check proof of work
     if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams))
@@ -3478,12 +3477,10 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
 
     // Ensure the stake difficulty specified in the block header matches the calculated difficulty based on the previous block
     // and difficulty retarget rules.
-    if (hybridForkEnabled) {
-        CAmount expectedStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev, params.GetConsensus());
-        if (block.nStakeDifficulty != expectedStakeDifficulty) {
-            auto report = strprintf("incorrect stake difficulty in a block: expected %.2f, found %.2f", expectedStakeDifficulty / (float)COIN, block.nStakeDifficulty / (float)COIN);
-            return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, report);
-        }
+    CAmount expectedStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev, params.GetConsensus());
+    if (block.nStakeDifficulty != expectedStakeDifficulty) {
+        auto report = strprintf("incorrect stake difficulty in a block: expected %.2f, found %.2f", expectedStakeDifficulty / (float)COIN, block.nStakeDifficulty / (float)COIN);
+        return state.DoS(100, false, REJECT_INVALID, "bad-stakediff", false, report);
     }
 
     auto expectedStakeVersion = calcStakeVersion(pindexPrev, params.GetConsensus());
@@ -3524,6 +3521,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     if (block.GetBlockTime() > nAdjustedTime + MAX_FUTURE_BLOCK_TIME)
         return state.Invalid(false, REJECT_INVALID, "time-too-new", "block timestamp too far in the future");
 
+    const bool hybridForkEnabled = IsHybridConsensusForkEnabled(pindexPrev, consensusParams);
     if (hybridForkEnabled) {
         if (block.nVersion & HARDFORK_VERSION_BIT)
             return true;

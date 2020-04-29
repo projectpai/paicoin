@@ -135,7 +135,7 @@ public:
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
-        consensus.HybridConsensusForkTime = -1; // Never
+        consensus.HybridConsensusHeight = -1; // Never
         consensus.powLimit = MAINNET_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -298,7 +298,7 @@ public:
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
-        consensus.HybridConsensusForkTime = -1; // Never
+        consensus.HybridConsensusHeight = -1; // Never
         consensus.powLimit = TESTNET_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -460,7 +460,7 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
-        consensus.HybridConsensusForkTime = 1500;
+        consensus.HybridConsensusHeight = 1500;
         consensus.powLimit = REGTEST_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;

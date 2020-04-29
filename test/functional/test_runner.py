@@ -61,12 +61,14 @@ BASE_SCRIPTS= [
     'fundrawtransaction.py',
     'p2p-compactblocks.py',
     'segwit.py',
+    'rpc_ticket_operations.py',
     # vv Tests less than 2m vv
     'wallet.py',
     'wallet-accounts.py',
     'p2p-segwit.py',
     'wallet-dump.py',
     'listtransactions.py',
+    'multinode_tickets_before_hybrid_fork.py',
     # vv Tests less than 60s vv
     'sendheaders.py',
     'zapwallettxes.py',
@@ -130,9 +132,9 @@ BASE_SCRIPTS= [
     'wallet_stake_api.py',
     'wallet_multisig_api.py',
     'wallet_ticket_api.py',
-    'rpc_ticket_operations.py',
     'rpc_search_operations.py',
-    'rpc_node_operations.py'
+    'rpc_node_operations.py',
+    'multinode_hybrid_fork.py',
 ]
 
 EXTENDED_SCRIPTS = [
