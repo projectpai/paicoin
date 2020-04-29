@@ -10,12 +10,15 @@
 #include "utilstrencodings.h"
 #include "stake/staketx.h"
 #include "crypto/common.h"
+#include "chainparams.h"
 
 uint256 CBlockHeader::GetHash() const
 {
+    if (this->nVersion & HARDFORK_VERSION_BIT) {
+        // use SHAKE-256 hasher when Hybrid PoW/PoS deploys
+        return SerializeHash<CBlockHashWriter>(*this);
+    }
     return SerializeHash<CHashWriter>(*this);
-    // TODO: use CBlockHashWriter as template argument and regenerate the GENESIS BLOCK
-    // return SerializeHash<CBlockHashWriter>(*this);
 }
 
 std::string CBlock::ToString() const
@@ -35,4 +38,18 @@ std::string CBlock::ToString() const
         s << "  " << tx->ToString() << "\n";
     }
     return s.str();
+}
+
+void CBlockHeader::SetReadStakeDefaultBeforeFork()
+{
+    nStakeDifficulty = Params().GetConsensus().nMinimumStakeDiff;
+    // TODO add more stake defaults as needed
+    // nVoteBits = 1;
+    // nTicketPoolSize = 0;
+    // ticketLotteryState.SetNull();
+    // nVoters = 0;
+    // nFreshStake = 0;
+    // nRevocations = 0;
+    // std::fill(std::begin(extraData), std::end(extraData), 0);
+    // nStakeVersion = 0;
 }
