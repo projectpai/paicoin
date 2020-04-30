@@ -103,6 +103,8 @@ CScript COINBASE_FLAGS;
 
 const std::string strMessageMagic = "PAIcoin Signed Message:\n";
 
+static const auto nNumBlocksPastStakeValidationToKeepWhitelist = 100u;
+
 // Internal stuff
 namespace {
 
@@ -3180,7 +3182,8 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
         return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
 
     // Consensus checks rely on this assumption
-    if (consensusParams.nStakeEnabledHeight > consensusParams.nStakeValidationHeight)
+    if (consensusParams.HybridConsensusHeight > consensusParams.nStakeEnabledHeight || 
+        consensusParams.nStakeEnabledHeight > consensusParams.nStakeValidationHeight)
         return state.Error("bad stake height consensus parameters");
 
     return true;
@@ -3345,7 +3348,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
             return state.DoS(100, false, REJECT_INVALID, "nontickets-too-early", false, "block contains non-ticket stake transactions before stake validation height");
     }
 
-    if (fCheckCoinbase && block.GetHash() != consensusParams.hashGenesisBlock) {
+    if (fCheckCoinbase && block.GetHash() != consensusParams.hashGenesisBlock && blockHeight < consensusParams.nStakeValidationHeight + nNumBlocksPastStakeValidationToKeepWhitelist) {
         const auto& coinbaseAddrs = Params().coinbaseAddrs;
         if (!coinbaseAddrs.empty()) {
             for (const CTxOut& out : block.vtx[0]->vout) {

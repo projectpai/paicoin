@@ -6,7 +6,6 @@
 #ifndef PAICOIN_POW_H
 #define PAICOIN_POW_H
 
-#include "consensus/params.h"
 #include "amount.h"
 
 #include <stdint.h>
@@ -15,11 +14,22 @@ class CBlockHeader;
 class CBlockIndex;
 class uint256;
 
+namespace Consensus {
+struct Params;
+}
+
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params&);
 unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nFirstBlockTime, const Consensus::Params&);
 
 /** Check whether a block hash satisfies the proof-of-work requirement specified by nBits */
 bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&);
+
+/**
+ * Bitcoin cash's difficulty adjustment mechanism.
+ */
+uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
+                                 const CBlockHeader *pblock,
+                                 const Consensus::Params &params);
 
 /* Stake difficulty*/
 // calcNextRequiredStakeDifficulty calculates the required stake difficulty for
