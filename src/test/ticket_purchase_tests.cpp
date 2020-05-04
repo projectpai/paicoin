@@ -61,7 +61,7 @@ public:
         CTxDestination ticketKeyId = ticketPubKey.GetID();
 
         const CAmount ticketPrice = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), Params().GetConsensus());
-        CFeeRate feeRate{100000};
+        CFeeRate feeRate{10000};
         const CAmount ticketFee = feeRate.GetFee(GetEstimatedSizeOfBuyTicketTx(false));
         const CAmount contributedAmount = ticketPrice + ticketFee;
 
@@ -585,23 +585,24 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
     uint256 splitTxHash;
     CWalletError we;
     CAmount neededPerTicket{0};
+    const CAmount ticketFee{10000};
 
     LOCK2(cs_main, wallet->cs_wallet);
 
     // Coin availability
 
-    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 1000000 * COIN, 1 * COIN);
+    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 1000000 * COIN, ticketFee);
     BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
 
-    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 100000 * COIN, 1 * COIN);
+    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 100000 * COIN, ticketFee);
     BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
 
-    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 10000 * COIN, 1 * COIN);
+    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 10000 * COIN, ticketFee);
     BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
 
     // Single ticket
 
-    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 100 * COIN, 1 * COIN);
+    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 100 * COIN, ticketFee);
     BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
     const CWalletTx* splitTxSingle = wallet.get()->GetWalletTx(splitTxHash);
@@ -611,13 +612,13 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
 
     BOOST_CHECK_EQUAL(splitTxSingle->tx->vout.size(), 2U); // ticket + change
 
-    neededPerTicket = 100 * COIN + 1 * COIN; // ticket price + ticket fee
+    neededPerTicket = 100 * COIN + ticketFee; // ticket price + ticket fee
 
     BOOST_CHECK_EQUAL(splitTxSingle->tx->vout[0].nValue, neededPerTicket);
 
     // Multiple tickets
 
-    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 10 * COIN, 1 * COIN, 0, 10);
+    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 10 * COIN, ticketFee, 0, 10);
     BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
     const CWalletTx* splitTxMultiple = wallet.get()->GetWalletTx(splitTxHash);
@@ -625,14 +626,14 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
 
     BOOST_CHECK_EQUAL(splitTxMultiple->tx->vout.size(), 10U + 1U); // tickets + change
 
-    neededPerTicket = 10 * COIN + 1 * COIN; // ticket price + ticket fee
+    neededPerTicket = 10 * COIN + ticketFee; // ticket price + ticket fee
 
     for (size_t i = 0; i < 10; ++i)
         BOOST_CHECK_EQUAL(splitTxMultiple->tx->vout[i].nValue, neededPerTicket);
 
     // Use VSP (single ticket)
 
-    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 100 * COIN, 1 * COIN, 20 * COIN);
+    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 100 * COIN, ticketFee, 20 * COIN);
     BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
     const CWalletTx* splitTxVspSingle = wallet.get()->GetWalletTx(splitTxHash);
@@ -640,14 +641,14 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
 
     BOOST_CHECK_EQUAL(splitTxVspSingle->tx->vout.size(), 2U + 1U); // user + VSP + change
 
-    neededPerTicket = 100 * COIN + 1 * COIN; // ticket price + ticket fee
+    neededPerTicket = 100 * COIN + ticketFee; // ticket price + ticket fee
 
     BOOST_CHECK_EQUAL(splitTxVspSingle->tx->vout[0].nValue, 20 * COIN); // VSP fee
     BOOST_CHECK_EQUAL(splitTxVspSingle->tx->vout[1].nValue, neededPerTicket - 20 * COIN); // user (needed per ticket - VSP)
 
     // Use VSP (multiple tickets)
 
-    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 10 * COIN, 1 * COIN, 5 * COIN, 10);
+    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 10 * COIN, ticketFee, 5 * COIN, 10);
     BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
     const CWalletTx* splitTxVspMultiple = wallet.get()->GetWalletTx(splitTxHash);
@@ -655,7 +656,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
 
     BOOST_CHECK_EQUAL(splitTxVspMultiple->tx->vout.size(), 10U * 2U + 1U); // users + VSPs + change
 
-    neededPerTicket = 10 * COIN + 1 * COIN; // ticket price + ticket fee
+    neededPerTicket = 10 * COIN + ticketFee; // ticket price + ticket fee
 
     for (size_t i = 0; i < 10; ++i) {
         BOOST_CHECK_EQUAL(splitTxVspMultiple->tx->vout[2*i].nValue, 5 * COIN); // VSP fee
@@ -664,13 +665,13 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
 
     // Fee rate
 
-    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 10 * COIN, 1 * COIN, 5 * COIN, 10, 1 * COIN);
+    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 10 * COIN, ticketFee, 5 * COIN, 10, ticketFee);
     BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
     const CWalletTx* splitTxFeeRate = wallet.get()->GetWalletTx(splitTxHash);
     BOOST_CHECK(splitTxFeeRate != nullptr);
 
-    CFeeRate feeRate{1 * COIN};
+    CFeeRate feeRate{ticketFee};
 
     CAmount fee;
     std::string account;
@@ -679,6 +680,123 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
     splitTxFeeRate->GetAmounts(received, sent, fee, account, ISMINE_ALL);
 
     BOOST_CHECK_LE(feeRate.GetFee(static_cast<size_t>(GetVirtualTransactionSize(*(splitTxFeeRate->tx)))), fee);
+}
+
+// test the reordering of split transactions in a block
+BOOST_FIXTURE_TEST_CASE(split_transaction_reordering, TicketPurchaseTestingSetup)
+{
+    const CChainParams& chainParams = Params();
+    const Consensus::Params& consensus = chainParams.GetConsensus();
+    const int count = 5;
+    const CAmount ticketFee{10000};
+
+    LOCK2(cs_main, wallet->cs_wallet);
+
+    CPubKey splitTxPubKeys[count];
+    CTxDestination splitTxKeyIds[count];
+    CScript splitTxScriptPubKey[count];
+    for (size_t i = 0; i < count; ++i) {
+        BOOST_CHECK(wallet->GetKeyFromPool(splitTxPubKeys[i]));
+        splitTxKeyIds[i] = splitTxPubKeys[i].GetID();
+        splitTxScriptPubKey[i] = GetScriptForDestination(splitTxKeyIds[i]);
+    }
+
+    CPubKey ticketPubKeys[count];
+    CTxDestination ticketKeyIds[count];
+    CScript ticketScriptPubKey[count];
+    for (size_t i = 0; i < count; ++i) {
+        BOOST_CHECK(wallet->GetKeyFromPool(ticketPubKeys[i]));
+        ticketKeyIds[i] = ticketPubKeys[i].GetID();
+        ticketScriptPubKey[i] = GetScriptForDestination(ticketKeyIds[i]);
+    }
+
+    ExtendChain(consensus.nStakeEnabledHeight + 1 - chainActive.Height());
+
+    CAmount ticketPrice = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), consensus);
+    CAmount neededPerTicket = ticketPrice + ticketFee;
+
+    // create some interdependent split transactions
+    // the first one has a large change, in order to cover the subsequent ones
+
+    CMutableTransaction splitTxs[count];
+    CWalletError we;
+    for (int i = count-1; i >= 0 ; --i) {
+        if (i == count-1) {
+            CAmount feeRet{0};
+            int changePos{1};
+            std::string reason;
+
+            splitTxs[i].vout.push_back(CTxOut(neededPerTicket + 5 * neededPerTicket, splitTxScriptPubKey[i]));
+
+            BOOST_CHECK(wallet->FundTransaction(splitTxs[i], feeRet, changePos, reason, false, {}, CCoinControl()));
+
+            splitTxs[i].vout[0].nValue = neededPerTicket;
+
+            splitTxs[i].vout[1].nValue += 5 * neededPerTicket;
+        } else {
+            splitTxs[i].vin.push_back(CTxIn(splitTxs[i+1].GetHash(), 1));
+
+            splitTxs[i].vout.push_back(CTxOut(neededPerTicket, splitTxScriptPubKey[i]));
+
+            splitTxs[i].vout.push_back(CTxOut(splitTxs[i+1].vout[1].nValue - neededPerTicket, splitTxScriptPubKey[i]));
+
+            BOOST_CHECK(wallet->SignTransaction(splitTxs[i]));
+
+            CAmount fee = CFeeRate(10000).GetFee(GetVirtualTransactionSize(splitTxs[i]));
+            splitTxs[i].vout[1].nValue -= fee;
+        }
+
+        BOOST_CHECK(wallet->SignTransaction(splitTxs[i]));
+
+        CWalletTx wtx;
+        CValidationState state;
+        wtx.fTimeReceivedIsTxTime = true;
+        wtx.BindWallet(wallet.get());
+        wtx.SetTx(MakeTransactionRef(splitTxs[i]));
+        CReserveKey reservekey{wallet.get()};
+        BOOST_CHECK(wallet->CommitTransaction(wtx, reservekey, g_connman.get(), state));
+    }
+
+    // create the tickets
+
+    CMutableTransaction tickets[count];
+    for (size_t i = 0; i < count ; ++i) {
+        tickets[i].vin.push_back(CTxIn(splitTxs[i].GetHash(), 0));
+
+        tickets[i].vout.push_back(CTxOut(0, GetScriptForBuyTicketDecl(BuyTicketData{1})));
+
+        tickets[i].vout.push_back(CTxOut(ticketPrice, GetScriptForDestination(ticketKeyIds[i])));
+
+        tickets[i].vout.push_back(CTxOut(0, GetScriptForTicketContrib(TicketContribData{1, ticketKeyIds[i], neededPerTicket, TicketContribData::NoFees, TicketContribData::NoFees})));
+
+        tickets[i].vout.push_back(CTxOut(splitTxs[i].vout[0].nValue - neededPerTicket, GetScriptForDestination(ticketKeyIds[i])));
+
+        BOOST_CHECK(wallet->SignTransaction(tickets[i]));
+
+        CWalletTx wtx;
+        CValidationState state;
+        wtx.fTimeReceivedIsTxTime = true;
+        wtx.BindWallet(wallet.get());
+        wtx.SetTx(MakeTransactionRef(tickets[i]));
+        CReserveKey reservekey{wallet.get()};
+        BOOST_CHECK(wallet->CommitTransaction(wtx, reservekey, g_connman.get(), state));
+    }
+
+    // create a block template and mine it
+
+    std::unique_ptr<CBlockTemplate> pblocktemplate;
+    BOOST_CHECK_NO_THROW(pblocktemplate = BlockAssembler(chainParams).CreateNewBlock(coinbaseTxns[0].vout[0].scriptPubKey));
+    BOOST_CHECK(pblocktemplate.get());
+
+    CBlock& block = pblocktemplate->block;
+
+    unsigned int extraNonce = 0;
+    IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
+
+    while (!CheckProofOfWork(block.GetHash(), block.nBits, consensus)) ++block.nNonce;
+
+    std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
+    BOOST_CHECK(ProcessNewBlock(chainParams, shared_pblock, true, nullptr));
 }
 
 // test the transaction for purchasing tickets
@@ -698,7 +816,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
     CTxDestination vspKeyId = vspPubKey.GetID();
 
     const CAmount spendLimit{100000 * COIN};
-    const CAmount feeRate{1 * COIN};
+    const CAmount feeRate{10000};
     const double vspFeePercent{5.0};
 
     // validate a single ticket, with or without VSP fee
@@ -777,11 +895,11 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
     {
         txHashes.clear();
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", 100000 * COIN, 1, ticketKeyId, 10000, CNoDestination(), 0.0, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", 100000 * COIN, 1, ticketKeyId, 10, CNoDestination(), 0.0, 0, 1000 * COIN);
         BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
 
         std::tie(txHashes, we) = wallet->PurchaseTicket("", 100 * COIN, 1, ticketKeyId, 10000, CNoDestination(), 0.0, 0, feeRate);
-        BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
+        BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_ERROR);
     }
 
     ExtendChain(Params().GetConsensus().nStakeValidationHeight + 1 - chainActive.Height());
