@@ -151,7 +151,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
                        ? nMedianTimePast
                        : pblock->GetBlockTime();
 
-	// Votes should be present after this height.
+    // Votes should be present after this height.
     if (nHeight >= chainparams.GetConsensus().nStakeValidationHeight) {
         auto& voted_hash_index = mempool.mapTx.get<voted_block_hash>();
         auto votesForBlockHash = voted_hash_index.equal_range(pindexPrev->GetBlockHash());
@@ -168,7 +168,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             const auto& spentTicketHash = votetxiter->GetTx().vin[voteStakeInputIndex].prevout.hash;
             if (std::find(winningHashes.begin(), winningHashes.end(), spentTicketHash) == winningHashes.end())
                 continue; //not a winner
-                
+
             // tally votes already done in CheckBlock validation.cpp
             // VoteData voteData;
             // ParseVote(tx.GetTx(), voteData);
@@ -183,7 +183,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     // Get the newly purchased tickets
     CTxMemPool::setEntries ticketAncestors;
-    // if (nHeight >= chainparams.GetConsensus().nStakeEnabledHeight) 
+    // if (nHeight >= chainparams.GetConsensus().nStakeEnabledHeight)
     {
         auto& tx_class_index = mempool.mapTx.get<tx_class>();
         auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
@@ -216,7 +216,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         for (auto revocationtxiter = revocations.first; revocationtxiter != revocations.second; ++revocationtxiter) {
             const auto& ticketHash = revocationtxiter->GetTx().vin[revocationStakeInputIndex].prevout.hash;
             if (std::find(missedTickets.begin(), missedTickets.end(), ticketHash) == missedTickets.end())
-                continue; // Skip all missed tickets that we've never heard of 
+                continue; // Skip all missed tickets that we've never heard of
             auto txiter = mempool.mapTx.project<0>(revocationtxiter);
             AddToBlock(txiter);
         }
@@ -224,12 +224,15 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     // Add all the funding (ancestor) transactions that are in the mempool for the ticket just included.
     // Make sure that the funding transactions are ordered themselves by ancestry, if needed.
+    // Normally, at this point no circular or multiple dependencies should be present.
+    // However, a watchdog monitoring is implemented.
     // TODO: verify the case where a ticket is funded by other stake transaction spendable output
     std::vector<CTxMemPool::txiter> reorderedTicketAncestors;
     for (auto& ticketAncestorIter : ticketAncestors)
         reorderedTicketAncestors.push_back(ticketAncestorIter);
     const size_t reorderedTicketAncestorsSize = reorderedTicketAncestors.size();
     if (reorderedTicketAncestorsSize > 0) {
+        int watchdog = std::pow(2, reorderedTicketAncestorsSize);
         CTxMemPool::txiter b;
         uint256 hash;
         bool swapped;
@@ -250,7 +253,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
                         }
                 }
             }
-        } while (swapped);
+        } while (swapped && (--watchdog > 0));
+
+        if (watchdog == 0)
+            throw std::runtime_error(strprintf("%s: Split transaction reordering failed (%llu transactions)", __func__, reorderedTicketAncestorsSize));
 
         for (auto& reorderedTicketAncestorIter : reorderedTicketAncestors)
             AddToBlock(reorderedTicketAncestorIter);
