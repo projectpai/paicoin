@@ -232,7 +232,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         reorderedTicketAncestors.push_back(ticketAncestorIter);
     const size_t reorderedTicketAncestorsSize = reorderedTicketAncestors.size();
     if (reorderedTicketAncestorsSize > 0) {
-        int watchdog = std::pow(2, reorderedTicketAncestorsSize);
+        int watchdog = static_cast<int>(std::pow(2, reorderedTicketAncestorsSize));
         CTxMemPool::txiter b;
         uint256 hash;
         bool swapped;
@@ -241,15 +241,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             for (size_t i = 0; (i < reorderedTicketAncestorsSize - 1) && (!swapped); ++i) {
                 for (size_t j = i + 1; (j < reorderedTicketAncestorsSize) && (!swapped); ++j) {
                     hash = reorderedTicketAncestors[j]->GetTx().GetHash();
-                    for (auto& input: reorderedTicketAncestors[i]->GetTx().vin)
-                        if (input.prevout.hash == hash) {
-                            b = reorderedTicketAncestors[i];
-                            reorderedTicketAncestors[i] = reorderedTicketAncestors[j];
-                            reorderedTicketAncestors[j] = b;
-
+                    for (size_t k = 0; (k < reorderedTicketAncestors[i]->GetTx().vin.size()) && (!swapped); ++k)
+                        if (reorderedTicketAncestors[i]->GetTx().vin[k].prevout.hash == hash) {
+                            std::swap(reorderedTicketAncestors[i], reorderedTicketAncestors[j]);
                             swapped = true;
-
-                            break;
                         }
                 }
             }
