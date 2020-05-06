@@ -151,7 +151,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
                        ? nMedianTimePast
                        : pblock->GetBlockTime();
 
-	// Votes should be present after this height.
+    // Votes should be present after this height.
     if (nHeight >= chainparams.GetConsensus().nStakeValidationHeight) {
         auto& voted_hash_index = mempool.mapTx.get<voted_block_hash>();
         auto votesForBlockHash = voted_hash_index.equal_range(pindexPrev->GetBlockHash());
@@ -168,7 +168,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             const auto& spentTicketHash = votetxiter->GetTx().vin[voteStakeInputIndex].prevout.hash;
             if (std::find(winningHashes.begin(), winningHashes.end(), spentTicketHash) == winningHashes.end())
                 continue; //not a winner
-                
+
             // tally votes already done in CheckBlock validation.cpp
             // VoteData voteData;
             // ParseVote(tx.GetTx(), voteData);
@@ -182,11 +182,14 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     }
 
     // Get the newly purchased tickets
-    // if (nHeight >= chainparams.GetConsensus().nStakeEnabledHeight) 
+    CTxMemPool::setEntries ticketAncestors;
+    // if (nHeight >= chainparams.GetConsensus().nStakeEnabledHeight)
     {
         auto& tx_class_index = mempool.mapTx.get<tx_class>();
         auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
         int nNewTickets = 0;
+        uint64_t nNoLimit = std::numeric_limits<uint64_t>::max();
+        std::string dummy;
         for (auto tickettxiter = existingTickets.first; tickettxiter != existingTickets.second; ++tickettxiter) {
             if (nNewTickets >= chainparams.GetConsensus().nMaxFreshStakePerBlock) //new ticket purchases not more than max allowed in block
                 break;
@@ -194,6 +197,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             auto txiter = mempool.mapTx.project<0>(tickettxiter);
             AddToBlock(txiter);
             ++nNewTickets;
+
+            // store all unconfirmed ancestors in order to include them in this block
+            mempool.CalculateMemPoolAncestors(*txiter, ticketAncestors, nNoLimit, nNoLimit, nNoLimit, nNoLimit, dummy, false);
+            onlyUnconfirmed(ticketAncestors);
         }
         pblock->nFreshStake = nNewTickets;
     }
@@ -209,10 +216,45 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         for (auto revocationtxiter = revocations.first; revocationtxiter != revocations.second; ++revocationtxiter) {
             const auto& ticketHash = revocationtxiter->GetTx().vin[revocationStakeInputIndex].prevout.hash;
             if (std::find(missedTickets.begin(), missedTickets.end(), ticketHash) == missedTickets.end())
-                continue; // Skip all missed tickets that we've never heard of 
+                continue; // Skip all missed tickets that we've never heard of
             auto txiter = mempool.mapTx.project<0>(revocationtxiter);
             AddToBlock(txiter);
         }
+    }
+
+    // Add all the funding (ancestor) transactions that are in the mempool for the ticket just included.
+    // Make sure that the funding transactions are ordered themselves by ancestry, if needed.
+    // Normally, at this point no circular or multiple dependencies should be present.
+    // However, a watchdog monitoring is implemented.
+    // TODO: verify the case where a ticket is funded by other stake transaction spendable output
+    std::vector<CTxMemPool::txiter> reorderedTicketAncestors;
+    for (auto& ticketAncestorIter : ticketAncestors)
+        reorderedTicketAncestors.push_back(ticketAncestorIter);
+    const size_t reorderedTicketAncestorsSize = reorderedTicketAncestors.size();
+    if (reorderedTicketAncestorsSize > 0) {
+        int watchdog = static_cast<int>(std::pow(2, reorderedTicketAncestorsSize));
+        CTxMemPool::txiter b;
+        uint256 hash;
+        bool swapped;
+        do {
+            swapped = false;
+            for (size_t i = 0; (i < reorderedTicketAncestorsSize - 1) && (!swapped); ++i) {
+                for (size_t j = i + 1; (j < reorderedTicketAncestorsSize) && (!swapped); ++j) {
+                    hash = reorderedTicketAncestors[j]->GetTx().GetHash();
+                    for (size_t k = 0; (k < reorderedTicketAncestors[i]->GetTx().vin.size()) && (!swapped); ++k)
+                        if (reorderedTicketAncestors[i]->GetTx().vin[k].prevout.hash == hash) {
+                            std::swap(reorderedTicketAncestors[i], reorderedTicketAncestors[j]);
+                            swapped = true;
+                        }
+                }
+            }
+        } while (swapped && (--watchdog > 0));
+
+        if (watchdog == 0)
+            throw std::runtime_error(strprintf("%s: Split transaction reordering failed (%llu transactions)", __func__, reorderedTicketAncestorsSize));
+
+        for (auto& reorderedTicketAncestorIter : reorderedTicketAncestors)
+            AddToBlock(reorderedTicketAncestorIter);
     }
 
     // Decide whether to include witness transactions

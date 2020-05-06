@@ -2,6 +2,7 @@
 #include "stake/staketx.h"
 #include "script/standard.h"
 #include "chain.h"
+#include "pubkey.h"
 
 #include <sstream>
 
@@ -92,6 +93,9 @@ bool ValidateDataTxoutStructure(const CTransaction& tx, uint32_t txoutIndex,
 
 // ======================================================================
 
+const uint8_t TicketContribData::MaxFees = 0x3F;
+const uint8_t TicketContribData::NoFees = TicketContribData::MaxFees+1;
+
 CScript GetScriptForBuyTicketDecl(const BuyTicketData& data)
 {
     int nBuyTicketVersion = 1;
@@ -104,7 +108,10 @@ CScript GetScriptForTicketContrib(const TicketContribData& data)
     int nContribVersion = 1;
     return GetScriptForStructuredData(CLASS_Staking) << STAKE_TicketContribution
                     << nContribVersion
-                    << ToByteVector(data.rewardAddr) << data.whichAddr << data.contributedAmount;
+                    << ToByteVector(data.rewardAddr) << data.whichAddr
+                    << data.contributedAmount
+                    << data.voteFees
+                    << data.revokeFees;
 }
 
 CScript GetScriptForVoteDecl(const VoteData& data)
@@ -169,7 +176,7 @@ bool IsStakeTx(ETxClass eTxClass)
 
 bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContribData& data)
 {
-    int numItems = 7;   // structVersion, dataClass, stakeDataClass, contribVersion, rewardAddr, whichAddr, contribAmount
+    int numItems = 9;   // structVersion, dataClass, stakeDataClass, contribVersion, rewardAddr, whichAddr, contribAmount, voteFees, revokeFees
     std::vector<std::vector<unsigned char> > items;
     if (!ParseStakeData(tx, txoutIndex, STAKE_TicketContribution, numItems, items))
         return false;
@@ -180,8 +187,21 @@ bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContr
 
     data.rewardAddr = uint160(items[contribAddrIndex]);
     data.whichAddr = CScriptNum(items[contribAddrTypeIndex],false).getint();
-    data.contributedAmount = CScriptNum(items[contribAmountIndex], false).getint(); // CScriptNum can handle 32-byte integers; is that enough?
-    //data.contributedAmount = base_blob<64>(items[contribAmountIndex]).GetUint64(0); // this parses uint64 but not int64
+
+    data.contributedAmount = CScriptNum(items[contribAmountIndex], false, 8).getint64();
+
+    int fees = CScriptNum(items[contribVoteFeesIndex], false).getint();
+    if (fees >= 0 && fees <= TicketContribData::MaxFees)
+        data.voteFees = static_cast<uint8_t>(fees);
+    else
+        data.voteFees = TicketContribData::NoFees;
+
+    fees = CScriptNum(items[contribRevokeFeesIndex], false).getint();
+    if (fees >= 0 && fees <= TicketContribData::MaxFees)
+        data.revokeFees = static_cast<uint8_t>(fees);
+    else
+        data.revokeFees = TicketContribData::NoFees;
+
     return true;
 }
 
@@ -292,8 +312,8 @@ bool ValidateBuyTicketStructure(const CTransaction &tx, std::string& reason)
         // even-indexed outputs should be reward addresses
         else
         {
-            unsigned dataSizes[] = { 0, sizeof(uint160), 0, 0 };     // version, 20-bytes address hash, addrType, contributed amount
-            if (!ValidateDataTxoutStructure(tx, txoutIndex, 4, dataSizes, nullptr, reason))
+            unsigned dataSizes[] = { 0, sizeof(uint160), 0, 0, 1, 1 };     // version, 20-bytes address hash, addrType, contributed amount, vote fees, revoke fees
+            if (!ValidateDataTxoutStructure(tx, txoutIndex, 6, dataSizes, nullptr, reason))
                 return false;
         }
     }
@@ -414,6 +434,71 @@ bool ValidateRevokeTicketStructure(const CTransaction &tx, std::string& reason)
     }
 
     return true;
+}
+
+size_t GetEstimatedP2PKHTxInSize(bool compressed)
+{
+    // a P2PKH input has the following structure:
+    // - previous outpoint hash     [32 bytes]
+    // - previous outpoint index    [4 bytes]
+    // - scriptsig size             [1 byte]
+    // - push opcode                [1 byte]
+    // - signature                  [71 or 72 bytes]
+    // - push opcode                [1 byte]
+    // - public key                 [33 bytes compressed, 65 bytes uncompressed]
+    // - sequence                   [4 bytes]
+
+    return 32 + 4 + 1 + 1 + 72 + 1 + (compressed ? 33 : 65) + 4;
+}
+
+size_t GetEstimatedP2PKHTxOutSize()
+{
+    // a P2PKH output has the following structure:
+    // - value              [8 bytes]
+    // - script size        [1 byte]
+    // - OP_DUP             [1 byte]
+    // - OP_HASH160         [1 byte]
+    // - push opcode        [1 byte]
+    // - public key hash    [20 bytes]
+    // - OP_EQUALVERIFY     [1 byte]
+    // - OP_CHECKSIG        [1 byte]
+
+    return 8 + 1 + 1 + 1 + 1 + 20 + 1 + 1;
+}
+
+size_t GetEstimatedBuyTicketDeclTxOutSize()
+{
+    BuyTicketData data{1};
+    CTxOut txOut{0, GetScriptForBuyTicketDecl(data)};
+    return GetSerializeSize(txOut, SER_NETWORK, PROTOCOL_VERSION);
+}
+
+size_t GetEstimatedTicketContribTxOutSize()
+{
+    TicketContribData data{1, CKeyID(), MAX_MONEY, TicketContribData::MaxFees, TicketContribData::MaxFees};
+    CTxOut txOut{0, GetScriptForTicketContrib(data)};
+    return GetSerializeSize(txOut, SER_NETWORK, PROTOCOL_VERSION);
+}
+
+size_t GetEstimatedSizeOfBuyTicketTx(bool useVsp)
+{
+    // since the format of the ticket purchase transaction is fixed,
+    // its size can be estimated precisely.
+    // A ticket purchase transaction has the structure described in ValidateBuyTicketStructure().
+    // version + in count (1|2) + 1 regular input + out count (4|5) + buy ticket decl output + ticket address output + pool fee contributor (optional)  + pool fee change output (optional) + contributor info output + change output + locktime
+
+    return 4
+            + 1
+            + (useVsp ? GetEstimatedP2PKHTxInSize() : 0)
+            + GetEstimatedP2PKHTxInSize()
+            + 1
+            + GetEstimatedBuyTicketDeclTxOutSize()
+            + GetEstimatedP2PKHTxOutSize()
+            + (useVsp ? GetEstimatedTicketContribTxOutSize() : 0)
+            + (useVsp ? GetEstimatedP2PKHTxOutSize() : 0)
+            + GetEstimatedTicketContribTxOutSize()
+            + GetEstimatedP2PKHTxOutSize()
+            + 4;
 }
 
 StakeSlice::StakeSlice(std::vector<CTransactionRef> vtx)

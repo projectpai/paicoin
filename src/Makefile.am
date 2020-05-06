@@ -139,6 +139,8 @@ PAICOIN_CORE_H = \
   script/sign.h \
   script/standard.h \
   script/ismine.h \
+  stake/stakepoolfee.h \
+  stake/stakeversion.h \
   streams.h \
   support/allocators/secure.h \
   support/allocators/zeroafterfree.h \
@@ -190,7 +192,6 @@ libpaicoin_server_a_SOURCES = \
   addrman.cpp \
   bloom.cpp \
   blockencodings.cpp \
-  chain.cpp \
   checkpoints.cpp \
   consensus/tx_verify.cpp \
   httprpc.cpp \
@@ -249,8 +250,11 @@ libpaicoin_wallet_a_SOURCES = \
   wallet/init.cpp \
   wallet/rpcdump.cpp \
   wallet/rpcwallet.cpp \
+  wallet/ticket-buyer/ticketbuyerconfig.cpp \
+  wallet/ticket-buyer/ticketbuyer.cpp \
   wallet/wallet.cpp \
   wallet/walletdb.cpp \
+  stake/stakepoolfee.cpp \
   $(PAICOIN_CORE_H)
 
 # crypto primitives library
@@ -288,6 +292,7 @@ libpaicoin_consensus_a_SOURCES = \
   amount.h \
   arith_uint256.cpp \
   arith_uint256.h \
+  chain.cpp \
   chainparams.cpp \
   consensus/merkle.cpp \
   consensus/merkle.h \
@@ -353,6 +358,7 @@ libpaicoin_common_a_SOURCES = \
   scheduler.cpp \
   script/sign.cpp \
   script/standard.cpp \
+  stake/stakepoolfee.cpp \
   warnings.cpp \
   $(PAICOIN_CORE_H)
 

@@ -204,6 +204,18 @@ bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
     return true;
 }
 
+bool CCryptoKeyStore::VerifyMasterKey(const CKeyingMaterial& vMasterKeyIn)
+{
+    {
+        LOCK(cs_KeyStore);
+
+        if (vMasterKeyIn != vMasterKey)
+            return false;
+    }
+
+    return true;
+}
+
 bool CCryptoKeyStore::AddKeyPubKey(const CKey& key, const CPubKey &pubkey)
 {
     {
