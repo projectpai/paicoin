@@ -460,7 +460,7 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
-        consensus.HybridConsensusHeight = 1500;
+        consensus.HybridConsensusHeight = 2016; //should be a multiple of DifficultyAdjustmentInterval
         consensus.powLimit = REGTEST_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -501,8 +501,8 @@ public:
         consensus.nStakeDiffWindows            = 8;
         consensus.nStakeVersionInterval        = 6 * 24; // ~1 day
         consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight          = 2000;//141;//consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
-        consensus.nStakeValidationHeight       = 2100;//200;//consensus.nCoinbaseMaturity + (consensus.nTicketPoolSize * 2);
+        consensus.nStakeEnabledHeight          = 2020;//must be above HybridConsensusHeight
+        consensus.nStakeValidationHeight       = 2100;//must be above nStakeEnabledHeight
         consensus.stakeBaseSigScript           = CScript() << 0x73 << 0x57;
         consensus.nStakeMajorityMultiplier     = 3;
         consensus.nStakeMajorityDivisor        = 4;
