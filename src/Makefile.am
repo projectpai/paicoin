@@ -218,6 +218,7 @@ libpaicoin_server_a_SOURCES = \
   rpc/stakeapi.cpp \
   script/sigcache.cpp \
   script/ismine.cpp \
+  stake/stakeversion.cpp \
   timedata.cpp \
   torcontrol.cpp \
   txdb.cpp \
@@ -294,6 +295,7 @@ libpaicoin_consensus_a_SOURCES = \
   arith_uint256.h \
   chain.cpp \
   chainparams.cpp \
+  chainparamsbase.cpp \
   consensus/merkle.cpp \
   consensus/merkle.h \
   consensus/params.h \
@@ -330,8 +332,6 @@ libpaicoin_consensus_a_SOURCES = \
   stake/stakenode.h \
   stake/staketx.cpp \
   stake/staketx.h \
-  stake/stakeversion.cpp \
-  stake/stakeversion.h \
   tinyformat.h \
   uint256.cpp \
   uint256.h \
@@ -344,6 +344,7 @@ libpaicoin_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES)
 libpaicoin_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpaicoin_common_a_SOURCES = \
   base58.cpp \
+  chainparams.cpp \
   coins.cpp \
   compressor.cpp \
   core_read.cpp \
@@ -489,14 +490,15 @@ paicoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 if BUILD_PAICOIN_LIBS
 include_HEADERS = script/paicoinconsensus.h
 libpaicoinconsensus_la_SOURCES = $(crypto_libpaicoin_crypto_a_SOURCES) $(libpaicoin_consensus_a_SOURCES)
+libpaicoinconsensus_la_SOURCES += support/cleanse.cpp fs.cpp random.cpp utiltime.cpp util.cpp
 
 if GLIBC_BACK_COMPAT
   libpaicoinconsensus_la_SOURCES += compat/glibc_compat.cpp
 endif
 
 libpaicoinconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
-libpaicoinconsensus_la_LIBADD = $(LIBSECP256K1) $(BOOST_SYSTEM_LIB)
-libpaicoinconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_PAICOIN_INTERNAL
+libpaicoinconsensus_la_LIBADD = $(LIBSECP256K1) $(LIBUNIVALUE) $(BOOST_LIBS) $(CRYPTO_LIBS)
+libpaicoinconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) $(UNIVALUE_CFLAGS) $(BOOST_CPPFLAGS) $(CRYPTO_CFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_PAICOIN_INTERNAL
 libpaicoinconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 
 endif
