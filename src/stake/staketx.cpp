@@ -119,7 +119,7 @@ CScript GetScriptForVoteDecl(const VoteData& data)
     int nVoteVersion = 1;
     return GetScriptForStructuredData(CLASS_Staking) << STAKE_TxDeclaration
                     << TX_Vote << nVoteVersion
-                    << ToByteVector(data.blockHash) << data.blockHeight << data.voteBits << data.voterStakeVersion;
+                    << ToByteVector(data.blockHash) << data.blockHeight << data.voteBits.getBits() << data.voterStakeVersion << data.extendedVoteBits.getVector();
 }
 
 CScript GetScriptForRevokeTicketDecl(const RevokeTicketData& data)
@@ -127,6 +127,12 @@ CScript GetScriptForRevokeTicketDecl(const RevokeTicketData& data)
     int nRevokeTicketVersion = 1;
     return GetScriptForStructuredData(CLASS_Staking) << STAKE_TxDeclaration
                     << TX_RevokeTicket << nRevokeTicketVersion;
+}
+
+size_t GetVoteDataSizeWithEmptyExtendedVoteBits()
+{
+    VoteData voteData;
+    return GetSerializeSize(GetScriptForVoteDecl(voteData), SER_NETWORK, PROTOCOL_VERSION);
 }
 
 // ======================================================================
@@ -174,6 +180,11 @@ bool IsStakeTx(ETxClass eTxClass)
     return eTxClass == TX_BuyTicket || eTxClass == TX_Vote || eTxClass == TX_RevokeTicket;
 }
 
+bool HasStakebaseContents(const CTxIn& txIn)
+{
+    return txIn.prevout.n == std::numeric_limits<uint32_t>::max() && txIn.scriptSig == Params().GetConsensus().stakeBaseSigScript && txIn.prevout.hash == uint256();
+}
+
 bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContribData& data)
 {
     int numItems = 9;   // structVersion, dataClass, stakeDataClass, contribVersion, rewardAddr, whichAddr, contribAmount, voteFees, revokeFees
@@ -207,7 +218,7 @@ bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContr
 
 bool ParseVote(const CTransaction& tx, VoteData& data)
 {
-    int numItems = 9;   // structVersion, dataClass, stakeDataClass, txClass, voteVersion, blockHash, blockHeight, voteBits, voterStakeVersion
+    int numItems = 10;   // structVersion, dataClass, stakeDataClass, txClass, voteVersion, blockHash, blockHeight, voteBits, voterStakeVersion, extendedVoteBits
     std::vector<std::vector<unsigned char> > items;
     if (!ParseStakeData(tx, txdeclOutputIndex, STAKE_TxDeclaration, numItems, items))
         return false;
@@ -222,8 +233,13 @@ bool ParseVote(const CTransaction& tx, VoteData& data)
 
     data.blockHash = uint256(items[voteBlockHashIndex]);
     data.blockHeight = (uint32_t) CScriptNum(items[voteBlockHeightIndex], false).getint();
-    data.voteBits = (uint32_t) CScriptNum(items[voteBitsIndex], false).getint();
+    int vb = CScriptNum(items[voteBitsIndex], false).getint();
+    if (vb < 0 || vb > std::numeric_limits<uint16_t>().max())
+        return false;
+    data.voteBits = VoteBits{static_cast<uint16_t>(vb)};
     data.voterStakeVersion = (uint32_t) CScriptNum(items[voterStakeVersionIndex], false).getint();
+    data.extendedVoteBits = ExtendedVoteBits(items[extendedVoteBitsIndex]);
+
     return true;
 }
 
@@ -365,8 +381,8 @@ bool ValidateVoteStructure(const CTransaction &tx, std::string& reason)
 
     // check that the first output contains vote declaration (TX_Vote, block hash, block height, vote bits, stake version)
     // validation of voting data itself is contextual and done elsewhere
-    unsigned dataSizes[] = { 0, 0, sizeof(uint256), 0, 0, 0 }; // TX_Vote, version, blockHash, blockHeight, voteBits, stakeVersion
-    if (!ValidateTxDeclStructure(tx, TX_Vote, 6, dataSizes, reason))
+    unsigned dataSizes[] = { 0, 0, sizeof(uint256), 0, 0, 0, 0 }; // TX_Vote, version, blockHash, blockHeight, voteBits, stakeVersion, extendedVoteBits
+    if (!ValidateTxDeclStructure(tx, TX_Vote, 7, dataSizes, reason))
         return false;
 
     // check that the rest of the outputs are payments;
@@ -555,7 +571,7 @@ SpentTicketsInBlock FindSpentTicketsInBlock(const CBlock& block)
                 votes.push_back(
                     VoteVersion{
                         static_cast<uint32_t>(voteData.voterStakeVersion),
-                        static_cast<uint16_t>(voteData.voteBits)
+                        voteData.voteBits
                         });
                 }
                 break;

@@ -57,7 +57,7 @@ typedef std::vector<uint256> HashVector;
 // (SSGen).
 struct VoteVersion {
     uint32_t Version;
-	uint16_t Bits;
+    VoteBits Bits;
 };
 typedef std::vector<VoteVersion> VoteVersionVector;
 typedef std::tuple<HashVector, HashVector, VoteVersionVector> SpentTicketsInBlock;

@@ -679,7 +679,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
     if (IsHybridConsensusForkEnabled(pindexPrev, Params().GetConsensus())) {
         result.push_back(Pair("stakedifficulty", std::to_string(pblock->nStakeDifficulty)));
-        result.push_back(Pair("votebits", strprintf("%08x", pblock->nVoteBits)));
+        result.push_back(Pair("votebits", strprintf("%04x", pblock->nVoteBits.getBits())));
         result.push_back(Pair("ticketpoolsize", strprintf("%08x", pblock->nTicketPoolSize)));
         result.push_back(Pair("ticketlotterystate", StakeStateToString(pblock->ticketLotteryState)));
         result.push_back(Pair("stakeversion", strprintf("%08x", pblock->nStakeVersion)));
