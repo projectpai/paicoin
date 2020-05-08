@@ -9,6 +9,7 @@
 #include "primitives/transaction.h"
 #include "serialize.h"
 #include "uint256.h"
+#include "stake/votebits.h"
 
 #include <array>
 
@@ -31,7 +32,7 @@ public:
     uint32_t   nBits;
     uint32_t   nNonce;
     int64_t    nStakeDifficulty;
-    uint32_t   nVoteBits;
+    VoteBits   nVoteBits;
     uint32_t   nTicketPoolSize;
     uint48     ticketLotteryState;
     uint16_t   nVoters;
@@ -84,7 +85,7 @@ public:
         nBits = 0;
         nNonce = 0;
         nStakeDifficulty = 0;
-        nVoteBits = 1;
+        nVoteBits = VoteBits(VoteBits::Rtt, true);
         nTicketPoolSize = 0;
         ticketLotteryState.SetNull();
         nVoters = 0;

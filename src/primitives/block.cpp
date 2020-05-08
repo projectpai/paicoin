@@ -25,14 +25,14 @@ std::string CBlock::ToString() const
 {
     std::stringstream s;
     s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, "
-                   "nStakeDifficulty=%s, nVoteBits=%08x, nTicketPoolSize=%u, ticketLotteryState=%s,"
+                   "nStakeDifficulty=%s, nVoteBits=%04x, nTicketPoolSize=%u, ticketLotteryState=%s,"
                    "nFreshStake=%u, nStakeVersion=%u, vtx=%u)\n",
         GetHash().ToString(),
         nVersion,
         hashPrevBlock.ToString(),
         hashMerkleRoot.ToString(),
         nTime, nBits, nNonce,
-        std::to_string(nStakeDifficulty), nVoteBits, nTicketPoolSize, StakeStateToString(ticketLotteryState),
+        std::to_string(nStakeDifficulty), nVoteBits.getBits(), nTicketPoolSize, StakeStateToString(ticketLotteryState),
         nFreshStake,  nStakeVersion, vtx.size());
     for (const auto& tx : vtx) {
         s << "  " << tx->ToString() << "\n";
@@ -44,7 +44,7 @@ void CBlockHeader::SetReadStakeDefaultBeforeFork()
 {
     nStakeDifficulty = Params().GetConsensus().nMinimumStakeDiff;
     // TODO add more stake defaults as needed
-    // nVoteBits = 1;
+    // nVoteBits = VoteBits(VoteBits::Rtt, true);
     // nTicketPoolSize = 0;
     // ticketLotteryState.SetNull();
     // nVoters = 0;

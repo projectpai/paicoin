@@ -100,8 +100,8 @@ public:
 
     // voteBitNo and voteBitYes represent no and yes votes, respectively, on
     // whether or not to approve the previous block.
-    static const uint32_t voteNoBits  = 0x0000;
-    static const uint32_t voteYesBits = 0x0001;
+    static const VoteBits voteNoBits;
+    static const VoteBits voteYesBits;
 
     static const uint16_t minStakebaseScriptLen = 2;
     static const uint16_t maxStakebaseScriptLen = 100;
@@ -143,7 +143,7 @@ public:
                     , const std::list<SpendableOut>& ticketSpends
                     , const MungerType& munger = MungerType());
     CMutableTransaction CreateTicketPurchaseTx(const SpendableOut& spend, const CAmount& ticketPrice, const CAmount& fee);
-    CMutableTransaction CreateVoteTx(const uint256& voteBlockHash, int voteBlockHeight, const uint256& ticketTxHash, uint32_t voteBits = voteYesBits) const;
+    CMutableTransaction CreateVoteTx(const uint256& voteBlockHash, int voteBlockHeight, const uint256& ticketTxHash, VoteBits voteBits = voteYesBits) const;
     CMutableTransaction CreateRevocationTx(const uint256& ticketTxHash) const;
     CMutableTransaction CreateSpendTx(const SpendableOut& spend, const CAmount& fee) const;
     CMutableTransaction CreateSplitSpendTx(const SpendableOut& spend, const std::vector<CAmount>& payments, const CAmount& fee) const;
@@ -158,7 +158,7 @@ public:
     void SaveSpendableOuts(const CBlock& b, uint32_t indexBlock, const std::vector<uint32_t>& indicesTxOut);
     void SaveCoinbaseOut(const CBlock& b);
 
-    void ReplaceVoteBits(CTransactionRef& tx, uint32_t voteBits) const;
+    void ReplaceVoteBits(CTransactionRef& tx, VoteBits voteBits) const;
     void ReplaceStakeBaseSigScript(CTransactionRef& tx, const CScript& sigScript) const;
     CScript RepeatOpCode(opcodetype opCode, uint16_t numRepeats) const;
 

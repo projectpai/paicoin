@@ -17,6 +17,8 @@
 #include "chainparamsseeds.h"
 #include "coinbase_addresses.h"
 
+#include "stake/votebits.h"
+
 /**
  * To initialize the block chain by mining a new genesis block uncomment the following define.
  * WARNING: this should only be done once and prior to release in production!
@@ -74,7 +76,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     genesis.nTime    = nTime;
     genesis.nBits    = nBits;
     genesis.nStakeDifficulty = nStakeDiff;
-    genesis.nVoteBits = 1;
+    genesis.nVoteBits = VoteBits(VoteBits::Rtt, true);
     genesis.nTicketPoolSize = 0;
     std::fill(genesis.ticketLotteryState.begin(), genesis.ticketLotteryState.end(), 0);
     genesis.nStakeVersion = 0;

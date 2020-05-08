@@ -410,7 +410,7 @@ bool checkVoteOrRevokeTicketInputs(const CTransaction& tx, bool vote, CValidatio
 
         // Check if the payment amount is as expected
         // Also consider fee limits, if enabled.
-        CAmount paymentAmount = CalcContributorRemuneration(contrib.contributedAmount, stakedAmount, subsidy, contributionSum);
+        CAmount paymentAmount = CalculateGrossRemuneration(contrib.contributedAmount, stakedAmount, subsidy, contributionSum);
 
         CAmount feeLimit{-1};
         if (vote && contrib.hasVoteFeeLimits())

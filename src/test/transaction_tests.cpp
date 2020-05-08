@@ -929,9 +929,10 @@ CMutableTransaction CreateDummyVote()
     // create a structured OP_RETURN output containing tx declaration and dummy voting data
     uint256 dummyBlockHash = uint256();
     uint32_t dummyBlockHeight = 55;
-    uint32_t dummyVoteBits = 0x0001;
+    VoteBits dummyVoteBits(VoteBits::Rtt, true);
     uint32_t dummyVoteStakeVerion = 1;
-    VoteData voteData = { 1, dummyBlockHash, dummyBlockHeight, dummyVoteBits, dummyVoteStakeVerion};
+    ExtendedVoteBits dummyExtendedVoteBits;
+    VoteData voteData = { 1, dummyBlockHash, dummyBlockHeight, dummyVoteBits, dummyVoteStakeVerion, dummyExtendedVoteBits };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 

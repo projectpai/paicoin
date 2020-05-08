@@ -43,10 +43,6 @@ void CTicketBuyer::UpdatedBlockTip(const CBlockIndex *, const CBlockIndex *, boo
     cv.notify_one();
 }
 
-//void CTicketBuyer::BlockConnected(const std::shared_ptr<const CBlock> &block, const CBlockIndex *pindex, const std::vector<CTransactionRef> &txnConflicted) override
-//{
-//}
-
 void CTicketBuyer::start()
 {
     config.buyTickets = true;
@@ -179,11 +175,20 @@ void CTicketBuyer::mainLoop()
             buy = config.limit;
 
         const auto&& r = pwallet->PurchaseTicket(config.account, spendable, config.minConf, config.votingAddress, buy, config.poolFeeAddress, config.poolFees, expiry, 0 /*TODO Make sure this is handled correctly*/);
-        if (r.first.size() > 0 && r.second.code == CWalletError::SUCCESSFUL) {
-            LogPrintf("CTicketBuyer: Purchased tickets: %s", std::accumulate(r.first.begin(), r.first.end(), std::string()));
-        } else {
+
+        if (r.second.code != CWalletError::SUCCESSFUL)
             LogPrintf("CTicketBuyer: Failed to purchase tickets: (%d) %s", r.second.code, r.second.message.c_str());
-        }
+
+        if (r.first.size() > 0) {
+            std::string hashes;
+            for (const auto& h : r.first) {
+                if (hashes.length() > 0)
+                    hashes += ", ";
+                hashes += h;
+            }
+            LogPrintf("CTicketBuyer: Purchased tickets: %s", hashes.c_str());
+        } else
+            LogPrintf("CTicketBuyer: Successful, but not ticket hashes are available");
 
         if (shouldRelock) pwallet->Lock();
     }

@@ -5,6 +5,7 @@
 #include "policy/policy.h"
 #include "txmempool.h"
 #include "util.h"
+#include "stake/extendedvotebits.h"
 
 #include "test/test_paicoin.h"
 
@@ -170,8 +171,10 @@ CMutableTransaction CreateDummyVote(const uint256& blockHashToVoteOn)
 
     // create a structured OP_RETURN output containing tx declaration and dummy voting data
     uint32_t dummyBlockHeight = 55;
-    uint32_t dummyVoteBits = 0x0001;
-    VoteData voteData = { 1, blockHashToVoteOn, dummyBlockHeight, dummyVoteBits };
+    VoteBits dummyVoteBits(VoteBits::Rtt, true);
+    uint32_t dummyVoterStakeVersion = 0;
+    ExtendedVoteBits dummyExtendedVoteBits;
+    VoteData voteData = { 1, blockHashToVoteOn, dummyBlockHeight, dummyVoteBits, dummyVoterStakeVersion, dummyExtendedVoteBits };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 

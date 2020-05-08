@@ -283,9 +283,21 @@ bool GetTransaction(const uint256 &hash, CTransactionRef &tx, const Consensus::P
 CTransactionRef GetTicket(const uint256 &ticketTxHash);
 /** Find the best known block, and make it the tip of the block chain */
 bool ActivateBestChain(CValidationState& state, const CChainParams& chainparams, std::shared_ptr<const CBlock> pblock = std::shared_ptr<const CBlock>());
+
+// An indicator of the desired fee distribution policy
+// This influences the way that the vote or revoke fees are distributed among the contributors.
+enum class FeeDistributionPolicy {
+    FirstContributor,   // only the first contributor will pay the fee, in its entirety
+    EqualFee,           // each contributor will pay the same fee, regardless of his/her contribution
+                        // the first contributor will also pay any rounding errors
+    ProportionalFee     // each contributor will pay a fee proportional to his/her contribution
+                        // as with equal fee, the first contributor will also pay any rounding errors
+};
+
 CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams);
 CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams);
-CAmount CalcContributorRemuneration(CAmount contributedAmount, CAmount totalStake, CAmount subsidy, CAmount contributionSum);
+CAmount CalculateGrossRemuneration(CAmount contributedAmount, CAmount totalStake, CAmount subsidy, CAmount contributionSum);
+std::vector<CAmount> CalculateNetRemunerations(const std::vector<TicketContribData>& contributions, const CAmount& stake, const CAmount& subsidy, const CAmount& fee = 0, const FeeDistributionPolicy feePolicy = FeeDistributionPolicy::FirstContributor);
 
 /** Guess verification progress (as a fraction between 0.0=genesis and 1.0=current tip). */
 double GuessVerificationProgress(const ChainTxData& data, CBlockIndex* pindex);

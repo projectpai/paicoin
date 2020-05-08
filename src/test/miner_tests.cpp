@@ -17,6 +17,7 @@
 #include "uint256.h"
 #include "util.h"
 #include "utilstrencodings.h"
+#include "stake/extendedvotebits.h"
 
 #include "test/test_paicoin.h"
 
@@ -912,9 +913,10 @@ CMutableTransaction CreateDummyVote(const uint256& txBuyTicketHash, const uint25
     mtx.vin.push_back(CTxIn(COutPoint(txBuyTicketHash, ticketStakeOutputIndex)));
 
     // create a structured OP_RETURN output containing tx declaration and dummy voting data
-    uint32_t dummyVoteBits = 0x0001;
+    VoteBits voteBits(VoteBits::Rtt, true);
     uint32_t voterStakeVersion = 0;
-    VoteData voteData = { 1, blockHashToVoteOn, blockHeight, dummyVoteBits, voterStakeVersion };
+    ExtendedVoteBits extendedVoteBits;
+    VoteData voteData = { 1, blockHashToVoteOn, blockHeight, voteBits, voterStakeVersion, extendedVoteBits };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 
@@ -1150,7 +1152,7 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
             const auto& ticketPriceAtPurchase = vBoughtTickets[winningHashes[i]];
             const auto& contributedAmount = ticketPriceAtPurchase + test_ticket_contributions[0];
             // recalculated reward
-            const auto& reward = CalcContributorRemuneration( contributedAmount, ticketPriceAtPurchase, subsidy, contributedAmount);
+            const auto& reward = CalculateGrossRemuneration( contributedAmount, ticketPriceAtPurchase, subsidy, contributedAmount);
             CMutableTransaction txVote = CreateDummyVote(winningHashes[i], blockHashToVoteOn, blockHeightToVoteOn, rewardAddr, reward);
             SignTx(txVote, voteStakeInputIndex, scriptPubKeyStake, stakeKey);
             mempool.addUnchecked(txVote.GetHash(), entry.Fee(ZEROFEE).FromTx(txVote));
@@ -1158,7 +1160,7 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
 
         // add some bad votes
         // vote using dummy ticket hash
-        const auto& reward = CalcContributorRemuneration(test_ticket_contributions[0], minimumStakeDiff, subsidy, test_ticket_contributions[0]);
+        const auto& reward = CalculateGrossRemuneration(test_ticket_contributions[0], minimumStakeDiff, subsidy, test_ticket_contributions[0]);
         CMutableTransaction txBadVote1 = CreateDummyVote(uint256(), blockHashToVoteOn, blockHeightToVoteOn, rewardAddr, reward);
         SignTx(txBadVote1, voteStakeInputIndex, scriptPubKeyStake, stakeKey);
         mempool.addUnchecked(txBadVote1.GetHash(), entry.Fee(ZEROFEE).FromTx(txBadVote1));
@@ -1194,7 +1196,7 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
             const auto& ticketPriceAtPurchase = vBoughtTickets[winningHashes[i]];
             const auto& contributedAmount = ticketPriceAtPurchase + test_ticket_contributions[0];
             // recalculated reward
-            const auto& reward = CalcContributorRemuneration( contributedAmount, ticketPriceAtPurchase, subsidy, contributedAmount);
+            const auto& reward = CalculateGrossRemuneration( contributedAmount, ticketPriceAtPurchase, subsidy, contributedAmount);
             CMutableTransaction txVote = CreateDummyVote(winningHashes[i], blockHashToVoteOn, blockHeightToVoteOn, rewardAddr, reward);
             SignTx(txVote, voteStakeInputIndex, scriptPubKeyStake, stakeKey);
             mempool.addUnchecked(txVote.GetHash(), entry.Fee(ZEROFEE).FromTx(txVote));
@@ -1585,7 +1587,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
     {
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [](CBlock& b) {
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 // Leaving vote bits as is since all blocks from the generator have
                 // votes set to Yes by default
             }
@@ -1600,7 +1602,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 5; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
@@ -1618,7 +1620,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 3; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
@@ -1636,7 +1638,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 2; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
@@ -1655,7 +1657,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 2; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
@@ -1679,7 +1681,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 2; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
@@ -1704,7 +1706,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[1]), TX_Vote);
                 ReplaceVoteBits(b.vtx[1],voteNoBits);
@@ -2019,7 +2021,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
                 // Header says No and all vote say No
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for(int i = 1; i <= 5; ++i)
                 {
@@ -2047,7 +2049,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
                 // Header says No and all vote say No
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for(int i = 1; i <= 5; ++i)
                 {
