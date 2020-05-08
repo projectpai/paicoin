@@ -149,9 +149,9 @@ class WalletTicketOperations(PAIcoinTestFramework):
         assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1")
         assert_raises_rpc_error(-3, None, self.nodes[0].purchaseticket, "param1", "param2")
         assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1", 1, "param2")
-        assert_raises_rpc_error(-5, None, self.nodes[0].purchaseticket, "param1", 1, 1 , "param2")
+        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "param1", 1, 1 , "param2")
         assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, "param2")
-        assert_raises_rpc_error(-5, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, 1, "param2")
+        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, 1, "param2")
 
         pooladdr = self.nodes[0].getnewaddress()
         assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, 1, pooladdr, "param2")

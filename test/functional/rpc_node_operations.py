@@ -4,7 +4,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 """Test the search operations RPC commands
-    - search operations (ported from Decred) include: existsaddress existsaddresses existsmempooltxs searchrawtransactions
+    - search operations (ported from Decred) include: node getheaders rebroadcastmissed rebroadcastwinners
 """
 
 from test_framework.test_framework import PAIcoinTestFramework
