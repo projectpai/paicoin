@@ -161,6 +161,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "purchaseticket", 9, "ticketfee" },
     { "generatevote", 1, "height" },
     { "generatevote", 3, "votebits" },
+    { "setticketfee", 0, "fee" },
     { "ticketfeeinfo", 0, "blocks" },
     { "ticketfeeinfo", 1, "windows" },
     { "ticketvwap", 0, "start" },
