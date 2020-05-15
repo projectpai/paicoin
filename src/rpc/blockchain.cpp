@@ -149,6 +149,7 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("hash", blockindex->GetBlockHash().GetHex()));
     int confirmations{-1};
     // Only report confirmations if the block is on the main chain
+    LOCK(cs_main);
     if (chainActive.Contains(blockindex))
         confirmations = chainActive.Height() - blockindex->nHeight + 1;
     result.push_back(Pair("confirmations", confirmations));
@@ -162,8 +163,6 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("bits", strprintf("%08x", blockindex->nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-    // if (blockindex->pstakeNode != nullptr)
-    //     result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
     if (IsHybridConsensusForkEnabled(blockindex, Params().GetConsensus())) {
         result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
         result.push_back(Pair("votebits", strprintf("%08x", blockindex->nVoteBits)));
@@ -187,6 +186,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("hash", blockindex->GetBlockHash().GetHex()));
     int confirmations{-1};
     // Only report confirmations if the block is on the main chain
+    LOCK(cs_main);
     if (chainActive.Contains(blockindex))
         confirmations = chainActive.Height() - blockindex->nHeight + 1;
     result.push_back(Pair("confirmations", confirmations));
@@ -216,10 +216,6 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-    // if (blockindex->pstakeNode != nullptr)
-    //     result.push_back(Pair("ticketlotterystate", StakeStateToString(blockindex->pstakeNode->FinalState())));
-    // result.push_back(Pair("freshstake", blockindex->nFreshStake));
-    // result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
     if (IsHybridConsensusForkEnabled(blockindex, Params().GetConsensus())) {
         result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
         result.push_back(Pair("votebits", strprintf("%08x", blockindex->nVoteBits)));
