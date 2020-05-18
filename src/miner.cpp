@@ -26,6 +26,7 @@
 #include "util.h"
 #include "utilmoneystr.h"
 #include "validationinterface.h"
+#include "stake/stakeversion.h"
 
 #include <algorithm>
 #include <queue>
@@ -130,9 +131,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
     const auto& hybridForkEnabled = IsHybridConsensusForkEnabled(pindexPrev,chainparams.GetConsensus());
-    if (hybridForkEnabled)
+    if (hybridForkEnabled) {
         pblock->nVersion |= HARDFORK_VERSION_BIT;
+    }
 
+    pblock->nStakeVersion = calcStakeVersion(pindexPrev, chainparams.GetConsensus());
     pblock->nStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev,chainparams.GetConsensus());
     if (pindexPrev->pstakeNode != nullptr) {
         pblock->ticketLotteryState = pindexPrev->pstakeNode->FinalState();

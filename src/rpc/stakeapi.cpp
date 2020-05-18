@@ -278,7 +278,7 @@ UniValue getstakeversions(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw std::runtime_error(
-            "getstakeversions \"count\"\n"
+            "getstakeversions \"hash\" \"count\"\n"
             "\nReturns the stake versions statistics.\n"
             "\nArguments:\n"
             "1. \"hash\"                (string)  The start block hash.\n"

@@ -3748,7 +3748,8 @@ UniValue generatevote(const JSONRPCRequest& request)
     // TODO use specified votebits and votebitsext
     uint32_t voteYesBits = 0x0001;
     int voteVersion = 1;
-    VoteData voteData = { voteVersion, blockhash, static_cast<uint32_t>(blockheight), voteYesBits };
+    uint32_t voterStakeVersion = 1;
+    VoteData voteData = { voteVersion, blockhash, static_cast<uint32_t>(blockheight), voteYesBits, voterStakeVersion };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mVoteTx.vout.push_back(CTxOut(0, declScript));
 
