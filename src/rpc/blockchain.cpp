@@ -133,11 +133,11 @@ UniValue FormatTxFeesInfo(const std::vector<CAmount>& txFees)
     auto result = UniValue{UniValue::VOBJ};
     result.pushKV("number", static_cast<int>(txFees.size()));
     if (!txFees.empty()){
-        result.pushKV("min", *std::min_element(txFees.cbegin(), txFees.cend()));
-        result.pushKV("max", *std::max_element(txFees.cbegin(), txFees.cend()));
-        result.pushKV("mean", ComputeMeanAmount(txFees));
-        result.pushKV("median", ComputeMedianAmount(txFees));
-        result.pushKV("stddev", ComputeStdDevAmount(txFees));
+        result.pushKV("min", ValueFromAmount(*std::min_element(txFees.cbegin(), txFees.cend())));
+        result.pushKV("max", ValueFromAmount(*std::max_element(txFees.cbegin(), txFees.cend())));
+        result.pushKV("mean", ValueFromAmount(ComputeMeanAmount(txFees)));
+        result.pushKV("median", ValueFromAmount(ComputeMedianAmount(txFees)));
+        result.pushKV("stddev", ValueFromAmount(ComputeStdDevAmount(txFees)));
     }
 
     return result;
@@ -1951,8 +1951,10 @@ UniValue txfeeinfo(const JSONRPCRequest& request)
             + HelpExampleRpc("txfeeinfo", "3 5 7")
         };
     
+    LOCK(cs_main);
     auto blocksTip = chainActive.Tip();
     auto currHeight = static_cast<uint32_t>(blocksTip->nHeight);
+    const auto& params = Params().GetConsensus();
 
     uint32_t blocks = 0;
     uint32_t rangeStart = 0;
@@ -1960,17 +1962,23 @@ UniValue txfeeinfo(const JSONRPCRequest& request)
     if (!request.params[0].isNull()) {
         blocks = static_cast<uint32_t>(request.params[0].get_int());
     }
+
+    const auto& windowDiffSize = IsHybridConsensusForkEnabled(blocksTip,params) ? 144 //The size of window as used by the new DAA (see pow.cpp)
+                                                                                : static_cast<uint32_t>(params.DifficultyAdjustmentInterval());
+
     if (!request.params[1].isNull()) {
         rangeStart = static_cast<uint32_t>(request.params[1].get_int());
     } else {
-        rangeStart = currHeight - 1; // TODO: -1 here is a placeholder for windowdiffsize
+        rangeStart = currHeight - windowDiffSize;
+        // Use 1 as the first block if there aren't enough blocks.
+        if (rangeStart == 0)
+            rangeStart = 1;
     }
     if (!request.params[2].isNull()) {
         rangeEnd = static_cast<uint32_t>(request.params[2].get_int());
     } else {
         rangeEnd = currHeight;
     }
-
     // Validations
     if (blocks > currHeight) {
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter for blocks");
