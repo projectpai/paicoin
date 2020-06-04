@@ -2827,7 +2827,7 @@ static bool ticketMatured(const Consensus::Params& params, int txHeight, int cur
 }
 
 static bool ticketExpired(const Consensus::Params& params, int txHeight, int currentHeight) {
-    return txHeight >= 0 && currentHeight-txHeight > params.nTicketMaturity + params.nTicketExpiry;
+    return txHeight >= 0 && currentHeight-txHeight > static_cast<int>(params.nTicketMaturity + params.nTicketExpiry);
 }
 
 
@@ -2870,8 +2870,8 @@ UniValue getstakeinfo(const JSONRPCRequest& request)
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
-    auto allmempooltix = 0ul;
-    auto ownMempoolTix = 0ul;
+    auto allmempooltix = uint64_t{0};
+    auto ownMempoolTix = uint64_t{0};
     {
         LOCK(mempool.cs);
         auto unminedTicketCount = 0ul;
@@ -2886,11 +2886,11 @@ UniValue getstakeinfo(const JSONRPCRequest& request)
         allmempooltix = unminedTicketCount;
     }
 
-    auto immature = 0ul;
-    auto unspent = 0ul;
-    auto unspentExpired = 0ul;
-    auto voted = 0ul;
-    auto revoked = 0ul;
+    auto immature = uint64_t{0};
+    auto unspent = uint64_t{0};
+    auto unspentExpired = uint64_t{0};
+    auto voted = uint64_t{0};
+    auto revoked = uint64_t{0};
     auto totalSubsidy = CAmount{};
 
     std::vector<uint256> liveOrExpireOrMissed;
@@ -2966,9 +2966,9 @@ UniValue getstakeinfo(const JSONRPCRequest& request)
         }
     }
 
-    auto live = 0ul;
-    auto expired = 0ul;
-    auto missed = 0ul;
+    auto live = uint64_t{0};
+    auto expired = uint64_t{0};
+    auto missed = uint64_t{0};
 
     // As the wallet is unaware of when a ticket was selected or missed, this
     // info must be queried from the consensus server.  If the ticket is neither
@@ -3036,7 +3036,7 @@ UniValue stakepooluserinfo(const JSONRPCRequest& request)
             + HelpExampleRpc("stakepooluserinfo", "\"user\"")
         };
 
-    const auto& user = request.params[0].get_str();
+    // const auto& user = request.params[0].get_str();
 
     UniValue obj{UniValue::VOBJ};
 
