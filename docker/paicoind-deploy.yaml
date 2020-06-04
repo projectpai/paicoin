@@ -6,7 +6,7 @@ spec:
   selector:
     matchLabels:
       app: paicoin-live
-  replicas: 1
+  replicas: 3
   strategy:
     type: Recreate
   template:
@@ -14,10 +14,28 @@ spec:
       labels:
         app: paicoin-live
     spec:
+      volumes:
+      - name: paicoin-datadir
+        emptyDir: {}
+      - name: paicoin-config
+        configMap:
+          name: paicoin-config-map
+          items:
+            - key: paicoin.conf
+              path: paicoin.conf
       containers:
-        - name: paicoin-live
-          image: hybrid-consensus:dev_v1
-          imagePullPolicy: Never
+      - name: paicoin-live
+        image: hybrid-consensus:v1
+        imagePullPolicy: Never
+        command: ["/bin/sh", "-c"]
+        args: ["paicoind"]
+        volumeMounts:
+          # - mountPath: "/usr/share/pouw-data"
+          #   name: pouw-pv-storage
+          - mountPath: /root/data
+            name: paicoin-datadir
+          - mountPath: /root/.paicoin
+            name: paicoin-config
           # ports:
           # - containerPort: 8333
           #   hostPort: 8333
@@ -25,18 +43,18 @@ spec:
           #   name: btc-live
           # - containerPort: 8332
           #   name: btc-json-rpc
-          volumeMounts:
-          - name: paicoin-data
-            mountPath: /app/data
-          resources:
-            requests:
-              memory: "1024M"
-              cpu: "750m"
-            limits:
-              memory: "2048M"
-              cpu: "1000m"
-      volumes:
-        - name: paicoin-data
-          hostPath:
-            path: /mnt/paicoin-data
-            type: Directory
+          # volumeMounts:
+          # - name: paicoin-data
+          #   mountPath: /app/data
+          # resources:
+          #   requests:
+          #     memory: "1024M"
+          #     cpu: "750m"
+          #   limits:
+          #     memory: "2048M"
+          #     cpu: "1000m"
+      # volumes:
+      #   - name: paicoin-data
+      #     hostPath:
+      #       path: /mnt/paicoin-data
+      #       type: Directory
