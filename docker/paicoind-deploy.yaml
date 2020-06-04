@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paicoin-live
+spec:
+  selector:
+    matchLabels:
+      app: paicoin-live
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: paicoin-live
+    spec:
+      containers:
+        - name: paicoin-live
+          image: hybrid-consensus:dev_v1
+          imagePullPolicy: Never
+          # ports:
+          # - containerPort: 8333
+          #   hostPort: 8333
+          #   protocol: TCP
+          #   name: btc-live
+          # - containerPort: 8332
+          #   name: btc-json-rpc
+          volumeMounts:
+          - name: paicoin-data
+            mountPath: /app/data
+          resources:
+            requests:
+              memory: "1024M"
+              cpu: "750m"
+            limits:
+              memory: "2048M"
+              cpu: "1000m"
+      volumes:
+        - name: paicoin-data
+          hostPath:
+            path: /mnt/paicoin-data
+            type: Directory
