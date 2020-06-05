@@ -49,7 +49,6 @@ class WalletStakeOperations(PAIcoinTestFramework):
         # TODO make this test have valid input and output once the command is implemented
         # 2. invalid parameters
         assert_raises_rpc_error(-1, None, self.nodes[0].stakepooluserinfo)
-        assert_raises_rpc_error(-1, None, self.nodes[0].stakepooluserinfo, 5)
         assert_raises_rpc_error(-1, None, self.nodes[0].stakepooluserinfo, "param1", "param2")
 
 if __name__ == '__main__':
