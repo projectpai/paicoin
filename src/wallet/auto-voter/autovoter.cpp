@@ -15,9 +15,6 @@ CAutoVoter::CAutoVoter(CWallet* wallet) :
 
 CAutoVoter::~CAutoVoter()
 {
-    if (configured.load())
-        ::UnregisterValidationInterface(this);
-
     stop();
 }
 

@@ -15,9 +15,6 @@ CAutoRevoker::CAutoRevoker(CWallet* wallet) :
 
 CAutoRevoker::~CAutoRevoker()
 {
-    if (configured.load())
-        ::UnregisterValidationInterface(this);
-
     stop();
 }
 

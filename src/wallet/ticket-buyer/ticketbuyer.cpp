@@ -17,9 +17,6 @@ CTicketBuyer::CTicketBuyer(CWallet* wallet) :
 
 CTicketBuyer::~CTicketBuyer()
 {
-    if (configured.load())
-        ::UnregisterValidationInterface(this);
-
     stop();
     shouldRun.store(false);
 
