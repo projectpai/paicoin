@@ -785,8 +785,9 @@ UniValue getticketfee(const JSONRPCRequest& request)
             + HelpExampleRpc("getticketfee", "")
         };
 
-    auto ret = UniValue{0.0};
-    return ret;
+    // auto ret = UniValue{0.0};
+    // return ret;
+    return pwallet->GetTicketFeeRate().ToString();
 }
 
 UniValue gettickets(const JSONRPCRequest& request)
@@ -918,8 +919,13 @@ UniValue setticketfee(const JSONRPCRequest& request)
 
     const auto& nFee = request.params[0].get_real();
 
-    auto ret = UniValue{UniValue::VBOOL};
-    return ret;
+    if (nFee < 0)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "negative fee");
+
+    const auto& newTicketFeeRate = CFeeRate(AmountFromValue(nFee), 1000);
+    pwallet->SetTicketFeeRate(newTicketFeeRate);
+
+    return true;
 }
 
 UniValue getreceivedbyaccount(const JSONRPCRequest& request)
@@ -2816,6 +2822,15 @@ UniValue getwalletinfo(const JSONRPCRequest& request)
     return obj;
 }
 
+static bool ticketMatured(const Consensus::Params& params, int txHeight, int currentHeight) {
+    return txHeight >= 0 && currentHeight-txHeight > params.nTicketMaturity;
+}
+
+static bool ticketExpired(const Consensus::Params& params, int txHeight, int currentHeight) {
+    return txHeight >= 0 && currentHeight-txHeight > static_cast<int>(params.nTicketMaturity + params.nTicketExpiry);
+}
+
+
 UniValue getstakeinfo(const JSONRPCRequest& request)
 {
     if (request.fHelp || !request.params.empty())
@@ -2848,7 +2863,151 @@ UniValue getstakeinfo(const JSONRPCRequest& request)
             + HelpExampleRpc("getstakeinfo", "")
         };
 
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    auto allmempooltix = uint64_t{0};
+    auto ownMempoolTix = uint64_t{0};
+    {
+        LOCK(mempool.cs);
+        auto unminedTicketCount = 0ul;
+        for (const CTxMemPoolEntry& e : mempool.mapTx) {
+            const auto& tx = e.GetTx();
+            if (ETxClass::TX_BuyTicket ==  ParseTxClass(tx)) {
+                ++unminedTicketCount;
+                if (pwallet->IsMine(tx))
+                    ++ownMempoolTix;
+            }
+        }
+        allmempooltix = unminedTicketCount;
+    }
+
+    auto immature = uint64_t{0};
+    auto unspent = uint64_t{0};
+    auto unspentExpired = uint64_t{0};
+    auto voted = uint64_t{0};
+    auto revoked = uint64_t{0};
+    auto totalSubsidy = CAmount{};
+
+    std::vector<uint256> liveOrExpireOrMissed;
+    const auto& txOrdered = pwallet->wtxOrdered;
+    for (const auto& it : txOrdered) {
+        const auto* const pwtx = it.second.first;
+
+        if (pwtx == nullptr)
+            continue;
+
+        const auto& tx = *pwtx->tx;
+
+        if (pwtx->IsCoinBase() || !CheckFinalTx(tx))
+            continue;
+        
+        if (ETxClass::TX_BuyTicket ==  ParseTxClass(tx)) {
+            const auto& depth = pwtx->GetDepthInMainChain();
+            if (depth == 0) {
+                // in mempool
+                continue;
+            }
+            else if (depth >= 1) {
+                // in main chain
+                const auto& txHeight = chainActive.Height() - depth; 
+                if (!ticketMatured(Params().GetConsensus(), txHeight, chainActive.Height())) {
+                    ++immature;
+                }
+
+                auto spendingWtx = CWalletTx{};
+                if (pwallet->IsSpent(tx.GetHash(), ticketStakeOutputIndex, &spendingWtx)) {
+
+                    const auto& spendingTx = *spendingWtx.tx;
+                    const auto& txClass = ParseTxClass(spendingTx);
+                    switch(txClass){
+                        case ETxClass::TX_Vote:
+                            {
+                                ++voted;
+                                // Add the subsidy.
+                                //
+                                // This is not the actual subsidy that was earned by this
+                                // wallet, but rather the stakebase sum.  If a user uses a
+                                // stakepool for voting, this value will include the total
+                                // subsidy earned by both the user and the pool together.
+                                // Similarly, for stakepool wallets, this includes the
+                                // customer's subsidy rather than being just the subsidy
+                                // earned by fees.
+                                totalSubsidy += tx.vout[ticketStakeOutputIndex].nValue;
+                            }
+                            break;
+                        case ETxClass::TX_RevokeTicket:
+                            {
+                                ++revoked;
+                                // The ticket was revoked because it was either expired or
+                                // missed.  Append it to the liveOrExpiredOrMissed slice to
+                                // check this later.
+                                liveOrExpireOrMissed.push_back(tx.GetHash());
+                            }
+                            break;
+                        default:
+                            assert(!"Ticket spent by transaction that is neither vote nor revocation!");
+                    }
+                    continue;
+                }
+
+                // Ticket is matured but unspent.  Possible states are that the
+                // ticket is live, expired, or missed.
+                ++unspent;
+                if (ticketExpired(Params().GetConsensus(), txHeight, chainActive.Height())) {
+                    ++unspentExpired;
+                }
+                liveOrExpireOrMissed.push_back(tx.GetHash());
+            }
+        }
+    }
+
+    auto live = uint64_t{0};
+    auto expired = uint64_t{0};
+    auto missed = uint64_t{0};
+
+    // As the wallet is unaware of when a ticket was selected or missed, this
+    // info must be queried from the consensus server.  If the ticket is neither
+    // live nor expired, it is assumed missed.
+    CBlockIndex* pblockindex = chainActive.Tip();
+    for ( const auto& ticket : liveOrExpireOrMissed) {
+        if (pblockindex->pstakeNode->ExistsLiveTicket(ticket))
+            ++live;
+        else if (pblockindex->pstakeNode->ExistsMissedTicket(ticket))
+            ++missed;
+        else if (pblockindex->pstakeNode->ExistsExpiredTicket(ticket))
+            ++expired;
+    }
+
+    const auto& poolSize = pblockindex->pstakeNode->PoolSize();
+    const auto& proportionLive = (poolSize > 0) ? (double)live / (double)poolSize
+                                                : 0.0;
+    const auto& proportionMissed = (missed > 0) ? (double)missed / (double)(voted + missed)
+                                                : 0.0;
+
+    const auto& stakeDiff = CalculateNextRequiredStakeDifficulty(pblockindex, Params().GetConsensus());
+
     UniValue obj{UniValue::VOBJ};
+    obj.push_back(Pair("blockheight",      chainActive.Height()));
+    obj.push_back(Pair("difficulty",       ValueFromAmount(stakeDiff)));
+    obj.push_back(Pair("totalsubsidy",     ValueFromAmount(totalSubsidy)));
+    obj.push_back(Pair("ownmempooltix",    ownMempoolTix));
+    obj.push_back(Pair("immature",         immature));
+    obj.push_back(Pair("unspent",          unspent));
+    obj.push_back(Pair("voted",            voted));
+    obj.push_back(Pair("revoked",          revoked));
+    obj.push_back(Pair("unspentexpired",   unspentExpired));
+    obj.push_back(Pair("poolsize",         poolSize));
+    obj.push_back(Pair("allmempooltix",    allmempooltix));
+    obj.push_back(Pair("live",             live));
+    obj.push_back(Pair("proportionlive",   proportionLive));
+    obj.push_back(Pair("missed",           missed));
+    obj.push_back(Pair("proportionmissed", proportionMissed));
+    obj.push_back(Pair("expired",          expired));
 
     return obj;
 }
@@ -2877,7 +3036,7 @@ UniValue stakepooluserinfo(const JSONRPCRequest& request)
             + HelpExampleRpc("stakepooluserinfo", "\"user\"")
         };
 
-    const auto& user = request.params[0].get_str();
+    // const auto& user = request.params[0].get_str();
 
     UniValue obj{UniValue::VOBJ};
 

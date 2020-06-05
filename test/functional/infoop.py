@@ -51,10 +51,23 @@ class InfoOPTest(PAIcoinTestFramework):
 
         result = chain_node.getblocksubsidy(100, 5)
         assert result is not None
-        assert 'developer' in result.keys()
         assert 'pos' in result.keys()
         assert 'pow' in result.keys()
         assert 'total' in result.keys()
+
+        assert(float(result['pos']) == 0)
+        assert(float(result['pow']) == 1500)
+        assert(float(result['total']) == 1500)
+
+        result = chain_node.getblocksubsidy(2100, 3) #height at which voting is needed
+        assert(float(result['pos']) == 0)
+        assert(float(result['pow']) == 0.06408691)
+        assert(float(result['total']) ==0.06408691)
+
+        result = chain_node.getblocksubsidy(3000, 5)
+        assert(float(result['pos']) == 0.00085830)
+        assert(float(result['pow']) == 0.00100135)
+        assert(float(result['total']) == float(result['pos']) + float(result['pow']))
 
         util.assert_raises_rpc_error(-1, None, chain_node.getblocksubsidy, -1)
         util.assert_raises_rpc_error(-1, None, chain_node.getblocksubsidy)

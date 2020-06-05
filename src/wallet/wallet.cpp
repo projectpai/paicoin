@@ -1488,7 +1488,7 @@ std::pair<uint256, CWalletError> CWallet::CreateTicketPurchaseSplitTx(std::strin
 
     CFeeRate txFeeRate{feeRate};
     if (feeRate <= 0) {
-        txFeeRate = ticketFeeRate;
+        txFeeRate = GetTicketFeeRate();
     }
 
     if (GetBroadcastTransactions() && !g_connman) {
@@ -1745,7 +1745,7 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
     // TODO Make sure this is handled correctly
     CFeeRate txFeeRate{feeRate};
     if (feeRate <= 0) {
-        txFeeRate = ticketFeeRate;
+        txFeeRate = GetTicketFeeRate();
     }
 
     // calculate the ticket fee based on transaction size estimation

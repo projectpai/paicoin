@@ -2019,7 +2019,6 @@ UniValue getblocksubsidy(const JSONRPCRequest& request)
             "2. voters      (numeric) The number of voters.\n"
             "\nResult:\n"
             "{\n"
-            "   \"developer\":  (numeric)   The developer subsidy\n"
             "   \"pos\":        (numeric)   The Proof-of-Stake subsidy\n"
             "   \"pow\":        (numeric)   The Proof-of-Work subsidy\n"
             "   \"total\":      (numeric)   The total subsidy\n"
@@ -2030,10 +2029,15 @@ UniValue getblocksubsidy(const JSONRPCRequest& request)
         };
     
     UniValue result{UniValue::VOBJ};
-    result.push_back(Pair("developer", 0));
-    result.push_back(Pair("pos", 0));
-    result.push_back(Pair("pow", 0));
-    result.push_back(Pair("total", 0));
+    const auto& height = static_cast<uint32_t>(request.params[0].get_int());
+    const auto& voters = static_cast<uint32_t>(request.params[1].get_int());
+    const auto& voterSubsidy = GetVoterSubsidy(height-1,Params().GetConsensus()) * voters;
+    const auto& minerSubsidy = GetMinerSubsidy(height,Params().GetConsensus());
+    const auto& totalSubsidy = voterSubsidy + minerSubsidy;
+
+    result.push_back(Pair("pos", ValueFromAmount(voterSubsidy)));
+    result.push_back(Pair("pow", ValueFromAmount(minerSubsidy)));
+    result.push_back(Pair("total", ValueFromAmount(totalSubsidy)));
     return result;
 }
 

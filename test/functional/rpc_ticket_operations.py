@@ -41,6 +41,8 @@ class TicketOperations(PAIcoinTestFramework):
         nTicketExpiry          = 5 * nTicketPoolSize
         nStakeDiffWindowSize   = 8
 
+        nPurchaseMaxHeight     = 2067
+
         self.nodes[0].generate(nStakeEnabledHeight - nTicketMaturity - 1)
         self.sync_all()
         txaddress = self.nodes[0].getnewaddress()
@@ -51,11 +53,27 @@ class TicketOperations(PAIcoinTestFramework):
             print("purchase", nMaxFreshStakePerBlock, "at", blkidx)
             txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, nMaxFreshStakePerBlock))
             assert(len(txs[-1])==nMaxFreshStakePerBlock)
+            
+            stakeinfo = self.nodes[0].getstakeinfo()
+            # print(stakeinfo)
+            assert(stakeinfo['ownmempooltix'] == nMaxFreshStakePerBlock)
+            assert(stakeinfo['ownmempooltix'] == stakeinfo['allmempooltix']) # only our ticket tx are in mempool
+            assert(stakeinfo['immature'] == stakeinfo['unspent'])
+            assert(stakeinfo['poolsize'] == 0)
+            assert(stakeinfo['live'] == 0)
+            assert(stakeinfo['missed'] == 0)
+            assert(stakeinfo['expired'] == 0)
+            assert(stakeinfo['voted'] == 0)
+            assert(stakeinfo['revoked'] == 0)
 
             self.nodes[0].generate(1)
             self.sync_all()
             chainInfo = self.nodes[0].getblockchaininfo()
             assert(chainInfo['blocks'] == blkidx)
+
+            stakeinfo = self.nodes[0].getstakeinfo()
+            assert(stakeinfo['ownmempooltix'] == 0) # no ticket tx in mempool after generate
+            assert(stakeinfo['ownmempooltix'] == stakeinfo['allmempooltix'])
 
         # we should be at nStakeEnabledHeight, so only tickets in txs[0] should be live
         assert(blkidx == nStakeEnabledHeight)
@@ -97,6 +115,12 @@ class TicketOperations(PAIcoinTestFramework):
         assert_raises_rpc_error(-1, None, self.nodes[0].existslivetickets)
         assert_raises_rpc_error(-1, None, self.nodes[0].existslivetickets, "param1", "param2")
         assert_raises_rpc_error(-1, None, self.nodes[0].existslivetickets, ["hash1", "hash2"])
+
+        # getstakeinfo tests:
+        stakeinfo = self.nodes[0].getstakeinfo()
+        assert(stakeinfo['immature'] + stakeinfo['live'] == stakeinfo['unspent']) # tickets bought first are live
+        assert(stakeinfo['live'] == stakeinfo['poolsize'])
+        assert(stakeinfo['proportionlive'] == 1) # all live are in pool
 
         # existsmissedtickets tests:
         # 1. valid parameters
@@ -236,7 +260,7 @@ class TicketOperations(PAIcoinTestFramework):
             # we cannot purchase after that because the ticketPrice increases too much and we do not 
             # support yet multiple funding inputs to our ticket purchasing transactions
             # TODO try to go further when multiple inputs are supported
-            if blkidx < 2067:
+            if blkidx < nPurchaseMaxHeight:
                 # funds = self.nodes[0].getbalance()
                 # print("funds:", funds)
                 # ticketPrice = self.nodes[0].getstakedifficulty()
@@ -265,6 +289,14 @@ class TicketOperations(PAIcoinTestFramework):
         nHeightExpiredBecomeMissed = nTicketExpiry + nStakeEnabledHeight
         assert(nHeightExpiredBecomeMissed > nStakeValidationHeight)
 
+        stakeinfo = self.nodes[0].getstakeinfo()
+        # print(stakeinfo)
+        assert(stakeinfo['live'] == stakeinfo['unspent']) # tickets bought first are live
+        assert(stakeinfo['live'] == stakeinfo['poolsize'])
+        allPurchasedTickets = 20 * ((nPurchaseMaxHeight - 1) - (nStakeEnabledHeight-nTicketMaturity))
+        assert(stakeinfo['live'] == allPurchasedTickets)
+
+        totalVotes = 0
         for blkidx in range(nStakeValidationHeight, nHeightExpiredBecomeMissed + 10):
             # winners vote
             winners = self.nodes[0].winningtickets()
@@ -273,17 +305,29 @@ class TicketOperations(PAIcoinTestFramework):
             blockheight = chainInfo['blocks']
             for tickethash in winners['tickets']:
                 votehash = self.nodes[0].generatevote(blockhash, blockheight, tickethash, dummyVoteBits, dummyVoteBitsExt)
+                totalVotes += 1
             
             self.nodes[0].generate(1)
             self.sync_all()
             chainInfo = self.nodes[0].getblockchaininfo()
             assert(chainInfo['blocks'] == blkidx)
             # print("generated block ", blkidx)
+            stakeinfo = self.nodes[0].getstakeinfo()
+            # print(stakeinfo)
+            allPurchasedTickets -=  len(winners['tickets'])
+            # TODO seems the wallet finds only one ticket to be spent by a vote, retry this after integrating the auto-voter changes
+            # assert(stakeinfo['voted'] == totalVotes)
+            # assert(stakeinfo['unspent'] == allPurchasedTickets)
+            assert(stakeinfo['live'] == stakeinfo['poolsize'])
+            assert(stakeinfo['live'] + stakeinfo['missed'] + stakeinfo['expired'] == allPurchasedTickets)
 
-            x = self.nodes[0].missedtickets()
-            # print("missed", x)
-            assert(blkidx < nHeightExpiredBecomeMissed or len(x["tickets"]) > 0) # we expect missed tickets 
+            live = self.nodes[0].livetickets()
+            assert(stakeinfo['live'] == len(live['tickets']))
 
+            missed = self.nodes[0].missedtickets()
+            assert(stakeinfo['missed'] == len(missed['tickets']))
+            assert(blkidx < nHeightExpiredBecomeMissed or len(missed["tickets"]) > 0) # we expect missed tickets 
+        
         # getstakeversioninfo
         numintervals = 2
         stakeversioninfo = self.nodes[0].getstakeversioninfo(numintervals)

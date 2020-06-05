@@ -153,6 +153,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "sendtomultisig", 2, "pubkeys"},
     { "sendtomultisig", 3, "nrequired"},
     { "sendtomultisig", 4, "minconf"},
+    { "setticketfee", 0, "fee" },
     { "ticketfeeinfo", 0, "blocks" },
     { "ticketfeeinfo", 1, "windows" },
     { "ticketvwap", 0, "start" },

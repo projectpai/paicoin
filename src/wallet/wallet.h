@@ -756,6 +756,9 @@ private:
 
     std::unique_ptr<CTicketBuyer> ticketBuyer;
 
+    // wallet's ticket fee rate
+    std::atomic<CFeeRate> ticketFeeRate;
+
 public:
     /*
      * Main wallet lock.
@@ -1012,8 +1015,15 @@ public:
     static CFeeRate fallbackFee;
     static CFeeRate m_discard_rate;
 
-    // wallet's ticket fee rate
-    CFeeRate ticketFeeRate;
+    CFeeRate GetTicketFeeRate()
+    {
+        return ticketFeeRate.load();
+    }
+
+    void SetTicketFeeRate(const CFeeRate& newTicketFeeRate)
+    {
+        ticketFeeRate.store(newTicketFeeRate);
+    }
 
     bool NewKeyPool();
     size_t KeypoolCountExternalKeys();
