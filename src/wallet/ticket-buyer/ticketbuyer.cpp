@@ -180,7 +180,13 @@ void CTicketBuyer::mainLoop()
 
         const auto&& r = pwallet->PurchaseTicket(config.account, spendable, config.minConf, config.votingAddress, buy, config.poolFeeAddress, config.poolFees, expiry, 0 /*TODO Make sure this is handled correctly*/);
         if (r.first.size() > 0 && r.second.code == CWalletError::SUCCESSFUL) {
-            LogPrintf("CTicketBuyer: Purchased tickets: %s", std::accumulate(r.first.begin(), r.first.end(), std::string()));
+            std::string hashes;
+            for (const auto& h : r.first) {
+                if (hashes.length() > 0)
+                    hashes += ", ";
+                hashes += h;
+            }
+            LogPrintf("CTicketBuyer: Purchased tickets: %s", hashes.c_str());
         } else {
             LogPrintf("CTicketBuyer: Failed to purchase tickets: (%d) %s", r.second.code, r.second.message.c_str());
         }

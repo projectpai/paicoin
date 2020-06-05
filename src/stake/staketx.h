@@ -6,6 +6,7 @@
 #include "script/standard.h"
 #include "pubkey.h"
 #include "stakenode.h"
+#include "extendedvotebits.h"
 
 class CTransaction;
 class CBlock;
@@ -157,11 +158,16 @@ struct TicketContribData {
 };
 
 struct VoteData {
+    VoteData() : nVersion{}, blockHash{}, blockHeight{}, voteBits{}, voterStakeVersion{}, extendedVoteBits{} {}
+    VoteData(int nVersion, uint256 blockHash, uint32_t blockHeight, VoteBits voteBits, uint32_t voterStakeVersion, ExtendedVoteBits extendedVoteBits)
+        : nVersion{nVersion}, blockHash{blockHash}, blockHeight{blockHeight}, voteBits{voteBits}, voterStakeVersion{voterStakeVersion}, extendedVoteBits{extendedVoteBits} {}
+
     int nVersion;
     uint256 blockHash;
     uint32_t blockHeight;
-    uint32_t voteBits;
+    VoteBits voteBits;
     uint32_t voterStakeVersion;
+    ExtendedVoteBits extendedVoteBits;
 };
 
 struct RevokeTicketData {
@@ -172,6 +178,8 @@ CScript GetScriptForBuyTicketDecl(const BuyTicketData& data);
 CScript GetScriptForTicketContrib(const TicketContribData& data);
 CScript GetScriptForVoteDecl(const VoteData& data);
 CScript GetScriptForRevokeTicketDecl(const RevokeTicketData& data);
+
+size_t GetVoteDataSizeWithEmptyExtendedVoteBits();
 
 // ======================================================================
 // classification and validation of staking transactions
@@ -203,6 +211,7 @@ const uint32_t voteBlockHashIndex = 5;
 const uint32_t voteBlockHeightIndex = 6;
 const uint32_t voteBitsIndex = 7;
 const uint32_t voterStakeVersionIndex = 8;
+const uint32_t extendedVoteBitsIndex = 9;
 //---
 const uint32_t contribVersionIndex = 3;
 const uint32_t contribAddrIndex = 4;
@@ -222,6 +231,7 @@ ETxClass ParseTxClass(const CTransaction& tx);
 bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContribData& data);
 bool ParseVote(const CTransaction& tx, VoteData& data);
 bool IsStakeTx(ETxClass txClass);
+bool HasStakebaseContents(const CTxIn& txIn);
 
 bool ValidateStakeTxDeclStructure(const CTransaction& tx, ETxClass eTxClassExpected, unsigned numExpectedItems, unsigned expectedItemSizes[], std::string& reason);
 bool ValidateStakeTxStructure(const CTransaction& tx, std::string& reason);

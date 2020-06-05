@@ -342,7 +342,7 @@ UniValue getstakeversions(const JSONRPCRequest& request)
         for (const auto& voteIt : v.votes) {
             UniValue vote(UniValue::VOBJ);
             vote.push_back(Pair("version", static_cast<int>(voteIt.Version)));
-            vote.push_back(Pair("bits", voteIt.Bits));
+            vote.push_back(Pair("bits", voteIt.Bits.getBits()));
 
             votes.push_back(vote);
         }
