@@ -251,6 +251,8 @@ libpaicoin_wallet_a_SOURCES = \
   wallet/init.cpp \
   wallet/rpcdump.cpp \
   wallet/rpcwallet.cpp \
+  wallet/auto-voter/autovoterconfig.cpp \
+  wallet/auto-voter/autovoter.cpp \
   wallet/ticket-buyer/ticketbuyerconfig.cpp \
   wallet/ticket-buyer/ticketbuyer.cpp \
   wallet/wallet.cpp \
@@ -318,6 +320,8 @@ libpaicoin_consensus_a_SOURCES = \
   script/script_error.h \
   script/standard.cpp \
   serialize.h \
+  stake/extendedvotebits.cpp \
+  stake/extendedvotebits.h \
   stake/hash256prng.cpp \
   stake/hash256prng.h \
   stake/hasher.cpp \
@@ -332,6 +336,8 @@ libpaicoin_consensus_a_SOURCES = \
   stake/stakenode.h \
   stake/staketx.cpp \
   stake/staketx.h \
+  stake/votebits.cpp \
+  stake/votebits.h \
   tinyformat.h \
   uint256.cpp \
   uint256.h \
@@ -490,7 +496,7 @@ paicoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 if BUILD_PAICOIN_LIBS
 include_HEADERS = script/paicoinconsensus.h
 libpaicoinconsensus_la_SOURCES = $(crypto_libpaicoin_crypto_a_SOURCES) $(libpaicoin_consensus_a_SOURCES)
-libpaicoinconsensus_la_SOURCES += support/cleanse.cpp fs.cpp random.cpp utiltime.cpp util.cpp
+libpaicoinconsensus_la_SOURCES += support/cleanse.cpp sync.cpp fs.cpp random.cpp utiltime.cpp util.cpp
 
 if GLIBC_BACK_COMPAT
   libpaicoinconsensus_la_SOURCES += compat/glibc_compat.cpp
