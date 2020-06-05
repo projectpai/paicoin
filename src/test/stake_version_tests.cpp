@@ -146,7 +146,7 @@ CBlockIndex* newFakeNode(CBlockIndex* parent,int32_t blockVersion, uint32_t stak
     const auto& nextHeight = parent->nHeight + 1;
     auto bheader = CBlockHeader{};
     bheader.nVersion = blockVersion;
-    bheader.nVoteBits = 0x01;
+    bheader.nVoteBits = VoteBits::rttAccepted;
     bheader.nBits = bits;
     bheader.nTime = timestamp;
     bheader.nStakeVersion = stakeVersion;
@@ -160,7 +160,7 @@ CBlockIndex* newFakeNode(CBlockIndex* parent,int32_t blockVersion, uint32_t stak
 
 // appendFakeVotes appends the passed number of votes to the node with the
 // provided version and vote bits.
-void appendFakeVotes(CBlockIndex* node, uint16_t numVotes,uint32_t voteVersion,uint16_t voteBits) {
+void appendFakeVotes(CBlockIndex* node, uint16_t numVotes, uint32_t voteVersion, VoteBits voteBits) {
     for (auto i = uint16_t{0}; i < numVotes; i++) {
         node->votes.push_back(VoteVersion{voteVersion, voteBits});
     }
@@ -180,7 +180,7 @@ BOOST_FIXTURE_TEST_CASE(calc_stake_version_REG, TestingSetup_REG)
             3,
             [&](CBlockIndex* node) {
                 if (node->nHeight > svh) {
-                    appendFakeVotes(node, tpb, 3, 0);
+                    appendFakeVotes(node, tpb, 3, VoteBits::allRejected);
                     node->nStakeVersion = 2;
                     node->nVersion = 3;
                 }
@@ -192,7 +192,7 @@ BOOST_FIXTURE_TEST_CASE(calc_stake_version_REG, TestingSetup_REG)
             3,
             [&](CBlockIndex* node) {
                 if (node->nHeight > svh) {
-                    appendFakeVotes(node, tpb, 2, 0);
+                    appendFakeVotes(node, tpb, 2, VoteBits::allRejected);
                     node->nStakeVersion = 3;
                     node->nVersion = 3;
                 }
