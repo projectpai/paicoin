@@ -17,6 +17,7 @@
 #include "uint256.h"
 #include "util.h"
 #include "utilstrencodings.h"
+#include "stake/extendedvotebits.h"
 
 #include "test/test_paicoin.h"
 
@@ -912,9 +913,10 @@ CMutableTransaction CreateDummyVote(const uint256& txBuyTicketHash, const uint25
     mtx.vin.push_back(CTxIn(COutPoint(txBuyTicketHash, ticketStakeOutputIndex)));
 
     // create a structured OP_RETURN output containing tx declaration and dummy voting data
-    uint32_t dummyVoteBits = 0x0001;
+    VoteBits voteBits = VoteBits::rttAccepted;
     uint32_t voterStakeVersion = 0;
-    VoteData voteData = { 1, blockHashToVoteOn, blockHeight, dummyVoteBits, voterStakeVersion };
+    ExtendedVoteBits extendedVoteBits;
+    VoteData voteData = { 1, blockHashToVoteOn, blockHeight, voteBits, voterStakeVersion, extendedVoteBits };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 
@@ -1585,7 +1587,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
     {
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [](CBlock& b) {
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 // Leaving vote bits as is since all blocks from the generator have
                 // votes set to Yes by default
             }
@@ -1600,11 +1602,11 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 5; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
             }
         );
@@ -1618,11 +1620,11 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 3; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
             }
         );
@@ -1636,11 +1638,11 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 2; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
             }
         );
@@ -1655,11 +1657,11 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 2; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
                 // leave 3 and 4 with Yes
                 // drop the 5th
@@ -1679,11 +1681,11 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 2; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
                 // leave 1 with Yes
                 // drop the 4th and 5th
@@ -1704,10 +1706,10 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[1]), TX_Vote);
-                ReplaceVoteBits(b.vtx[1],voteNoBits);
+                ReplaceVoteBits(b.vtx[1], VoteBits::allRejected);
                 // leave 2 with Yes
                 // drop the 4th and 5th
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_Vote);
@@ -2019,12 +2021,12 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
                 // Header says No and all vote say No
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for(int i = 1; i <= 5; ++i)
                 {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
             }
         );
@@ -2047,12 +2049,12 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
                 // Header says No and all vote say No
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for(int i = 1; i <= 5; ++i)
                 {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
             }
         );

@@ -2009,7 +2009,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         nLockTimeFlags |= LOCKTIME_VERIFY_SEQUENCE;
     }
 
-    if (pindex->nHeight > 1 && pindex->nVoteBits != 1) {
+    if (pindex->nHeight > 1 && !pindex->nVoteBits.isRttAccepted()) {
         DisconnectedBlockTransactions disconnectedPool;
         if (!DisconnectDisapprovedTip(state,chainparams, &disconnectedPool)){
             UpdateMempoolForReorg(disconnectedPool, false);
@@ -3237,7 +3237,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
         if (numRevocations > 0)
             return state.DoS(50, false, REJECT_INVALID, "revocations-too-early", false, "revocation transactions present before stake validation time");
 
-        if (block.nVoteBits != 1)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
+        if (block.nVoteBits != VoteBits::rttAccepted)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
             return state.DoS(50, false, REJECT_INVALID, "voteBits-too-early", false, "voteBits present before stake validation time");
 
         StakeState earlyLotteryState;
@@ -3330,8 +3330,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
             if (voteData.blockHash != block.hashPrevBlock || voteData.blockHeight != (uint32_t)blockHeight - 1)
                 return state.DoS(100, false, REJECT_INVALID, "vote-for-wrong-block", false, "vote transaction references unexpected block");
 
-            // Tally how many votes approve the previous block for use.
-            if (voteData.voteBits != 0)     // for now: 0 means rejection, non-zero is approval
+            // Tally how many votes approve the previous block's regular transactions tree for use.
+            if (voteData.voteBits.isRttAccepted())
                 ++numYesVotes;
         }
     }
@@ -3349,7 +3349,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     if (blockHeight >= consensusParams.nStakeValidationHeight) {
         int numNoVotes = numVotes - numYesVotes;
         bool votesApprovePrevBlock = numYesVotes > numNoVotes;
-        bool headerApprovesPrevBlock = block.nVoteBits != 0;
+        bool headerApprovesPrevBlock = block.nVoteBits.isRttAccepted();
         if (votesApprovePrevBlock != headerApprovesPrevBlock)
             return state.DoS(100, false, REJECT_INVALID, "header-votebits-incorrect", false, "header voteBits does not match votes");
     }

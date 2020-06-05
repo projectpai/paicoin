@@ -170,7 +170,6 @@ TestChain100Setup::~TestChain100Setup()
 }
 
 
-
 Generator::Generator(const std::string& chainName)
 : TestingSetup(chainName)
 , coinbaseKey{ [](){
@@ -238,7 +237,7 @@ CMutableTransaction Generator::CreateTicketPurchaseTx(const SpendableOut& spend,
     return mtx;
 }
     
-CMutableTransaction Generator::CreateVoteTx(const uint256& voteBlockHash, int voteBlockHeight, const uint256& ticketTxHash, uint32_t voteBits) const
+CMutableTransaction Generator::CreateVoteTx(const uint256& voteBlockHash, int voteBlockHeight, const uint256& ticketTxHash, VoteBits voteBits) const
 {
     CMutableTransaction mtx;
 
@@ -253,7 +252,9 @@ CMutableTransaction Generator::CreateVoteTx(const uint256& voteBlockHash, int vo
 
     // create a structured OP_RETURN output containing tx declaration and voting data
     int voteVersion = 1;
-    VoteData voteData = { voteVersion, voteBlockHash, static_cast<uint32_t>(voteBlockHeight), voteBits };
+    uint32_t voterStakeVersion = 0;
+    ExtendedVoteBits extendedVoteBits;
+    VoteData voteData = { voteVersion, voteBlockHash, static_cast<uint32_t>(voteBlockHeight), voteBits, voterStakeVersion, extendedVoteBits };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 
@@ -397,7 +398,7 @@ CAmount Generator::NextRequiredStakeDifficulty() const
     return ticketPrice;
 }
 
-void Generator::ReplaceVoteBits(CTransactionRef& tx, uint32_t voteBits) const
+void Generator::ReplaceVoteBits(CTransactionRef& tx, VoteBits voteBits) const
 {
     // Regenerate vote tx using the same hash/height, but change the voteBits
     CMutableTransaction voteTx = *tx;

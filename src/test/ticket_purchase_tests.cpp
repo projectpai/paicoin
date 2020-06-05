@@ -184,7 +184,7 @@ public:
 
             // outputs
 
-            VoteData voteData{1, hash, static_cast<uint32_t>(height), 0x0001, 0};
+            VoteData voteData{1, hash, static_cast<uint32_t>(height), VoteBits::rttAccepted, 0, ExtendedVoteBits()};
             CScript declScript = GetScriptForVoteDecl(voteData);
             mtx.vout.push_back(CTxOut(0, declScript));
 
@@ -269,10 +269,6 @@ public:
 
         LOCK2(cs_main, wallet->cs_wallet);
 
-        bool shouldRelock = wallet->IsLocked();
-        if (shouldRelock)
-            BOOST_CHECK(wallet->Unlock(passphrase));
-
         const Consensus::Params& consensus = Params().GetConsensus();
 
         CScript coinbaseScriptPubKey = coinbaseTxns[0].vout[0].scriptPubKey;
@@ -287,13 +283,21 @@ public:
                 txns.push_back(*(txnInfos[j].tx));
         }
 
+        bool shouldRelock = wallet->IsLocked();
+
         for (int i = 0; i < blockCount; ++i) {
+            if (shouldRelock)
+                wallet->Unlock(passphrase);
+
             if (chainActive.Tip()->nHeight >= consensus.nStakeValidationHeight - 1 - consensus.nTicketMaturity - 1)
                 while (!MempoolHasEnoughTicketsForBlock())
                     AddTicketTx();
 
             if (chainActive.Tip()->nHeight >= consensus.nStakeValidationHeight - 1)
                 AddVoteTxs();
+
+            if (shouldRelock)
+                wallet->Lock();
 
             CBlock b = CreateAndProcessBlock({}, coinbaseScriptPubKey);
 
@@ -304,9 +308,6 @@ public:
             for (size_t i = 0; i < txns.size(); i++)
                 latestTestTxns.push_back(txns[i]);
         }
-
-        if (shouldRelock)
-            BOOST_CHECK(wallet->Lock());
     }
 
     const SecureString passphrase = "aV3rySecurePassword!";
@@ -1280,7 +1281,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
 
     UniValue r;
     BOOST_CHECK_NO_THROW(r = CallRPC("ticketbuyerconfig"));
-    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "buyTickets").get_bool(), false);
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "buytickets").get_bool(), false);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "account").get_str(), "abc");
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "maintain").get_int64(), 12300000000);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "votingAccount").get_str(), "");
@@ -1354,6 +1355,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
     BOOST_CHECK_EQUAL(cfg.passphrase, passphrase);
 
     tb->stop();
+
+    vpwallets.erase(std::remove(vpwallets.begin(), vpwallets.end(), wallet.get()), vpwallets.end());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -278,7 +278,7 @@ UniValue getstakeversions(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw std::runtime_error(
-            "getstakeversions \"count\"\n"
+            "getstakeversions \"hash\" \"count\"\n"
             "\nReturns the stake versions statistics.\n"
             "\nArguments:\n"
             "1. \"hash\"                (string)  The start block hash.\n"
@@ -342,7 +342,7 @@ UniValue getstakeversions(const JSONRPCRequest& request)
         for (const auto& voteIt : v.votes) {
             UniValue vote(UniValue::VOBJ);
             vote.push_back(Pair("version", static_cast<int>(voteIt.Version)));
-            vote.push_back(Pair("bits", voteIt.Bits));
+            vote.push_back(Pair("bits", voteIt.Bits.getBits()));
 
             votes.push_back(vote);
         }

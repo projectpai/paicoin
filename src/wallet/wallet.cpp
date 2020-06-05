@@ -1925,6 +1925,193 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
     return std::make_pair(results, error);
 }
 
+bool CWallet::IsMyTicket(const uint256& ticketHash) const
+{
+    if (ticketHash == uint256())
+        return false;
+
+    const CWalletTx* wtx = GetWalletTx(ticketHash);
+    if (wtx == nullptr || wtx->tx == nullptr)
+        return false;
+
+    if (!IsMine(*(wtx->tx)))
+        return false;
+
+    std::string reason;
+    if (!ValidateBuyTicketStructure(*(wtx->tx), reason))
+        return false;
+
+    if (!IsMine(wtx->tx->vout[ticketStakeOutputIndex]))
+        return false;
+
+    return true;
+}
+
+std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, const uint256& blockHash, const int blockHeight, const VoteBits voteBits, const ExtendedVoteBits& extendedVoteBits)
+{
+    std::string voteHash;
+    CWalletError error;
+
+    if (ticketHash == uint256()) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Invalid ticket hash");
+        return std::make_pair(voteHash, error);
+    }
+
+    const Consensus::Params& consensus = Params().GetConsensus();
+
+    if (blockHeight < consensus.nStakeValidationHeight - 1) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Height is lower than expected (below the stake validation height)");
+        return std::make_pair(voteHash, error);
+    }
+
+    LOCK2(cs_main, cs_wallet);
+
+    const CBlockIndex* chainTip = chainActive.Tip();
+
+    // Validations
+
+    if (IsLocked()) {
+        error.Load(CWalletError::WALLET_UNLOCK_NEEDED, "Please enter the wallet passphrase with walletpassphrase first");
+        return std::make_pair(voteHash, error);
+    }
+
+    if (blockHash != chainTip->GetBlockHash()) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Invalid block hash (different than the hash of the previous block)");
+        return std::make_pair(voteHash, error);
+    }
+
+    if (blockHeight != chainTip->nHeight) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Invalid block height (different than the height of the previous block)");
+        return std::make_pair(voteHash, error);
+    }
+
+    if (!extendedVoteBits.isValid()) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Invalid extended vote bits");
+        return std::make_pair(voteHash, error);
+    }
+
+    const CWalletTx* ticketWtx = GetWalletTx(ticketHash);
+    if (ticketWtx == nullptr) {
+        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is invalid or does not belong to the wallet");
+        return std::make_pair(voteHash, error);
+    }
+
+    const CTransactionRef& ticket = ticketWtx->tx;
+    if (ticket == nullptr) {
+        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is invalid or does not belong to the wallet");
+        return std::make_pair(voteHash, error);
+    }
+
+    std::string reason;
+
+    if (ParseTxClass(*ticket) != TX_BuyTicket || !ValidateBuyTicketStructure(*ticket, reason) ) {
+        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Invalid ticket hash, must be hash of a ticket purchase transaction");
+        return std::make_pair(voteHash, error);
+    }
+
+    if (std::find(chainTip->pstakeNode->Winners().begin(), chainTip->pstakeNode->Winners().end(), ticket->GetHash()) == chainTip->pstakeNode->Winners().end()) {
+        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is not selected to vote in this block");
+        return std::make_pair(voteHash, error);
+    }
+
+    // process ticket contributions
+
+    CAmount totalContribution{0};
+    std::vector<TicketContribData> contributions;
+    for (unsigned i = ticketContribOutputIndex; i < ticket->vout.size(); i += 2) {
+        TicketContribData contrib;
+        if (!ParseTicketContrib(*ticket, i, contrib)) {
+            error.Load(CWalletError::TRANSACTION_ERROR, "Specified ticket has invalid contributions");
+            return std::make_pair(voteHash, error);
+        }
+        contributions.push_back(contrib);
+        totalContribution += contrib.contributedAmount;
+    }
+
+    const CAmount& voteSubsidy = GetVoterSubsidy(chainTip->nHeight + 1, consensus);
+    const CAmount& ticketPrice = ticket->vout[ticketStakeOutputIndex].nValue;
+
+    // vote transaction
+
+    CMutableTransaction mVoteTx;
+
+    // inputs
+
+    // stake base
+    mVoteTx.vin.push_back(CTxIn(COutPoint(), consensus.stakeBaseSigScript));
+
+    // staked amounts
+    mVoteTx.vin.push_back(CTxIn(ticket->GetHash(), ticketStakeOutputIndex));
+
+    // outputs
+
+    // transaction declaration (block being voted, the vote and stake version)
+    // TODO: use the correct voterStakeVersion!!!
+    VoteData voteData{1, blockHash, static_cast<uint32_t>(blockHeight), voteBits, 0, extendedVoteBits};
+    CScript declScript = GetScriptForVoteDecl(voteData);
+    mVoteTx.vout.push_back(CTxOut(0, declScript));
+
+    // payment outputs containing the proportional reward
+    for (const auto& contrib : contributions) {
+        const CAmount& reward = CalcContributorRemuneration(contrib.contributedAmount, ticketPrice, voteSubsidy, totalContribution);
+        if (!MoneyRange(reward)) {
+            error.Load(CWalletError::TRANSACTION_ERROR, "Incorrect reward");
+            return std::make_pair(voteHash, error);
+        }
+
+        // TODO: process fee limits
+
+        CScript script;
+        if (contrib.whichAddr == 0) {
+            error.Load(CWalletError::TRANSACTION_ERROR, "The reward address type is not correct");
+            return std::make_pair(voteHash, error);
+        } else if (contrib.whichAddr == 1) {
+            script = GetScriptForDestination(CKeyID(contrib.rewardAddr));
+        } else {
+            script = GetScriptForDestination(CScriptID(contrib.rewardAddr));
+        }
+
+        mVoteTx.vout.push_back(CTxOut(reward, script));
+    }
+
+    // structural validation
+
+    if (!ValidateVoteStructure(mVoteTx, reason)) {
+        error.Load(CWalletError::TRANSACTION_ERROR, "Failed to build the vote transaction: " + reason);
+        return std::make_pair(voteHash, error);
+    }
+
+    // signature (for stake input only)
+
+    {
+        CTransaction tx(mVoteTx);
+        const CScript& scriptPubKey = ticket->vout[ticketStakeOutputIndex].scriptPubKey;
+        SignatureData sigdata;
+        if (!ProduceSignature(TransactionSignatureCreator(this, &tx, 1, ticketPrice, SIGHASH_ALL), scriptPubKey, sigdata)) {
+            error.Load(CWalletError::TRANSACTION_ERROR, "Could not sign the vote transaction");
+            return std::make_pair(voteHash, error);
+        }
+        UpdateTransaction(mVoteTx, 1, sigdata);
+    }
+
+    // commitment
+
+    CValidationState state;
+    CWalletTx wtx;
+    wtx.fTimeReceivedIsTxTime = true;
+    wtx.BindWallet(this);
+    wtx.SetTx(MakeTransactionRef(std::move(mVoteTx)));
+    CReserveKey reservekey{this};
+    if (!CommitTransaction(wtx, reservekey, g_connman.get(), state)) {
+        error.Load(CWalletError::TRANSACTION_ERROR, "Committing transaction failed");
+        return std::make_pair(voteHash, error);
+    }
+
+    voteHash = wtx.GetHash().GetHex();
+
+    return std::make_pair(voteHash, error);
+}
+
 int64_t CWalletTx::GetTxTime() const
 {
     int64_t n = nTimeSmart;
@@ -2368,8 +2555,14 @@ bool CWalletTx::IsTrusted() const
         return false;
 
     // Trusted if all inputs are from us and are in the mempool:
-    for (const CTxIn& txin : tx->vin)
+    for (unsigned i = 0; i < tx->vin.size(); ++i)
     {
+        const CTxIn& txin = tx->vin[i];
+
+        // Stake base inputs of votes should not be tested
+        if (i == 0 && HasStakebaseContents(txin))
+            continue;
+
         // Transactions not sent by us: not trusted
         const CWalletTx* parent = pwallet->GetWalletTx(txin.prevout.hash);
         if (parent == nullptr)

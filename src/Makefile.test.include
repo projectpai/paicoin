@@ -61,6 +61,7 @@ PAICOIN_TESTS =\
   test/policyestimator_tests.cpp \
   test/pow_tests.cpp \
   test/stake_difficulty_tests.cpp \
+  test/stake_version_tests.cpp \
   test/prevector_tests.cpp \
   test/raii_event_tests.cpp \
   test/random_tests.cpp \
@@ -86,6 +87,7 @@ PAICOIN_TESTS =\
   test/transaction_tests.cpp \
   test/txvalidationcache_tests.cpp \
   test/versionbits_tests.cpp \
+  test/vote_tests.cpp \
   test/uint256_tests.cpp \
   test/univalue_tests.cpp \
   test/util_tests.cpp
