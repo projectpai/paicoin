@@ -48,6 +48,7 @@
 
 #include <atomic>
 #include <sstream>
+#include <numeric>
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -1148,27 +1149,168 @@ CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams)
         / (consensusParams.TotalSubsidyProportions() * consensusParams.nTicketsPerBlock);
 }
 
-CAmount CalcContributorRemuneration(CAmount contributedAmount, CAmount totalStake, CAmount subsidy, CAmount contributionSum)
+// Calculate the remuneration of a contributor before any fees are subtracted
+// Conceptually, the formula is:
+//
+//                 total stake + subsidy
+// remuneration =  --------------------- * contribution amount
+//                  total contributions
+//
+// However, in order to avoid floating point math, we will use large integers (arith_uint256) and a modified formula:
+//
+//                  --                                                  --
+//                 | (total stake + subsidy) * contribution amount * 2^32 |
+//                 | ---------------------------------------------------- |
+// remuneration =  |                 total contributions                  |
+//                  --                                                  --
+//                 --------------------------------------------------------
+//                                         2^32
+//
+CAmount CalculateGrossRemuneration(CAmount contributedAmount, CAmount totalStake, CAmount subsidy, CAmount contributionSum)
 {
-    // Conceptually, the formula is:
-    //
-    //                 total stake + subsidy
-    // remuneration =  --------------------- * contribution amount
-    //                  total contributions
-    //
-    // However, in order to avoid floating point math, we will use large integers (arith_uint256) and a modified formula:
-    //
-    //                  --                                                  --
-    //                 | (total stake + subsidy) * contribution amount * 2^32 |
-    //                 | ---------------------------------------------------- |
-    // remuneration =  |                 total contributions                  |
-    //                  --                                                  --
-    //                 --------------------------------------------------------
-    //                                         2^32
-    //
-    arith_uint256 funding(totalStake + subsidy);
-    arith_uint256 result = (((arith_uint256(contributedAmount) * funding) << 32) / arith_uint256(contributionSum)) >> 32;
-    return result.GetLow64();
+    arith_uint256 funding(static_cast<uint64_t>(totalStake + subsidy));
+    arith_uint256 result = (((arith_uint256{static_cast<uint64_t>(contributedAmount)} * funding) << 32) / arith_uint256{static_cast<uint64_t>(contributionSum)}) >> 32;
+    return static_cast<CAmount>(result.GetLow64());
+}
+
+// Calculate all the remunerations for a ticket in a vote or revoke transaction
+// Arguments:
+// - contributions: the vector of all the ticket contributions
+// - stake: the price of the ticket (the total staked amount)
+// - subsidy: the subsidy of the operation (will be zero for revocations and non-zero for votes)
+// - fee: the total fee to be distributed among the remunerations
+// - feePolicy: the policy under which the distribution of the fee among remunerations will be made
+//
+// If the subsidy is zero, the remunerations are considered revocation refunds and therefore the revoke fee
+// limits will be applied. If the subsidy is positive, the remunerations are considered vote rewards and
+// therefore the vote fee limits will be applied.
+//
+// The gross remuneration is calculated with the CalcultateGrossContributorRemuneration() function.
+//
+// Then, the fee is subtracted from this according to the distribution policy.
+//
+// The algorithm to fairly distribute fees according to the ticket contribution limits is as follows:
+// 1. sort the indexes of ticket contributions by ascending fee limits;
+// 2. iterate throught the sorted contributions and enforce the corresponding fees, limited by their contribution specifications.
+// This ensures that the most generous contributors cover the fees not assumed by the stingy ones.
+// However, there might still be situations where the fees cannot be covered with the respective limitations.
+//
+// If the output vector size differs from the contributions vector size, then the calculation failed and the output does not contain valid data.
+// Please note that regardless of the fee distribution policy, if the fee cannot be distributed correctly then this function will fail.
+// This also includes the situation where an output becomes dust after applying the fee.
+//
+std::vector<CAmount> CalculateNetRemunerations(const std::vector<TicketContribData>& contributions, const CAmount& stake, const CAmount& subsidy, const CAmount& fee, const FeeDistributionPolicy feePolicy)
+{
+    // preconditions
+
+    if (contributions.size() == 0U || !MoneyRange(stake) || !MoneyRange(subsidy) || !MoneyRange(fee))
+        return {};
+
+    // helpers
+
+    const bool vote = subsidy > 0;
+    const CAmount n = static_cast<CAmount>(contributions.size());
+
+    std::vector<CAmount> remunerations(static_cast<size_t>(n));
+
+    arith_uint256 arithFee(static_cast<uint64_t>(fee));
+    CAmount paidFee{0}; // this is used for calculating and assigning rounding errors to the most generous contributor
+    CAmount contributionFee{0};
+
+    CScript dummyScript{GetScriptForDestination(CKeyID())};
+
+    // sort the contribution indexes ascending by their fee limits
+    // if the fee policy is first contributor only, make sure that his/her position is not changed.
+
+    std::vector<unsigned int> indexes(static_cast<size_t>(n));
+    std::iota(indexes.begin(), indexes.end(), 0);
+    std::sort(indexes.begin() + (feePolicy == FeeDistributionPolicy::FirstContributor ? 1 : 0), indexes.end(), [&](const unsigned int a, const unsigned int b) {
+        if (vote)
+            return contributions[a].voteFeeLimit() < contributions[b].voteFeeLimit();
+        else
+            return contributions[a].revocationFeeLimit() < contributions[b].revocationFeeLimit();
+    });
+
+    // calculate the total contribution
+
+    CAmount totalContribution{0};
+    for (auto& contrib: contributions) {
+        if (!MoneyRange(contrib.contributedAmount))
+            return {};
+        totalContribution += contrib.contributedAmount;
+    }
+
+    // calculate the remunerations and subtract the fees according to their limits and the policy.
+    // any rounding errors will be applied to the most generous contributor, for funding as well as fees.
+
+    CAmount funding{stake + subsidy};
+    CAmount grossRemunerationSum{0}; // used to give the funding rounding errors to the most generous contributor
+
+    for (unsigned i = 0; i < indexes.size(); ++i) {
+        unsigned int j = indexes[i];
+
+        const TicketContribData& contribution = contributions[j];
+
+        // initial remuneration
+
+        if (i < indexes.size() - 1) {
+            remunerations[j] = CalculateGrossRemuneration(contribution.contributedAmount, stake, subsidy, totalContribution);
+            grossRemunerationSum += remunerations[j];
+        } else
+            remunerations[j] = funding - grossRemunerationSum;
+
+        if (!MoneyRange(remunerations[j]) || ::IsDust(CTxOut(remunerations[j], dummyScript) , ::dustRelayFee))
+                return {};
+
+        // fee
+
+        if (fee > 0) {
+            contributionFee = 0;
+
+            if (feePolicy == FeeDistributionPolicy::FirstContributor)
+                contributionFee = (j == 0 ? fee : fee - paidFee);
+            else {
+                if (feePolicy == FeeDistributionPolicy::EqualFee)
+                    contributionFee = fee / n;
+
+                if (feePolicy == FeeDistributionPolicy::ProportionalFee)
+                    contributionFee = static_cast<CAmount>(((((arith_uint256{static_cast<uint64_t>(contribution.contributedAmount)} * arithFee) << 32) / totalContribution) >> 32).GetLow64());
+
+                // include any remaining fee in the most generous contributor's remuneration
+                if (i == n-1)
+                    contributionFee = fee - paidFee;
+            }
+
+            // make sure that the fee does not exceed the limit imposed by the contributor,
+            // and if the most generous contributor cannot cover the required fee, just abort.
+
+            const CAmount& feeLimit = (vote ? contribution.voteFeeLimit() : contribution.revocationFeeLimit());
+            if (contributionFee > feeLimit) {
+                if (i == n-1)
+                    return {};
+                else
+                    contributionFee = feeLimit;
+            }
+
+            // if the fee is larger than the remuneration or if it leads to a dust output, then
+            // use as much fee as possible for this contributor to still have a valid output, or
+            // just abort if this is the last contribution, which is supposed to be the most generous,
+            // under the sorting of the fee limits above.
+
+            CAmount dustThreshold = GetDustThreshold(CTxOut(remunerations[j] - contributionFee, dummyScript), ::dustRelayFee);
+            if (contributionFee > remunerations[j] || remunerations[j] - contributionFee <= dustThreshold) {
+                if (i == n-1)
+                    return {};
+
+                contributionFee = remunerations[j] - dustThreshold;
+            }
+
+            remunerations[j] -= contributionFee;
+            paidFee += contributionFee;
+        }
+    }
+
+    return remunerations;
 }
 
 bool IsInitialBlockDownload()

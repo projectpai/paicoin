@@ -15,6 +15,11 @@
 
 class CWallet;
 
+// The Automatic Ticket Buyer (TB)
+// This is responsible with monitoring the blockchain advance
+// and automatically generate and publish any ticket purchase transaction
+// on behalf of the user.
+
 class CTicketBuyer : public CValidationInterface {
 public:
     CTicketBuyer() = delete;
@@ -22,7 +27,6 @@ public:
     virtual ~CTicketBuyer();
 
     virtual void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) override;
-    //virtual void BlockConnected(const std::shared_ptr<const CBlock> &block, const CBlockIndex *pindex, const std::vector<CTransactionRef> &txnConflicted) override;
 
     CTicketBuyerConfig& GetConfig() { return config; }
 

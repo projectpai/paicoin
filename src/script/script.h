@@ -223,6 +223,13 @@ public:
 
     static const size_t nDefaultMaxNumSize = 4;
 
+    // 64 bit integers may require upto 8 bytes for storage. To allow this, use
+    // nMaxNumSizeForInt64 in the CScriptNum constructor.
+    // Amounts are also represented as int64_t and even though they should be upper
+    // bounded by MAX_MONEY, values can easily get to more than 4 bytes in size.
+    // Therefore, this const is useful for amounts as well.
+    static const size_t nMaxNumSizeForInt64 = 8;
+
     explicit CScriptNum(const std::vector<unsigned char>& vch, bool fRequireMinimal,
                         const size_t nMaxNumSize = nDefaultMaxNumSize)
     {

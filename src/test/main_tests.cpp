@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(block_subsidy_test)
     CAmount stakedAmount = 1000;
     CAmount subsidy = 50;
     CAmount contributionSum = 1000;
-    CAmount reward = CalcContributorRemuneration(contributedAmount, stakedAmount, subsidy, contributionSum);
+    CAmount reward = CalculateGrossRemuneration(contributedAmount, stakedAmount, subsidy, contributionSum);
     BOOST_CHECK(reward == 21);
 
     auto nStakeValidationHeight = chainParams->GetConsensus().nStakeValidationHeight;

@@ -1442,6 +1442,50 @@ bool CWallet::IsHDEnabled() const
     return !hdChain.masterKeyID.IsNull();
 }
 
+bool CWallet::IsMyTicket(const CTransaction& tx) const
+{
+    if (!IsMine(tx))
+        return false;
+
+    std::string reason;
+    if (!ValidateBuyTicketStructure(tx, reason))
+        return false;
+
+    if (!tx.vout[ticketStakeOutputIndex].scriptPubKey.IsPayToScriptHash() && !IsMine(tx.vout[ticketStakeOutputIndex]))
+        return false;
+
+    return true;
+}
+
+bool CWallet::IsMyTicket(const uint256& ticketHash) const
+{
+    const CWalletTx* wtx = GetWalletTx(ticketHash);
+    if (wtx == nullptr || wtx->tx == nullptr)
+        return false;
+
+    return IsMyTicket(*wtx->tx);
+}
+
+bool CWallet::IsTicketRevokedInMempool(const uint256& ticketHash) const
+{
+    std::string reason;
+
+    auto& txClassIndex = mempool.mapTx.get<tx_class>();
+    auto revocations = txClassIndex.equal_range(ETxClass::TX_RevokeTicket);
+
+    for (auto revocationTxIter = revocations.first; revocationTxIter != revocations.second; ++revocationTxIter) {
+        const CTransaction& tx = revocationTxIter->GetTx();
+
+        if (!ValidateRevokeTicketStructure(tx, reason))
+            continue;
+
+        if (ticketHash == tx.vin[revocationStakeInputIndex].prevout.hash)
+            return true;
+    }
+
+    return false;
+}
+
 std::pair<uint256, CWalletError> CWallet::CreateTicketPurchaseSplitTx(std::string fromAccount, CAmount ticketPrice, CAmount ticketFee, CAmount vspFee, int numTickets, CAmount feeRate)
 {
     CWalletTx wtx;
@@ -1815,7 +1859,7 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
         // outputs
 
         // buy ticket transaction declaration
-        BuyTicketData buyTicketData = { 1 };    // version
+        BuyTicketData buyTicketData{1};    // version
         CScript declScript = GetScriptForBuyTicketDecl(buyTicketData);
         CTxOut declTxOut(0, declScript);
         mTicketTx.vout.push_back(declTxOut);
@@ -1837,7 +1881,7 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
 
             // contribution output
             const auto& contributedAmount = vspFee;
-            TicketContribData ticketContribData{1, vspAddress, contributedAmount, TicketContribData::NoFees, TicketContribData::NoFees};
+            TicketContribData ticketContribData{1, vspAddress, contributedAmount, 0, TicketContribData::DefaultFeeLimit};
             CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
             mTicketTx.vout.push_back(CTxOut(0, contributorInfoScript));
 
@@ -1862,7 +1906,7 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
             }
 
             // contribution output
-            CKeyID rewardAddress;
+            CKeyID userAddress;
             {
                 // Generate a new key that is added to wallet
                 CPubKey newKey;
@@ -1870,10 +1914,10 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
                     error.Load(CWalletError::WALLET_KEYPOOL_RAN_OUT, "Keypool ran out, please call keypoolrefill first");
                     return std::make_pair(results, error);
                 }
-                rewardAddress = newKey.GetID();
+                userAddress = newKey.GetID();
             }
             const auto& contributedAmount = neededPerTicket - vspFee;
-            TicketContribData ticketContribData{1, rewardAddress, contributedAmount, TicketContribData::NoFees, TicketContribData::NoFees};
+            TicketContribData ticketContribData{1, userAddress, contributedAmount, 0, TicketContribData::DefaultFeeLimit};
             CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
             mTicketTx.vout.push_back(CTxOut(0, contributorInfoScript));
 
@@ -1925,32 +1969,12 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
     return std::make_pair(results, error);
 }
 
-bool CWallet::IsMyTicket(const uint256& ticketHash) const
-{
-    if (ticketHash == uint256())
-        return false;
-
-    const CWalletTx* wtx = GetWalletTx(ticketHash);
-    if (wtx == nullptr || wtx->tx == nullptr)
-        return false;
-
-    if (!IsMine(*(wtx->tx)))
-        return false;
-
-    std::string reason;
-    if (!ValidateBuyTicketStructure(*(wtx->tx), reason))
-        return false;
-
-    if (!IsMine(wtx->tx->vout[ticketStakeOutputIndex]))
-        return false;
-
-    return true;
-}
-
 std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, const uint256& blockHash, const int blockHeight, const VoteBits voteBits, const ExtendedVoteBits& extendedVoteBits)
 {
     std::string voteHash;
     CWalletError error;
+
+    // Validations
 
     if (ticketHash == uint256()) {
         error.Load(CWalletError::INVALID_PARAMETER, "Invalid ticket hash");
@@ -1967,8 +1991,6 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
     LOCK2(cs_main, cs_wallet);
 
     const CBlockIndex* chainTip = chainActive.Tip();
-
-    // Validations
 
     if (IsLocked()) {
         error.Load(CWalletError::WALLET_UNLOCK_NEEDED, "Please enter the wallet passphrase with walletpassphrase first");
@@ -2014,22 +2036,29 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
         return std::make_pair(voteHash, error);
     }
 
-    // process ticket contributions
+    // ticket contributions
 
-    CAmount totalContribution{0};
     std::vector<TicketContribData> contributions;
-    for (unsigned i = ticketContribOutputIndex; i < ticket->vout.size(); i += 2) {
-        TicketContribData contrib;
-        if (!ParseTicketContrib(*ticket, i, contrib)) {
-            error.Load(CWalletError::TRANSACTION_ERROR, "Specified ticket has invalid contributions");
-            return std::make_pair(voteHash, error);
-        }
-        contributions.push_back(contrib);
-        totalContribution += contrib.contributedAmount;
+    CAmount totalContribution{0};
+    CAmount totalVoteFeeLimit{0};
+    CAmount totalRevocationFeeLimit{0};
+    if (!ParseTicketContribs(*ticket, contributions, totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit)) {
+        error.Load(CWalletError::TRANSACTION_ERROR, "Specified ticket has invalid contributions");
+        return std::make_pair(voteHash, error);
     }
 
-    const CAmount& voteSubsidy = GetVoterSubsidy(chainTip->nHeight + 1, consensus);
+    // funds
+
     const CAmount& ticketPrice = ticket->vout[ticketStakeOutputIndex].nValue;
+    const CAmount& voteSubsidy = GetVoterSubsidy(chainTip->nHeight + 1, consensus);
+
+    // rewards
+
+    std::vector<CAmount> rewards = CalculateNetRemunerations(contributions, ticketPrice, voteSubsidy /*no fee for votes*/);
+    if (rewards.size() != contributions.size()) {
+        error.Load(CWalletError::TRANSACTION_ERROR, "Could not retrive correct rewards");
+        return std::make_pair(voteHash, error);
+    }
 
     // vote transaction
 
@@ -2051,15 +2080,15 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
     CScript declScript = GetScriptForVoteDecl(voteData);
     mVoteTx.vout.push_back(CTxOut(0, declScript));
 
-    // payment outputs containing the proportional reward
-    for (const auto& contrib : contributions) {
-        const CAmount& reward = CalcContributorRemuneration(contrib.contributedAmount, ticketPrice, voteSubsidy, totalContribution);
+    // payment outputs containing the proportional rewards
+    for (unsigned i = 0; i < contributions.size(); ++i) {
+        const TicketContribData& contrib = contributions[i];
+
+        const CAmount& reward = rewards[i];
         if (!MoneyRange(reward)) {
             error.Load(CWalletError::TRANSACTION_ERROR, "Incorrect reward");
             return std::make_pair(voteHash, error);
         }
-
-        // TODO: process fee limits
 
         CScript script;
         if (contrib.whichAddr == 0) {
@@ -2110,6 +2139,218 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
     voteHash = wtx.GetHash().GetHex();
 
     return std::make_pair(voteHash, error);
+}
+
+std::pair<std::string, CWalletError> CWallet::Revoke(const uint256& ticketHash)
+{
+    std::string revocationHash;
+    CWalletError error;
+
+    // Validations
+
+    if (ticketHash == uint256()) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Invalid ticket hash");
+        return std::make_pair(revocationHash, error);
+    }
+
+    const Consensus::Params& consensus = Params().GetConsensus();
+
+    LOCK2(cs_main, cs_wallet);
+
+    const CBlockIndex* chainTip = chainActive.Tip();
+
+    if (chainTip->nHeight < consensus.nStakeValidationHeight - 1) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Height is lower than expected (below the stake validation height)");
+        return std::make_pair(revocationHash, error);
+    }
+
+    if (IsLocked()) {
+        error.Load(CWalletError::WALLET_UNLOCK_NEEDED, "Please enter the wallet passphrase with walletpassphrase first");
+        return std::make_pair(revocationHash, error);
+    }
+
+    if (!chainTip->pstakeNode->ExistsMissedTicket(ticketHash)) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Ticket is not missed or expired yet");
+        return std::make_pair(revocationHash, error);
+    }
+
+    if (IsTicketRevokedInMempool(ticketHash)){
+        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is already revoked in mempool");
+        return std::make_pair(revocationHash, error);
+    }
+
+    const CWalletTx* ticketWtx = GetWalletTx(ticketHash);
+    if (ticketWtx == nullptr) {
+        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is invalid or does not belong to the wallet");
+        return std::make_pair(revocationHash, error);
+    }
+
+    const CTransactionRef& ticket = ticketWtx->tx;
+    if (ticket == nullptr) {
+        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is invalid or does not belong to the wallet");
+        return std::make_pair(revocationHash, error);
+    }
+
+    std::string reason;
+
+    if (ParseTxClass(*ticket) != TX_BuyTicket || !ValidateBuyTicketStructure(*ticket, reason) ) {
+        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Invalid ticket hash, must be hash of a ticket purchase transaction");
+        return std::make_pair(revocationHash, error);
+    }
+
+    if (!IsMyTicket(*ticket)) {
+        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Revoked ticket does not belong to the wallet");
+        return std::make_pair(revocationHash, error);
+    }
+
+    // ticket contributions
+
+    std::vector<TicketContribData> contributions;
+    CAmount totalContribution{0};
+    CAmount totalVoteFeeLimit{0};
+    CAmount totalRevocationFeeLimit{0};
+    if (!ParseTicketContribs(*ticket, contributions, totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit)) {
+        error.Load(CWalletError::TRANSACTION_ERROR, "Specified ticket has invalid contributions");
+        return std::make_pair(revocationHash, error);
+    }
+
+    // funds
+
+    const CAmount& ticketPrice = ticket->vout[ticketStakeOutputIndex].nValue;
+
+    // estimated fee
+
+    FeeCalculation feeCalc;
+    CAmount fee = GetMinimumFee(static_cast<unsigned int>(GetEstimatedSizeOfRevokeTicketTx(contributions.size(), false)), CCoinControl(), ::mempool, ::feeEstimator, &feeCalc);
+
+    // refunds
+
+    std::vector<CAmount> refunds = CalculateNetRemunerations(contributions, ticketPrice, 0/*no subsidy*/, fee, FeeDistributionPolicy::ProportionalFee);
+    if (refunds.size() != contributions.size()) {
+        error.Load(CWalletError::TRANSACTION_ERROR, "Could not retrive correct refunds");
+        return std::make_pair(revocationHash, error);
+    }
+
+    // revocation transaction
+
+    CMutableTransaction mRevokeTx;
+
+    // inputs
+
+    // staked amounts
+    mRevokeTx.vin.push_back(CTxIn(ticket->GetHash(), ticketStakeOutputIndex));
+
+    // outputs
+
+    // transaction declaration
+    RevokeTicketData revokeData{1};
+    CScript declScript = GetScriptForRevokeTicketDecl(revokeData);
+    mRevokeTx.vout.push_back(CTxOut(0, declScript));
+
+    // payment outputs containing the proportional refund
+    for (unsigned i = 0; i < contributions.size(); ++i) {
+        const TicketContribData& contrib = contributions[i];
+
+        const CAmount& refund = refunds[i];
+        if (!MoneyRange(refund)) {
+            error.Load(CWalletError::TRANSACTION_ERROR, "Incorrect refund");
+            return std::make_pair(revocationHash, error);
+        }
+
+        CScript script;
+        if (contrib.whichAddr == 0) {
+            error.Load(CWalletError::TRANSACTION_ERROR, "The refund address type is not correct");
+            return std::make_pair(revocationHash, error);
+        } else if (contrib.whichAddr == 1) {
+            script = GetScriptForDestination(CKeyID(contrib.rewardAddr));
+        } else {
+            script = GetScriptForDestination(CScriptID(contrib.rewardAddr));
+        }
+
+        mRevokeTx.vout.push_back(CTxOut(refund, script));
+    }
+
+    // signature
+
+    {
+        CTransaction tx(mRevokeTx);
+        const CScript& scriptPubKey = ticket->vout[ticketStakeOutputIndex].scriptPubKey;
+        SignatureData sigdata;
+        if (!ProduceSignature(TransactionSignatureCreator(this, &tx, 0, ticketPrice, SIGHASH_ALL), scriptPubKey, sigdata)) {
+            error.Load(CWalletError::TRANSACTION_ERROR, "Could not sign the revocation transaction");
+            return std::make_pair(revocationHash, error);
+        }
+        UpdateTransaction(mRevokeTx, 0, sigdata);
+    }
+
+    // structural validation
+
+    if (!ValidateRevokeTicketStructure(mRevokeTx, reason)) {
+        error.Load(CWalletError::TRANSACTION_ERROR, "Failed to build the revocation transaction: " + reason);
+        return std::make_pair(revocationHash, error);
+    }
+
+    // commitment
+
+    CValidationState state;
+    CWalletTx wtx;
+    wtx.fTimeReceivedIsTxTime = true;
+    wtx.BindWallet(this);
+    wtx.SetTx(MakeTransactionRef(std::move(mRevokeTx)));
+    CReserveKey reservekey{this};
+    if (!CommitTransaction(wtx, reservekey, g_connman.get(), state)) {
+        error.Load(CWalletError::TRANSACTION_ERROR, "Committing transaction failed");
+        return std::make_pair(revocationHash, error);
+    }
+
+    revocationHash = wtx.GetHash().GetHex();
+
+    return std::make_pair(revocationHash, error);
+}
+
+std::pair<std::vector<std::string>, CWalletError> CWallet::RevokeAll()
+{
+    std::vector<std::string> results;
+    CWalletError error;
+
+    const Consensus::Params& consensus = Params().GetConsensus();
+
+    LOCK2(cs_main, cs_wallet);
+
+    // Validations
+
+    if (IsLocked()) {
+        error.Load(CWalletError::WALLET_UNLOCK_NEEDED, "Please enter the wallet passphrase with walletpassphrase first.");
+        return std::make_pair(results, error);
+    }
+
+    const CBlockIndex* chainTip = chainActive.Tip();
+
+    if (chainTip->nHeight < consensus.nStakeValidationHeight - 1) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Height is lower than expected (below the stake validation height)");
+        return std::make_pair(results, error);
+    }
+
+    // try sending a revocation transaction for each missed ticket that belongs
+    // to the wallet; missed tickets include the expired ones too; validations
+    // are made in Revoke()
+
+    std::string revocatioHash;
+    CWalletError we;
+    std::string failedRevocations{"Tickets that failed to be revoked:"};
+
+    for (const uint256& ticketHash : chainTip->pstakeNode->MissedTickets()) {
+        std::tie(revocatioHash, we) = Revoke(ticketHash);
+
+        if (we.code == CWalletError::SUCCESSFUL && !revocatioHash.empty())
+            results.push_back(revocatioHash);
+        else if (we.code != CWalletError::INVALID_ADDRESS_OR_KEY) {
+            failedRevocations += (" " + ticketHash.GetHex());
+            error.Load(CWalletError::TRANSACTION_ERROR, failedRevocations);
+        }
+    }
+
+    return std::make_pair(results, error);
 }
 
 int64_t CWalletTx::GetTxTime() const

@@ -300,6 +300,9 @@ bool checkBuyTicketInputs(const CTransaction& tx, CValidationState& state, const
     if (!ValidateBuyTicketStructure(tx, reason))
         return state.DoS(100, false, REJECT_INVALID, "bad-buyticket-structure", false, reason);
 
+    CAmount totalVoteFeeLimit{0};
+    CAmount totalRevocationFeeLimit{0};
+
     // validate individual inputs
     for (unsigned i = 0; i < tx.vin.size(); i++)
     {
@@ -322,7 +325,16 @@ bool checkBuyTicketInputs(const CTransaction& tx, CValidationState& state, const
         CAmount funding = coin.out.nValue;
         if (contrib.contributedAmount + change != funding)
             return state.DoS(100, false, REJECT_INVALID, "bad-txin-amount-mismatch");
+
+        totalVoteFeeLimit += contrib.voteFeeLimit();
+        totalRevocationFeeLimit += contrib.revocationFeeLimit();
     }
+
+    // Ensure that the minimum fee limits are met
+    if (totalVoteFeeLimit < chainparams.GetConsensus().nMinimumTotalVoteFeeLimit)
+        return state.DoS(100, false, REJECT_INVALID, "total-vote-fee-limit-too-low");
+    if (totalRevocationFeeLimit < chainparams.GetConsensus().nMinimumTotalRevocationFeeLimit)
+        return state.DoS(100, false, REJECT_INVALID, "total-revocation-fee-limit-too-low");
 
     return true;
 }
@@ -373,24 +385,29 @@ bool checkVoteOrRevokeTicketInputs(const CTransaction& tx, bool vote, CValidatio
     if (numVotePayments * 2 != numTicketStakeContributions)
         return state.DoS(100, false, REJECT_INVALID, what + "-payments-contributions-mismatch");
 
-    // Calculate contribution sum
-    CAmount contributionSum = 0;
-    for (unsigned i = ticketContribOutputIndex; i < ticketTxPtr->vout.size(); i += 2) {
-        TicketContribData contrib;
-        ParseTicketContrib(*ticketTxPtr, i, contrib);
-        contributionSum += contrib.contributedAmount;
-    }
+    // Extract contributions
+    std::vector<TicketContribData> contributions;
+    CAmount totalContribution{0};
+    CAmount totalVoteFeeLimit{0};
+    CAmount totalRevocationFeeLimit{0};
+    if (!ParseTicketContribs(*ticketTxPtr, contributions, totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit))
+        return state.DoS(100, false, REJECT_INVALID, what + "-invalid-ticket-contributions");
+
+    // Generate the expected remunerations without the fee
+    // For both vote and revocation transactions, calculate the gross remuneration,
+    // taking into account the fee limit based generosity sorting (using the net function, rather than the gross one).
+    // This allows the correct shifting of the rounding errors towards the most generous contributor.
+    CAmount stakedAmount = ticketTxPtr->vout[ticketStakeOutputIndex].nValue;
+    CAmount subsidy = vote ? GetVoterSubsidy(nSpendHeight, chainparams.GetConsensus()) : 0;
+    std::vector<CAmount> grossRemunerations = CalculateNetRemunerations(contributions, stakedAmount, subsidy /*zero fees!*/);
+    if (grossRemunerations.size() != contributions.size())
+        return state.DoS(100, false, REJECT_INVALID, what + "-invalid-ticket-contributions");
 
     // Ensure the payment outputs correspond with the ticket contributions.
-    CAmount stakedAmount = ticketTxPtr->vout[ticketStakeOutputIndex].nValue;
-    CAmount subsidy = vote ? GetVoterSubsidy(nSpendHeight, Params().GetConsensus()) : 0;
     unsigned paymentOutputIndex = vote ? voteRewardOutputIndex : revocationRefundOutputIndex;
     for (unsigned i = paymentOutputIndex; i < tx.vout.size(); i++)
     {
-        // Extract contribution info corresponding to this payment
-        unsigned contribIndex = 2 * i;
-        TicketContribData contrib;
-        ParseTicketContrib(*ticketTxPtr, contribIndex, contrib);
+        const TicketContribData& contrib = contributions[i-paymentOutputIndex];
 
         // Check if the payment uses P2PKH or P2SH
         if (!isLegalScriptTypeForStake(tx.vout[i].scriptPubKey))
@@ -409,24 +426,14 @@ bool checkVoteOrRevokeTicketInputs(const CTransaction& tx, bool vote, CValidatio
             return state.DoS(100, false, REJECT_INVALID, what + "-incorrect-payment-address");
 
         // Check if the payment amount is as expected
-        // Also consider fee limits, if enabled.
-        CAmount paymentAmount = CalcContributorRemuneration(contrib.contributedAmount, stakedAmount, subsidy, contributionSum);
+        // Also make sure that the fee limits are respected, if enabled.
+        const CAmount& grossRemuneration = grossRemunerations[i-paymentOutputIndex];
 
-        CAmount feeLimit{-1};
-        if (vote && contrib.hasVoteFeeLimits())
-            feeLimit = contrib.voteFeeLimits();
-        if (!vote && contrib.hasRevokeFeeLimits())
-            feeLimit = contrib.revokeFeeLimits();
-
-        if (feeLimit > -1) {
-            CAmount lowLimit{0};
-            if (feeLimit < paymentAmount)
-                lowLimit = paymentAmount - feeLimit;
-            if (tx.vout[i].nValue < lowLimit)
-                return state.DoS(100, false, REJECT_INVALID, what + "-output-pays-less-than-expected");
-        }
-        else if (tx.vout[i].nValue != paymentAmount)
-            return state.DoS(100, false, REJECT_INVALID, what + "-bad-payment-amount");
+        CAmount feeLimit = (vote ? contrib.voteFeeLimit() : contrib.revocationFeeLimit());
+        if (tx.vout[i].nValue < grossRemuneration - feeLimit)
+            return state.DoS(100, false, REJECT_INVALID, what + "-remuneration-too-low");
+        if (tx.vout[i].nValue > grossRemuneration)
+            return state.DoS(100, false, REJECT_INVALID, what + "-remuneration-too-high");
     }
 
     return true;
@@ -463,7 +470,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         // so we'll skip the checks
         if (txClass == TX_Vote && i == voteSubsidyInputIndex)
         {
-            nValueIn += GetVoterSubsidy(nSpendHeight/*voteData.blockHeight*/, ::Params().GetConsensus());
+            nValueIn += GetVoterSubsidy(nSpendHeight/*voteData.blockHeight*/, chainparams.GetConsensus());
             continue;
         }
 
@@ -472,7 +479,6 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         assert(!coin.IsSpent());
 
         // If prev is coinbase, check that it's matured
-        const CChainParams& chainparams = ::Params();
         if (!chainparams.HasGenesisBlockTxOutPoint(prevout)) {
           if (coin.IsCoinBase() && nSpendHeight - coin.nHeight < COINBASE_MATURITY) {
               return state.Invalid(false,
