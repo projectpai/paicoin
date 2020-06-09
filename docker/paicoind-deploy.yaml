@@ -1,14 +1,41 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
-  name: paicoin-live
+  name: paicoin-service
+  labels:
+    app: paicoin-live
+spec:
+  # ports:
+  # - port: 80
+  #   name: web
+  clusterIP: None
+  selector:
+    app: paicoin-live
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: redis
+#   labels:
+#     app: redis-live
+# spec:
+#   ports:
+#   - port: 6379
+#     name: redis
+#   clusterIP: None
+#   selector:
+#     app: redis-live
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: paicoin-node
 spec:
   selector:
     matchLabels:
       app: paicoin-live
+  serviceName: paicoin-service
   replicas: 3
-  strategy:
-    type: Recreate
   template:
     metadata:
       labels:
@@ -24,37 +51,52 @@ spec:
             - key: paicoin.conf
               path: paicoin.conf
       containers:
-      - name: paicoin-live
+      - name: paicoin-node
         image: hybrid-consensus:v1
         imagePullPolicy: Never
         command: ["/bin/sh", "-c"]
         args: ["paicoind"]
         volumeMounts:
-          # - mountPath: "/usr/share/pouw-data"
-          #   name: pouw-pv-storage
           - mountPath: /root/data
             name: paicoin-datadir
           - mountPath: /root/.paicoin
             name: paicoin-config
-          # ports:
-          # - containerPort: 8333
-          #   hostPort: 8333
-          #   protocol: TCP
-          #   name: btc-live
-          # - containerPort: 8332
-          #   name: btc-json-rpc
-          # volumeMounts:
-          # - name: paicoin-data
-          #   mountPath: /app/data
-          # resources:
-          #   requests:
-          #     memory: "1024M"
-          #     cpu: "750m"
-          #   limits:
-          #     memory: "2048M"
-          #     cpu: "1000m"
-      # volumes:
-      #   - name: paicoin-data
-      #     hostPath:
-      #       path: /mnt/paicoin-data
-      #       type: Directory
+# ---
+# apiVersion: apps/v1
+# kind: StatefulSet
+# metadata:
+#   name: redis
+# spec:
+#   selector:
+#     matchLabels:
+#       app: redis-live
+#   serviceName: "redis"
+#   replicas: 1
+#   template:
+#     metadata:
+#       labels:
+#         app: redis-live
+#     spec:
+#       volumes:
+#       - name: redis-datadir
+#         emptyDir: {}
+#       - name: redis-conf
+#         configMap:
+#           name: redis-config-map
+#           items:
+#           - key: redis.conf
+#             path: redis.conf
+#       containers:
+#       - name: redis
+#         image: redis:5.0.5-alpine3.10
+#         ports:
+#           - containerPort: 6379
+#         command:
+#           - redis-server
+#           - "/conf/redis.conf"
+#         volumeMounts:
+#           - mountPath: /datadir
+#             name: redis-datadir
+#           - mountPath: /conf
+#             name: redis-conf
+#         imagePullPolicy: IfNotPresent

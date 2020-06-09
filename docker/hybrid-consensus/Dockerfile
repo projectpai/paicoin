@@ -37,5 +37,7 @@ RUN ./autogen.sh &&  \
 
 WORKDIR /app
 
+RUN apt-get install busybox
+
 CMD ["/bin/bash", "-c", "paicoind -regtest -txindex -printtoconsole"]
 # CMD /bin/bash
