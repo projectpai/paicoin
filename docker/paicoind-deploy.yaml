@@ -11,21 +11,66 @@ spec:
   clusterIP: None
   selector:
     app: paicoin-live
-# ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: redis
-#   labels:
-#     app: redis-live
-# spec:
-#   ports:
-#   - port: 6379
-#     name: redis
-#   clusterIP: None
-#   selector:
-#     app: redis-live
+
 ---
+
+apiVersion: v1
+data:
+  paicoin.conf: |-
+    server=1
+    bantime=1
+    daemon=0
+    rpcuser=paicoin
+    rpcpassword=PAI
+    rpcport=4002
+    rpcallowip=0.0.0.0/0
+    rpcbind=0.0.0.0
+    testnet=1
+    txindex=1
+    onlynet=ipv4
+    listenonion=0
+    listen=1
+    printtoconsole=1
+    datadir=/root/data
+    # dnsseed=0
+    # connect=0
+kind: ConfigMap
+metadata:
+  name: paicoin-config-map
+
+---
+
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: paicoin-data-pv-volume
+#   labels:
+#     type: local
+# spec:
+#   storageClassName: manual
+#   capacity:
+#     storage: 1Gi
+#   accessModes:
+#     - ReadWriteOnce
+#   hostPath:
+#     path: "/mnt/paicoin-data"
+
+# ---
+
+# kind: PersistentVolumeClaim
+# apiVersion: v1
+# metadata:
+#   name: paicoin-data-pv-claim
+# spec:
+#   storageClassName: manual 
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 1Gi
+
+# ---
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -42,6 +87,9 @@ spec:
         app: paicoin-live
     spec:
       volumes:
+      # - name: paicoin-data-pv-storage
+      #   persistentVolumeClaim:
+      #     claimName: paicoin-data-pv-claim
       - name: paicoin-datadir
         emptyDir: {}
       - name: paicoin-config
@@ -52,51 +100,23 @@ spec:
               path: paicoin.conf
       containers:
       - name: paicoin-node
-        image: hybrid-consensus:v1
+        image: hybrid-consensus:0.16.1
         imagePullPolicy: Never
-        command: ["/bin/sh", "-c"]
-        args: ["paicoind"]
+        command: ["/bin/bash", "-c"]
+        # args: ["paicoind"]
+        args: ["sleep 2 && CONNECTS=$(busybox nslookup paicoin-service | grep $(hostname -d) | grep -v $(hostname) | awk '{print $3}' | while read line || [[ -n $line ]]; do echo -n ' -connect='$line; done) && echo $CONNECTS && paicoind $CONNECTS"]
         volumeMounts:
           - mountPath: /root/data
+            # name: paicoin-data-pv-storage
             name: paicoin-datadir
           - mountPath: /root/.paicoin
             name: paicoin-config
-# ---
-# apiVersion: apps/v1
-# kind: StatefulSet
-# metadata:
-#   name: redis
-# spec:
-#   selector:
-#     matchLabels:
-#       app: redis-live
-#   serviceName: "redis"
-#   replicas: 1
-#   template:
-#     metadata:
-#       labels:
-#         app: redis-live
-#     spec:
-#       volumes:
-#       - name: redis-datadir
-#         emptyDir: {}
-#       - name: redis-conf
-#         configMap:
-#           name: redis-config-map
-#           items:
-#           - key: redis.conf
-#             path: redis.conf
-#       containers:
-#       - name: redis
-#         image: redis:5.0.5-alpine3.10
-#         ports:
-#           - containerPort: 6379
-#         command:
-#           - redis-server
-#           - "/conf/redis.conf"
-#         volumeMounts:
-#           - mountPath: /datadir
-#             name: redis-datadir
-#           - mountPath: /conf
-#             name: redis-conf
-#         imagePullPolicy: IfNotPresent
+  # volumeClaimTemplates:
+  # - metadata:
+  #     name: paicoin-datadir
+  #   spec:
+  #     accessModes: [ "ReadWriteOnce" ]
+  #     storageClassName: manual
+  #     resources:
+  #       requests:
+  #         storage: 1Gi
