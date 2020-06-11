@@ -6,8 +6,21 @@ metadata:
     app: paicoin-live
 spec:
   # ports:
-  # - port: 80
-  #   name: web
+  # - port: 18566
+  #   name: rpc
+  clusterIP: None
+  selector:
+    app: paicoin-live
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpuminer-service
+  labels:
+    app: paicoin-live
+spec:
   clusterIP: None
   selector:
     app: paicoin-live
@@ -22,7 +35,7 @@ data:
     daemon=0
     rpcuser=paicoin
     rpcpassword=PAI
-    rpcport=4002
+    # rpcport=4002 # use default 18566
     rpcallowip=0.0.0.0/0
     rpcbind=0.0.0.0
     testnet=1
@@ -102,6 +115,11 @@ spec:
       - name: paicoin-node
         image: hybrid-consensus:0.16.1
         imagePullPolicy: Never
+        ports:
+        - containerPort: 18566
+          name: rpc
+        - containerPort: 18567
+          name: connect
         command: ["/bin/bash", "-c"]
         # args: ["paicoind"]
         args: ["sleep 2 && CONNECTS=$(busybox nslookup paicoin-service | grep $(hostname -d) | grep -v $(hostname) | awk '{print $3}' | while read line || [[ -n $line ]]; do echo -n ' -connect='$line; done) && echo $CONNECTS && paicoind $CONNECTS"]
@@ -120,3 +138,47 @@ spec:
   #     resources:
   #       requests:
   #         storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cpuminer
+spec:
+  selector:
+    matchLabels:
+      app: paicoin-live
+  serviceName: cpuminer-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: paicoin-live
+    spec:
+      # volumes:
+      # - name: paicoin-data-pv-storage
+      #   persistentVolumeClaim:
+      #     claimName: paicoin-data-pv-claim
+      # - name: paicoin-datadir
+      #   emptyDir: {}
+      # - name: paicoin-config
+      #   configMap:
+      #     name: paicoin-config-map
+      #     items:
+      #       - key: paicoin.conf
+      #         path: paicoin.conf
+      containers:
+      - name: cpuminer
+        image: cpuminer
+        imagePullPolicy: Never
+        command: ["/bin/bash", "-c"]
+        args:
+         - ./minerd -a sha256d -o http://172.18.0.7:18566 -O paicoin:PAI -P 
+        # args: ["while true; do ./minerd --help && sleep 10; done"]
+        # volumeMounts:
+        #   - mountPath: /root/data
+        #     # name: paicoin-data-pv-storage
+        #     name: paicoin-datadir
+        #   - mountPath: /root/.paicoin
+        #     name: paicoin-config
