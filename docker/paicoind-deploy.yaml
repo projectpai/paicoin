@@ -2,8 +2,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: paicoin-service
-  labels:
-    app: paicoin-live
 spec:
   # ports:
   # - port: 18566
@@ -13,21 +11,22 @@ spec:
     app: paicoin-live
 
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
   name: cpuminer-service
-  labels:
-    app: paicoin-live
 spec:
   clusterIP: None
   selector:
-    app: paicoin-live
-
+    app: cpuminer-live
 ---
 
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paicoin-config-map
+  labels:
+    app: paicoin-live
 data:
   paicoin.conf: |-
     server=1
@@ -47,42 +46,8 @@ data:
     datadir=/root/data
     # dnsseed=0
     # connect=0
-kind: ConfigMap
-metadata:
-  name: paicoin-config-map
 
 ---
-
-# apiVersion: v1
-# kind: PersistentVolume
-# metadata:
-#   name: paicoin-data-pv-volume
-#   labels:
-#     type: local
-# spec:
-#   storageClassName: manual
-#   capacity:
-#     storage: 1Gi
-#   accessModes:
-#     - ReadWriteOnce
-#   hostPath:
-#     path: "/mnt/paicoin-data"
-
-# ---
-
-# kind: PersistentVolumeClaim
-# apiVersion: v1
-# metadata:
-#   name: paicoin-data-pv-claim
-# spec:
-#   storageClassName: manual 
-#   accessModes:
-#     - ReadWriteOnce
-#   resources:
-#     requests:
-#       storage: 1Gi
-
-# ---
 
 apiVersion: apps/v1
 kind: StatefulSet
@@ -100,9 +65,6 @@ spec:
         app: paicoin-live
     spec:
       volumes:
-      # - name: paicoin-data-pv-storage
-      #   persistentVolumeClaim:
-      #     claimName: paicoin-data-pv-claim
       - name: paicoin-datadir
         emptyDir: {}
       - name: paicoin-config
@@ -122,22 +84,20 @@ spec:
           name: connect
         command: ["/bin/bash", "-c"]
         # args: ["paicoind"]
-        args: ["sleep 2 && CONNECTS=$(busybox nslookup paicoin-service | grep $(hostname -d) | grep -v $(hostname) | awk '{print $3}' | while read line || [[ -n $line ]]; do echo -n ' -connect='$line; done) && echo $CONNECTS && paicoind $CONNECTS"]
+        args:
+        - sleep 2;
+          CONNECTS=$(busybox nslookup paicoin-service | grep $(hostname -d) | grep -v $(hostname) | awk '{print $3}' | while read line || [[ -n $line ]]; do echo -n ' -connect='$line; done);
+          echo $CONNECTS;
+          paicoind $CONNECTS;
         volumeMounts:
           - mountPath: /root/data
-            # name: paicoin-data-pv-storage
             name: paicoin-datadir
           - mountPath: /root/.paicoin
             name: paicoin-config
-  # volumeClaimTemplates:
-  # - metadata:
-  #     name: paicoin-datadir
-  #   spec:
-  #     accessModes: [ "ReadWriteOnce" ]
-  #     storageClassName: manual
-  #     resources:
-  #       requests:
-  #         storage: 1Gi
+      # initContainers:
+      # - name: init-paicoin-service
+      #   image: busybox:1.28
+      #   command: ['sh', '-c', "until nslookup paicoin-service; do echo waiting for paicoin-service; sleep 2; done"]
 
 ---
 
@@ -148,37 +108,18 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: paicoin-live
+      app: cpuminer-live
   serviceName: cpuminer-service
   replicas: 1
   template:
     metadata:
       labels:
-        app: paicoin-live
+        app: cpuminer-live
     spec:
-      # volumes:
-      # - name: paicoin-data-pv-storage
-      #   persistentVolumeClaim:
-      #     claimName: paicoin-data-pv-claim
-      # - name: paicoin-datadir
-      #   emptyDir: {}
-      # - name: paicoin-config
-      #   configMap:
-      #     name: paicoin-config-map
-      #     items:
-      #       - key: paicoin.conf
-      #         path: paicoin.conf
       containers:
       - name: cpuminer
         image: cpuminer
         imagePullPolicy: Never
         command: ["/bin/bash", "-c"]
         args:
-         - ./minerd -a sha256d -o http://172.18.0.7:18566 -O paicoin:PAI -P 
-        # args: ["while true; do ./minerd --help && sleep 10; done"]
-        # volumeMounts:
-        #   - mountPath: /root/data
-        #     # name: paicoin-data-pv-storage
-        #     name: paicoin-datadir
-        #   - mountPath: /root/.paicoin
-        #     name: paicoin-config
+        - ./minerd -a sha256d -o http://172.18.0.7:18566 -O paicoin:PAI -P 
