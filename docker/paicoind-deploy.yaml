@@ -46,6 +46,7 @@ data:
     datadir=/root/data
     # dnsseed=0
     # connect=0
+    maxtipage = 86400 # this is default = 60 days in seconds
 
 ---
 
