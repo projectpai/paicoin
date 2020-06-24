@@ -284,7 +284,7 @@ class TicketOperations(PAIcoinTestFramework):
         # starting with nStakeValidationHeight we need to add vote txs into blocks, otherwise TestBlockValidity fails: too-few-votes
         assert_raises_rpc_error(-1, None, self.nodes[0].generate,1)
         dummyVoteBits    =  1
-        dummyVoteBitsExt = "a"
+        dummyVoteBitsExt = "00"
 
         nHeightExpiredBecomeMissed = nTicketExpiry + nStakeEnabledHeight
         assert(nHeightExpiredBecomeMissed > nStakeValidationHeight)
