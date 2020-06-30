@@ -40,6 +40,20 @@ spec:
 ---
 
 apiVersion: v1
+kind: Service
+metadata:
+  name: explorer-service
+spec:
+  type: NodePort
+  ports:
+  - targetPort: 8079
+    port: 8079
+  selector:
+    app: explorer-live
+
+---
+
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: paicoin-config-map
@@ -187,6 +201,93 @@ spec:
         - echo "starting miner using cbaddr=2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK";
           echo "on http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC/";
           ./minerd -o http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC/ -u paicoin -p PAI -a sha256d --no-longpoll --no-getwork --no-stratum --coinbase-addr=2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK
+      initContainers:
+      - name: init-paicoin-service
+        image: busybox:1.28
+        command: ['sh', '-c', "until nslookup paicoin-service2; do echo waiting for paicoin-service2; sleep 2; done"]
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: explorer
+spec:
+  selector:
+    matchLabels:
+      app: explorer-live
+  serviceName: explorer-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: explorer-live
+    spec:
+      containers:
+      - name: mongo
+        image: mongo:latest
+        env:
+         - name: MONGO_INITDB_ROOT_USERNAME
+           value: paiexplorer
+         - name: MONGO_INITDB_ROOT_PASSWORD
+           value: paiexplorer1234
+        # command: ["mongod", "--auth"]
+        ports:
+          - containerPort: 27017
+        imagePullPolicy: Never
+      - name: redis
+        image: redis:latest
+        ports:
+          - containerPort: 6379
+        imagePullPolicy: Never
+      - name: explorer
+        image: dreg-or.oben.me/projectpai/block-explorer:latest
+        imagePullPolicy: Never
+        ports:
+          - containerPort: 8079
+        env:
+          - name: SERVER_PORT
+            value: "8079"
+          - name: REDIS_HOST
+            value: localhost
+          - name: REDIS_PORT
+            value: "6379"
+          - name: COIN
+            value: paicoin
+          - name: COIN_NETWORK
+            value: paitestnet
+          - name: GENESIS_TX
+            value: 34p2345p94kqej
+          - name: GENESIS_BLOCK
+            value: "0x000007becd450bd8af0085d8a81da851a91c4cd1913bbb2d085ad560793b5001"
+          - name: JSON_RPC_USERNAME
+            value: paicoin
+          - name: JSON_RPC_PASSWORD
+            value: PAI
+          - name: MONGODB_HOST
+            value: localhost
+          - name: MONGODB_USERNAME
+            value: paiexplorer
+          - name: MONGODB_PASSWORD
+            value: paiexplorer1234
+          - name: SPRING_PROFILES_ACTIVE
+            value: local
+          - name: DEPLOYMENT_MODE
+            value: READ_WRITE
+        command: ["/bin/sh", "-c"]
+        args:
+        - java -jar /block-explorer.jar
+          --server.port=$SERVER_PORT
+          --redis.host=$REDIS_HOST --redis.port=$REDIS_PORT
+          --coin=$COIN --coin.network=$COIN_NETWORK --genesis.tx=$GENESIS_TX --genesis.block=$GENESIS_BLOCK
+          --json.rpc.username=$JSON_RPC_USERNAME --json.rpc.password=$JSON_RPC_PASSWORD 
+          --json.rpc.endpoint=http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC
+          --spring.data.mongodb.host=$MONGODB_HOST 
+          --spring.data.mongodb.username=$MONGODB_USERNAME
+          --spring.data.mongodb.password=$MONGODB_PASSWORD
+          # --MONGO_USERNAME=$MONGODB_USERNAME --MONGO_PASSWORD=$MONGODB_PASSWORD
+          # --SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE
+          # --DEPLOYMENT_MODE=$DEPLOYMENT_MODE -debug
       initContainers:
       - name: init-paicoin-service
         image: busybox:1.28
