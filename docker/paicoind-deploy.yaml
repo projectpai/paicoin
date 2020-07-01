@@ -164,7 +164,7 @@ spec:
           name: connect
         command: ["/bin/bash", "-c"]
         args:
-        - paicoind -connect=$PAICOIN_SERVICE1_SERVICE_HOST
+        - paicoind -connect=$PAICOIN_SERVICE1_SERVICE_HOST -blocknotify='busybox wget http://$EXPLORER_SERVICE_SERVICE_HOST:$EXPLORER_SERVICE_SERVICE_PORT/update/%s'
         volumeMounts:
           - mountPath: /root/data
             name: paicoin-datadir
@@ -257,9 +257,9 @@ spec:
           - name: COIN_NETWORK
             value: paitestnet
           - name: GENESIS_TX
-            value: 34p2345p94kqej
+            value: 017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19
           - name: GENESIS_BLOCK
-            value: "0x000007becd450bd8af0085d8a81da851a91c4cd1913bbb2d085ad560793b5001"
+            value: 000007becd450bd8af0085d8a81da851a91c4cd1913bbb2d085ad560793b5001
           - name: JSON_RPC_USERNAME
             value: paicoin
           - name: JSON_RPC_PASSWORD
@@ -281,7 +281,7 @@ spec:
           --redis.host=$REDIS_HOST --redis.port=$REDIS_PORT
           --coin=$COIN --coin.network=$COIN_NETWORK --genesis.tx=$GENESIS_TX --genesis.block=$GENESIS_BLOCK
           --json.rpc.username=$JSON_RPC_USERNAME --json.rpc.password=$JSON_RPC_PASSWORD 
-          --json.rpc.endpoint=http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC
+          --json.rpc.endpoint=http://$PAICOIN_SERVICE1_SERVICE_HOST:$PAICOIN_SERVICE1_SERVICE_PORT_RPC
           --spring.data.mongodb.host=$MONGODB_HOST 
           --spring.data.mongodb.username=$MONGODB_USERNAME
           --spring.data.mongodb.password=$MONGODB_PASSWORD
@@ -291,4 +291,4 @@ spec:
       initContainers:
       - name: init-paicoin-service
         image: busybox:1.28
-        command: ['sh', '-c', "until nslookup paicoin-service2; do echo waiting for paicoin-service2; sleep 2; done"]
+        command: ['sh', '-c', "until nslookup paicoin-service1; do echo waiting for paicoin-service1; sleep 2; done"]
