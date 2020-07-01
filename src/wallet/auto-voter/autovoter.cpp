@@ -15,14 +15,7 @@ CAutoVoter::CAutoVoter(CWallet* wallet) :
 
 CAutoVoter::~CAutoVoter()
 {
-    if (configured.load())
-        ::UnregisterValidationInterface(this);
-
     stop();
-
-    //// make sure that the pending operation is finished
-    //mtx.lock();
-    //mtx.unlock();
 }
 
 void CAutoVoter::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *, bool fInitialDownload)
@@ -36,6 +29,9 @@ void CAutoVoter::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex
 
     // if not configured yet, do nothing
     if (!configured.load())
+        return;
+
+    if (!config.autoVote)
         return;
 
     LOCK2(cs_main, pwallet->cs_wallet);
@@ -95,10 +91,6 @@ void CAutoVoter::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex
         LogPrintf("CAutoVoter: Voted: %s", hashes.c_str());
     }
 }
-
-//void CAutoVoter::BlockConnected(const std::shared_ptr<const CBlock> &block, const CBlockIndex *pindex, const std::vector<CTransactionRef> &txnConflicted) override
-//{
-//}
 
 void CAutoVoter::start()
 {

@@ -2,320 +2,20 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "test/test_paicoin.h"
-#include <boost/test/unit_test.hpp>
-#include <boost/algorithm/string.hpp>
+#include "wallet/test/wallet_stake_test_fixture.h"
 
-#include "wallet/wallet.h"
+#include <boost/test/unit_test.hpp>
+
 #include "stake/stakepoolfee.h"
-#include "stake/staketx.h"
-#include "key_io.h"
-#include "serialize.h"
 #include "validation.h"
-#include "stake/stakepoolfee.h"
 #include "policy/policy.h"
 #include "wallet/coincontrol.h"
-#include "rpc/server.h"
-#include "rpc/client.h"
 #include "net.h"
+#include "rpc/server.h"
 #include "miner.h"
-#include <univalue.h>
-#include <limits>
-#include <vector>
+#include "consensus/tx_verify.h"
 
-static void AddKey(CWallet& wallet, const CKey& key)
-{
-    LOCK(wallet.cs_wallet);
-    wallet.AddKeyPubKey(key, key.GetPubKey());
-}
-
-class TicketPurchaseTestingSetup : public TestChain100Setup
-{
-public:
-    TicketPurchaseTestingSetup() :
-        TestChain100Setup(scriptPubKeyType::P2PKH)
-    {
-        CreateAndProcessBlock({}, GetScriptForRawPubKey(coinbaseKey.GetPubKey()));
-        ::bitdb.MakeMock();
-        wallet.reset(new CWallet(std::unique_ptr<CWalletDBWrapper>(new CWalletDBWrapper(&bitdb, "ticket_purchase_test.dat"))));
-        bool firstRun;
-        wallet->LoadWallet(firstRun);
-        AddKey(*wallet, coinbaseKey);
-        wallet->ScanForWalletTransactions(chainActive.Genesis(), nullptr);
-        wallet->SetBroadcastTransactions(true);
-    }
-
-    ~TicketPurchaseTestingSetup()
-    {
-        wallet.reset();
-        ::bitdb.Flush(true);
-        ::bitdb.Reset();
-    }
-
-    uint256 AddTicketTx()
-    {
-        // ticket settings
-
-        CPubKey ticketPubKey;
-        BOOST_CHECK(wallet->GetKeyFromPool(ticketPubKey));
-        CTxDestination ticketKeyId = ticketPubKey.GetID();
-
-        const CAmount ticketPrice = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), Params().GetConsensus());
-        CFeeRate feeRate{10000};
-        const CAmount ticketFee = feeRate.GetFee(GetEstimatedSizeOfBuyTicketTx(false));
-        const CAmount contributedAmount = ticketPrice + ticketFee;
-
-        // split transaction
-
-        uint256 splitTxHash;
-        CWalletError we;
-        std::tie(splitTxHash, we) = wallet->CreateTicketPurchaseSplitTx("", ticketPrice, ticketFee);
-        BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
-
-        const CWalletTx* splitWTx = wallet->GetWalletTx(splitTxHash);
-        BOOST_CHECK(splitWTx != nullptr);
-        BOOST_CHECK(splitWTx->tx != nullptr);
-
-        CTransactionRef splitTx = splitWTx->tx;
-        BOOST_CHECK(splitTx.get() != nullptr);
-
-        BOOST_CHECK_GE(splitTx->vout.size(), 1U);
-        BOOST_CHECK_GE(splitTx->vout[0].nValue, ticketPrice + ticketFee);
-
-        // ticket
-
-        CMutableTransaction mtx;
-
-        // input
-
-        mtx.vin.push_back(CTxIn(splitTxHash, 0));
-
-        // outputs
-
-        BuyTicketData buyTicketData = {1};
-        CScript declScript = GetScriptForBuyTicketDecl(buyTicketData);
-        mtx.vout.push_back(CTxOut(0, declScript));
-
-        CScript ticketScript = GetScriptForDestination(ticketKeyId);
-        mtx.vout.push_back(CTxOut(ticketPrice, ticketScript));
-
-        TicketContribData ticketContribData{1, ticketKeyId, contributedAmount, TicketContribData::NoFees, TicketContribData::NoFees};
-        CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
-        mtx.vout.push_back(CTxOut(0, contributorInfoScript));
-
-        CScript changeScript = GetScriptForDestination(ticketKeyId);
-        mtx.vout.push_back(CTxOut(0, changeScript));
-
-        // signature
-
-        BOOST_CHECK(wallet->SignTransaction(mtx));
-
-        // commitment
-
-        CWalletTx wtx;
-        CValidationState state;
-        wtx.fTimeReceivedIsTxTime = true;
-        wtx.BindWallet(wallet.get());
-        wtx.SetTx(MakeTransactionRef(std::move(mtx)));
-        CReserveKey reservekey{wallet.get()};
-        BOOST_CHECK(wallet->CommitTransaction(wtx, reservekey, g_connman.get(), state));
-
-        return wtx.GetHash();
-    }
-
-    std::vector<uint256> AddVoteTxs()
-    {
-        const Consensus::Params& consensus = Params().GetConsensus();
-
-        // block being voted
-
-        const CBlockIndex *tip = chainActive.Tip();
-        BOOST_CHECK(tip != nullptr);
-
-        const uint256& hash{tip->GetBlockHash()};
-        BOOST_CHECK(hash != uint256());
-
-        const int height = tip->nHeight;
-        BOOST_CHECK_GT(height, 0);
-
-        std::vector<uint256> voteHashes;
-
-        std::string reason;
-
-        // votes
-
-        int majority{(consensus.nTicketsPerBlock / 2) + 1};
-        int i{0};
-
-        for (auto ticketHash: chainActive.Tip()->pstakeNode->Winners()) {
-            if (++i > majority)
-                break;
-
-            // ticket
-
-            const CWalletTx* ticket = wallet->GetWalletTx(ticketHash);
-
-            BOOST_CHECK(ticketHash != uint256());
-            BOOST_CHECK(ticket != nullptr);
-            BOOST_CHECK(ticket->tx != nullptr);
-
-            BOOST_CHECK(ValidateBuyTicketStructure(*(ticket->tx), reason));
-
-            const CAmount ticketPrice = ticket->tx->vout[ticketStakeOutputIndex].nValue;
-            BOOST_CHECK(MoneyRange(ticketPrice));
-
-            TicketContribData ticketContribData;
-            BOOST_CHECK(ParseTicketContrib(*(ticket->tx), ticketContribOutputIndex, ticketContribData));
-
-            const CAmount voterSubsidy = GetVoterSubsidy(height + 1, consensus);
-            BOOST_CHECK_GT(voterSubsidy, 0);
-
-            const CAmount reward = CalcContributorRemuneration(ticketContribData.contributedAmount, ticketPrice, voterSubsidy, ticketContribData.contributedAmount);
-            BOOST_CHECK_GT(reward, 0);
-
-            // vote
-
-            CMutableTransaction mtx;
-
-            // inputs
-
-            mtx.vin.push_back(CTxIn(COutPoint(), consensus.stakeBaseSigScript));
-            mtx.vin.push_back(CTxIn(COutPoint(ticketHash, ticketStakeOutputIndex)));
-
-            // outputs
-
-            VoteData voteData{1, hash, static_cast<uint32_t>(height), VoteBits::rttAccepted, 0, ExtendedVoteBits()};
-            CScript declScript = GetScriptForVoteDecl(voteData);
-            mtx.vout.push_back(CTxOut(0, declScript));
-
-            CScript rewardScript = GetScriptForDestination(static_cast<CKeyID>(ticketContribData.rewardAddr));
-            mtx.vout.push_back(CTxOut(reward, rewardScript));
-
-            // signature
-
-            std::map<uint256, CWalletTx>::const_iterator mi = wallet->mapWallet.find(mtx.vin[1].prevout.hash);
-            BOOST_CHECK(mi != wallet->mapWallet.end());
-            BOOST_CHECK(mtx.vin[1].prevout.n < static_cast<uint32_t>(mi->second.tx->vout.size()));
-
-            CTransaction tx(mtx);
-            const CScript& scriptPubKey = mi->second.tx->vout[tx.vin[1].prevout.n].scriptPubKey;
-            const CAmount& amount = mi->second.tx->vout[tx.vin[1].prevout.n].nValue;
-            SignatureData sigdata;
-            BOOST_CHECK(ProduceSignature(TransactionSignatureCreator(wallet.get(), &tx, 1, amount, SIGHASH_ALL), scriptPubKey, sigdata));
-            UpdateTransaction(mtx, 1, sigdata);
-
-            // commitment
-
-            CWalletTx wtx;
-            CValidationState state;
-            wtx.fTimeReceivedIsTxTime = true;
-            wtx.BindWallet(wallet.get());
-            wtx.SetTx(MakeTransactionRef(std::move(mtx)));
-            CReserveKey reservekey{wallet.get()};
-            BOOST_CHECK(wallet->CommitTransaction(wtx, reservekey, g_connman.get(), state));
-
-            voteHashes.push_back(wtx.GetHash());
-        }
-
-        return voteHashes;
-    }
-
-    bool MempoolHasTicket() {
-        std::vector<TxMempoolInfo> txnInfos = mempool.infoAll();
-        for (size_t j = 0; j < txnInfos.size(); ++j)
-            if (ParseTxClass(*(txnInfos[j].tx)) == TX_BuyTicket)
-                return true;
-
-        return false;
-    }
-
-    bool MempoolHasEnoughTicketsForBlock() {
-        int count{0};
-        std::vector<TxMempoolInfo> txnInfos = mempool.infoAll();
-        for (size_t j = 0; j < txnInfos.size(); ++j)
-            if (ParseTxClass(*(txnInfos[j].tx)) == TX_BuyTicket)
-                if ((++count) >= Params().GetConsensus().nTicketsPerBlock)
-                    return true;
-
-        return false;
-    }
-
-    CBlock CreateAndProcessBlock(const std::vector<CTransaction>& txns, const CScript& scriptPubKey)
-    {
-        const CChainParams& chainparams = Params();
-        std::unique_ptr<CBlockTemplate> pblocktemplate = BlockAssembler(chainparams).CreateNewBlock(scriptPubKey);
-        CBlock& block = pblocktemplate->block;
-
-        // Replace mempool-selected txns with just coinbase plus passed-in txns:
-        for (const CTransaction& tx : txns)
-            block.vtx.push_back(MakeTransactionRef(tx));
-        // IncrementExtraNonce creates a valid coinbase and merkleRoot
-        unsigned int extraNonce = 0;
-        IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
-
-        while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus())) ++block.nNonce;
-
-        std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
-        ProcessNewBlock(chainparams, shared_pblock, true, nullptr);
-
-        CBlock result = block;
-        return result;
-    }
-
-    void ExtendChain(int blockCount)
-    {
-        if (blockCount <= 0)
-            return;
-
-        LOCK2(cs_main, wallet->cs_wallet);
-
-        const Consensus::Params& consensus = Params().GetConsensus();
-
-        CScript coinbaseScriptPubKey = coinbaseTxns[0].vout[0].scriptPubKey;
-
-        latestTestTxns.clear();
-
-        std::vector<CTransaction> txns;
-
-        if (blockCount > 0) {
-            std::vector<TxMempoolInfo> txnInfos = mempool.infoAll();
-            for (size_t j = 0; j < txnInfos.size(); ++j)
-                txns.push_back(*(txnInfos[j].tx));
-        }
-
-        bool shouldRelock = wallet->IsLocked();
-
-        for (int i = 0; i < blockCount; ++i) {
-            if (shouldRelock)
-                wallet->Unlock(passphrase);
-
-            if (chainActive.Tip()->nHeight >= consensus.nStakeValidationHeight - 1 - consensus.nTicketMaturity - 1)
-                while (!MempoolHasEnoughTicketsForBlock())
-                    AddTicketTx();
-
-            if (chainActive.Tip()->nHeight >= consensus.nStakeValidationHeight - 1)
-                AddVoteTxs();
-
-            if (shouldRelock)
-                wallet->Lock();
-
-            CBlock b = CreateAndProcessBlock({}, coinbaseScriptPubKey);
-
-            coinbaseTxns.push_back(*b.vtx[0]);
-        }
-
-        if (blockCount > 0) {
-            for (size_t i = 0; i < txns.size(); i++)
-                latestTestTxns.push_back(txns[i]);
-        }
-    }
-
-    const SecureString passphrase = "aV3rySecurePassword!";
-    std::unique_ptr<CWallet> wallet;
-    std::vector<CTransaction> latestTestTxns;
-};
-
-BOOST_FIXTURE_TEST_SUITE(ticket_purchase_tests, TicketPurchaseTestingSetup)
+BOOST_FIXTURE_TEST_SUITE(ticket_tests, WalletStakeTestingSetup)
 
 // test correctness of stake pool fee percent validation
 BOOST_AUTO_TEST_CASE(stake_pool_fee_percent_test)
@@ -414,74 +114,113 @@ BOOST_AUTO_TEST_CASE(stake_pool_ticket_fee_test)
 }
 
 // test fee limits for ticket (vote or revoke)
-BOOST_AUTO_TEST_CASE(ticket_vote_or_revoke_fee_limits)
+BOOST_FIXTURE_TEST_CASE(ticket_vote_or_revoke_fee_limits, WalletStakeTestingSetup)
 {
     struct TestData {
-        uint8_t voteFees;
-        uint8_t revokeFees;
+        CAmount voteFeeLimit;
+        CAmount revocationFeeLimit;
 
-        bool expectedHasVoteFeeLimits;
-        bool expectedHasRevokeFeeLimits;
-
-        CAmount expectedVoteFeeLimits;
-        CAmount expectedRevokeFeeLimits;
+        CAmount expectedVoteFeeLimit;
+        CAmount expectedRevocationFeeLimit;
     };
 
     std::vector<TestData> tests {
-        {  0,   0,  true,  true,          0x01,            0x01},
-        {  1,   1,  true,  true,          0x02,            0x02},
-        {  2,   2,  true,  true,          0x04,            0x04},
-        { 10,  11,  true,  true,         0x400,           0x800},
-        { 16,  32,  true,  true,       0x10000,     0x100000000},
-        { 40,  50,  true,  true, 0x10000000000, 0x4000000000000},
-        { 60,  62,  true,  true,     MAX_MONEY,       MAX_MONEY},
-        { 63,  63,  true,  true,     MAX_MONEY,       MAX_MONEY},
-        // values below should throw exceptions on expected fee limits
-        { 64,  64, false, false,             0,               0},
-        { 65,  65, false, false,             0,               0},
-        {100, 100, false, false,             0,               0},
-        {127, 127, false, false,             0,               0},
-        {128, 128, false, false,             0,               0},
-        {255, 255, false, false,             0,               0}
+        {                    0,                    0,         0,          0},
+        {                    1,                    1,         1,          1},
+        {                    2,                    2,         2,          2},
+        {                   10,                   11,        10,         11},
+        {                 1000,                 1001,      1000,       1001},
+        {              10*COIN,               5*COIN,   10*COIN,     5*COIN},
+        {            1000*COIN,            2000*COIN, 1000*COIN,  2000*COIN},
+        {            MAX_MONEY,            MAX_MONEY, MAX_MONEY,  MAX_MONEY},
+        // values below should be capped at valid money amounts
+        {                   -1,                   -1,         0,          0},
+        {                -1000,                -1000,         0,          0},
+        {             -10*COIN,             -10*COIN,         0,          0},
+        {           -1000*COIN,           -1000*COIN,         0,          0},
+        {           -MAX_MONEY,           -MAX_MONEY,         0,          0},
+        { -MAX_MONEY-1000*COIN, -MAX_MONEY-1000*COIN,         0,          0},
+        {          MAX_MONEY+1,          MAX_MONEY+1, MAX_MONEY,  MAX_MONEY},
+        {  MAX_MONEY+1000*COIN,  MAX_MONEY+2000*COIN, MAX_MONEY,  MAX_MONEY}
     };
 
+    // default fee
+
+    BOOST_CHECK_EQUAL(TicketContribData::DefaultFeeLimit, 1LL<<20);
+
+    // fee limit accessors
+
     for (auto& test: tests) {
-        TicketContribData tcd{1, CKeyID(), 0LL, test.voteFees, test.revokeFees};
+        // constructor
 
-        BOOST_CHECK_EQUAL(tcd.hasVoteFeeLimits(), test.expectedHasVoteFeeLimits);
-        BOOST_CHECK_EQUAL(tcd.hasRevokeFeeLimits(), test.expectedHasRevokeFeeLimits);
+        TicketContribData tcd1{1, CKeyID(), 0LL, test.voteFeeLimit, test.revocationFeeLimit};
 
-        if (test.voteFees <= TicketContribData::MaxFees) {
-            BOOST_CHECK_EQUAL(tcd.voteFeeLimits(), test.expectedVoteFeeLimits);
-            BOOST_CHECK_NO_THROW(tcd.voteFeeLimits());
+        BOOST_CHECK_EQUAL(tcd1.voteFeeLimit(), test.expectedVoteFeeLimit);
+        BOOST_CHECK_EQUAL(tcd1.revocationFeeLimit(), test.expectedRevocationFeeLimit);
 
-            if (test.expectedVoteFeeLimits < MAX_MONEY)
-                BOOST_CHECK_EQUAL(TicketContribData::feeFromAmount(test.expectedVoteFeeLimits), test.voteFees);
-        } else {
-            BOOST_CHECK_THROW(tcd.voteFeeLimits(), std::range_error);
-        }
+        // setters
 
-        if (test.revokeFees <= TicketContribData::MaxFees) {
-            BOOST_CHECK_EQUAL(tcd.revokeFeeLimits(), test.expectedRevokeFeeLimits);
-            BOOST_CHECK_NO_THROW(tcd.revokeFeeLimits());
+        TicketContribData tcd2;
 
-            if (test.expectedRevokeFeeLimits < MAX_MONEY)
-                BOOST_CHECK_EQUAL(TicketContribData::feeFromAmount(test.expectedRevokeFeeLimits), test.revokeFees);
-        } else {
-            BOOST_CHECK_THROW(tcd.revokeFeeLimits(), std::range_error);
-        }
+        tcd2.setVoteFeeLimit(test.voteFeeLimit);
+        BOOST_CHECK_EQUAL(tcd2.voteFeeLimit(), test.expectedVoteFeeLimit);
+
+        tcd2.setRevocationFeeLimit(test.revocationFeeLimit);
+        BOOST_CHECK_EQUAL(tcd2.revocationFeeLimit(), test.expectedRevocationFeeLimit);
     }
 
-    BOOST_CHECK_EQUAL(TicketContribData::feeFromAmount(0), 0);
+    // input validation
 
-    BOOST_CHECK_EQUAL(TicketContribData::feeFromAmount(-1), 0);
-    BOOST_CHECK_EQUAL(TicketContribData::feeFromAmount(-10), 0);
-    BOOST_CHECK_EQUAL(TicketContribData::feeFromAmount(-1000), 0);
-    BOOST_CHECK_EQUAL(TicketContribData::feeFromAmount(std::numeric_limits<int64_t>().min()), 0);
+    LOCK2(cs_main, wallet->cs_wallet);
 
-    BOOST_CHECK_EQUAL(TicketContribData::feeFromAmount(MAX_MONEY), TicketContribData::MaxFees);
-    BOOST_CHECK_EQUAL(TicketContribData::feeFromAmount(MAX_MONEY+1), TicketContribData::MaxFees);
-    BOOST_CHECK_EQUAL(TicketContribData::feeFromAmount(std::numeric_limits<int64_t>().max()), TicketContribData::MaxFees);
+    BOOST_CHECK(GetSomeCoins());
+
+    CPubKey pubKey;
+    BOOST_CHECK(wallet->GetKeyFromPool(pubKey));
+    const CTxDestination addr = pubKey.GetID();
+
+    const CAmount& ticketPrice = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), consensus);
+    BOOST_CHECK_GT(ticketPrice, 0LL);
+
+    uint256 splitTxtHash = SendMoney({std::make_pair(addr, ticketPrice)});
+    BOOST_CHECK(splitTxtHash != emptyData.hash);
+
+    CCoinsView viewDummy;
+    CCoinsViewCache view(&viewDummy);
+    CCoinsViewMemPool viewMempool(pcoinsTip, mempool);
+    view.SetBackend(viewMempool);
+
+    CMutableTransaction mtx;
+
+    mtx.vin.push_back(CTxIn(splitTxtHash, 0));
+
+    mtx.vout.push_back(CTxOut(0, GetScriptForBuyTicketDecl(BuyTicketData{1})));
+    mtx.vout.push_back(CTxOut(ticketPrice, GetScriptForDestination(addr)));
+    mtx.vout.push_back(CTxOut(0, GetScriptForTicketContrib(TicketContribData(1, addr, ticketPrice, 0, TicketContribData::DefaultFeeLimit))));
+    mtx.vout.push_back(CTxOut(0, GetScriptForDestination(addr)));
+
+    CAmount nFees{0};
+    CValidationState state;
+
+    BOOST_CHECK(Consensus::CheckTxInputs(mtx, state, view, GetSpendHeight(view), nFees, params));
+
+    TicketContribData contrib;
+    ParseTicketContrib(mtx, ticketContribOutputIndex, contrib);
+
+    if (consensus.nMinimumTotalVoteFeeLimit > 0) {
+        contrib.setVoteFeeLimit(consensus.nMinimumTotalVoteFeeLimit-1);
+        mtx.vout[ticketContribOutputIndex].scriptPubKey = GetScriptForTicketContrib(contrib);
+        BOOST_CHECK(!Consensus::CheckTxInputs(mtx, state, view, GetSpendHeight(view), nFees, params) && state.GetRejectReason() == "total-vote-fee-limit-too-low");
+    }
+
+    if (consensus.nMinimumTotalRevocationFeeLimit > 0) {
+        contrib.setVoteFeeLimit(consensus.nMinimumTotalVoteFeeLimit);
+        contrib.setRevocationFeeLimit(consensus.nMinimumTotalRevocationFeeLimit-1);
+        mtx.vout[ticketContribOutputIndex].scriptPubKey = GetScriptForTicketContrib(contrib);
+        BOOST_CHECK(!Consensus::CheckTxInputs(mtx, state, view, GetSpendHeight(view), nFees, params) && state.GetRejectReason() == "total-revocation-fee-limit-too-low");
+    }
+
+    view.SetBackend(viewDummy);
 }
 
 // test the serialization and deserialization of the ticket contribution data
@@ -491,7 +230,6 @@ BOOST_AUTO_TEST_CASE(ticket_contrib_data_serialization)
         TicketContribData tcd;
 
         CScript expectedScript;
-        bool expectedParseStatus;
         TicketContribData expectedTcd;
     };
 
@@ -501,49 +239,93 @@ BOOST_AUTO_TEST_CASE(ticket_contrib_data_serialization)
 
     auto scriptBuilder = [](TicketContribData tcd) -> CScript {
         return CScript() << OP_RETURN << OP_STRUCT << 1 << CLASS_Staking << STAKE_TicketContribution
-                         << 1
+                         << tcd.nVersion
                          << ToByteVector(tcd.rewardAddr) << tcd.whichAddr
                          << tcd.contributedAmount
-                         << tcd.voteFees
-                         << tcd.revokeFees;
+                         << tcd.voteFeeLimit()
+                         << tcd.revocationFeeLimit();
     };
 
     std::vector<TestData> tests {
         {
             TicketContribData(1, addr, 5*COIN, 10, 0),
             scriptBuilder(TicketContribData(1, addr, 5*COIN, 10, 0)),
-            true,
             TicketContribData(1, addr, 5*COIN, 10, 0)
         },
         {
             TicketContribData(2, addr, 10*COIN, 0, 10),
             scriptBuilder(TicketContribData(2, addr, 10*COIN, 0, 10)),
-            true,
-            TicketContribData(1, addr, 10*COIN, 0, 10)
+            TicketContribData(2, addr, 10*COIN, 0, 10)
         },
         {
-            TicketContribData(3, addr, 20*COIN, 20, TicketContribData::NoFees),
-            scriptBuilder(TicketContribData(3, addr, 20*COIN, 20, TicketContribData::NoFees)),
-            true,
-            TicketContribData(1, addr, 20*COIN, 20, TicketContribData::NoFees)
+            TicketContribData(3, addr, 20*COIN, 20, 0),
+            scriptBuilder(TicketContribData(3, addr, 20*COIN, 20, 0)),
+            TicketContribData(3, addr, 20*COIN, 20, 0)
         },
         {
-            TicketContribData(4, addr, 30*COIN, TicketContribData::NoFees, 30),
-            scriptBuilder(TicketContribData(4, addr, 30*COIN, TicketContribData::NoFees, 30)),
-            true,
-            TicketContribData(1, addr, 30*COIN, TicketContribData::NoFees, 30)
+            TicketContribData(4, addr, 30*COIN, 0, 30),
+            scriptBuilder(TicketContribData(4, addr, 30*COIN, 0, 30)),
+            TicketContribData(4, addr, 30*COIN, 0, 30)
         },
         {
             TicketContribData(5, addr, 40*COIN, 15, 25),
             scriptBuilder(TicketContribData(5, addr, 40*COIN, 15, 25)),
-            true,
-            TicketContribData(1, addr, 40*COIN, 15, 25)
+            TicketContribData(5, addr, 40*COIN, 15, 25)
         },
         {
             TicketContribData(6, addr, 100*COIN, 40, 30),
             scriptBuilder(TicketContribData(6, addr, 100*COIN, 40, 30)),
-            true,
-            TicketContribData(1, addr, 100*COIN, 40, 30)
+            TicketContribData(6, addr, 100*COIN, 40, 30)
+        },
+        {
+            TicketContribData(4, addr, 30*COIN, 0, TicketContribData::DefaultFeeLimit),
+            scriptBuilder(TicketContribData(4, addr, 30*COIN, 0, TicketContribData::DefaultFeeLimit)),
+            TicketContribData(4, addr, 30*COIN, 0, TicketContribData::DefaultFeeLimit)
+        },
+        {
+            TicketContribData(4, addr, 30*COIN, TicketContribData::DefaultFeeLimit, 0),
+            scriptBuilder(TicketContribData(4, addr, 30*COIN, TicketContribData::DefaultFeeLimit, 0)),
+            TicketContribData(4, addr, 30*COIN, TicketContribData::DefaultFeeLimit, 0)
+        },
+        {
+            TicketContribData(5, addr, 40*COIN, 1000*COIN, 25),
+            scriptBuilder(TicketContribData(5, addr, 40*COIN, 1000*COIN, 25)),
+            TicketContribData(5, addr, 40*COIN, 1000*COIN, 25)
+        },
+        {
+            TicketContribData(6, addr, 100*COIN, 40, 1000*COIN),
+            scriptBuilder(TicketContribData(6, addr, 100*COIN, 40, 1000*COIN)),
+            TicketContribData(6, addr, 100*COIN, 40, 1000*COIN)
+        },
+        {
+            TicketContribData(5, addr, 40*COIN, 10000000*COIN, 25),
+            scriptBuilder(TicketContribData(5, addr, 40*COIN, 10000000*COIN, 25)),
+            TicketContribData(5, addr, 40*COIN, 10000000*COIN, 25)
+        },
+        {
+            TicketContribData(6, addr, 100*COIN, 40, 10000000*COIN),
+            scriptBuilder(TicketContribData(6, addr, 100*COIN, 40, 10000000*COIN)),
+            TicketContribData(6, addr, 100*COIN, 40, 10000000*COIN)
+        },
+        {
+            TicketContribData(5, addr, 40*COIN, 10000000*COIN, 25),
+            scriptBuilder(TicketContribData(5, addr, 40*COIN, 10000000*COIN, 25)),
+            TicketContribData(5, addr, 40*COIN, 10000000*COIN, 25)
+        },
+        {
+            TicketContribData(6, addr, 100*COIN, 40, 10000000*COIN),
+            scriptBuilder(TicketContribData(6, addr, 100*COIN, 40, 10000000*COIN)),
+            TicketContribData(6, addr, 100*COIN, 40, 10000000*COIN)
+        },
+        {
+            TicketContribData(5, addr, 40*COIN, -1, MAX_MONEY+1),
+            scriptBuilder(TicketContribData(5, addr, 40*COIN, 0, MAX_MONEY)),
+            TicketContribData(5, addr, 40*COIN, 0, MAX_MONEY)
+        },
+        {
+            TicketContribData(6, addr, 100*COIN, MAX_MONEY+1, -1),
+            scriptBuilder(TicketContribData(6, addr, 100*COIN, MAX_MONEY, 0)),
+            TicketContribData(6, addr, 100*COIN, MAX_MONEY, 0)
         }
     };
 
@@ -552,16 +334,145 @@ BOOST_AUTO_TEST_CASE(ticket_contrib_data_serialization)
     TicketContribData deserializedTcd;
 
     for (auto& test: tests) {
-        BOOST_CHECK(GetScriptForTicketContrib(test.tcd) == test.expectedScript);
+        BOOST_CHECK(test.tcd == test.expectedTcd);
+
+        CScript script = GetScriptForTicketContrib(test.tcd);
+        BOOST_CHECK(script == test.expectedScript);
 
         tx.vout.clear();
 
-        CTxOut txOut{0, GetScriptForTicketContrib(test.tcd)};
+        CTxOut txOut{0, script};
         tx.vout.push_back(txOut);
         BOOST_CHECK(ParseTicketContrib(tx, 0, deserializedTcd));
 
         BOOST_CHECK(deserializedTcd == test.expectedTcd);
     }
+
+    // validated deserialization
+
+    {
+        const uint160 dummyAddr{};
+
+        auto flScriptBuilder = [&dummyAddr](const CAmount& vfl, const CAmount& rfl) -> CScript {
+            return CScript() << OP_RETURN << OP_STRUCT << 1 << CLASS_Staking << STAKE_TicketContribution
+                             << 1
+                             << ToByteVector(dummyAddr) << 1
+                             << 1000*COIN
+                             << vfl
+                             << rfl;
+        };
+
+        CScript script = flScriptBuilder(-1, MAX_MONEY+1);
+        tx.vout.clear(); tx.vout.push_back(CTxOut{0, script});
+        BOOST_CHECK(!ParseTicketContrib(tx, 0, deserializedTcd));
+
+        script = flScriptBuilder(MAX_MONEY+1, -1);
+        tx.vout.clear(); tx.vout.push_back(CTxOut{0, script});
+        BOOST_CHECK(!ParseTicketContrib(tx, 0, deserializedTcd));
+    }
+}
+
+// test the serialization and deserialization of the ticket multiple contribution data
+BOOST_AUTO_TEST_CASE(ticket_contribs_data_serialization)
+{
+    struct TestData {
+        TicketContribData tcd;
+
+        CScript expectedScript;
+        TicketContribData expectedTcd;
+    };
+
+    CPubKey pubKey;
+    BOOST_CHECK(wallet->GetKeyFromPool(pubKey));
+    const CTxDestination addr = pubKey.GetID();
+
+    auto scriptBuilder = [](TicketContribData tcd) -> CScript {
+        return CScript() << OP_RETURN << OP_STRUCT << 1 << CLASS_Staking << STAKE_TicketContribution
+                         << tcd.nVersion
+                         << ToByteVector(tcd.rewardAddr) << tcd.whichAddr
+                         << tcd.contributedAmount
+                         << tcd.voteFeeLimit()
+                         << tcd.revocationFeeLimit();
+    };
+
+    std::vector<TestData> tests {
+        {
+            TicketContribData(1, addr, 5*COIN, 10, 0),
+            scriptBuilder(TicketContribData(1, addr, 5*COIN, 10, 0)),
+            TicketContribData(1, addr, 5*COIN, 10, 0)
+        },
+        {
+            TicketContribData(2, addr, 10*COIN, 0, 10),
+            scriptBuilder(TicketContribData(2, addr, 10*COIN, 0, 10)),
+            TicketContribData(2, addr, 10*COIN, 0, 10)
+        },
+        {
+            TicketContribData(3, addr, 20*COIN, 20, 0),
+            scriptBuilder(TicketContribData(3, addr, 20*COIN, 20, 0)),
+            TicketContribData(3, addr, 20*COIN, 20, 0)
+        },
+        {
+            TicketContribData(4, addr, 30*COIN, 0, 30),
+            scriptBuilder(TicketContribData(4, addr, 30*COIN, 0, 30)),
+            TicketContribData(4, addr, 30*COIN, 0, 30)
+        },
+        {
+            TicketContribData(5, addr, 40*COIN, 15, 25),
+            scriptBuilder(TicketContribData(5, addr, 40*COIN, 15, 25)),
+            TicketContribData(5, addr, 40*COIN, 15, 25)
+        },
+        {
+            TicketContribData(6, addr, 100*COIN, 40, 30),
+            scriptBuilder(TicketContribData(6, addr, 100*COIN, 40, 30)),
+            TicketContribData(6, addr, 100*COIN, 40, 30)
+        },
+        {
+            TicketContribData(7, addr, 40*COIN, -1, MAX_MONEY+1),
+            scriptBuilder(TicketContribData(7, addr, 40*COIN, 0, MAX_MONEY)),
+            TicketContribData(7, addr, 40*COIN, 0, MAX_MONEY)
+        },
+        {
+            TicketContribData(8, addr, 100*COIN, MAX_MONEY+1, -1),
+            scriptBuilder(TicketContribData(8, addr, 100*COIN, MAX_MONEY, 0)),
+            TicketContribData(8, addr, 100*COIN, MAX_MONEY, 0)
+        }
+    };
+
+    CMutableTransaction mtx;
+    for (unsigned i = 0; i < ticketContribOutputIndex; ++i)
+        mtx.vout.push_back(CTxOut{1, coinbaseScriptPubKey}); // dummy output
+
+    for (unsigned i = 0; i < tests.size(); ++i)  {
+        BOOST_CHECK(GetScriptForTicketContrib(tests[i].tcd) == tests[i].expectedScript);
+
+        mtx.vout.push_back(CTxOut{0, GetScriptForTicketContrib(tests[i].tcd)});
+
+        mtx.vout.push_back(CTxOut{1, coinbaseScriptPubKey}); // dummy change
+    }
+
+    std::vector<TicketContribData> deserializedTcds;
+    CAmount totalContribution;
+    CAmount totalVoteFeeLimit;
+    CAmount totalRevocationFeeLimit;
+
+    BOOST_CHECK(ParseTicketContribs(mtx, deserializedTcds, totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit));
+
+    BOOST_CHECK(deserializedTcds.size() == tests.size());
+
+    CAmount expectedTotalContribution{0};
+    CAmount expectedTotalVoteFeeLimit{0};
+    CAmount expectedTotalRevocationFeeLimit{0};
+    for (unsigned i = 0; i < tests.size(); ++i) {
+        BOOST_CHECK(deserializedTcds[i] == tests[i].expectedTcd);
+
+        expectedTotalContribution += tests[i].expectedTcd.contributedAmount;
+        expectedTotalVoteFeeLimit += tests[i].expectedTcd.voteFeeLimit();
+        expectedTotalRevocationFeeLimit += tests[i].expectedTcd.revocationFeeLimit();
+    }
+
+    BOOST_CHECK(totalContribution == expectedTotalContribution);
+    BOOST_CHECK(totalVoteFeeLimit == expectedTotalVoteFeeLimit);
+    BOOST_CHECK(totalRevocationFeeLimit == expectedTotalRevocationFeeLimit);
 }
 
 // test the ticket purchase estimated sizes of inputs and outputs
@@ -574,31 +485,123 @@ BOOST_AUTO_TEST_CASE(ticket_purchase_estimated_sizes)
 
     BOOST_CHECK_EQUAL(GetEstimatedBuyTicketDeclTxOutSize(), 16U);
 
-    BOOST_CHECK_EQUAL(GetEstimatedTicketContribTxOutSize(), 50U);
+    BOOST_CHECK_EQUAL(GetEstimatedTicketContribTxOutSize(), 64U);
 
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(true), 524U);
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(false), 292U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(true), 552U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(false), 306U);
+}
+
+// test the ticket ownership verification
+BOOST_FIXTURE_TEST_CASE(is_my_ticket, WalletStakeTestingSetup)
+{
+    GetSomeCoins();
+
+    LOCK2(cs_main, wallet->cs_wallet);
+
+    // dummy transaction
+
+    {
+        CMutableTransaction mtx;
+        mtx.vin.push_back(CTxIn(emptyData.hash, 0));
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx), false);
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx.GetHash()), false);
+        mtx.vout.push_back(CTxOut(1000, CScript()));
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx), false);
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx.GetHash()), false);
+    }
+
+    // valid transaction (not owned output)
+
+    {
+        CKey key;
+        key.MakeNewKey(true);
+
+        CMutableTransaction mtx;
+        mtx.vout.push_back(CTxOut(1 * COIN, GetScriptForDestination(key.GetPubKey().GetID())));
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx), false);
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx.GetHash()), false);
+
+        CAmount feeRet;
+        int changePos{-1};
+        std::string reason;
+        BOOST_CHECK_MESSAGE(wallet->FundTransaction(mtx, feeRet, changePos, reason, false, {}, CCoinControl()), ((reason.size() > 0) ? reason : "FundTransaction"));
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx), false);
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx.GetHash()), false);
+    }
+
+    // valid transaction (owned output)
+
+    {
+        CPubKey pubKey;
+        wallet->GetKeyFromPool(pubKey);
+
+        CMutableTransaction mtx;
+        mtx.vout.push_back(CTxOut(1 * COIN, GetScriptForDestination(pubKey.GetID())));
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx), false);
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx.GetHash()), false);
+
+        CAmount feeRet;
+        int changePos{-1};
+        std::string reason;
+        BOOST_CHECK_MESSAGE(wallet->FundTransaction(mtx, feeRet, changePos, reason, false, {}, CCoinControl()), ((reason.size() > 0) ? reason : "FundTransaction"));
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx), false);
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(mtx.GetHash()), false);
+    }
+
+    // valid ticket (not owned stake output)
+
+    {
+        CKey key;
+        key.MakeNewKey(true);
+
+        std::vector<std::string> txHashes;
+        CWalletError we;
+
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", MAX_MONEY, 1, key.GetPubKey().GetID(), 1, CNoDestination(), 0.0, 0);
+        BOOST_CHECK(we.code == CWalletError::SUCCESSFUL);
+        BOOST_CHECK(txHashes.size() > 0);
+
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(uint256S(txHashes[0])), false);
+    }
+
+    // valid ticket
+
+    {
+        CPubKey pubKey;
+        wallet->GetKeyFromPool(pubKey);
+
+        std::vector<std::string> txHashes;
+        CWalletError we;
+
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", MAX_MONEY, 1, pubKey.GetID(), 1, CNoDestination(), 0.0, 0);
+        BOOST_CHECK(we.code == CWalletError::SUCCESSFUL);
+        BOOST_CHECK(txHashes.size() > 0);
+
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(uint256S(txHashes[0])), true);
+    }
 }
 
 // test the split transaction for funding a ticket purchase
-BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTestingSetup)
+BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, WalletStakeTestingSetup)
 {
     uint256 splitTxHash;
     CWalletError we;
     CAmount neededPerTicket{0};
     const CAmount ticketFee{10000};
 
+    GetSomeCoins();
+
     LOCK2(cs_main, wallet->cs_wallet);
 
     // Coin availability
 
-    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 1000000 * COIN, ticketFee);
+    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 1000000000 * COIN, ticketFee);
     BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
 
-    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 100000 * COIN, ticketFee);
+    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 100000000 * COIN, ticketFee);
     BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
 
-    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 10000 * COIN, ticketFee);
+    std::tie(splitTxHash, we) = wallet.get()->CreateTicketPurchaseSplitTx("", 10000000 * COIN, ticketFee);
     BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
 
     // Single ticket
@@ -684,10 +687,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_split_transaction, TicketPurchaseTesting
 }
 
 // test the reordering of split transactions in a block
-BOOST_FIXTURE_TEST_CASE(split_transaction_reordering, TicketPurchaseTestingSetup)
+BOOST_FIXTURE_TEST_CASE(split_transaction_reordering, WalletStakeTestingSetup)
 {
-    const CChainParams& chainParams = Params();
-    const Consensus::Params& consensus = chainParams.GetConsensus();
     const int count = 5;
     const CAmount ticketFee{10000};
 
@@ -768,7 +769,7 @@ BOOST_FIXTURE_TEST_CASE(split_transaction_reordering, TicketPurchaseTestingSetup
 
         tickets[i].vout.push_back(CTxOut(ticketPrice, GetScriptForDestination(ticketKeyIds[i])));
 
-        tickets[i].vout.push_back(CTxOut(0, GetScriptForTicketContrib(TicketContribData{1, ticketKeyIds[i], neededPerTicket, TicketContribData::NoFees, TicketContribData::NoFees})));
+        tickets[i].vout.push_back(CTxOut(0, GetScriptForTicketContrib(TicketContribData{1, ticketKeyIds[i], neededPerTicket, 0, TicketContribData::DefaultFeeLimit})));
 
         tickets[i].vout.push_back(CTxOut(splitTxs[i].vout[0].nValue - neededPerTicket, GetScriptForDestination(ticketKeyIds[i])));
 
@@ -786,7 +787,7 @@ BOOST_FIXTURE_TEST_CASE(split_transaction_reordering, TicketPurchaseTestingSetup
     // create a block template and mine it
 
     std::unique_ptr<CBlockTemplate> pblocktemplate;
-    BOOST_CHECK_NO_THROW(pblocktemplate = BlockAssembler(chainParams).CreateNewBlock(coinbaseTxns[0].vout[0].scriptPubKey));
+    BOOST_CHECK_NO_THROW(pblocktemplate = BlockAssembler(params).CreateNewBlock(coinbaseScriptPubKey));
     BOOST_CHECK(pblocktemplate.get());
 
     CBlock& block = pblocktemplate->block;
@@ -797,11 +798,11 @@ BOOST_FIXTURE_TEST_CASE(split_transaction_reordering, TicketPurchaseTestingSetup
     while (!CheckProofOfWork(block.GetHash(), block.nBits, consensus)) ++block.nNonce;
 
     std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
-    BOOST_CHECK(ProcessNewBlock(chainParams, shared_pblock, true, nullptr));
+    BOOST_CHECK(ProcessNewBlock(params, shared_pblock, true, nullptr));
 }
 
 // test the transaction for purchasing tickets
-BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
+BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 {
     std::vector<std::string> txHashes;
     CWalletError we;
@@ -824,7 +825,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
     auto checkTicket = [&](uint256 txHash, bool useVsp) {
         // Transaction
 
-        BOOST_CHECK(txHash != uint256());
+        BOOST_CHECK(txHash != emptyData.hash);
 
         const CWalletTx* wtx = wallet->GetWalletTx(txHash);
         BOOST_CHECK(wtx != nullptr);
@@ -845,7 +846,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
         BOOST_CHECK_EQUAL(tx.vout[0].nValue, 0);
 
         // make sure that the stake address and value are correct
-        int64_t ticketPrice = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), Params().GetConsensus());
+        int64_t ticketPrice = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), consensus);
         BOOST_CHECK(tx.vout[1].scriptPubKey == GetScriptForDestination(ticketKeyId));
         BOOST_CHECK_EQUAL(tx.vout[1].nValue, ticketPrice);
 
@@ -865,8 +866,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
             BOOST_CHECK(ParseTicketContrib(tx, 2, tcd));
             BOOST_CHECK_EQUAL(tcd.nVersion, 1);
             BOOST_CHECK_EQUAL(tcd.contributedAmount, vspFee);
-            BOOST_CHECK_EQUAL(tcd.voteFees, TicketContribData::NoFees);
-            BOOST_CHECK_EQUAL(tcd.revokeFees, TicketContribData::NoFees);
+            BOOST_CHECK_EQUAL(tcd.voteFeeLimit(), 0);
+            BOOST_CHECK_EQUAL(tcd.revocationFeeLimit(), TicketContribData::DefaultFeeLimit);
             BOOST_CHECK_EQUAL(tcd.whichAddr, 1);
             BOOST_CHECK(tcd.rewardAddr == boost::get<CKeyID>(vspKeyId));
             BOOST_CHECK_EQUAL(tx.vout[2].nValue, 0);
@@ -882,8 +883,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
         BOOST_CHECK(ParseTicketContrib(tx, userOutput, tcd));
         BOOST_CHECK_EQUAL(tcd.nVersion, 1);
         BOOST_CHECK_EQUAL(tcd.contributedAmount, neededPerTicket - vspFee);
-        BOOST_CHECK_EQUAL(tcd.voteFees, TicketContribData::NoFees);
-        BOOST_CHECK_EQUAL(tcd.revokeFees, TicketContribData::NoFees);
+        BOOST_CHECK_EQUAL(tcd.voteFeeLimit(), 0);
+        BOOST_CHECK_EQUAL(tcd.revocationFeeLimit(), TicketContribData::DefaultFeeLimit);
         BOOST_CHECK_EQUAL(tcd.whichAddr, 1);
         BOOST_CHECK(wallet->IsMine(CTxOut(0, GetScriptForDestination(CKeyID(uint160(tcd.rewardAddr))))));
         BOOST_CHECK_EQUAL(tx.vout[userOutput].nValue, 0);
@@ -899,11 +900,13 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
         std::tie(txHashes, we) = wallet->PurchaseTicket("", 100000 * COIN, 1, ticketKeyId, 10, CNoDestination(), 0.0, 0, 1000 * COIN);
         BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
 
+        GetSomeCoins();
+
         std::tie(txHashes, we) = wallet->PurchaseTicket("", 100 * COIN, 1, ticketKeyId, 10000, CNoDestination(), 0.0, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_ERROR);
     }
 
-    ExtendChain(Params().GetConsensus().nStakeValidationHeight + 1 - chainActive.Height());
+    ExtendChain(consensus.nStakeValidationHeight + 1 - chainActive.Height());
 
     // Single purchase, no VSP
     {
@@ -968,30 +971,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, TicketPurchaseTestingSetup)
     }
 }
 
-void CheckTicketPurchase(const CTransaction& tx, std::vector<TicketContribData> ticketContribDatas, bool validateAmount = false)
-{
-    std::string reason;
-
-    BOOST_CHECK_MESSAGE(ValidateBuyTicketStructure(tx, reason), ((reason.size() > 0) ? reason : "ValidateBuyTicketStructure"));
-
-    for (uint32_t i = 2; i < static_cast<uint32_t>(ticketContribDatas.size()); ++i) {
-        TicketContribData tcd;
-        TicketContribData expectedTcd = ticketContribDatas[i];
-
-        BOOST_CHECK(ParseTicketContrib(tx, 2*i, tcd));
-
-        BOOST_CHECK_EQUAL(tcd.nVersion, expectedTcd.nVersion);
-        BOOST_CHECK(tcd.rewardAddr == expectedTcd.rewardAddr);
-        BOOST_CHECK_EQUAL(tcd.whichAddr, expectedTcd.whichAddr);
-        if (validateAmount)
-            BOOST_CHECK_EQUAL(tcd.contributedAmount, expectedTcd.contributedAmount);
-        BOOST_CHECK_EQUAL(tcd.voteFees, expectedTcd.voteFees);
-        BOOST_CHECK_EQUAL(tcd.revokeFees, expectedTcd.revokeFees);
-    }
-}
-
 // test the ticket buyer
-BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
+BOOST_FIXTURE_TEST_CASE(ticket_buyer, WalletStakeTestingSetup)
 {
     CPubKey ticketPubKey;
     CPubKey vspPubKey;
@@ -1006,7 +987,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
 
     CTxDestination vspKeyId = vspPubKey.GetID();
 
-    ExtendChain(Params().GetConsensus().nStakeEnabledHeight + 1 - chainActive.Height());
+    ExtendChain(consensus.nStakeEnabledHeight + 1 - chainActive.Height());
 
     BOOST_CHECK_GE(chainActive.Tip()->nTx, 1U);
     BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, 0U);
@@ -1057,19 +1038,19 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
     BOOST_CHECK_GE(chainActive.Tip()->nTx, 1U + 1U + 1U);
     BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, 1U);
 
-    BOOST_CHECK_EQUAL(latestTestTxns.size(), 2U);
+    BOOST_CHECK_EQUAL(txsInMempoolBeforeLastBlock.size(), 2U);
 
-    BOOST_CHECK_EQUAL(ParseTxClass(latestTestTxns[0]), TX_Regular);
-    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), 1U + 1U);
+    BOOST_CHECK_EQUAL(ParseTxClass(*txsInMempoolBeforeLastBlock[0].get()), TX_Regular);
+    BOOST_CHECK_EQUAL(txsInMempoolBeforeLastBlock[0]->vout.size(), 1U + 1U);
 
     // TODO: Add amount validation
-    CheckTicketPurchase(latestTestTxns[1], {TicketContribData(1, ticketKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees)});
+    CheckTicket(*txsInMempoolBeforeLastBlock[1].get(), {TicketContribData(1, ticketKeyId, 0, 0, TicketContribData::DefaultFeeLimit)});
 
     // Single ticket, VSP
 
     tb->stop();
 
-    ExtendChain(Params().GetConsensus().nStakeValidationHeight + 1 - chainActive.Height());
+    ExtendChain(consensus.nStakeValidationHeight + 1 - chainActive.Height());
     ExtendChain(5); // since no purchases are made prior to the interval switch,
                     // make sure that the tests do not overlap with this switch.
 
@@ -1086,11 +1067,11 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
     BOOST_CHECK_GE(chainActive.Tip()->nTx, 1U + 1U + 1U);
     BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, 1U);
 
-    BOOST_CHECK_EQUAL(ParseTxClass(latestTestTxns[0]), TX_Regular);
-    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), 1U + 1U + 1U);
+    BOOST_CHECK_EQUAL(ParseTxClass(*txsInMempoolBeforeLastBlock[0].get()), TX_Regular);
+    BOOST_CHECK_EQUAL(txsInMempoolBeforeLastBlock[0]->vout.size(), 1U + 1U + 1U);
 
     // TODO: Add amount validation
-    CheckTicketPurchase(latestTestTxns[1], {TicketContribData(1, vspKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees), TicketContribData(1, ticketKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees)});
+    CheckTicket(*txsInMempoolBeforeLastBlock[1].get(), {TicketContribData(1, vspKeyId, 0, 0, TicketContribData::DefaultFeeLimit), TicketContribData(1, ticketKeyId, 0, 0, TicketContribData::DefaultFeeLimit)});
 
     // Multiple tickets, no VSP
 
@@ -1110,12 +1091,12 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
     BOOST_CHECK_GE(chainActive.Tip()->nTx, static_cast<unsigned int>(1 + 1 + cfg.limit));
     BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, static_cast<uint8_t>(cfg.limit));
 
-    BOOST_CHECK_EQUAL(ParseTxClass(latestTestTxns[0]), TX_Regular);
-    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), static_cast<size_t>(cfg.limit + 1));
+    BOOST_CHECK_EQUAL(ParseTxClass(*txsInMempoolBeforeLastBlock[0].get()), TX_Regular);
+    BOOST_CHECK_EQUAL(txsInMempoolBeforeLastBlock[0]->vout.size(), static_cast<size_t>(cfg.limit + 1));
 
     // TODO: Add amount validation
     for (size_t i = 0; static_cast<int>(i) < cfg.limit; ++i)
-        CheckTicketPurchase(latestTestTxns[1 + i], {TicketContribData(1, ticketKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees)});
+        CheckTicket(*txsInMempoolBeforeLastBlock[1 + i].get(), {TicketContribData(1, ticketKeyId, 0, 0, TicketContribData::DefaultFeeLimit)});
 
     // Multiple ticket, VSP
 
@@ -1134,18 +1115,18 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, TicketPurchaseTestingSetup)
     BOOST_CHECK_GE(chainActive.Tip()->nTx, static_cast<unsigned int>(1 + 1 + cfg.limit));
     BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, static_cast<uint8_t>(cfg.limit));
 
-    BOOST_CHECK_EQUAL(ParseTxClass(latestTestTxns[0]), TX_Regular);
-    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), static_cast<size_t>(2 * cfg.limit + 1));
+    BOOST_CHECK_EQUAL(ParseTxClass(*txsInMempoolBeforeLastBlock[0].get()), TX_Regular);
+    BOOST_CHECK_EQUAL(txsInMempoolBeforeLastBlock[0]->vout.size(), static_cast<size_t>(2 * cfg.limit + 1));
 
     // TODO: Add amount validation
     for (size_t i = 0; static_cast<int>(i) < cfg.limit; ++i)
-        CheckTicketPurchase(latestTestTxns[1 + i], {TicketContribData(1, vspKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees), TicketContribData(1, ticketKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees)});
+        CheckTicket(*txsInMempoolBeforeLastBlock[1 + i].get(), {TicketContribData(1, vspKeyId, 0, 0, TicketContribData::DefaultFeeLimit), TicketContribData(1, ticketKeyId, 0, 0, TicketContribData::DefaultFeeLimit)});
 
     tb->stop();
 }
 
 // test the ticket buyer on encrypted wallet
-BOOST_FIXTURE_TEST_CASE(ticket_buyer_encrypted, TicketPurchaseTestingSetup)
+BOOST_FIXTURE_TEST_CASE(ticket_buyer_encrypted, WalletStakeTestingSetup)
 {
     CPubKey ticketPubKey;
     CPubKey vspPubKey;
@@ -1161,8 +1142,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_encrypted, TicketPurchaseTestingSetup)
 
     CTxDestination vspKeyId = vspPubKey.GetID();
 
-    ExtendChain(Params().GetConsensus().nStakeValidationHeight + 1 - chainActive.Height() + 7); // since no purchases are made right before the interval switch,
-                                                                                                // make sure that the tests do not overlap with this switch.
+    ExtendChain(consensus.nStakeValidationHeight + 1 - chainActive.Height() + 7); // since no purchases are made right before the interval switch,
+                                                                                  // make sure that the tests do not overlap with this switch.
 
     CTicketBuyer* tb = wallet->GetTicketBuyer();
     BOOST_CHECK(tb != nullptr);
@@ -1193,39 +1174,54 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_encrypted, TicketPurchaseTestingSetup)
     BOOST_CHECK_GE(chainActive.Tip()->nTx, static_cast<unsigned int>(1 + 1 + cfg.limit));
     BOOST_CHECK_GE(chainActive.Tip()->nFreshStake, static_cast<uint8_t>(cfg.limit));
 
-    BOOST_CHECK_EQUAL(ParseTxClass(latestTestTxns[0]), TX_Regular);
-    BOOST_CHECK_EQUAL(latestTestTxns[0].vout.size(), static_cast<size_t>(2 * cfg.limit + 1));
+    BOOST_CHECK_EQUAL(ParseTxClass(*txsInMempoolBeforeLastBlock[0].get()), TX_Regular);
+    BOOST_CHECK_EQUAL(txsInMempoolBeforeLastBlock[0]->vout.size(), static_cast<size_t>(2 * cfg.limit + 1));
 
     // TODO: Add amount validation
     for (size_t i = 0; static_cast<int>(i) < cfg.limit; ++i)
-        CheckTicketPurchase(latestTestTxns[1 + i], {TicketContribData(1, vspKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees), TicketContribData(1, ticketKeyId, 0, TicketContribData::NoFees, TicketContribData::NoFees)});
+        CheckTicket(*txsInMempoolBeforeLastBlock[1 + i].get(), {TicketContribData(1, vspKeyId, 0, 0, TicketContribData::DefaultFeeLimit), TicketContribData(1, ticketKeyId, 0, 0, TicketContribData::DefaultFeeLimit)});
 
     tb->stop();
 }
 
-UniValue CallRPC(std::string args)
+// test the password validation from optional value
+BOOST_FIXTURE_TEST_CASE(password_validation_from_optional_value, WalletStakeTestingSetup)
 {
-    std::vector<std::string> vArgs;
-    boost::split(vArgs, args, boost::is_any_of(" \t"));
-    std::string strMethod = vArgs[0];
-    vArgs.erase(vArgs.begin());
-    JSONRPCRequest request;
-    request.strMethod = strMethod;
-    request.params = RPCConvertValues(strMethod, vArgs);
-    request.fHelp = false;
-    BOOST_CHECK(tableRPC[strMethod]);
-    rpcfn_type method = tableRPC[strMethod]->actor;
-    try {
-        UniValue result = (*method)(request);
-        return result;
-    }
-    catch (const UniValue& objError) {
-        throw std::runtime_error(find_value(objError, "message").get_str());
-    }
+    LOCK2(cs_main, wallet->cs_wallet);
+
+    // unencrypted wallet
+
+    BOOST_CHECK_NO_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue()));
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(10)), UniValue);
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(1.001)), UniValue);
+    BOOST_CHECK_NO_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue("")));
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue("aWr0ngP4$$word")), UniValue);
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(passphrase.c_str())), UniValue);
+    BOOST_CHECK_NO_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(emptyData.string)));
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(std::string("aWr0ngP4$$word"))), UniValue);
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(std::string(passphrase.c_str()))), UniValue);
+
+    // encrypted wallet (wrong password)
+
+    wallet->EncryptWallet(passphrase);
+    BOOST_CHECK(wallet->IsLocked());
+
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue()), UniValue);
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(10)), UniValue);
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(1.001)), UniValue);
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue("")), UniValue);
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue("aWr0ngP4$$word")), UniValue);
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(emptyData.string)), UniValue);
+    BOOST_CHECK_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(std::string("aWr0ngP4$$word"))), UniValue);
+
+    // encrypted wallet (good password)
+
+    BOOST_CHECK_NO_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(passphrase.c_str())));
+    BOOST_CHECK_NO_THROW(ValidatedPasswordFromOptionalValue(wallet.get(), UniValue(std::string(passphrase.c_str()))));
 }
 
 // test the ticket buyer RPCs
-BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
+BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
 {
     vpwallets.insert(vpwallets.begin(), wallet.get());
 
@@ -1250,23 +1246,23 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
 
     // Settings (write)
 
-    BOOST_CHECK_THROW(CallRPC("setticketbuyeraccount"), std::runtime_error);
-    BOOST_CHECK_NO_THROW(CallRPC("setticketbuyeraccount abc"));
+    BOOST_CHECK_THROW(CallRpc("setticketbuyeraccount"), std::runtime_error);
+    BOOST_CHECK_NO_THROW(CallRpc("setticketbuyeraccount abc"));
 
-    BOOST_CHECK_THROW(CallRPC("setticketbuyerbalancetomaintain"), std::runtime_error);
-    BOOST_CHECK_NO_THROW(CallRPC("setticketbuyerbalancetomaintain 123"));
+    BOOST_CHECK_THROW(CallRpc("setticketbuyerbalancetomaintain"), std::runtime_error);
+    BOOST_CHECK_NO_THROW(CallRpc("setticketbuyerbalancetomaintain 123"));
 
-    BOOST_CHECK_THROW(CallRPC("setticketbuyervotingaddress"), std::runtime_error);
-    BOOST_CHECK_NO_THROW(CallRPC("setticketbuyervotingaddress " + ticketAddress));
+    BOOST_CHECK_THROW(CallRpc("setticketbuyervotingaddress"), std::runtime_error);
+    BOOST_CHECK_NO_THROW(CallRpc("setticketbuyervotingaddress " + ticketAddress));
 
-    BOOST_CHECK_THROW(CallRPC("setticketbuyerpooladdress"), std::runtime_error);
-    BOOST_CHECK_NO_THROW(CallRPC("setticketbuyerpooladdress " + vspAddress));
+    BOOST_CHECK_THROW(CallRpc("setticketbuyerpooladdress"), std::runtime_error);
+    BOOST_CHECK_NO_THROW(CallRpc("setticketbuyerpooladdress " + vspAddress));
 
-    BOOST_CHECK_THROW(CallRPC("setticketbuyerpoolfees"), std::runtime_error);
-    BOOST_CHECK_NO_THROW(CallRPC("setticketbuyerpoolfees 5.0"));
+    BOOST_CHECK_THROW(CallRpc("setticketbuyerpoolfees"), std::runtime_error);
+    BOOST_CHECK_NO_THROW(CallRpc("setticketbuyerpoolfees 5.0"));
 
-    BOOST_CHECK_THROW(CallRPC("setticketbuyermaxperblock"), std::runtime_error);
-    BOOST_CHECK_NO_THROW(CallRPC("setticketbuyermaxperblock 5"));
+    BOOST_CHECK_THROW(CallRpc("setticketbuyermaxperblock"), std::runtime_error);
+    BOOST_CHECK_NO_THROW(CallRpc("setticketbuyermaxperblock 5"));
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, false);
     BOOST_CHECK_EQUAL(cfg.account, "abc");
@@ -1280,7 +1276,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
     // Settings (read)
 
     UniValue r;
-    BOOST_CHECK_NO_THROW(r = CallRPC("ticketbuyerconfig"));
+    BOOST_CHECK_NO_THROW(r = CallRpc("ticketbuyerconfig"));
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "buytickets").get_bool(), false);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "account").get_str(), "abc");
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "maintain").get_int64(), 12300000000);
@@ -1293,9 +1289,9 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
 
     // Start (with minimal settings)
 
-    BOOST_CHECK_THROW(CallRPC("startticketbuyer"), std::runtime_error);
-    BOOST_CHECK_THROW(CallRPC("startticketbuyer \"\""), std::runtime_error);
-    BOOST_CHECK_NO_THROW(CallRPC("startticketbuyer def 124"));
+    BOOST_CHECK_THROW(CallRpc("startticketbuyer"), std::runtime_error);
+    BOOST_CHECK_THROW(CallRpc("startticketbuyer \"\""), std::runtime_error);
+    BOOST_CHECK_NO_THROW(CallRpc("startticketbuyer def 124"));
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, true);
     BOOST_CHECK_EQUAL(cfg.account, "def");
@@ -1312,7 +1308,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, false);
 
-    BOOST_CHECK_NO_THROW(CallRPC(std::string("startticketbuyer fromaccount 125 \"\" votingaccount ") + ticketAddress + " " + vspAddress + " 10.0 8"));
+    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 \"\" votingaccount ") + ticketAddress + " " + vspAddress + " 10.0 8"));
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, true);
     BOOST_CHECK_EQUAL(cfg.account, "fromaccount");
@@ -1325,7 +1321,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
 
     // Stop
 
-    BOOST_CHECK_NO_THROW(CallRPC("stopticketbuyer"));
+    BOOST_CHECK_NO_THROW(CallRpc("stopticketbuyer"));
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, false);
 
@@ -1338,11 +1334,11 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, TicketPurchaseTestingSetup)
     wallet->EncryptWallet(passphrase);
     BOOST_CHECK(wallet->IsLocked());
 
-    BOOST_CHECK_THROW(CallRPC("startticketbuyer def 124"), std::runtime_error);
-    BOOST_CHECK_THROW(CallRPC("startticketbuyer def 124 wrongP4ssword!"), std::runtime_error);
-    BOOST_CHECK_THROW(CallRPC("startticketbuyer def 124 wrongP4ssword votingaccount " + ticketAddress + " " + vspAddress + " 10.0 8"), std::runtime_error);
+    BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124"), std::runtime_error);
+    BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124 wrongP4ssword!"), std::runtime_error);
+    BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124 wrongP4ssword votingaccount " + ticketAddress + " " + vspAddress + " 10.0 8"), std::runtime_error);
 
-    BOOST_CHECK_NO_THROW(CallRPC(std::string("startticketbuyer fromaccount 125 ") + std::string(passphrase.c_str()) + " votingaccount " + ticketAddress + " " + vspAddress + " 10.0 8"));
+    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 ") + std::string(passphrase.c_str()) + " votingaccount " + ticketAddress + " " + vspAddress + " 10.0 8"));
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, true);
     BOOST_CHECK_EQUAL(cfg.account, "fromaccount");

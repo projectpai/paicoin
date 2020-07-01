@@ -221,7 +221,7 @@ CMutableTransaction Generator::CreateTicketPurchaseTx(const SpendableOut& spend,
     mtx.vout.push_back(CTxOut(ticketPrice, stakeScript));
 
     // create an OP_RETURN push containing a dummy address to send rewards to, and the amount contributed to stake
-    const auto& ticketContribData = TicketContribData{ 1, rewardAddr, ticketPrice + fee };
+    const auto& ticketContribData = TicketContribData{ 1, rewardAddr, ticketPrice + fee, 0, TicketContribData::DefaultFeeLimit };
     CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
     mtx.vout.push_back(CTxOut(0, contributorInfoScript));
 
@@ -244,7 +244,7 @@ CMutableTransaction Generator::CreateVoteTx(const uint256& voteBlockHash, int vo
     const auto& voterSubsidy = GetVoterSubsidy(voteBlockHeight+1/*spend height*/,Params().GetConsensus());
     const auto& ticketPrice  = boughtTicketHashToPrice.at(ticketTxHash);
     const auto& contributedAmount = ticketPrice + 2 /*fee*/;
-    const auto& reward = CalcContributorRemuneration( contributedAmount, ticketPrice, voterSubsidy, contributedAmount);
+    const auto& reward = CalculateGrossRemuneration( contributedAmount, ticketPrice, voterSubsidy, contributedAmount);
     // create a reward generation input
     mtx.vin.push_back(CTxIn(COutPoint(), Params().GetConsensus().stakeBaseSigScript));
 
@@ -424,6 +424,24 @@ CScript Generator::RepeatOpCode(opcodetype opCode, uint16_t numRepeats) const
         result << opCode;
     }
     return result;
+}
+
+void Generator::SetTotalFeeLimit(CMutableTransaction& mtx, const CAmount& feeLimit, bool vote) const
+{
+    // replace all the contributor fee limits with zero,
+    // except the first one, which is replaced with the total fee limit
+
+    assert(ParseTxClass(mtx) == TX_BuyTicket);
+
+    for (unsigned i = ticketContribOutputIndex; i < mtx.vout.size(); i+=2) {
+        TicketContribData contrib;
+        assert(ParseTicketContrib(mtx, i, contrib));
+        if (vote)
+            contrib.setVoteFeeLimit(i == ticketContribOutputIndex ? feeLimit : 0);
+        else
+            contrib.setRevocationFeeLimit(i == ticketContribOutputIndex ? feeLimit : 0);
+        mtx.vout[i].scriptPubKey = GetScriptForTicketContrib(contrib);
+    }
 }
 
 CBlock Generator::NextBlock(const std::string& blockName

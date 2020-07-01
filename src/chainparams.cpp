@@ -167,28 +167,30 @@ public:
         consensus.defaultAssumeValid = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
 
         // stake parameters
-        consensus.nMinimumStakeDiff            = COIN * 2;
-        consensus.nTicketPoolSize              = 8192;
-        consensus.nTicketsPerBlock             = 5;
-        consensus.nTicketMaturity              = 256;
-        consensus.nTicketExpiry                = 5 * consensus.nTicketPoolSize;
-        // consensus.nCoinbaseMaturity            = 256;
-        consensus.nSStxChangeMaturity          = 1;
-        consensus.nTicketPoolSizeWeight        = 4;
-        consensus.nStakeDiffAlpha              = 1;
-        consensus.nStakeDiffWindowSize         = 144;
-        consensus.nStakeDiffWindows            = 20;
-        consensus.nStakeVersionInterval        = 144 * 2 * 7; // ~2 weeks
-        consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight          = 356;         //consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
-        consensus.nStakeValidationHeight       = 4096;        // ~ 14 days
-        consensus.stakeBaseSigScript           = CScript() << 0x00 << 0x00;
-        consensus.nStakeMajorityMultiplier     = 3;
-        consensus.nStakeMajorityDivisor        = 4;
+        consensus.nMinimumStakeDiff                 = COIN * 2;
+        consensus.nTicketPoolSize                   = 8192;
+        consensus.nTicketsPerBlock                  = 5;
+        consensus.nTicketMaturity                   = 256;
+        consensus.nTicketExpiry                     = 5 * consensus.nTicketPoolSize;
+        // consensus.nCoinbaseMaturity                 = 256;
+        consensus.nSStxChangeMaturity               = 1;
+        consensus.nTicketPoolSizeWeight             = 4;
+        consensus.nStakeDiffAlpha                   = 1;
+        consensus.nStakeDiffWindowSize              = 144;
+        consensus.nStakeDiffWindows                 = 20;
+        consensus.nStakeVersionInterval             = 144 * 2 * 7; // ~2 weeks
+        consensus.nMaxFreshStakePerBlock            = 4 * consensus.nTicketsPerBlock;
+        consensus.nStakeEnabledHeight               = 356;         //consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
+        consensus.nStakeValidationHeight            = 4096;        // ~ 14 days
+        consensus.stakeBaseSigScript                = CScript() << 0x00 << 0x00;
+        consensus.nStakeMajorityMultiplier          = 3;
+        consensus.nStakeMajorityDivisor             = 4;
+        consensus.nMinimumTotalVoteFeeLimit         = 0;
+        consensus.nMinimumTotalRevocationFeeLimit   = 1LL << 15;
         //organization related parameters
-        consensus.organizationPkScript         = CScript(); //uint256S("TODO add some predef")
-        consensus.nOrganizationPkScriptVersion = 0;
-        consensus.vBlockOneLedger              = {}; //TODO update with smtg resembling BlockOneLedgerMainNet in premine.go 
+        consensus.organizationPkScript              = CScript(); //uint256S("TODO add some predef")
+        consensus.nOrganizationPkScriptVersion      = 0;
+        consensus.vBlockOneLedger                   = {}; //TODO update with smtg resembling BlockOneLedgerMainNet in premine.go
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -330,28 +332,30 @@ public:
         consensus.defaultAssumeValid = uint256S("0x0000000000b13e58c76917eb3b416fc284e36641d952a96c3422b0808d828646");
 
         // stake parameters
-        consensus.nMinimumStakeDiff            = COIN * 0.2;
-        consensus.nTicketPoolSize              = 1024;
-        consensus.nTicketsPerBlock             = 5;
-        consensus.nTicketMaturity              = 16;
-        consensus.nTicketExpiry                = 6 * consensus.nTicketPoolSize;
-        // consensus.nCoinbaseMaturity            = 16;
-        consensus.nSStxChangeMaturity          = 1;
-        consensus.nTicketPoolSizeWeight        = 4;
-        consensus.nStakeDiffAlpha              = 1;
-        consensus.nStakeDiffWindowSize         = 144;
-        consensus.nStakeDiffWindows            = 20;
-        consensus.nStakeVersionInterval        = 144 * 2 * 7; // ~2 weeks
-        consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight          = 116;         // consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
-        consensus.nStakeValidationHeight       = 768;         // Arbitrary chosen into the future; height is 46261 at the moment
-        consensus.stakeBaseSigScript           = CScript() << 0x00 << 0x00;
-        consensus.nStakeMajorityMultiplier     = 3;
-        consensus.nStakeMajorityDivisor        = 4;
+        consensus.nMinimumStakeDiff                 = COIN * 0.2;
+        consensus.nTicketPoolSize                   = 1024;
+        consensus.nTicketsPerBlock                  = 5;
+        consensus.nTicketMaturity                   = 16;
+        consensus.nTicketExpiry                     = 6 * consensus.nTicketPoolSize;
+        // consensus.nCoinbaseMaturity                 = 16;
+        consensus.nSStxChangeMaturity               = 1;
+        consensus.nTicketPoolSizeWeight             = 4;
+        consensus.nStakeDiffAlpha                   = 1;
+        consensus.nStakeDiffWindowSize              = 144;
+        consensus.nStakeDiffWindows                 = 20;
+        consensus.nStakeVersionInterval             = 144 * 2 * 7; // ~2 weeks
+        consensus.nMaxFreshStakePerBlock            = 4 * consensus.nTicketsPerBlock;
+        consensus.nStakeEnabledHeight               = 116;         // consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
+        consensus.nStakeValidationHeight            = 768;         // Arbitrary chosen into the future; height is 46261 at the moment
+        consensus.stakeBaseSigScript                = CScript() << 0x00 << 0x00;
+        consensus.nStakeMajorityMultiplier          = 3;
+        consensus.nStakeMajorityDivisor             = 4;
+        consensus.nMinimumTotalVoteFeeLimit         = 0;
+        consensus.nMinimumTotalRevocationFeeLimit   = 1LL << 15;
         //organization related parameters
-        consensus.organizationPkScript         = CScript(); //uint256S("TODO add some predef")
-        consensus.nOrganizationPkScriptVersion = 0;
-        consensus.vBlockOneLedger              = {}; //TODO update with smtg resembling BlockOneLedgerTestNet3 in premine.go 
+        consensus.organizationPkScript              = CScript(); //uint256S("TODO add some predef")
+        consensus.nOrganizationPkScriptVersion      = 0;
+        consensus.vBlockOneLedger                   = {}; //TODO update with smtg resembling BlockOneLedgerTestNet3 in premine.go
 
         pchMessageStart[0] = 0x0b;
         pchMessageStart[1] = 0x09;
@@ -490,28 +494,30 @@ public:
         consensus.defaultAssumeValid = uint256S("0x00");
 
         // stake paramters
-        consensus.nMinimumStakeDiff            = 20000;
-        consensus.nTicketPoolSize              = 64;
-        consensus.nTicketsPerBlock             = 5;
-        consensus.nTicketMaturity              = 8;
-        consensus.nTicketExpiry                = 5 * consensus.nTicketPoolSize;
-        // consensus.nCoinbaseMaturity            = 16;
-        consensus.nSStxChangeMaturity          = 1;
-        consensus.nTicketPoolSizeWeight        = 4;
-        consensus.nStakeDiffAlpha              = 1;
-        consensus.nStakeDiffWindowSize         = 8;
-        consensus.nStakeDiffWindows            = 8;
-        consensus.nStakeVersionInterval        = 6 * 24; // ~1 day
-        consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight          = 2000;//must be above HybridConsensusHeight
-        consensus.nStakeValidationHeight       = 2100;//must be above nStakeEnabledHeight
-        consensus.stakeBaseSigScript           = CScript() << 0x73 << 0x57;
-        consensus.nStakeMajorityMultiplier     = 3;
-        consensus.nStakeMajorityDivisor        = 4;
+        consensus.nMinimumStakeDiff               = 20000;
+        consensus.nTicketPoolSize                 = 64;
+        consensus.nTicketsPerBlock                = 5;
+        consensus.nTicketMaturity                 = 8;
+        consensus.nTicketExpiry                   = 5 * consensus.nTicketPoolSize;
+        // consensus.nCoinbaseMaturity               = 16;
+        consensus.nSStxChangeMaturity             = 1;
+        consensus.nTicketPoolSizeWeight           = 4;
+        consensus.nStakeDiffAlpha                 = 1;
+        consensus.nStakeDiffWindowSize            = 8;
+        consensus.nStakeDiffWindows               = 8;
+        consensus.nStakeVersionInterval           = 6 * 24; // ~1 day
+        consensus.nMaxFreshStakePerBlock          = 4 * consensus.nTicketsPerBlock;
+        consensus.nStakeEnabledHeight             = 2000;//must be above HybridConsensusHeight
+        consensus.nStakeValidationHeight          = 2100;//must be above nStakeEnabledHeight
+        consensus.stakeBaseSigScript              = CScript() << 0x73 << 0x57;
+        consensus.nStakeMajorityMultiplier        = 3;
+        consensus.nStakeMajorityDivisor           = 4;
+        consensus.nMinimumTotalVoteFeeLimit       = 0;
+        consensus.nMinimumTotalRevocationFeeLimit = 1LL << 15;
         //organization related parameters
-        consensus.organizationPkScript         = CScript(); //uint256S("TODO add some predef")
-        consensus.nOrganizationPkScriptVersion = 0;
-        consensus.vBlockOneLedger              = {}; //TODO update with smtg resembling BlockOneLedgerRegNet in premine.go 
+        consensus.organizationPkScript            = CScript(); //uint256S("TODO add some predef")
+        consensus.nOrganizationPkScriptVersion    = 0;
+        consensus.vBlockOneLedger                 = {}; //TODO update with smtg resembling BlockOneLedgerRegNet in premine.go
 
         pchMessageStart[0] = 0xff;
         pchMessageStart[1] = 0xd1;

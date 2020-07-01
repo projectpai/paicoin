@@ -251,6 +251,8 @@ libpaicoin_wallet_a_SOURCES = \
   wallet/init.cpp \
   wallet/rpcdump.cpp \
   wallet/rpcwallet.cpp \
+  wallet/auto-revoker/autorevokerconfig.cpp \
+  wallet/auto-revoker/autorevoker.cpp \
   wallet/auto-voter/autovoterconfig.cpp \
   wallet/auto-voter/autovoter.cpp \
   wallet/ticket-buyer/ticketbuyerconfig.cpp \

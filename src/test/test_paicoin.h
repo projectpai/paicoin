@@ -157,6 +157,8 @@ public:
     void ReplaceStakeBaseSigScript(CTransactionRef& tx, const CScript& sigScript) const;
     CScript RepeatOpCode(opcodetype opCode, uint16_t numRepeats) const;
 
+    void SetTotalFeeLimit(CMutableTransaction& mtx, const CAmount& feeLimit, bool vote) const;
+
     std::list<SpendableOut> OldestCoinOuts();
 
 private:

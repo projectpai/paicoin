@@ -81,24 +81,27 @@ PAICOIN_TESTS =\
   test/test_paicoin.cpp \
   test/test_paicoin.h \
   test/test_paicoin_main.cpp \
-  test/ticket_purchase_tests.cpp \
   test/timedata_tests.cpp \
   test/torcontrol_tests.cpp \
   test/transaction_tests.cpp \
   test/txvalidationcache_tests.cpp \
   test/versionbits_tests.cpp \
-  test/vote_tests.cpp \
   test/uint256_tests.cpp \
   test/univalue_tests.cpp \
   test/util_tests.cpp
 
 if ENABLE_WALLET
 PAICOIN_TESTS += \
+  wallet/test/wallet_stake_test_fixture.cpp \
+  wallet/test/wallet_stake_test_fixture.h \
   wallet/test/wallet_test_fixture.cpp \
   wallet/test/wallet_test_fixture.h \
   wallet/test/accounting_tests.cpp \
   wallet/test/wallet_tests.cpp \
-  wallet/test/crypto_tests.cpp
+  wallet/test/crypto_tests.cpp \
+  wallet/test/revoke_tests.cpp \
+  wallet/test/ticket_tests.cpp \
+  wallet/test/vote_tests.cpp
 endif
 
 test_test_paicoin_SOURCES = $(PAICOIN_TESTS) $(JSON_TEST_FILES) $(RAW_TEST_FILES)

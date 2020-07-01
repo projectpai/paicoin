@@ -991,7 +991,7 @@ BOOST_AUTO_TEST_CASE(test_ValidateStakeTransactions)
     for (const auto& addr : rewardAddresses)
     {
         CAmount contributedAmount = 123;
-        const auto& ticketContribData = TicketContribData{1, addr, contributedAmount};
+        const auto& ticketContribData = TicketContribData{1, addr, contributedAmount, 0, TicketContribData::DefaultFeeLimit};
 
         CMutableTransaction txBuyTicket = CreateDummyBuyTicket(ticketContribData);
         BOOST_CHECK(ok = ValidateBuyTicketStructure(txBuyTicket, reason));

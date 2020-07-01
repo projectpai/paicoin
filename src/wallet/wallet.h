@@ -21,6 +21,7 @@
 #include "utilmemory.h"
 #include "stake/extendedvotebits.h"
 #include "wallet/auto-voter/autovoter.h"
+#include "wallet/auto-revoker/autorevoker.h"
 #include "wallet/ticket-buyer/ticketbuyer.h"
 
 #include <algorithm>
@@ -754,6 +755,8 @@ private:
 
     std::unique_ptr<CAutoVoter> autoVoter;
 
+    std::unique_ptr<CAutoRevoker> autoRevoker;
+
     std::unique_ptr<CTicketBuyer> ticketBuyer;
 
     // wallet's ticket fee rate
@@ -801,6 +804,7 @@ public:
         ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
         autoVoter = MakeUnique<CAutoVoter>(this);
+        autoRevoker = MakeUnique<CAutoRevoker>(this);
         ticketBuyer = MakeUnique<CTicketBuyer>(this);
         SetNull();
     }
@@ -811,20 +815,26 @@ public:
         ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
         autoVoter = MakeUnique<CAutoVoter>(this);
+        autoRevoker = MakeUnique<CAutoRevoker>(this);
         ticketBuyer = MakeUnique<CTicketBuyer>(this);
         SetNull();
     }
 
     ~CWallet()
     {
-        if (autoVoter.get() != nullptr) {
-            autoVoter->stop();
-            autoVoter.reset();
-        }
-
         if (ticketBuyer.get() != nullptr) {
             ticketBuyer->stop();
             ticketBuyer.reset();
+        }
+
+        if (autoRevoker.get() != nullptr) {
+            autoRevoker->stop();
+            autoRevoker.reset();
+        }
+
+        if (autoVoter.get() != nullptr) {
+            autoVoter->stop();
+            autoVoter.reset();
         }
 
         delete pwalletdbEncryption;
@@ -1175,6 +1185,24 @@ public:
        this function). */
     bool SetHDMasterKey(const CPubKey& key);
 
+    /* Verify if a ticket belongs to the wallet
+       - tx: the ticket transaction
+       Returns true if the transaction with the specified hash is a ticket and belongs to this wallet.
+       Returns false otherwise. */
+    bool IsMyTicket(const CTransaction& tx) const;
+
+    /* Verify if a ticket belongs to the wallet
+       - ticketHash: the hash of the ticket transaction
+       Returns true if the transaction with the specified hash is a ticket and belongs to this wallet.
+       Returns false otherwise. */
+    bool IsMyTicket(const uint256& ticketHash) const;
+
+    /* Verify if a ticket belongs to the wallet
+       - ticketHash: the hash of the ticket transaction
+       Returns true if the mempool contains a revoke transaction for the specified ticket.
+       Returns false otherwise. */
+    bool IsTicketRevokedInMempool(const uint256& ticketHash) const;
+
     /* Creates a transaction that is gathering sparse funds from the wallet in order to
        provide unique UTXOs to all the tickets being purchased in one batch.
        - fromAccount: account to use for funding
@@ -1205,6 +1233,8 @@ public:
        - expiry: height at which the purchase tickets expire
        - feeRate: transaction fee rate (PAI/kB) to use (overrides current fees if larger than them) (optional, default = -1)
        In case of success, the returned vector contains the transactions' hashes.
+       In case of partial success, meaning only some tickets could not have been created, the returned values are the
+       successful transactions' hashes, but the error code does not indicate success.
        In case of error, the returned vector is empty. Check the error object for the reason. */
     std::pair<std::vector<std::string>, CWalletError>
     PurchaseTicket(std::string fromAccount,
@@ -1216,12 +1246,6 @@ public:
                    double vspFeePercent,
                    int64_t expiry,
                    CAmount feeRate = -1);
-
-    /* Verify if a ticket belongs to the wallet
-       - ticketHash: the hash of the ticket transaction
-       Returns true if the transaction with the specified hash is a ticket and belongs to this wallet.
-       Returns false otherwise. */
-    bool IsMyTicket(const uint256& ticketHash) const;
 
     /* Creates a vote
        It funds and creates the vote transaction that corresponds to the specified ticket and sends it to the memory pool.
@@ -1239,8 +1263,31 @@ public:
          const VoteBits voteBits,
          const ExtendedVoteBits& extendedVoteBits);
 
+    /* Creates a revocation
+       It funds and creates the revocation transaction for the specified ticket and sends it to the memory pool.
+       This transaction must have a fee for encouragig miners to add it in a block. This fee will be spent from the stake,
+       according to the contributor preferences. The fee is a normal transaction fee. If the required fee cannot be covered,
+       this function will fail.
+       - ticketHash: hash of the ticket that will be revoked
+       In case of success, the returned value is the transaction's hash.
+       In case of error, the returned value is empty. Check the error object for the reason. */
+    std::pair<std::string, CWalletError> Revoke(const uint256& ticketHash);
+
+    /* Create revocations for all misses or expired tickets
+       It funds and creates the revocation transactions for all the expired tickets and sends them to the memory pool.
+       Some revocations may fail. This function returns the hashes of all succesful revocations even if the error code
+       is not successful.
+       In case of success, the returned values are the transactions' hashes.
+       In case of partial success, meaning only some tickets have been revoked, the returned values are the
+       successful transactions' hashes, but the error code does not indicate success.
+       In case of error, the returned vector is empty. Check the error object for the reason. */
+    std::pair<std::vector<std::string>, CWalletError> RevokeAll();
+
     /* Returns the auto voter */
     CAutoVoter* GetAutoVoter() { return autoVoter.get(); }
+
+    /* Returns the auto revoker */
+    CAutoRevoker* GetAutoRevoker() { return autoRevoker.get(); }
 
      /* Returns the ticket buyer */
      CTicketBuyer* GetTicketBuyer() { return ticketBuyer.get(); }

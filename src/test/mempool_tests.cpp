@@ -143,7 +143,7 @@ CMutableTransaction CreateDummyBuyTicket(const CAmount& contribution)
     auto rewardKey = CKey();
     rewardKey.MakeNewKey(false);
     auto rewardAddr = rewardKey.GetPubKey().GetID();
-    const auto& ticketContribData = TicketContribData{ 1, rewardAddr, contribution };
+    const auto& ticketContribData = TicketContribData{ 1, rewardAddr, contribution, 0, TicketContribData::DefaultFeeLimit };
     CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
     mtx.vout.push_back(CTxOut(0, contributorInfoScript));
 

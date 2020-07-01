@@ -83,6 +83,45 @@ void EnsureWalletIsUnlocked(const CWallet * const pwallet)
     }
 }
 
+static void LockWallet(CWallet* pWallet);
+
+SecureString ValidatedPasswordFromOptionalValue(CWallet* pwallet, const UniValue& value)
+{
+    // Passphrase
+    SecureString passphrase;
+    if (!value.isNull()) {
+        if (!value.isStr())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid passphrase.");
+
+        passphrase.clear();
+        passphrase.reserve(100);
+        passphrase = value.get_str().c_str();
+
+        // make sure that any empty representation is correctly handled
+        if (passphrase == "\"\"")
+            passphrase.clear();
+    }
+
+    // verify the validity of the passphrase
+    if (pwallet->IsCrypted()) {
+        if (passphrase.length() > 0) {
+            if (pwallet->IsLocked()) {
+                if (pwallet->Unlock(passphrase))
+                    LockWallet(pwallet);
+                else
+                    throw JSONRPCError(RPCErrorCode::WALLET_PASSPHRASE_INCORRECT, "The wallet passphrase entered is incorrect.");
+            } else {
+                if (!pwallet->VerifyWalletPassphrase(passphrase))
+                    throw JSONRPCError(RPCErrorCode::WALLET_PASSPHRASE_INCORRECT, "The wallet passphrase entered is incorrect.");
+            }
+        } else
+            throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Running with an encrypted wallet, but no passphrase is specified.");
+    } else if (passphrase.length() > 0)
+        throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Running with an unencrypted wallet, but passphrase is specified.");
+
+    return passphrase;
+}
+
 static void WalletTxToJSON(const CWalletTx& wtx, UniValue& entry)
 {
     const auto confirms = wtx.GetDepthInMainChain();
@@ -845,29 +884,6 @@ UniValue gettickets(const JSONRPCRequest& request)
 
     auto ret = UniValue{UniValue::VOBJ};
     ret.pushKV("hashes",tx_arr);
-    return ret;
-}
-
-UniValue revoketickets(const JSONRPCRequest& request)
-{
-    const auto pwallet = GetWalletForJSONRPCRequest(request);
-    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
-        return NullUniValue;
-    }
-
-    if (request.fHelp || request.params.size() != 0)
-        throw std::runtime_error{
-            "revoketickets\n"
-            "\nRequests the wallet create revovactions for any previously missed tickets.  Wallet must be unlocked.\n"
-            "\nArguments:\n"
-            "None\n"
-            "\nResult:\n"
-            "Nothing\n"
-            + HelpExampleCli("revoketickets", "")
-            + HelpExampleRpc("revoketickets", "")
-        };
-
-    auto ret = UniValue{UniValue::VNULL};
     return ret;
 }
 
@@ -3283,6 +3299,7 @@ UniValue purchaseticket(const JSONRPCRequest& request)
         throw std::runtime_error{
             "purchaseticket \"fromaccount\" spendlimit (minconf=1 \"ticketaddress\" numtickets \"pooladdress\" poolfees expiry \"comment\" ticketfee)\n"
             "\nPurchase ticket using available funds.\n"
+            + HelpRequiringPassphrase(pwallet) +
             "\nArguments:\n"
             "1.  \"fromaccount\"     (string, required)             The account to use for purchase (default=\"default\")\n"
             "2.  spendlimit         (numeric, required)            Limit on the amount to spend on ticket\n"
@@ -3300,11 +3317,14 @@ UniValue purchaseticket(const JSONRPCRequest& request)
 
             "\nExamples:\n"
             "\nUse PAI from your default account to purchase a ticket if the current ticket price was a max of 50 PAI\n"
-            + HelpExampleCli("purchaseticket", "\"default\" 50") +
+            + HelpExampleCli("purchaseticket", "\"default\" 50")
+            + HelpExampleRpc("purchaseticket", "\"default\" 50") +
             "\nPurchase 5 tickets, as the 5th argument (numtickets) is set to 5\n"
-            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" 5") +
+            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" 5")
+            + HelpExampleRpc("purchaseticket", "\"default\" 50 1 \"\" 5") +
             "\nPurchase 5 tickets that would expire from the mempool if not mined by block 100,000, as the 8th argument (expiry) is set to 100000\n"
             + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" 5 \"\" 0 100000")
+            + HelpExampleRpc("purchaseticket", "\"default\" 50 1 \"\" 5 \"\" 0 100000")
         };
 
     ObserveSafeMode();
@@ -3370,12 +3390,10 @@ UniValue purchaseticket(const JSONRPCRequest& request)
         results.push_back(txid);
 
     if (r.second.code != CWalletError::SUCCESSFUL) {
-        if (r.first.size() > 0) {
-            UniValue error = JSONRPCErrorFromWalletError(r.second);
+        UniValue error = JSONRPCErrorFromWalletError(r.second);
+        if (r.first.size() > 0)
             error.push_back(Pair("txids", results));
-            throw error;
-        } else
-            throw JSONRPCErrorFromWalletError(r.second);
+        throw error;
     }
 
     return results;
@@ -3392,7 +3410,6 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
         throw std::runtime_error{
             "startticketbuyer \"fromaccount\" maintain (\"passphrase\" \"votingaccount\" \"votingaddress\" \"poolfeeaddress\" poolfees limit)\n"
             "\nStart the automatic ticket buyer with the specified settings.\n"
-            + HelpRequiringPassphrase(pwallet) +
             "\nArguments:\n"
             "1.  \"fromaccount\"      (string, required)   The account to use for purchase (default=\"default\")\n"
             "2.  maintain             (numeric, required)  Minimum amount to maintain in purchasing account\n"
@@ -3404,11 +3421,14 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
             "8.  limit                (numeric, optional)  Limit maximum number of purchased tickets per block\n"
             "\nExamples:\n"
             "\nStart the ticket buyer from your default account to purchase tickets and leaving at least 50 PAI\n"
-            + HelpExampleCli("startticketbuyer", "\"default\" 50") +
+            + HelpExampleCli("startticketbuyer", "\"default\" 50")
+            + HelpExampleRpc("startticketbuyer", "\"default\" 50") +
             "\nStart the ticket buyer from your default account to purchase at most 5 tickets in a block\n"
-            + HelpExampleCli("startticketbuyer", "\"default\" 50 \"\" \"\" \"\" \"\" 0 5") +
+            + HelpExampleCli("startticketbuyer", "\"default\" 50 \"\" \"\" \"\" \"\" 0 5")
+            + HelpExampleRpc("startticketbuyer", "\"default\" 50 \"\" \"\" \"\" \"\" 0 5") +
             "\nStart the ticket buyer from your default account to purchase tickets for a specified voting address\n"
             + HelpExampleCli("startticketbuyer", "\"default\" 50 \"\" \"\" \"my_voting_address\" \"\" 0 5")
+            + HelpExampleRpc("startticketbuyer", "\"default\" 50 \"\" \"\" \"my_voting_address\" \"\" 0 5")
         };
 
     ObserveSafeMode();
@@ -3421,36 +3441,7 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
     const auto&& maintain = AmountFromValue(request.params[1]);
 
     // Passphrase
-    SecureString passphrase;
-    if (!request.params[2].isNull()) {
-        if (!request.params[2].isStr())
-            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid passphrase.");
-
-        passphrase.clear();
-        passphrase.reserve(100);
-        passphrase = request.params[2].get_str().c_str();
-
-        // make sure that any empty representation is correctly handled
-        if (passphrase == "\"\"")
-            passphrase.clear();
-    }
-
-    // verify the validity of the passphrase
-    if (pwallet->IsCrypted()) {
-        if (passphrase.length() > 0) {
-            if (pwallet->IsLocked()) {
-                if (pwallet->Unlock(passphrase))
-                    LockWallet(pwallet);
-                else
-                    throw JSONRPCError(RPCErrorCode::WALLET_PASSPHRASE_INCORRECT, "The wallet passphrase entered is incorrect.");
-            } else {
-                if (!pwallet->VerifyWalletPassphrase(passphrase))
-                    throw JSONRPCError(RPCErrorCode::WALLET_PASSPHRASE_INCORRECT, "The wallet passphrase entered is incorrect.");
-            }
-        } else
-            throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Running with an encrypted wallet, but no passphrase is specified.");
-    } else if (passphrase.length() > 0)
-        throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Running with an unencrypted wallet, but passphrase is specified.");
+    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
 
     // Voting account
     std::string votingAccount;
@@ -3533,6 +3524,7 @@ UniValue stopticketbuyer(const JSONRPCRequest& request)
             "\nStop the automatic ticket buyer. Applies after current purchase iteration.\n"
             "\nExample:\n"
             + HelpExampleCli("stopticketbuyer", "")
+            + HelpExampleRpc("stopticketbuyer", "")
         };
 
     ObserveSafeMode();
@@ -3572,6 +3564,7 @@ UniValue ticketbuyerconfig(const JSONRPCRequest& request)
             "  }\n"
             "\nExample:\n"
             + HelpExampleCli("ticketbuyerconfig", "")
+            + HelpExampleRpc("ticketbuyerconfig", "")
         };
 
     ObserveSafeMode();
@@ -3612,6 +3605,7 @@ UniValue setticketbuyeraccount(const JSONRPCRequest& request)
             "1.  \"fromaccount\"  (string, required)  The account to use for purchase (default=\"default\")\n"
             "\nExample:\n"
             + HelpExampleCli("setticketbuyeraccount", "\"default\"")
+            + HelpExampleRpc("setticketbuyeraccount", "\"default\"")
         };
 
     ObserveSafeMode();
@@ -3643,6 +3637,7 @@ UniValue setticketbuyerbalancetomaintain(const JSONRPCRequest& request)
             "1.  maintain  (numeric, required)  The minimum amount to maintain in purchasing account\n"
             "\nExample:\n"
             + HelpExampleCli("setticketbuyerbalancetomaintain", "50")
+            + HelpExampleRpc("setticketbuyerbalancetomaintain", "50")
         };
 
     ObserveSafeMode();
@@ -3674,6 +3669,7 @@ UniValue setticketbuyervotingaddress(const JSONRPCRequest& request)
             "1.  \"votingaddress\"  (string, required)  The address to assign voting rights\n"
             "\nExample:\n"
             + HelpExampleCli("setticketbuyervotingaddress", "your_address")
+            + HelpExampleRpc("setticketbuyervotingaddress", "your_address")
         };
 
     ObserveSafeMode();
@@ -3716,6 +3712,7 @@ UniValue setticketbuyerpooladdress(const JSONRPCRequest& request)
             "1.  \"pooladdress\"  (string, required)  The address to pay stake pool fees to\n"
             "\nExample:\n"
             + HelpExampleCli("setticketbuyerpooladdress", "address_of_the_pool")
+            + HelpExampleRpc("setticketbuyerpooladdress", "address_of_the_pool")
         };
 
     ObserveSafeMode();
@@ -3758,6 +3755,7 @@ UniValue setticketbuyerpoolfees(const JSONRPCRequest& request)
             "1.  poolfees  (numeric, required)  The amount of fees to pay to the stake pool\n"
             "\nExample:\n"
             + HelpExampleCli("setticketbuyerpoolfees", "1.23")
+            + HelpExampleRpc("setticketbuyerpoolfees", "1.23")
         };
 
     ObserveSafeMode();
@@ -3790,9 +3788,10 @@ UniValue setticketbuyermaxperblock(const JSONRPCRequest& request)
             "setticketbuyermaxperblock limit\n"
             "\nConfigure the maximum number of purchased tickets per block when automatically purchasing tickets.\n"
             "\nArguments:\n"
-            "1.  setticketbuyermaxperblock  (numeric, required)  The maximum number of purchased tickets per block\n"
+            "1.  limit  (numeric, required)  The maximum number of purchased tickets per block\n"
             "\nExample:\n"
             + HelpExampleCli("setticketbuyermaxperblock", "1")
+            + HelpExampleRpc("setticketbuyermaxperblock", "1")
         };
 
     ObserveSafeMode();
@@ -3824,6 +3823,7 @@ UniValue generatevote(const JSONRPCRequest& request)
         throw std::runtime_error{
             "generatevote \"blockhash\" height \"tickethash\" votebits \"votebitsext\"\n"
             "\nReturns the hash of the vote transaction\n"
+            + HelpRequiringPassphrase(pwallet) +
             "\nArguments:\n"
             "1.  blockhash    (string, required)  Hash of the block containing the corresponding ticket\n"
             "2.  height       (numeric, required) Height of the block containing the corresponding ticket\n"
@@ -3838,6 +3838,7 @@ UniValue generatevote(const JSONRPCRequest& request)
 
             "\nExamples:\n"
             + HelpExampleCli("generatevote", "\"blockhash\" 50 \"tickethash\" 1 \"ext\"")
+            + HelpExampleRpc("generatevote", "\"blockhash\" 50 \"tickethash\" 1 \"ext\"")
         };
 
     ObserveSafeMode();
@@ -3905,18 +3906,20 @@ UniValue startautovoter(const JSONRPCRequest& request)
         throw std::runtime_error{
             "startautovoter votebits (votebitsext \"passphrase\")\n"
             "\nStart the automatic voter with the specified settings.\n"
-            + HelpRequiringPassphrase(pwallet) +
             "\nArguments:\n"
             "1.  votebits         (numeric, required)  Decimal representation of the 16 bits with the vote intention\n"
             "2.  votebitsext      (string, optional)   Extra bits with vote options. If not specified, the default value will be used (0x00).\n"
             "3.  \"passphrase\"   (string, optional)   Passphrase to use for unlocking the wallet\n"
             "\nExamples:\n"
             "\nStart the automatic voter with the intention to accept the previous block's regular transaction tree\n"
-            + HelpExampleCli("startautovoter", "1") +
+            + HelpExampleCli("startautovoter", "1")
+            + HelpExampleRpc("startautovoter", "1") +
             "\nStart the automatic voter with the intention to reject the previous block's regular transaction tree\n"
-            + HelpExampleCli("startautovoter", "0") +
+            + HelpExampleCli("startautovoter", "0")
+            + HelpExampleRpc("startautovoter", "0") +
             "\nStart the automatic voter on an encrypted wallet with the intention to accept the previous block's regular transaction tree, no extended vote options\n"
             + HelpExampleCli("startautovoter", "1 \"\" \"some-password\"")
+            + HelpExampleRpc("startautovoter", "1 \"\" \"some-password\"")
         };
 
     ObserveSafeMode();
@@ -3946,36 +3949,7 @@ UniValue startautovoter(const JSONRPCRequest& request)
     }
 
     // Passphrase
-    SecureString passphrase;
-    if (!request.params[2].isNull()) {
-        if (!request.params[2].isStr())
-            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid passphrase.");
-
-        passphrase.clear();
-        passphrase.reserve(100);
-        passphrase = request.params[2].get_str().c_str();
-
-        // make sure that any empty representation is correctly handled
-        if (passphrase == "\"\"")
-            passphrase.clear();
-    }
-
-    // verify the validity of the passphrase
-    if (pwallet->IsCrypted()) {
-        if (passphrase.length() > 0) {
-            if (pwallet->IsLocked()) {
-                if (pwallet->Unlock(passphrase))
-                    LockWallet(pwallet);
-                else
-                    throw JSONRPCError(RPCErrorCode::WALLET_PASSPHRASE_INCORRECT, "The wallet passphrase entered is incorrect.");
-            } else {
-                if (!pwallet->VerifyWalletPassphrase(passphrase))
-                    throw JSONRPCError(RPCErrorCode::WALLET_PASSPHRASE_INCORRECT, "The wallet passphrase entered is incorrect.");
-            }
-        } else
-            throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Running with an encrypted wallet, but no passphrase is specified.");
-    } else if (passphrase.length() > 0)
-        throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Running with an unencrypted wallet, but passphrase is specified.");
+    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
 
     CAutoVoter *av = pwallet->GetAutoVoter();
     if (av == nullptr)
@@ -4004,6 +3978,7 @@ UniValue stopautovoter(const JSONRPCRequest& request)
             "\nStop the automatic voter. Applies after current vote iteration.\n"
             "\nExample:\n"
             + HelpExampleCli("stopautovoter", "")
+            + HelpExampleRpc("stopautovoter", "")
         };
 
     ObserveSafeMode();
@@ -4037,6 +4012,7 @@ UniValue autovoterconfig(const JSONRPCRequest& request)
             "  }\n"
             "\nExample:\n"
             + HelpExampleCli("autovoterconfig", "")
+            + HelpExampleRpc("autovoterconfig", "")
         };
 
     ObserveSafeMode();
@@ -4071,6 +4047,7 @@ UniValue setautovotervotebits(const JSONRPCRequest& request)
             "1.  votebits           (numeric, required)  Decimal representation of the 16 bits with the vote intention\n"
             "\nExample:\n"
             + HelpExampleCli("setautovotervotebits", "1")
+            + HelpExampleRpc("setautovotervotebits", "1")
         };
 
     ObserveSafeMode();
@@ -4111,6 +4088,7 @@ UniValue setautovotervotebitsext(const JSONRPCRequest& request)
             "1.  votebitsext           (numeric, required)  Extra bits with vote options\n"
             "\nExample:\n"
             + HelpExampleCli("setautovotervotebitsext", "\"extra vote bits\"")
+            + HelpExampleRpc("setautovotervotebitsext", "\"extra vote bits\"")
         };
 
     ObserveSafeMode();
@@ -4135,6 +4113,192 @@ UniValue setautovotervotebitsext(const JSONRPCRequest& request)
     cfg.extendedVoteBits = extendedVoteBits;
 
     return NullUniValue;
+}
+
+UniValue revoketicket(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "revoketicket \"tickethash\"\n"
+            "\nCreates and published a revocation transaction and returns its hash.\n"
+            + HelpRequiringPassphrase(pwallet) +
+            "\nArguments:\n"
+            "1.  tickethash   (string, required)  Hash of the corresponding ticket\n"
+
+            "\nResult:\n"
+            "{\n"
+            " \"hex\": \"value\", (string) Hash of resulting revocation transaction\n"
+            "}\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("revoketicket", "\"tickethash\"")
+            + HelpExampleRpc("revoketicket", "\"tickethash\"")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    // ticket hash
+    if (!request.params[0].isStr())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid ticket hash.");
+
+    uint256 ticketHash = uint256S(request.params[0].get_str());
+
+    const auto&& r = pwallet->Revoke(ticketHash);
+    if (r.first.size() == 0 || r.second.code != CWalletError::SUCCESSFUL)
+        throw JSONRPCErrorFromWalletError(r.second);
+
+    UniValue result{UniValue::VOBJ};
+    result.push_back(Pair("hex", r.first));
+
+    return result;
+}
+
+UniValue revoketickets(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error{
+            "revoketickets\n"
+            "\nCreates and publishes revocation transactions for all the wallet's missed tickets and returns their hashes.\n"
+            + HelpRequiringPassphrase(pwallet) +
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "\"value\"              (string) Hashes of resulting ticket transactions\n"
+            + HelpExampleCli("revoketickets", "")
+            + HelpExampleRpc("revoketickets", "")
+    };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    const auto&& r = pwallet->RevokeAll();
+
+    UniValue results{UniValue::VARR};
+    for (auto&& txid: r.first)
+        results.push_back(txid);
+
+    if (r.second.code != CWalletError::SUCCESSFUL) {
+        UniValue error = JSONRPCErrorFromWalletError(r.second);
+        if (r.first.size() > 0)
+            error.push_back(Pair("txids", results));
+        throw error;
+    }
+
+    return results;
+}
+
+UniValue startautorevoker(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error{
+            "startautorevoker (\"passphrase\")\n"
+            "\nStart the automatic revoker.\n"
+            "\nArguments:\n"
+            "1.  \"passphrase\"   (string, optional)   Passphrase to use for unlocking the wallet\n"
+            "\nExamples:\n"
+            "\nStart the automatic revoker on a non-encrypted wallet\n"
+            + HelpExampleCli("startautorevoker", "")
+            + HelpExampleRpc("startautorevoker", "") +
+            "\nStart the automatic revoker on an encrypted wallet\n"
+            + HelpExampleCli("startautorevoker", "\"some-password\"")
+            + HelpExampleRpc("startautorevoker", "\"some-password\"")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    // Passphrase
+    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[0]);
+
+    CAutoRevoker *ar = pwallet->GetAutoRevoker();
+    if (ar == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic revoker not found.");
+
+    CAutoRevokerConfig& cfg = ar->GetConfig();
+    cfg.passphrase = passphrase;
+
+    ar->start();
+
+    return NullUniValue;
+}
+
+UniValue stopautorevoker(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error{
+            "stopautorevoker\n"
+            "\nStop the automatic revoker. Applies after current revoke iteration.\n"
+            "\nExample:\n"
+            + HelpExampleCli("stopautorevoker", "")
+            + HelpExampleRpc("stopautorevoker", "")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CAutoRevoker *ar = pwallet->GetAutoRevoker();
+    if (ar == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic revoker not found.");
+
+    ar->stop();
+
+    return NullUniValue;
+}
+
+UniValue autorevokerconfig(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error{
+            "autorevokerconfig\n"
+            "\nReturns the automatic revoker settings.\n"
+            "\nResult\n"
+            "{\n"
+            "  \"autorevoke\" : true|false,         (boolean)  true if the automatic revoker is running\n"
+            "  }\n"
+            "\nExample:\n"
+            + HelpExampleCli("autorevokerconfig", "")
+            + HelpExampleRpc("autorevokerconfig", "")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CAutoRevoker *ar = pwallet->GetAutoRevoker();
+    if (ar == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic revoker not found.");
+
+    CAutoRevokerConfig& cfg = ar->GetConfig();
+
+    UniValue result{UniValue::VOBJ};
+    result.push_back(Pair("autorevoke", cfg.autoRevoke));
+
+    return result;
 }
 
 UniValue fundrawtransaction(const JSONRPCRequest& request)
@@ -5150,7 +5314,6 @@ static const CRPCCommand commands[] =
     { "wallet",             "getreceivedbyaddress",             &getreceivedbyaddress,              {"address","minconf"} },
     { "wallet",             "getticketfee",                     &getticketfee,                      {} },
     { "wallet",             "gettickets",                       &gettickets,                        {"includeimmature"} },
-    { "wallet",             "revoketickets",                    &revoketickets,                     {} },
     { "wallet",             "setticketfee",                     &setticketfee,                      {"fee"} },
     { "wallet",             "listtickets",                      &listtickets,                       {} },
     { "wallet",             "gettransaction",                   &gettransaction,                    {"txid","include_watchonly"} },
@@ -5190,6 +5353,11 @@ static const CRPCCommand commands[] =
     { "wallet",             "autovoterconfig",                  &autovoterconfig,                   {} },
     { "wallet",             "setautovotervotebits",             &setautovotervotebits,              {"votebits"} },
     { "wallet",             "setautovotervotebitsext",          &setautovotervotebitsext,           {"votebitsext"} },
+    { "wallet",             "revoketicket",                     &revoketicket,                      {"tickethash"} },
+    { "wallet",             "revoketickets",                    &revoketickets,                     {} },
+    { "wallet",             "startautorevoker",                 &startautorevoker,                  {"passphrase"} },
+    { "wallet",             "stopautorevoker",                  &stopautorevoker,                   {} },
+    { "wallet",             "autorevokerconfig",                &autorevokerconfig,                 {} },
     { "wallet",             "listwallets",                      &listwallets,                       {} },
     { "wallet",             "listscripts",                      &listscripts,                       {} },
     { "wallet",             "lockunspent",                      &lockunspent,                       {"unlock","transactions"} },
