@@ -298,7 +298,7 @@ public:
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
-        consensus.HybridConsensusHeight = -1; // Never
+        consensus.HybridConsensusHeight = 150; // must be above coinbase maturity (>100)
         consensus.powLimit = TESTNET_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -341,8 +341,8 @@ public:
         consensus.nStakeDiffWindows            = 20;
         consensus.nStakeVersionInterval        = 144 * 2 * 7; // ~2 weeks
         consensus.nMaxFreshStakePerBlock       = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight          = 116;         // consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
-        consensus.nStakeValidationHeight       = 768;         // Arbitrary chosen into the future; height is 46261 at the moment
+        consensus.nStakeEnabledHeight          = 166;// consensus.HybridConsensusHeight + consensus.nTicketMaturity;
+        consensus.nStakeValidationHeight       = 200;// must be above nStakeEnabledHeight
         consensus.stakeBaseSigScript           = CScript() << 0x00 << 0x00;
         consensus.nStakeMajorityMultiplier     = 3;
         consensus.nStakeMajorityDivisor        = 4;
