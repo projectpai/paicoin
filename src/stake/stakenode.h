@@ -80,9 +80,9 @@ class StakeNode final
 {
 private:
     uint32_t                    height;
-    TicketTreapPtr              liveTickets;
-    TicketTreapPtr              missedTickets;
-    TicketTreapPtr              revokedTickets;
+    TicketTreap                 liveTickets;
+    TicketTreap                 missedTickets;
+    TicketTreap                 revokedTickets;
     UndoTicketDataVector        databaseUndoUpdate;
     HashVector                  databaseBlockTickets;
     HashVector                  nextWinners;
@@ -91,22 +91,19 @@ private:
 
 public:
 
-    void SetNull()
-    {
-        height = 0;
-        liveTickets = std::make_shared<TicketTreap>();
-        missedTickets = std::make_shared<TicketTreap>();
-        revokedTickets = std::make_shared<TicketTreap>();
-        databaseUndoUpdate = UndoTicketDataVector{};
-        databaseBlockTickets = HashVector{};
-        nextWinners = HashVector{};
-        finalState = StakeState{};
-    }
 
     StakeNode(const Consensus::Params& consensus_params)
-      : params(consensus_params)
+    : height(0),
+      liveTickets(),
+      missedTickets(),
+      revokedTickets(),
+      databaseUndoUpdate(),
+      databaseBlockTickets(),
+      nextWinners(),
+      finalState(),
+      params(consensus_params)
     {
-        SetNull();
+        ;
     }
 
     StakeNode(const StakeNode& other)
@@ -125,9 +122,9 @@ public:
 
     StakeNode(
           uint32_t              _height,
-    const TicketTreapPtr&       _liveTickets,
-    const TicketTreapPtr&       _missedTickets,
-    const TicketTreapPtr&       _revokedTickets,
+    const TicketTreap&       _liveTickets,
+    const TicketTreap&       _missedTickets,
+    const TicketTreap&       _revokedTickets,
     const UndoTicketDataVector& _databaseUndoUpdate,
     const HashVector&           _databaseBlockTickets,
     const HashVector&           _nextWinners,

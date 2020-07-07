@@ -54,13 +54,13 @@ bool TicketTreap::has(const uint256& key) const
     return false;
 }
 
-ValuePtr TicketTreap::get(const uint256& key) const
+boost::optional<Value> TicketTreap::get(const uint256& key) const
 {
     auto node = get_node(key);
     if (node != nullptr) {
         return node->value;
     }
-    return nullptr;
+    return {};
 }
 
 bool TicketTreap::isHeap() const
@@ -77,16 +77,16 @@ KeyValuePair TicketTreap::getByIndex(int idx) const
     return root->getByIndex(idx);
 }
 
-TicketTreap TicketTreap::put(const uint256& key, const ValuePtr& value) const
+TicketTreap TicketTreap::put(const uint256& key, const Value& value) const
 {
-    // Nothing to do if a nil value is passed.
-    if (value == nullptr) {
-        return *this;
-    }
+    // // Nothing to do if a nil value is passed.
+    // if (value == nullptr) {
+    //     return std::make_shared<TicketTreap>(*this);
+    // }
 
     // The node is the root of the tree if there isn't already one.
     if (root == nullptr) {
-        auto root = std::make_shared<TreapNode>(key, value, value->height);
+        auto root = std::make_shared<TreapNode>(key, value, value.height);
         return TicketTreap(root, 1, sizeof(TreapNode));
     }
 
@@ -103,7 +103,7 @@ TicketTreap TicketTreap::put(const uint256& key, const ValuePtr& value) const
     int compareResult;
     for (auto node = root; node != nullptr;) {
         // Clone the node and link its parent to it if needed.
-        auto nodeCopy = std::make_shared<TreapNode>(*node);
+        auto nodeCopy = node->clone();
         auto oldParent = parents.at(0);
         if (oldParent != nullptr) {
             if (oldParent->left == node) {
@@ -137,7 +137,7 @@ TicketTreap TicketTreap::put(const uint256& key, const ValuePtr& value) const
     }
 
     // Recompute the size member of all parents, to account for inserted item.
-    auto node = std::make_shared<TreapNode>(key, value, value->height);
+    auto node = std::make_shared<TreapNode>(key, value, value.height);
     for (int i = 0; i < parents.len(); ++i) {
         parents.at(i)->size++;
     }
@@ -209,7 +209,6 @@ TicketTreap TicketTreap::deleteKey(const uint256& key) const
     auto parents = ParentStack();
     auto delNode = TreapNodePtr();
 
-    // TODO probably replace with call of get_node
     for (auto node = root; node != nullptr;) {
         parents.push(node);
 
@@ -249,7 +248,7 @@ TicketTreap TicketTreap::deleteKey(const uint256& key) const
     auto newParents = ParentStack();
     for (int i = parents.len(); i > 0; --i) {
         auto node = parents.at(i - 1);
-        auto nodeCopy = node;
+        auto nodeCopy = node->clone();
         --nodeCopy->size;
         auto oldParent = newParents.at(0);
         if (oldParent != nullptr) {
@@ -287,7 +286,7 @@ TicketTreap TicketTreap::deleteKey(const uint256& key) const
         // is on.  This has the effect of moving the node to delete
         // towards the bottom of the tree while maintaining the
         // min-heap.
-        child = std::make_shared<TreapNode>(*child);
+        child = child->clone();
         if (isLeft) {
             child->size += delNode->rightSize();
             auto t1 = delNode;

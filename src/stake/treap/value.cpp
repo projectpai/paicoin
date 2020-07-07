@@ -18,15 +18,6 @@ Value::Value(uint32_t height) :
 {
 }
 
-Value::Value(const Value& other) :
-    height(other.height),
-    missed(other.missed),
-    revoked(other.revoked),
-    spent(other.spent),
-    expired(other.expired)
-{
-}
-
 bool operator==(const Value& lhs, const Value& rhs)
 {
     return lhs.height  == rhs.height

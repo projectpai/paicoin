@@ -210,9 +210,8 @@ class WalletTicketOperations(PAIcoinTestFramework):
 
         # revoketickets tests:
         # 1. valid parameters
-        x = self.nodes[0].revoketickets()
-        assert(x == None)
-        # TODO make this test have valid input and output once the command is implemented
+        # no parameters is valid but we are at a very low height
+        assert_raises_rpc_error(-8, None, self.nodes[0].revoketickets) #height is lower then expected
         # 2. invalid parameters
         assert_raises_rpc_error(-1, None, self.nodes[0].revoketickets, "param1")
         assert_raises_rpc_error(-1, None, self.nodes[0].revoketickets, "param1", "param2")
