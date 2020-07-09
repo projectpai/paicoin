@@ -12,6 +12,4 @@ CAutoRevokerConfig::CAutoRevokerConfig() :
 
 void CAutoRevokerConfig::ParseCommandline()
 {
-    if (gArgs.IsArgSet("-autoRevoke"))
-        autoRevoke = gArgs.GetBoolArg("-autoRevoke", false);
 }

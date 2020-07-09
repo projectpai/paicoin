@@ -36,18 +36,19 @@ void CAutoRevoker::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockInd
 
     LOCK2(cs_main, pwallet->cs_wallet);
 
-    // unlock wallet
-    bool shouldRelock = pwallet->IsLocked();
-    if (shouldRelock && ! pwallet->Unlock(config.passphrase)) {
-        LogPrintf("CAutoRevoker: Unlocking wallet: Wrong passphrase");
-        return;
-    }
-
     const CBlockIndex* tip = chainActive.Tip();
 
     // check if the new tip is indeed on chain active
-    if (pindexNew == nullptr || tip == nullptr || pindexNew->GetBlockHash() != tip->GetBlockHash()) {
-        if (shouldRelock) pwallet->Lock();
+    if (pindexNew == nullptr || tip == nullptr || pindexNew->GetBlockHash() != tip->GetBlockHash())
+        return;
+
+    if (tip->nHeight < Params().GetConsensus().nStakeValidationHeight - 1)
+        return;
+
+    // unlock wallet
+    bool shouldRelock = pwallet->IsLocked();
+    if (shouldRelock && ! pwallet->Unlock(config.passphrase)) {
+        LogPrintf("CAutoRevoker: Unlocking wallet: Wrong passphrase\n");
         return;
     }
 
@@ -63,7 +64,7 @@ void CAutoRevoker::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockInd
     if (shouldRelock) pwallet->Lock();
 
     if (we.code != CWalletError::SUCCESSFUL)
-        LogPrintf("CAutoRevoker: Failed to revoke: (%d) %s - (%s)", we.code, we.message.c_str());
+        LogPrintf("CAutoRevoker: Failed to revoke: (%d) %s\n", we.code, we.message.c_str());
 
     if (revocationHashes.size() > 0) {
         std::string hashes;
@@ -72,7 +73,7 @@ void CAutoRevoker::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockInd
                 hashes += ", ";
             hashes += h;
         }
-        LogPrintf("CAutoRevoker: Revoked: %s", hashes.c_str());
+        LogPrintf("CAutoRevoker: Revoked: %s\n", hashes.c_str());
     }
 }
 

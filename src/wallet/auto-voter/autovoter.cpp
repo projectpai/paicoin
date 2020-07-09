@@ -36,28 +36,26 @@ void CAutoVoter::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex
 
     LOCK2(cs_main, pwallet->cs_wallet);
 
-    // unlock wallet
-    bool shouldRelock = pwallet->IsLocked();
-    if (shouldRelock && ! pwallet->Unlock(config.passphrase)) {
-        LogPrintf("CAutoVoter: Unlocking wallet: Wrong passphrase");
-        return;
-    }
-
     const CBlockIndex* tip = chainActive.Tip();
 
     // check if the new tip is indeed on chain active
-    if (pindexNew == nullptr || tip == nullptr || pindexNew->GetBlockHash() != tip->GetBlockHash()) {
-        if (shouldRelock) pwallet->Lock();
-        return;
-    }
-
-    const uint256& blockHash = tip->GetBlockHash();
-    if (blockHash == uint256())
+    if (pindexNew == nullptr || tip == nullptr || pindexNew->GetBlockHash() != tip->GetBlockHash())
         return;
 
     const int& blockHeight = tip->nHeight;
     if (blockHeight < Params().GetConsensus().nStakeValidationHeight - 1)
         return;
+
+    const uint256& blockHash = tip->GetBlockHash();
+    if (blockHash == uint256())
+        return;
+
+    // unlock wallet
+    bool shouldRelock = pwallet->IsLocked();
+    if (shouldRelock && ! pwallet->Unlock(config.passphrase)) {
+        LogPrintf("CAutoVoter: Unlocking wallet: Wrong passphrase\n");
+        return;
+    }
 
     // verify each winning ticket in the previous block and
     // if it belongs to the wallet, cast a vote according to the
@@ -76,7 +74,7 @@ void CAutoVoter::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex
         if (we.code == CWalletError::SUCCESSFUL && !voteHash.empty())
             voteHashes.push_back(voteHash);
         else
-            LogPrintf("CAutoVoter: Failed to vote: (%d) %s - (%s)", we.code, we.message.c_str(), voteHash.c_str());
+            LogPrintf("CAutoVoter: Failed to vote: (%d) %s - (%s)\n", we.code, we.message.c_str(), voteHash.c_str());
     }
 
     if (shouldRelock) pwallet->Lock();
@@ -88,7 +86,7 @@ void CAutoVoter::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex
                 hashes += ", ";
             hashes += h;
         }
-        LogPrintf("CAutoVoter: Voted: %s", hashes.c_str());
+        LogPrintf("CAutoVoter: Voted: %s\n", hashes.c_str());
     }
 }
 

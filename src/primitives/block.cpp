@@ -43,13 +43,12 @@ std::string CBlock::ToString() const
 void CBlockHeader::SetReadStakeDefaultBeforeFork()
 {
     nStakeDifficulty = Params().GetConsensus().nMinimumStakeDiff;
-    // TODO add more stake defaults as needed
-    // nVoteBits = VoteBits::rttAccepted;
-    // nTicketPoolSize = 0;
-    // ticketLotteryState.SetNull();
-    // nVoters = 0;
-    // nFreshStake = 0;
-    // nRevocations = 0;
-    // std::fill(std::begin(extraData), std::end(extraData), 0);
-    // nStakeVersion = 0;
+    nVoteBits = VoteBits::rttAccepted;
+    nTicketPoolSize = 0;
+    ticketLotteryState.SetNull();
+    nVoters = 0;
+    nFreshStake = 0;
+    nRevocations = 0;
+    std::fill(std::begin(extraData), std::end(extraData), 0);
+    nStakeVersion = 0;
 }

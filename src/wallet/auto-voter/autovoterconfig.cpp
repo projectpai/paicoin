@@ -13,6 +13,19 @@ CAutoVoterConfig::CAutoVoterConfig() :
 
 void CAutoVoterConfig::ParseCommandline()
 {
-    if (gArgs.IsArgSet("-autoVote"))
-        autoVote = gArgs.GetBoolArg("-autoVote", false);
+    if (gArgs.IsArgSet("-avvotebits")) {
+        int64_t vb = gArgs.GetArg("-avvotebits", 1);
+        if (vb >= std::numeric_limits<uint16_t>().min() || vb <= std::numeric_limits<uint16_t>().max())
+            voteBits = VoteBits(static_cast<uint16_t>(vb));
+        else
+            LogPrintf("ERROR: automatic vote bits out of range %lld. Using default: %d", vb, VoteBits().getBits());
+    }
+
+    if (gArgs.IsArgSet("-avextendedvotebits")) {
+        std::string evb = gArgs.GetArg("-avextendedvotebits", "");
+        if (ExtendedVoteBits::containsValidExtendedVoteBits(evb))
+            extendedVoteBits = ExtendedVoteBits(evb);
+        else
+            LogPrintf("ERROR: automatic extended vote bits are note valid %s. Using default: %s", evb, ExtendedVoteBits().getHex());
+    }
 }

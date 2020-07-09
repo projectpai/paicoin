@@ -147,18 +147,21 @@ public:
     CBlockHeader GetBlockHeader() const
     {
         CBlockHeader block;
-        block.nVersion       = nVersion;
-        block.hashPrevBlock  = hashPrevBlock;
-        block.hashMerkleRoot = hashMerkleRoot;
-        block.nTime          = nTime;
-        block.nBits          = nBits;
-        block.nNonce         = nNonce;
-        block.nVoteBits      = nVoteBits;
-        block.nStakeDifficulty = nStakeDifficulty;
-        block.nTicketPoolSize = nTicketPoolSize;
-        block.ticketLotteryState = ticketLotteryState;
-        block.nFreshStake    = nFreshStake;
-        block.nStakeVersion  = nStakeVersion;
+        block.nVersion              = nVersion;
+        block.hashPrevBlock         = hashPrevBlock;
+        block.hashMerkleRoot        = hashMerkleRoot;
+        block.nTime                 = nTime;
+        block.nBits                 = nBits;
+        block.nNonce                = nNonce;
+        block.nVoteBits             = nVoteBits;
+        block.nStakeDifficulty      = nStakeDifficulty;
+        block.nTicketPoolSize       = nTicketPoolSize;
+        block.ticketLotteryState    = ticketLotteryState;
+        block.nVoters               = nVoters;
+        block.nFreshStake           = nFreshStake;
+        block.nRevocations          = nRevocations;
+        std::copy(extraData, extraData+sizeof(extraData), block.extraData);
+        block.nStakeVersion         = nStakeVersion;
         return block;
     }
 
