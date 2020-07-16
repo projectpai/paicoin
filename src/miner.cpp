@@ -172,12 +172,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             if (std::find(winningHashes.begin(), winningHashes.end(), spentTicketHash) == winningHashes.end())
                 continue; //not a winner
 
-            // tally votes already done in CheckBlock validation.cpp
-            // VoteData voteData;
-            // ParseVote(tx.GetTx(), voteData);
-
-            // voteData.voteBits
-
             // tx must be included in the block
             auto txiter = mempool.mapTx.project<0>(votetxiter);
             AddToBlock(txiter);

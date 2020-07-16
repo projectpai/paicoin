@@ -2075,8 +2075,7 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
     // outputs
 
     // transaction declaration (block being voted, the vote and stake version)
-    // TODO: use the correct voterStakeVersion!!!
-    VoteData voteData{1, blockHash, static_cast<uint32_t>(blockHeight), voteBits, 0, extendedVoteBits};
+    VoteData voteData{1, blockHash, static_cast<uint32_t>(blockHeight), voteBits, defaultVoterStakeVersion, extendedVoteBits};
     CScript declScript = GetScriptForVoteDecl(voteData);
     mVoteTx.vout.push_back(CTxOut(0, declScript));
 

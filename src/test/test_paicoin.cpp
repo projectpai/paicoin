@@ -252,9 +252,8 @@ CMutableTransaction Generator::CreateVoteTx(const uint256& voteBlockHash, int vo
 
     // create a structured OP_RETURN output containing tx declaration and voting data
     int voteVersion = 1;
-    uint32_t voterStakeVersion = 0;
     ExtendedVoteBits extendedVoteBits;
-    VoteData voteData = { voteVersion, voteBlockHash, static_cast<uint32_t>(voteBlockHeight), voteBits, voterStakeVersion, extendedVoteBits };
+    VoteData voteData = { voteVersion, voteBlockHash, static_cast<uint32_t>(voteBlockHeight), voteBits, defaultVoterStakeVersion, extendedVoteBits };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 
