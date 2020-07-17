@@ -28,16 +28,16 @@ spec:
 
 ---
 
-apiVersion: v1
-kind: Service
-metadata:
-  name: cpuminer-service
-spec:
-  clusterIP: None
-  selector:
-    app: cpuminer-live
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: cpuminer-service
+# spec:
+#   clusterIP: None
+#   selector:
+#     app: cpuminer-live
 
----
+# ---
 
 apiVersion: v1
 kind: Service
@@ -180,13 +180,66 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  name: miningcore
+spec:
+  selector:
+    matchLabels:
+      app: miningcore-live
+  serviceName: miningcore-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: miningcore-live
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:latest
+        imagePullPolicy: Never
+        env:
+         - name: POSTGRES_USER
+           value: miningcore # creates both user and db with same name
+         - name: POSTGRES_PASSWORD
+           value: miningcore1234
+        ports:
+          - containerPort: 5432
+      - name: miningcore
+        image: miningcore:latest
+        imagePullPolicy: Never
+        env:
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: PHONE_NUMBER_UNIQUE
+          value: "000"
+        - name: PAICOIND_HOST
+          value: "$(PAICOIN_SERVICE2_SERVICE_HOST)"
+        - name: PAICOIND_PORT
+          value: "$(PAICOIN_SERVICE2_SERVICE_PORT_RPC)"
+        - name: PAICOIND_USER
+          value: paicoin
+        - name: PAICOIND_PASSWORD
+          value: PAI
+        - name: PAYMENT_SCHEME
+          value: PPLNS
+        - name: POOL_ADDRESS
+          value: 2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK
+      initContainers:
+      - name: init-paicoin-service
+        image: busybox:1.28
+        command: ['sh', '-c', "until nslookup paicoin-service2; do echo waiting for paicoin-service2; sleep 2; done"]
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
   name: cpuminer
 spec:
   selector:
     matchLabels:
       app: cpuminer-live
   serviceName: cpuminer-service
-  replicas: 1
+  replicas: 0
   template:
     metadata:
       labels:
@@ -217,7 +270,7 @@ spec:
     matchLabels:
       app: explorer-live
   serviceName: explorer-service
-  replicas: 1
+  replicas: 0
   template:
     metadata:
       labels:
