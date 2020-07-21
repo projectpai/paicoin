@@ -1,12 +1,13 @@
 #include "stake/stakenode.h"
 #include "stake/hash256prng.h"
 #include "hash.h"
+#include "tinyformat.h"
 
 std::string StakeStateToString(const StakeState& stakeState)
 {
     std::string str;
     for (auto c : stakeState)
-        str += std::to_string((int)c) + " ";
+        str += strprintf("%02x", c);
     return str;
 }
 

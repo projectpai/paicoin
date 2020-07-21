@@ -678,12 +678,21 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     result.push_back(Pair("height", static_cast<int64_t>((pindexPrev->nHeight+1))));
 
     if (IsHybridConsensusForkEnabled(pindexPrev, Params().GetConsensus())) {
-        result.push_back(Pair("stakedifficulty", std::to_string(pblock->nStakeDifficulty)));
-        result.push_back(Pair("votebits", strprintf("%04x", pblock->nVoteBits.getBits())));
-        result.push_back(Pair("ticketpoolsize", strprintf("%08x", pblock->nTicketPoolSize)));
+        // large values are not correctly interpreted by the miner, thus we use hex strings where needed
+        result.push_back(Pair("stakedifficulty", strprintf("%016x", pblock->nStakeDifficulty)));
+        result.push_back(Pair("votebits", pblock->nVoteBits.getBits()));
+        result.push_back(Pair("ticketpoolsize", static_cast<int64_t>(pblock->nTicketPoolSize)));
         result.push_back(Pair("ticketlotterystate", StakeStateToString(pblock->ticketLotteryState)));
-        result.push_back(Pair("stakeversion", strprintf("%08x", pblock->nStakeVersion)));
+        result.push_back(Pair("voters", pblock->nVoters));
         result.push_back(Pair("freshstake", pblock->nFreshStake));
+        result.push_back(Pair("revocations", pblock->nRevocations));
+
+        std::string extraData;
+        for (auto& byte: pblock->extraData)
+            extraData += strprintf("%02x", byte);
+        result.push_back(Pair("extradata", extraData));
+
+        result.push_back(Pair("stakeversion", static_cast<int64_t>(pblock->nStakeVersion)));
     }
 
     if (!pblocktemplate->vchCoinbaseCommitment.empty() && fSupportsSegwit) {

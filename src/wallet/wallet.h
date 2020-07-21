@@ -45,6 +45,10 @@ extern unsigned int nTxConfirmTarget;
 extern bool bSpendZeroConfChange;
 extern bool fWalletRbf;
 
+extern bool fAutoBuy;
+extern bool fAutoVote;
+extern bool fAutoRevoke;
+
 static const unsigned int DEFAULT_KEYPOOL_SIZE = 1000;
 //! -paytxfee default
 static const CAmount DEFAULT_TRANSACTION_FEE = 0;
@@ -68,6 +72,12 @@ static const bool DEFAULT_WALLET_REJECT_LONG_CHAINS = false;
 static const unsigned int DEFAULT_TX_CONFIRM_TARGET = 6;
 //! -walletrbf default
 static const bool DEFAULT_WALLET_RBF = false;
+//! -autobuy default
+static const bool DEFAULT_AUTO_BUY = false;
+//! -autovote default
+static const bool DEFAULT_AUTO_VOTE = false;
+//! -autorevoke default
+static const bool DEFAULT_AUTO_REVOKE = false;
 static const bool DEFAULT_WALLETBROADCAST = true;
 static const bool DEFAULT_DISABLE_WALLET = false;
 //! if set, all keys will be derived by using BIP32
@@ -804,8 +814,11 @@ public:
         ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
         autoVoter = MakeUnique<CAutoVoter>(this);
+        if (fAutoVote) autoVoter->start();
         autoRevoker = MakeUnique<CAutoRevoker>(this);
+        if (fAutoRevoke) autoRevoker->start();
         ticketBuyer = MakeUnique<CTicketBuyer>(this);
+        ticketBuyer->GetConfig().buyTickets = fAutoBuy;
         SetNull();
     }
 
@@ -815,8 +828,11 @@ public:
         ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
         autoVoter = MakeUnique<CAutoVoter>(this);
+        if (fAutoVote) autoVoter->start();
         autoRevoker = MakeUnique<CAutoRevoker>(this);
+        if (fAutoRevoke) autoRevoker->start();
         ticketBuyer = MakeUnique<CTicketBuyer>(this);
+        ticketBuyer->GetConfig().buyTickets = fAutoBuy;
         SetNull();
     }
 

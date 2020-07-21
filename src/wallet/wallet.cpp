@@ -45,6 +45,10 @@ unsigned int nTxConfirmTarget = DEFAULT_TX_CONFIRM_TARGET;
 bool bSpendZeroConfChange = DEFAULT_SPEND_ZEROCONF_CHANGE;
 bool fWalletRbf = DEFAULT_WALLET_RBF;
 
+bool fAutoBuy = DEFAULT_AUTO_BUY;
+bool fAutoVote = DEFAULT_AUTO_VOTE;
+bool fAutoRevoke = DEFAULT_AUTO_REVOKE;
+
 const char * DEFAULT_WALLET_DAT = "wallet.dat";
 const uint32_t BIP32_HARDENED_KEY_LIMIT = 0x80000000;
 
