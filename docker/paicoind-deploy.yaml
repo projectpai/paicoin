@@ -106,8 +106,7 @@ spec:
               path: paicoin.conf
       containers:
       - name: paicoin-node
-        # image: feature/hybrid-consensus/kubernetes:0.16.1
-        image: feature/hybrid-consensus/gbt-updates:0.16.3
+        image: feature/hybrid-consensus/kubernetes:0.16.1
         imagePullPolicy: Never
         ports:
         - containerPort: 18566
@@ -156,8 +155,8 @@ spec:
               path: paicoin.conf
       containers:
       - name: paicoin-node
-        # image: feature/hybrid-consensus/kubernetes:0.16.1
-        image: feature/hybrid-consensus/gbt-updates:0.16.3
+        image: feature/hybrid-consensus/kubernetes:0.16.1
+        # image: feature/hybrid-consensus/gbt-updates:0.16.3
         imagePullPolicy: Never
         ports:
         - containerPort: 18566
@@ -256,7 +255,7 @@ spec:
         args:
         - echo "starting miner using cbaddr=2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK";
           echo "on http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC/";
-          ./minerd -o http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC/ -u paicoin -p PAI -a sha256d --no-longpoll --no-getwork --no-stratum --coinbase-addr=2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK
+          ./minerd -o http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC/ -u paicoin -p PAI -a paicoin --no-longpoll --no-getwork --no-stratum --coinbase-addr=2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK
       initContainers:
       - name: init-paicoin-service
         image: busybox:1.28
