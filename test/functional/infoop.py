@@ -241,10 +241,16 @@ class InfoOPTest(PAIcoinTestFramework):
 
         result = chain_node.txfeeinfo(3, rangeStart, rangeEnd)
         assert result is not None
+        # transaction moved to block from mempool
+        assert(result['feeinfomempool']['number'] == 0)
 
         assert 'feeinfoblocks' in result.keys()
         assert len(result['feeinfoblocks']) == 3
         block  = result['feeinfoblocks'][0] # only last block has a transaction
+        assert(block['height']== rangeEnd-1)
+        assert(result['feeinfoblocks'][1]['number'] == 0)
+        assert(result['feeinfoblocks'][2]['number'] == 0)
+        assert(result['feeinfoblocks'][2]['height'] == rangeStart)
         assert 'height' in block
         assert 'number' in block
         assert 'min' in block
@@ -261,6 +267,9 @@ class InfoOPTest(PAIcoinTestFramework):
         assert 'mean' in fir.keys()
         assert 'median' in fir.keys()
         assert 'stddev' in fir.keys()
+
+        # what we had in mempool is now in range
+        assert(fir == fim)
 
         util.assert_raises_rpc_error(-8, None, chain_node.txfeeinfo, 1000)
         util.assert_raises_rpc_error(-8, None, chain_node.txfeeinfo, 5, 5, 3)

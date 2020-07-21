@@ -93,40 +93,41 @@ bool ValidateDataTxoutStructure(const CTransaction& tx, uint32_t txoutIndex,
 
 // ======================================================================
 
-const uint8_t TicketContribData::MaxFees = 0x3F;
-const uint8_t TicketContribData::NoFees = TicketContribData::MaxFees+1;
+const CAmount TicketContribData::DefaultFeeLimit = 1LL<<20;
 
 CScript GetScriptForBuyTicketDecl(const BuyTicketData& data)
 {
-    int nBuyTicketVersion = 1;
     return GetScriptForStructuredData(CLASS_Staking) << STAKE_TxDeclaration
-                    << TX_BuyTicket << nBuyTicketVersion;
+                    << TX_BuyTicket << data.nVersion;
 }
 
 CScript GetScriptForTicketContrib(const TicketContribData& data)
 {
-    int nContribVersion = 1;
     return GetScriptForStructuredData(CLASS_Staking) << STAKE_TicketContribution
-                    << nContribVersion
+                    << data.nVersion
                     << ToByteVector(data.rewardAddr) << data.whichAddr
                     << data.contributedAmount
-                    << data.voteFees
-                    << data.revokeFees;
+                    << data.voteFeeLimit()
+                    << data.revocationFeeLimit();
 }
 
 CScript GetScriptForVoteDecl(const VoteData& data)
 {
-    int nVoteVersion = 1;
     return GetScriptForStructuredData(CLASS_Staking) << STAKE_TxDeclaration
-                    << TX_Vote << nVoteVersion
-                    << ToByteVector(data.blockHash) << data.blockHeight << data.voteBits << data.voterStakeVersion;
+                    << TX_Vote << data.nVersion
+                    << ToByteVector(data.blockHash) << data.blockHeight << data.voteBits.getBits() << data.voterStakeVersion << data.extendedVoteBits.getVector();
 }
 
 CScript GetScriptForRevokeTicketDecl(const RevokeTicketData& data)
 {
-    int nRevokeTicketVersion = 1;
     return GetScriptForStructuredData(CLASS_Staking) << STAKE_TxDeclaration
-                    << TX_RevokeTicket << nRevokeTicketVersion;
+                    << TX_RevokeTicket << data.nVersion;
+}
+
+size_t GetVoteDataSizeWithEmptyExtendedVoteBits()
+{
+    VoteData voteData;
+    return GetSerializeSize(GetScriptForVoteDecl(voteData), SER_NETWORK, PROTOCOL_VERSION);
 }
 
 // ======================================================================
@@ -174,40 +175,65 @@ bool IsStakeTx(ETxClass eTxClass)
     return eTxClass == TX_BuyTicket || eTxClass == TX_Vote || eTxClass == TX_RevokeTicket;
 }
 
+bool HasStakebaseContents(const CTxIn& txIn)
+{
+    return txIn.prevout.n == std::numeric_limits<uint32_t>::max() && txIn.scriptSig == Params().GetConsensus().stakeBaseSigScript && txIn.prevout.hash == uint256();
+}
+
 bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContribData& data)
 {
-    int numItems = 9;   // structVersion, dataClass, stakeDataClass, contribVersion, rewardAddr, whichAddr, contribAmount, voteFees, revokeFees
+    int numItems = 9;   // structVersion, dataClass, stakeDataClass, contribVersion, rewardAddr, whichAddr, contribAmount, voteFeeLimit, revocationFeeLimit
     std::vector<std::vector<unsigned char> > items;
     if (!ParseStakeData(tx, txoutIndex, STAKE_TicketContribution, numItems, items))
         return false;
 
     data.nVersion = CScriptNum(items[contribVersionIndex], false).getint();
-    if (data.nVersion != 1)
-        return false;
 
     data.rewardAddr = uint160(items[contribAddrIndex]);
     data.whichAddr = CScriptNum(items[contribAddrTypeIndex],false).getint();
 
-    data.contributedAmount = CScriptNum(items[contribAmountIndex], false, 8).getint64();
+    // amounts may require more than the default 4 bytes for storing in script numbers
 
-    int fees = CScriptNum(items[contribVoteFeesIndex], false).getint();
-    if (fees >= 0 && fees <= TicketContribData::MaxFees)
-        data.voteFees = static_cast<uint8_t>(fees);
-    else
-        data.voteFees = TicketContribData::NoFees;
+    data.contributedAmount = CScriptNum(items[contribAmountIndex], false, CScriptNum::nMaxNumSizeForInt64).getint64();
 
-    fees = CScriptNum(items[contribRevokeFeesIndex], false).getint();
-    if (fees >= 0 && fees <= TicketContribData::MaxFees)
-        data.revokeFees = static_cast<uint8_t>(fees);
-    else
-        data.revokeFees = TicketContribData::NoFees;
+    CAmount feeLimit = CScriptNum(items[contribVoteFeeLimitIndex], false, CScriptNum::nMaxNumSizeForInt64).getint64();
+    if (!MoneyRange(feeLimit))
+        return false;
+    data.setVoteFeeLimit(feeLimit);
+
+    feeLimit = CScriptNum(items[contribRevocationFeeLimitIndex], false, CScriptNum::nMaxNumSizeForInt64).getint64();
+    if (!MoneyRange(feeLimit))
+        return false;
+    data.setRevocationFeeLimit(feeLimit);
+
+    return true;
+}
+
+bool ParseTicketContribs(const CTransaction& tx, std::vector<TicketContribData>& contributions, CAmount& totalContribution, CAmount& totalVoteFeeLimit, CAmount& totalRevocationFeeLimit)
+{
+    totalContribution = 0;
+    totalVoteFeeLimit = 0;
+    totalRevocationFeeLimit = 0;
+
+    for (unsigned i = ticketContribOutputIndex; i < tx.vout.size(); i += 2) {
+        TicketContribData contrib;
+        if (!ParseTicketContrib(tx, i, contrib))
+            return false;
+
+        contributions.push_back(contrib);
+
+        totalContribution += contrib.contributedAmount;
+
+        totalVoteFeeLimit += contrib.voteFeeLimit();
+        totalRevocationFeeLimit += contrib.revocationFeeLimit();
+    }
 
     return true;
 }
 
 bool ParseVote(const CTransaction& tx, VoteData& data)
 {
-    int numItems = 9;   // structVersion, dataClass, stakeDataClass, txClass, voteVersion, blockHash, blockHeight, voteBits, voterStakeVersion
+    int numItems = 10;   // structVersion, dataClass, stakeDataClass, txClass, voteVersion, blockHash, blockHeight, voteBits, voterStakeVersion, extendedVoteBits
     std::vector<std::vector<unsigned char> > items;
     if (!ParseStakeData(tx, txdeclOutputIndex, STAKE_TxDeclaration, numItems, items))
         return false;
@@ -222,8 +248,13 @@ bool ParseVote(const CTransaction& tx, VoteData& data)
 
     data.blockHash = uint256(items[voteBlockHashIndex]);
     data.blockHeight = (uint32_t) CScriptNum(items[voteBlockHeightIndex], false).getint();
-    data.voteBits = (uint32_t) CScriptNum(items[voteBitsIndex], false).getint();
+    int vb = CScriptNum(items[voteBitsIndex], false).getint();
+    if (vb < 0 || vb > std::numeric_limits<uint16_t>().max())
+        return false;
+    data.voteBits = VoteBits{static_cast<uint16_t>(vb)};
     data.voterStakeVersion = (uint32_t) CScriptNum(items[voterStakeVersionIndex], false).getint();
+    data.extendedVoteBits = ExtendedVoteBits(items[extendedVoteBitsIndex]);
+
     return true;
 }
 
@@ -312,7 +343,7 @@ bool ValidateBuyTicketStructure(const CTransaction &tx, std::string& reason)
         // even-indexed outputs should be reward addresses
         else
         {
-            unsigned dataSizes[] = { 0, sizeof(uint160), 0, 0, 1, 1 };     // version, 20-bytes address hash, addrType, contributed amount, vote fees, revoke fees
+            unsigned dataSizes[] = { 0, sizeof(uint160), 0, 0, 0, 0 };     // version, 20-bytes address hash, addrType, contributed amount, vote fee limit, revocation fee limit
             if (!ValidateDataTxoutStructure(tx, txoutIndex, 6, dataSizes, nullptr, reason))
                 return false;
         }
@@ -365,8 +396,8 @@ bool ValidateVoteStructure(const CTransaction &tx, std::string& reason)
 
     // check that the first output contains vote declaration (TX_Vote, block hash, block height, vote bits, stake version)
     // validation of voting data itself is contextual and done elsewhere
-    unsigned dataSizes[] = { 0, 0, sizeof(uint256), 0, 0, 0 }; // TX_Vote, version, blockHash, blockHeight, voteBits, stakeVersion
-    if (!ValidateTxDeclStructure(tx, TX_Vote, 6, dataSizes, reason))
+    unsigned dataSizes[] = { 0, 0, sizeof(uint256), 0, 0, 0, 0 }; // TX_Vote, version, blockHash, blockHeight, voteBits, stakeVersion, extendedVoteBits
+    if (!ValidateTxDeclStructure(tx, TX_Vote, 7, dataSizes, reason))
         return false;
 
     // check that the rest of the outputs are payments;
@@ -475,7 +506,7 @@ size_t GetEstimatedBuyTicketDeclTxOutSize()
 
 size_t GetEstimatedTicketContribTxOutSize()
 {
-    TicketContribData data{1, CKeyID(), MAX_MONEY, TicketContribData::MaxFees, TicketContribData::MaxFees};
+    TicketContribData data{1, CKeyID(), MAX_MONEY, MAX_MONEY, MAX_MONEY};
     CTxOut txOut{0, GetScriptForTicketContrib(data)};
     return GetSerializeSize(txOut, SER_NETWORK, PROTOCOL_VERSION);
 }
@@ -485,7 +516,7 @@ size_t GetEstimatedSizeOfBuyTicketTx(bool useVsp)
     // since the format of the ticket purchase transaction is fixed,
     // its size can be estimated precisely.
     // A ticket purchase transaction has the structure described in ValidateBuyTicketStructure().
-    // version + in count (1|2) + 1 regular input + out count (4|5) + buy ticket decl output + ticket address output + pool fee contributor (optional)  + pool fee change output (optional) + contributor info output + change output + locktime
+    // version + in count (1|2) + (1|2) regular input + out count (4|5) + buy ticket decl output + ticket address output + pool fee contributor (optional)  + pool fee change output (optional) + contributor info output + change output + locktime
 
     return 4
             + 1
@@ -498,6 +529,29 @@ size_t GetEstimatedSizeOfBuyTicketTx(bool useVsp)
             + (useVsp ? GetEstimatedP2PKHTxOutSize() : 0)
             + GetEstimatedTicketContribTxOutSize()
             + GetEstimatedP2PKHTxOutSize()
+            + 4;
+}
+
+size_t GetEstimatedRevokeTicketDeclTxOutSize()
+{
+    RevokeTicketData data{1};
+    CTxOut txOut{0, GetScriptForRevokeTicketDecl(data)};
+    return GetSerializeSize(txOut, SER_NETWORK, PROTOCOL_VERSION);
+}
+
+size_t GetEstimatedSizeOfRevokeTicketTx(const size_t refundsCount, bool compressedInput)
+{
+    // since the format of the revocation transaction is fixed,
+    // its size can be estimated precisely.
+    // A revocation transaction has the structure described in ValidateRevokeTicketStructure().
+    // version + in count 1 + 1 regular input + out count (1+n) + revoke ticket decl output + n regular outputs + locktime
+
+    return 4
+            + 1
+            + GetEstimatedP2PKHTxInSize(compressedInput)
+            + 2
+            + GetEstimatedRevokeTicketDeclTxOutSize()
+            + refundsCount * GetEstimatedP2PKHTxOutSize()
             + 4;
 }
 
@@ -555,7 +609,7 @@ SpentTicketsInBlock FindSpentTicketsInBlock(const CBlock& block)
                 votes.push_back(
                     VoteVersion{
                         static_cast<uint32_t>(voteData.voterStakeVersion),
-                        static_cast<uint16_t>(voteData.voteBits)
+                        voteData.voteBits
                         });
                 }
                 break;

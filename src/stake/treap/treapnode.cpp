@@ -1,7 +1,7 @@
 #include "stake/treap/treapnode.h"
 #include "tinyformat.h"
 
-TreapNode::TreapNode(const uint256& key, const ValuePtr& value, uint32_t priority) :
+TreapNode::TreapNode(const uint256& key, const Value& value, uint32_t priority) :
     key{key},
     value{value},
     priority{priority},
@@ -11,7 +11,16 @@ TreapNode::TreapNode(const uint256& key, const ValuePtr& value, uint32_t priorit
 {
 }
 
-KeyValuePair TreapNode::getByIndex(int idx)
+TreapNodePtr TreapNode::clone() const
+{
+    auto result = std::make_shared<TreapNode>(this->key, this->value, this->priority);
+    result->size = this->size;
+    result->left = this->left;
+    result->right = this->right;
+    return result;
+}
+
+KeyValuePair TreapNode::getByIndex(int idx) const
 {
     if (idx < 0 || idx >= int(size)) {
         throw std::runtime_error(strprintf("getByIndex(%d) index out of bounds", idx));
@@ -39,7 +48,7 @@ KeyValuePair TreapNode::getByIndex(int idx)
     }
 }
 
-bool TreapNode::isHeap()
+bool TreapNode::isHeap() const
 {
     auto bLeft  = left == nullptr || (left->priority >= priority && left->isHeap());
     auto bRight = right == nullptr || (right->priority >= priority && right->isHeap());
@@ -47,7 +56,7 @@ bool TreapNode::isHeap()
     return bLeft && bRight;
 }
 
-uint32_t TreapNode::leftSize()
+uint32_t TreapNode::leftSize() const
 {
     if (left != nullptr) {
         return left->size;
@@ -55,7 +64,7 @@ uint32_t TreapNode::leftSize()
     return 0;
 }
 
-uint32_t TreapNode::rightSize()
+uint32_t TreapNode::rightSize() const
 {
     if (right != nullptr) {
         return right->size;

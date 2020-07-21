@@ -284,7 +284,7 @@ class TicketOperations(PAIcoinTestFramework):
         # starting with nStakeValidationHeight we need to add vote txs into blocks, otherwise TestBlockValidity fails: too-few-votes
         assert_raises_rpc_error(-1, None, self.nodes[0].generate,1)
         dummyVoteBits    =  1
-        dummyVoteBitsExt = "a"
+        dummyVoteBitsExt = "00"
 
         nHeightExpiredBecomeMissed = nTicketExpiry + nStakeEnabledHeight
         assert(nHeightExpiredBecomeMissed > nStakeValidationHeight)
@@ -328,6 +328,38 @@ class TicketOperations(PAIcoinTestFramework):
             assert(stakeinfo['missed'] == len(missed['tickets']))
             assert(blkidx < nHeightExpiredBecomeMissed or len(missed["tickets"]) > 0) # we expect missed tickets 
         
+        # getstakeversioninfo
+        numintervals = 2
+        stakeversioninfo = self.nodes[0].getstakeversioninfo(numintervals)
+        assert(stakeversioninfo['currentheight'] == blkidx)
+        assert(stakeversioninfo['hash'] == chainInfo['bestblockhash'])
+        assert(len(stakeversioninfo['intervals']) == numintervals)
+        adjust = 1 # as in the RPC call implementation
+        for interval in stakeversioninfo['intervals']:
+            difference = interval['startheight'] - interval['endheight'] + adjust
+            posver_total = 0
+            for posver in interval['posversions']:
+                posver_total += posver['count']
+            votever_total = 0
+            for votever in interval['voteversions']:
+                votever_total += votever['count']
+            assert(difference == posver_total)
+            assert(votever_total == posver_total*nTicketsPerBlock)
+            adjust = 0
+
+        # getstakeversions
+        numblocks = 3
+        stakeversions = self.nodes[0].getstakeversions(chainInfo['bestblockhash'], numblocks)
+        assert(len(stakeversions) == numblocks)
+        assert(stakeversions[0]['hash'] == chainInfo['bestblockhash'])
+        expectedHeight = blkidx
+        for stakeversion in stakeversions:
+            assert(stakeversion['height'] == expectedHeight)
+            expectedHeight -= 1
+            assert(len(stakeversion['votes']) == nTicketsPerBlock)
+            for vote in stakeversion['votes']:
+                assert(vote['version'] == stakeversion['stakeversion'])
+                assert(vote['bits'] == dummyVoteBits)
 
 if __name__ == "__main__":
     TicketOperations().main()

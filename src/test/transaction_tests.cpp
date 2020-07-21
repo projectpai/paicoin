@@ -929,9 +929,10 @@ CMutableTransaction CreateDummyVote()
     // create a structured OP_RETURN output containing tx declaration and dummy voting data
     uint256 dummyBlockHash = uint256();
     uint32_t dummyBlockHeight = 55;
-    uint32_t dummyVoteBits = 0x0001;
+    VoteBits dummyVoteBits = VoteBits::rttAccepted;
     uint32_t dummyVoteStakeVerion = 1;
-    VoteData voteData = { 1, dummyBlockHash, dummyBlockHeight, dummyVoteBits, dummyVoteStakeVerion};
+    ExtendedVoteBits dummyExtendedVoteBits;
+    VoteData voteData = { 1, dummyBlockHash, dummyBlockHeight, dummyVoteBits, dummyVoteStakeVerion, dummyExtendedVoteBits };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 
@@ -990,7 +991,7 @@ BOOST_AUTO_TEST_CASE(test_ValidateStakeTransactions)
     for (const auto& addr : rewardAddresses)
     {
         CAmount contributedAmount = 123;
-        const auto& ticketContribData = TicketContribData{1, addr, contributedAmount};
+        const auto& ticketContribData = TicketContribData{1, addr, contributedAmount, 0, TicketContribData::DefaultFeeLimit};
 
         CMutableTransaction txBuyTicket = CreateDummyBuyTicket(ticketContribData);
         BOOST_CHECK(ok = ValidateBuyTicketStructure(txBuyTicket, reason));

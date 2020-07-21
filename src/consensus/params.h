@@ -139,6 +139,17 @@ struct Params {
     // such: X*StakeMajorityMultiplier/StakeMajorityDivisor
     int32_t nStakeMajorityMultiplier;
     int32_t nStakeMajorityDivisor;
+    // A ticket contributor may limit the amount of fee the corresponding vote or
+    // revocation may charge from his/her reward or refund by specifying a fee limit
+    // when the ticket is purchased. If all the contributor specify a zero or very low
+    // limit, it might be possible that the ticket cannot vote or be revoked, because the
+    // corresponding transaction fees might exceed the total allowed fee. Therefore,
+    // the following two minimums have been enforced for the total ticket fee limits. A
+    // ticket that does not allow at least that much fee are not going to be accepted by
+    // the network. However, since votes are essential for the functioning of the
+    // blockchain, they are allowed to have zero fee.
+    int64_t nMinimumTotalVoteFeeLimit;
+    int64_t nMinimumTotalRevocationFeeLimit;
     // OrganizationPkScript is the output script for block taxes to be
     // distributed to in every block's coinbase. It should ideally be a P2SH
     // multisignature address.  OrganizationPkScriptVersion is the version

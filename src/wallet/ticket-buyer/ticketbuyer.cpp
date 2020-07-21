@@ -17,9 +17,6 @@ CTicketBuyer::CTicketBuyer(CWallet* wallet) :
 
 CTicketBuyer::~CTicketBuyer()
 {
-    if (configured.load())
-        ::UnregisterValidationInterface(this);
-
     stop();
     shouldRun.store(false);
 
@@ -43,10 +40,6 @@ void CTicketBuyer::UpdatedBlockTip(const CBlockIndex *, const CBlockIndex *, boo
     cv.notify_one();
 }
 
-//void CTicketBuyer::BlockConnected(const std::shared_ptr<const CBlock> &block, const CBlockIndex *pindex, const std::vector<CTransactionRef> &txnConflicted) override
-//{
-//}
-
 void CTicketBuyer::start()
 {
     config.buyTickets = true;
@@ -69,7 +62,7 @@ void CTicketBuyer::mainLoop()
     int64_t expiry{0};
     CAmount spendable{0};
     CAmount sdiff{0};
-    int buy{0};
+    int64_t buy{0};
     int max{0};
     bool shouldRelock{false};
 
@@ -103,21 +96,24 @@ void CTicketBuyer::mainLoop()
 
         LOCK2(cs_main, pwallet->cs_wallet);
 
+        if (chainActive.Tip() == nullptr)
+            continue;
+
+        height = chainActive.Height();
+
+        // do not try to purchase tickets before the stake enabling height
+        if (height < Params().GetConsensus().nStakeEnabledHeight)
+            continue;
+
         // unlock wallet
         shouldRelock = pwallet->IsLocked();
         if (shouldRelock && ! pwallet->Unlock(config.passphrase)) {
-            LogPrintf("CTicketBuyer: Purchased tickets: Wrong passphrase");
-            continue;
-        }
-
-        if (chainActive.Tip() == nullptr) {
-            if (shouldRelock) pwallet->Lock();
+            LogPrintf("CTicketBuyer: Purchased tickets: Wrong passphrase\n");
             continue;
         }
 
         // calculate the height of the first block in the
         // next stake difficulty interval:
-        height = chainActive.Height();
         if (height + 2 >= nextIntervalStart) {
             currentInterval = height / intervalSize + 1;
             nextIntervalStart = currentInterval * intervalSize;
@@ -127,7 +123,7 @@ void CTicketBuyer::mainLoop()
             // blocks from now, with the next block containing the split transaction
             // that the ticket purchase spends.
             if (height + 2 == nextIntervalStart) {
-                LogPrintf("CTicketBuyer: Skipping purchase: next sdiff interval starts soon");
+                LogPrintf("CTicketBuyer: Skipping purchase: next sdiff interval starts soon\n");
                 if (shouldRelock) pwallet->Lock();
                 continue;
             }
@@ -156,7 +152,7 @@ void CTicketBuyer::mainLoop()
         // Determine how many tickets to buy
         spendable = pwallet->GetAvailableBalance();
         if (spendable < config.maintain) {
-            LogPrintf("CTicketBuyer: Skipping purchase: low available balance");
+            LogPrintf("CTicketBuyer: Skipping purchase: low available balance\n");
             if (shouldRelock) pwallet->Lock();
             continue;
         }
@@ -164,9 +160,9 @@ void CTicketBuyer::mainLoop()
 
         sdiff = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), Params().GetConsensus());
 
-        buy = static_cast<int>(spendable / sdiff);
-        if (buy == 0) {
-            LogPrintf("CTicketBuyer: Skipping purchase: low available balance");
+        buy = spendable / sdiff;
+        if (buy <= 0) {
+            LogPrintf("CTicketBuyer: Skipping purchase: low available balance\n");
             if (shouldRelock) pwallet->Lock();
             continue;
         }
@@ -178,12 +174,21 @@ void CTicketBuyer::mainLoop()
         if (config.limit > 0 && buy > config.limit)
             buy = config.limit;
 
-        const auto&& r = pwallet->PurchaseTicket(config.account, spendable, config.minConf, config.votingAddress, buy, config.poolFeeAddress, config.poolFees, expiry, 0 /*TODO Make sure this is handled correctly*/);
-        if (r.first.size() > 0 && r.second.code == CWalletError::SUCCESSFUL) {
-            LogPrintf("CTicketBuyer: Purchased tickets: %s", std::accumulate(r.first.begin(), r.first.end(), std::string()));
-        } else {
-            LogPrintf("CTicketBuyer: Failed to purchase tickets: (%d) %s", r.second.code, r.second.message.c_str());
-        }
+        const auto&& r = pwallet->PurchaseTicket(config.account, spendable, config.minConf, config.votingAddress, static_cast<unsigned int>(buy), config.poolFeeAddress, config.poolFees, expiry, 0 /*TODO Make sure this is handled correctly*/);
+
+        if (r.second.code != CWalletError::SUCCESSFUL)
+            LogPrintf("CTicketBuyer: Failed to purchase tickets: (%d) %s\n", r.second.code, r.second.message.c_str());
+
+        if (r.first.size() > 0) {
+            std::string hashes;
+            for (const auto& h : r.first) {
+                if (hashes.length() > 0)
+                    hashes += ", ";
+                hashes += h;
+            }
+            LogPrintf("CTicketBuyer: Purchased tickets: %s\n", hashes.c_str());
+        } else
+            LogPrintf("CTicketBuyer: Successful, but not ticket hashes are available\n");
 
         if (shouldRelock) pwallet->Lock();
     }

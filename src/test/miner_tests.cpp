@@ -17,6 +17,7 @@
 #include "uint256.h"
 #include "util.h"
 #include "utilstrencodings.h"
+#include "stake/extendedvotebits.h"
 
 #include "test/test_paicoin.h"
 
@@ -889,7 +890,7 @@ CMutableTransaction CreateDummyBuyTicket( const CTransaction& prevTx, uint32_t n
     mtx.vout.push_back(CTxOut(ticketPrice, stakeScript));
 
     // create an OP_RETURN push containing a dummy address to send rewards to, and the amount contributed to stake
-    const auto& ticketContribData = TicketContribData{ 1, rewardAddr, contribution };
+    const auto& ticketContribData = TicketContribData{ 1, rewardAddr, contribution, 0, TicketContribData::DefaultFeeLimit };
     CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
     mtx.vout.push_back(CTxOut(0, contributorInfoScript));
 
@@ -912,9 +913,10 @@ CMutableTransaction CreateDummyVote(const uint256& txBuyTicketHash, const uint25
     mtx.vin.push_back(CTxIn(COutPoint(txBuyTicketHash, ticketStakeOutputIndex)));
 
     // create a structured OP_RETURN output containing tx declaration and dummy voting data
-    uint32_t dummyVoteBits = 0x0001;
+    VoteBits voteBits = VoteBits::rttAccepted;
     uint32_t voterStakeVersion = 0;
-    VoteData voteData = { 1, blockHashToVoteOn, blockHeight, dummyVoteBits, voterStakeVersion };
+    ExtendedVoteBits extendedVoteBits;
+    VoteData voteData = { 1, blockHashToVoteOn, blockHeight, voteBits, voterStakeVersion, extendedVoteBits };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 
@@ -1150,7 +1152,7 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
             const auto& ticketPriceAtPurchase = vBoughtTickets[winningHashes[i]];
             const auto& contributedAmount = ticketPriceAtPurchase + test_ticket_contributions[0];
             // recalculated reward
-            const auto& reward = CalcContributorRemuneration( contributedAmount, ticketPriceAtPurchase, subsidy, contributedAmount);
+            const auto& reward = CalculateGrossRemuneration( contributedAmount, ticketPriceAtPurchase, subsidy, contributedAmount);
             CMutableTransaction txVote = CreateDummyVote(winningHashes[i], blockHashToVoteOn, blockHeightToVoteOn, rewardAddr, reward);
             SignTx(txVote, voteStakeInputIndex, scriptPubKeyStake, stakeKey);
             mempool.addUnchecked(txVote.GetHash(), entry.Fee(ZEROFEE).FromTx(txVote));
@@ -1158,7 +1160,7 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
 
         // add some bad votes
         // vote using dummy ticket hash
-        const auto& reward = CalcContributorRemuneration(test_ticket_contributions[0], minimumStakeDiff, subsidy, test_ticket_contributions[0]);
+        const auto& reward = CalculateGrossRemuneration(test_ticket_contributions[0], minimumStakeDiff, subsidy, test_ticket_contributions[0]);
         CMutableTransaction txBadVote1 = CreateDummyVote(uint256(), blockHashToVoteOn, blockHeightToVoteOn, rewardAddr, reward);
         SignTx(txBadVote1, voteStakeInputIndex, scriptPubKeyStake, stakeKey);
         mempool.addUnchecked(txBadVote1.GetHash(), entry.Fee(ZEROFEE).FromTx(txBadVote1));
@@ -1194,7 +1196,7 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
             const auto& ticketPriceAtPurchase = vBoughtTickets[winningHashes[i]];
             const auto& contributedAmount = ticketPriceAtPurchase + test_ticket_contributions[0];
             // recalculated reward
-            const auto& reward = CalcContributorRemuneration( contributedAmount, ticketPriceAtPurchase, subsidy, contributedAmount);
+            const auto& reward = CalculateGrossRemuneration( contributedAmount, ticketPriceAtPurchase, subsidy, contributedAmount);
             CMutableTransaction txVote = CreateDummyVote(winningHashes[i], blockHashToVoteOn, blockHeightToVoteOn, rewardAddr, reward);
             SignTx(txVote, voteStakeInputIndex, scriptPubKeyStake, stakeKey);
             mempool.addUnchecked(txVote.GetHash(), entry.Fee(ZEROFEE).FromTx(txVote));
@@ -1454,6 +1456,56 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
     // - we rely on buying the max amount of ticket before this height at the lower price
     auto ticketSpends = OldestCoinOuts(); //we can use this for more test since blocks should be rejected
 
+    // Attempt to add block where a ticket has a total vote fee limit below mininum
+    if (ConsensusParams().nMinimumTotalVoteFeeLimit > 0) {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [&](CBlock& b) {
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+
+                unsigned i{0};
+                for (i = 1; i < b.vtx.size(); ++i)
+                    if (ParseTxClass(*b.vtx[i]) == TX_BuyTicket)
+                        break;
+
+                BOOST_CHECK(i != b.vtx.size());
+
+                CMutableTransaction mtx = *b.vtx[i];
+
+                SetTotalFeeLimit(mtx, ConsensusParams().nMinimumTotalVoteFeeLimit-1, true);
+
+                b.vtx[i] = MakeTransactionRef(mtx);
+            }
+        );
+
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "total-vote-fee-limit-too-low");
+    }
+
+    // Attempt to add block where a ticket has a total revocation fee limit below mininum
+    if (ConsensusParams().nMinimumTotalRevocationFeeLimit > 0) {
+        const auto& b = NextBlock("bsm", nullptr, ticketSpends,
+            [&](CBlock& b) {
+                BOOST_CHECK(b.vtx[0]->IsCoinBase());
+
+                unsigned i{0};
+                for (i = 1; i < b.vtx.size(); ++i)
+                    if (ParseTxClass(*b.vtx[i]) == TX_BuyTicket)
+                        break;
+
+                BOOST_CHECK(i != b.vtx.size());
+
+                CMutableTransaction mtx = *b.vtx[i];
+
+                SetTotalFeeLimit(mtx, ConsensusParams().nMinimumTotalRevocationFeeLimit-1, false);
+
+                b.vtx[i] = MakeTransactionRef(mtx);
+            }
+        );
+
+        BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "total-revocation-fee-limit-too-low");
+    }
+
     // Attempt to add block where vote has a null ticket reference hash.
     {
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
@@ -1585,7 +1637,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
     {
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [](CBlock& b) {
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 // Leaving vote bits as is since all blocks from the generator have
                 // votes set to Yes by default
             }
@@ -1600,11 +1652,11 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 5; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
             }
         );
@@ -1618,11 +1670,11 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 3; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
             }
         );
@@ -1636,11 +1688,11 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 2; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
             }
         );
@@ -1655,11 +1707,11 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 2; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
                 // leave 3 and 4 with Yes
                 // drop the 5th
@@ -1679,11 +1731,11 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits |= voteYesBits;
+                b.nVoteBits.setRttAccepted();
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for (int i = 1; i <= 2; ++i) {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
                 // leave 1 with Yes
                 // drop the 4th and 5th
@@ -1704,10 +1756,10 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
         const auto& b = NextBlock("bsm", nullptr, ticketSpends,
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[1]), TX_Vote);
-                ReplaceVoteBits(b.vtx[1],voteNoBits);
+                ReplaceVoteBits(b.vtx[1], VoteBits::allRejected);
                 // leave 2 with Yes
                 // drop the 4th and 5th
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_Vote);
@@ -1877,7 +1929,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
             }
         );
         BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "revocation-bad-payment-amount");
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "revocation-remuneration-too-high");
     }
 
     // Create block that has a revocation using a corrupted pay-to-address
@@ -1996,7 +2048,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
             }
         );
         BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
-        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-bad-payment-amount");
+        BOOST_CHECK_EQUAL(LastValidationState().GetRejectReason(), "vote-remuneration-too-high");
     }
 
     // ---------------------------------------------------------------------
@@ -2019,12 +2071,12 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
                 // Header says No and all vote say No
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for(int i = 1; i <= 5; ++i)
                 {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
             }
         );
@@ -2047,12 +2099,12 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
             [this](CBlock& b) {
                 BOOST_CHECK_EQUAL(ConsensusParams().nTicketsPerBlock, 5);
                 // Header says No and all vote say No
-                b.nVoteBits &= ~voteYesBits;
+                b.nVoteBits.setRttAccepted(false);
                 BOOST_CHECK(b.vtx[0]->IsCoinBase());
                 for(int i = 1; i <= 5; ++i)
                 {
                     BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[i]), TX_Vote);
-                    ReplaceVoteBits(b.vtx[i],voteNoBits);
+                    ReplaceVoteBits(b.vtx[i], VoteBits::allRejected);
                 }
             }
         );

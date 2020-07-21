@@ -12,8 +12,7 @@ constexpr u_int8_t StaticDepth = 128;
 
 class TreapNode;
 typedef std::shared_ptr<TreapNode>  TreapNodePtr;
-typedef std::shared_ptr<Value>      ValuePtr;
-typedef std::pair<uint256,ValuePtr> KeyValuePair; 
+typedef std::pair<uint256,Value> KeyValuePair; 
 
 class TicketTreap;
 
@@ -23,21 +22,23 @@ friend TicketTreap;
 
 public:
     // Creates a node from the given key, value, and priority. The node is not initially linked to any others.
-    TreapNode(const uint256& key, const ValuePtr& value, uint32_t priority);
+    TreapNode(const uint256& key, const Value& value, uint32_t priority);
 
 public:
     // Returns the (Key, Value) at the given position.
-    KeyValuePair getByIndex(int idx);
+    KeyValuePair getByIndex(int idx) const;
     // Tests whether the treap meets the min-heap invariant.
-    bool isHeap();
+    bool isHeap() const;
     // Returns the size of the subtree on the left-hand side, and zero if there is no tree present there.
-    uint32_t leftSize();
+    uint32_t leftSize() const;
     // Returns the size of the subtree on the right-hand side, and zero if there is no tree present there.
-    uint32_t rightSize();
+    uint32_t rightSize() const;
+
+    TreapNodePtr clone() const;
 
 private:
     uint256 key;
-    ValuePtr value;
+    Value value;
     uint32_t priority;
     uint32_t size; // Count of items within this treap - the node itself counts as 1.
     TreapNodePtr left;

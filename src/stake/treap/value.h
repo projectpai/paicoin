@@ -7,7 +7,10 @@ struct Value final
 {
     Value(uint32_t height, bool missed, bool revoked, bool spent, bool expired);
     explicit Value(uint32_t height);
-    Value(const Value&);
+    Value(const Value&) = default;
+    Value(Value&&) = default;
+    Value& operator=(const Value&) = default;
+    Value& operator=(Value&&) = default;
 
     friend bool operator==(const Value&, const Value&);
 

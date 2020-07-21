@@ -19,6 +19,9 @@
 #include "wallet/walletdb.h"
 #include "wallet/rpcwallet.h"
 #include "utilmemory.h"
+#include "stake/extendedvotebits.h"
+#include "wallet/auto-voter/autovoter.h"
+#include "wallet/auto-revoker/autorevoker.h"
 #include "wallet/ticket-buyer/ticketbuyer.h"
 
 #include <algorithm>
@@ -41,6 +44,10 @@ extern CFeeRate payTxFee;
 extern unsigned int nTxConfirmTarget;
 extern bool bSpendZeroConfChange;
 extern bool fWalletRbf;
+
+extern bool fAutoBuy;
+extern bool fAutoVote;
+extern bool fAutoRevoke;
 
 static const unsigned int DEFAULT_KEYPOOL_SIZE = 1000;
 //! -paytxfee default
@@ -65,6 +72,12 @@ static const bool DEFAULT_WALLET_REJECT_LONG_CHAINS = false;
 static const unsigned int DEFAULT_TX_CONFIRM_TARGET = 6;
 //! -walletrbf default
 static const bool DEFAULT_WALLET_RBF = false;
+//! -autobuy default
+static const bool DEFAULT_AUTO_BUY = false;
+//! -autovote default
+static const bool DEFAULT_AUTO_VOTE = false;
+//! -autorevoke default
+static const bool DEFAULT_AUTO_REVOKE = false;
 static const bool DEFAULT_WALLETBROADCAST = true;
 static const bool DEFAULT_DISABLE_WALLET = false;
 //! if set, all keys will be derived by using BIP32
@@ -750,6 +763,10 @@ private:
 
     std::unique_ptr<CWalletDBWrapper> dbw;
 
+    std::unique_ptr<CAutoVoter> autoVoter;
+
+    std::unique_ptr<CAutoRevoker> autoRevoker;
+
     std::unique_ptr<CTicketBuyer> ticketBuyer;
 
     // wallet's ticket fee rate
@@ -796,7 +813,12 @@ public:
         dbw(new CWalletDBWrapper()),
         ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
+        autoVoter = MakeUnique<CAutoVoter>(this);
+        if (fAutoVote) autoVoter->start();
+        autoRevoker = MakeUnique<CAutoRevoker>(this);
+        if (fAutoRevoke) autoRevoker->start();
         ticketBuyer = MakeUnique<CTicketBuyer>(this);
+        ticketBuyer->GetConfig().buyTickets = fAutoBuy;
         SetNull();
     }
 
@@ -805,7 +827,12 @@ public:
         dbw(std::move(dbw_in)),
         ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
+        autoVoter = MakeUnique<CAutoVoter>(this);
+        if (fAutoVote) autoVoter->start();
+        autoRevoker = MakeUnique<CAutoRevoker>(this);
+        if (fAutoRevoke) autoRevoker->start();
         ticketBuyer = MakeUnique<CTicketBuyer>(this);
+        ticketBuyer->GetConfig().buyTickets = fAutoBuy;
         SetNull();
     }
 
@@ -815,6 +842,17 @@ public:
             ticketBuyer->stop();
             ticketBuyer.reset();
         }
+
+        if (autoRevoker.get() != nullptr) {
+            autoRevoker->stop();
+            autoRevoker.reset();
+        }
+
+        if (autoVoter.get() != nullptr) {
+            autoVoter->stop();
+            autoVoter.reset();
+        }
+
         delete pwalletdbEncryption;
         pwalletdbEncryption = nullptr;
     }
@@ -1163,14 +1201,32 @@ public:
        this function). */
     bool SetHDMasterKey(const CPubKey& key);
 
+    /* Verify if a ticket belongs to the wallet
+       - tx: the ticket transaction
+       Returns true if the transaction with the specified hash is a ticket and belongs to this wallet.
+       Returns false otherwise. */
+    bool IsMyTicket(const CTransaction& tx) const;
+
+    /* Verify if a ticket belongs to the wallet
+       - ticketHash: the hash of the ticket transaction
+       Returns true if the transaction with the specified hash is a ticket and belongs to this wallet.
+       Returns false otherwise. */
+    bool IsMyTicket(const uint256& ticketHash) const;
+
+    /* Verify if a ticket belongs to the wallet
+       - ticketHash: the hash of the ticket transaction
+       Returns true if the mempool contains a revoke transaction for the specified ticket.
+       Returns false otherwise. */
+    bool IsTicketRevokedInMempool(const uint256& ticketHash) const;
+
     /* Creates a transaction that is gathering sparse funds from the wallet in order to
        provide unique UTXOs to all the tickets being purchased in one batch.
-       - fromAccount: The account to use for funding
-       - ticketPrice: The amount needed for each ticket as its staked value
-       - ticketFee: The amount needed for each ticket as a transaction fee
-       - vspFee: The VSP fee (optional, default =  0)
-       - numTickets: The number of tickets to purchase (optional, default = 1)
-       - feeRate: The transaction fee rate (PAI/kB) to use (overrides current fees if larger than them) (optional, default = -1)
+       - fromAccount: account to use for funding
+       - ticketPrice: amount needed for each ticket as its staked value
+       - ticketFee: amount needed for each ticket as a transaction fee
+       - vspFee: VSP fee (optional, default =  0)
+       - numTickets: number of tickets to purchase (optional, default = 1)
+       - feeRate: transaction fee rate (PAI/kB) to use (overrides current fees if larger than them) (optional, default = -1)
        In case of success, the wallet transaction's hash is returned.
        In case of error, the wallet transaction's hash is not valid. Check the error object for the reason. */
     std::pair<uint256, CWalletError>
@@ -1183,16 +1239,18 @@ public:
 
     /* Initiates the purchase of tickets
        It funds and creates the corresponding transactions, as well as it sends them to the memory pool.
-       - fromAccount: The account to use for purchase
-       - spendlimit: Limit on the amount to spend on ticket
-       - minConf: Minimum number of block confirmations required
-       - ticketAddress: Override the ticket address to which voting rights are given
-       - numTickets: The number of tickets to purchase
-       - vspAddress: The address to pay stake pool fees to
-       - vspFeePercent: The percent from the voter subsidy to pay to the stake pool
-       - expiry: Height at which the purchase tickets expire
-       - feeRate: The transaction fee rate (PAI/kB) to use (overrides current fees if larger than them) (optional, default = -1)
-       In case of success, the returned vector contains the transactions hex.
+       - fromAccount: account to use for purchase
+       - spendlimit: limit on the amount to spend on ticket
+       - minConf: minimum number of block confirmations required
+       - ticketAddress: override the ticket address to which voting rights are given
+       - numTickets: number of tickets to purchase
+       - vspAddress: address to pay stake pool fees to
+       - vspFeePercent: percent from the voter subsidy to pay to the stake pool
+       - expiry: height at which the purchase tickets expire
+       - feeRate: transaction fee rate (PAI/kB) to use (overrides current fees if larger than them) (optional, default = -1)
+       In case of success, the returned vector contains the transactions' hashes.
+       In case of partial success, meaning only some tickets could not have been created, the returned values are the
+       successful transactions' hashes, but the error code does not indicate success.
        In case of error, the returned vector is empty. Check the error object for the reason. */
     std::pair<std::vector<std::string>, CWalletError>
     PurchaseTicket(std::string fromAccount,
@@ -1204,6 +1262,48 @@ public:
                    double vspFeePercent,
                    int64_t expiry,
                    CAmount feeRate = -1);
+
+    /* Creates a vote
+       It funds and creates the vote transaction that corresponds to the specified ticket and sends it to the memory pool.
+       - ticketHash: hash of the ticket that is called to vote
+       - blockHash: hash of the block being vote on (this must be the hash of the previous block)
+       - blockHeight: height of the block being vote on (this must be the height of the previous block)
+       - voteBits: bits indicating the vote option
+       - extendedVoteBits: extra bits with vote options
+       In case of success, the returned value is the transaction's hash.
+       In case of error, the returned value is empty. Check the error object for the reason. */
+    std::pair<std::string, CWalletError>
+    Vote(const uint256& ticketHash,
+         const uint256& blockHash,
+         const int blockHeight,
+         const VoteBits voteBits,
+         const ExtendedVoteBits& extendedVoteBits);
+
+    /* Creates a revocation
+       It funds and creates the revocation transaction for the specified ticket and sends it to the memory pool.
+       This transaction must have a fee for encouragig miners to add it in a block. This fee will be spent from the stake,
+       according to the contributor preferences. The fee is a normal transaction fee. If the required fee cannot be covered,
+       this function will fail.
+       - ticketHash: hash of the ticket that will be revoked
+       In case of success, the returned value is the transaction's hash.
+       In case of error, the returned value is empty. Check the error object for the reason. */
+    std::pair<std::string, CWalletError> Revoke(const uint256& ticketHash);
+
+    /* Create revocations for all misses or expired tickets
+       It funds and creates the revocation transactions for all the expired tickets and sends them to the memory pool.
+       Some revocations may fail. This function returns the hashes of all succesful revocations even if the error code
+       is not successful.
+       In case of success, the returned values are the transactions' hashes.
+       In case of partial success, meaning only some tickets have been revoked, the returned values are the
+       successful transactions' hashes, but the error code does not indicate success.
+       In case of error, the returned vector is empty. Check the error object for the reason. */
+    std::pair<std::vector<std::string>, CWalletError> RevokeAll();
+
+    /* Returns the auto voter */
+    CAutoVoter* GetAutoVoter() { return autoVoter.get(); }
+
+    /* Returns the auto revoker */
+    CAutoRevoker* GetAutoRevoker() { return autoRevoker.get(); }
 
      /* Returns the ticket buyer */
      CTicketBuyer* GetTicketBuyer() { return ticketBuyer.get(); }

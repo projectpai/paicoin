@@ -4,8 +4,10 @@
 #include "treapnode.h"
 #include "prevector.h"
 #include <functional>
+#include <boost/optional.hpp>
 
-typedef std::function<bool(const uint256&, const ValuePtr&)> Predicate;
+typedef std::function<bool(const uint256&, const Value&)> Predicate;
+typedef std::shared_ptr<TicketTreap> TicketTreapPtr;
 // Immutable class that represents a treap data structure which is used to hold ordered
 // key/value pairs using a combination of binary search tree and heap semantics.
 //
@@ -41,13 +43,8 @@ class TicketTreap final
 {
 public:
     TicketTreap();
+private:
     explicit TicketTreap(TreapNodePtr treapNode, int count, uint64_t totalSize);
-
-    TicketTreap(const TicketTreap&) = default;
-    TicketTreap& operator=(const TicketTreap&) = default;
-
-    TicketTreap(TicketTreap&&) = default;
-    TicketTreap& operator=(TicketTreap&&) = default;
 
 public:
     // Len returns the number of items stored in the treap.
@@ -64,7 +61,7 @@ public:
 
     // Get returns the value for the passed key.  The function will return nil when
     // the key does not exist.
-    ValuePtr get(const uint256& key) const;
+    boost::optional<Value> get(const uint256& key) const;
 
     // GetByIndex returns the (Key, *Value) at the given position and panics if idx
     // is out of bounds.
@@ -72,7 +69,7 @@ public:
 
     // Put inserts the passed key/value pair.  Passing a nil value will result in a
     // NOOP.
-    TicketTreap put(const uint256& key, const ValuePtr& value) const;
+    TicketTreap put(const uint256& key, const Value& value) const;
 
     // Delete removes the passed key from the treap and returns the resulting treap
     // if it exists.  The original immutable treap is returned if the key does not
@@ -108,7 +105,5 @@ private:
     // the treap including the keys, values, and node sizes.
     uint64_t        totalSize;
 };
-
-typedef std::shared_ptr<TicketTreap> TicketTreapPtr;
 
 #endif // PAICOIN_STAKE_TICKETTREAP_H

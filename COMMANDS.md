@@ -362,6 +362,43 @@ Wallet options:
        blockchain through -rescan on startup (1 = keep tx meta data e.g.
        account owner and payment request information, 2 = drop tx meta data)
 
+  -autostake
+       Enable the automatic ticket buyer, the automatic voter and the automatic
+       revoker. These are performing the staking operations on behalf of the user
+       and as soon as possible. Please note that the ticket buyer requires more
+       settings to perform correctly, such as -tbvotingaddress, -tblimit or
+       -tbbalancetomaintainabsolute.
+
+  -autobuy
+       Enable the automatic ticket buyer. This is purchasing tickets on behalf of
+       the user as soon as all the criteria is met. Please make sure to specify
+       the voting address and other parameters as desired.
+
+  -tbbalancetomaintainabsolute
+       The funds to preserve in the wallet when purchasing tickets. This ensures
+       that at least this amount is still available in the wallet. No purchase
+       is made if the funds for tickets are not enough.
+
+  -tbvotingaddress
+       Specify the address to be used when voting. The voter or revoker must be
+       able to sign the input corresponding to this output, so it must own the
+       address.
+
+  -tblimit
+       The maximum number of tickets to purchase in one batch.
+
+  -tbvotingaccount
+       Specify the account to be used for voting.
+
+  -autovote
+       Enable the automatic voter. This is going to send the votes for the tickets
+       belonging to the wallet as soon as they are selected as winners.
+
+  -autorevoke
+     Enable the automatic revoker. As soon as a ticket becomes expired or missed,
+     the automatic revoker creates and publishes a transaction that is unlocking the
+     staked funds.
+
 Debugging/Testing options:
 
   -checkpoints
