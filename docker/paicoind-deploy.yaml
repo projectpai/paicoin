@@ -106,7 +106,8 @@ spec:
               path: paicoin.conf
       containers:
       - name: paicoin-node
-        image: feature/hybrid-consensus/kubernetes:0.16.1
+        # image: feature/hybrid-consensus/kubernetes:0.16.1
+        image: feature/hybrid-consensus/gbt-updates:0.16.3
         imagePullPolicy: Never
         ports:
         - containerPort: 18566
@@ -155,7 +156,8 @@ spec:
               path: paicoin.conf
       containers:
       - name: paicoin-node
-        image: feature/hybrid-consensus/kubernetes:0.16.1
+        # image: feature/hybrid-consensus/kubernetes:0.16.1
+        image: feature/hybrid-consensus/gbt-updates:0.16.3
         imagePullPolicy: Never
         ports:
         - containerPort: 18566
@@ -186,7 +188,7 @@ spec:
     matchLabels:
       app: miningcore-live
   serviceName: miningcore-service
-  replicas: 1
+  replicas: 0
   template:
     metadata:
       labels:
@@ -239,7 +241,7 @@ spec:
     matchLabels:
       app: cpuminer-live
   serviceName: cpuminer-service
-  replicas: 0
+  replicas: 1
   template:
     metadata:
       labels:
@@ -247,7 +249,8 @@ spec:
     spec:
       containers:
       - name: cpuminer
-        image: cpuminer
+        # image: cpuminer:latest
+        image: cpuminer-upd:latest
         imagePullPolicy: Never
         command: ["/bin/bash", "-c"]
         args:
@@ -270,7 +273,7 @@ spec:
     matchLabels:
       app: explorer-live
   serviceName: explorer-service
-  replicas: 0
+  replicas: 1
   template:
     metadata:
       labels:
