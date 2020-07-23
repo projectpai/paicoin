@@ -600,9 +600,18 @@ void CWallet::AddToSpends(const uint256& wtxid)
     CWalletTx& thisTx = it->second;
     if (thisTx.IsCoinBase()) // Coinbases don't spend anything!
         return;
+    
+    auto start = 0u; 
+    if (ETxClass::TX_Vote == ParseTxClass(*thisTx.tx)) {
+        start = 1; // stakebase inputs should not be considered as spends
+    }
 
-    for (const CTxIn& txin : thisTx.tx->vin)
+    // for (const CTxIn& txin : thisTx.tx->vin)
+    for (unsigned i = start; i < thisTx.tx->vin.size(); ++i)
+    {
+        const CTxIn& txin = thisTx.tx->vin[i];
         AddToSpends(txin.prevout, wtxid);
+    }
 }
 
 bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
