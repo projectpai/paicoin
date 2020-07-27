@@ -2324,7 +2324,13 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         assert(pindex->pprev->pstakeNode != nullptr);
 
         pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
+        if (pindex->pstakeNode == nullptr)
+            return state.DoS(100,
+                error("ConnectBlock(): FetchStakeNode - Failed to get Stake data"),
+                REJECT_INVALID, "bad-stake-data");
+
     }
+
     // if(pindex->GetStakePos().IsNull()){
     //     CDiskBlockPos _pos;
 

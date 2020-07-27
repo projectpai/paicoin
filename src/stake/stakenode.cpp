@@ -275,9 +275,13 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const uint256& lotteryIV, cons
     // winners at the block before StakeValidationHeight.
     if (connectedNode->height >= connectedNode->params.nStakeValidationHeight - 1 ) {
         // Find the next set of winners.
+
+        if (connectedNode->liveTickets.len() < connectedNode->params.nTicketsPerBlock)
+            // list size too small
+            return nullptr;
+
         auto prng = Hash256PRNG(lotteryIV);
         const auto& idxs = prng.FindTicketIdxs(connectedNode->liveTickets.len(), connectedNode->params.nTicketsPerBlock);
-
         const auto& nextWinnerKeys = connectedNode->liveTickets.fetchWinners(idxs);
 
         auto stateBuffer = HashVector{};
@@ -285,6 +289,7 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const uint256& lotteryIV, cons
             connectedNode->nextWinners.push_back(it);
             stateBuffer.push_back(it);
         }
+
         stateBuffer.push_back(prng.StateHash());
         const auto& hex = Hash(stateBuffer.begin(),stateBuffer.end()).GetHex();
         connectedNode->finalState.SetHex(hex);
@@ -399,6 +404,10 @@ std::shared_ptr<StakeNode> StakeNode::DisconnectNode(const uint256& parentLotter
     if (this->height >= this->params.nStakeValidationHeight) {
         auto prng = Hash256PRNG(parentLotteryIV);
         
+        if (restoredNode->liveTickets.len() < restoredNode->params.nTicketsPerBlock)
+            // list size too small
+            return nullptr;
+
         const auto& idxs = prng.FindTicketIdxs(restoredNode->liveTickets.len(), restoredNode->params.nTicketsPerBlock);
         stateBuffer.push_back(prng.StateHash());
         const auto& hex = Hash(stateBuffer.begin(),stateBuffer.end()).GetHex();
