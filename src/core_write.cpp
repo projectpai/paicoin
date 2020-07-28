@@ -15,6 +15,7 @@
 #include <util.h>
 #include <utilmoneystr.h>
 #include <utilstrencodings.h>
+#include <stake/staketx.h>
 
 UniValue ValueFromAmount(const CAmount& amount)
 {
@@ -154,10 +155,63 @@ void ScriptPubKeyToUniv(const CScript& scriptPubKey,
     out.pushKV("addresses", a);
 }
 
+static std::string TxClassToString(ETxClass txClass) 
+{
+    switch (txClass) {
+        case ETxClass::TX_Regular: return "standard";
+        case ETxClass::TX_BuyTicket: return "stake_purchase";
+        case ETxClass::TX_RevokeTicket: return "stake_revocation";
+        case ETxClass::TX_Vote: return "vote";
+        default:
+            assert(!"unknown ETxClass");
+            return "unknown";
+    }
+}
+
+static void StakingToUniv(const CTransaction &tx, UniValue& entry) 
+{
+    std::vector<TicketContribData> contributions;
+    CAmount totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit;
+    const auto& result = ParseTicketContribs(tx, contributions, totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit);
+    assert(result);
+    entry.pushKV("ticket_price", totalContribution);
+    entry.pushKV("fee_limit", totalVoteFeeLimit + totalRevocationFeeLimit);
+}
+
 void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry, bool include_hex, int serialize_flags
             , const std::map<uint256,std::shared_ptr<const CTransaction>>* const prevHashToTxMap)
 {
     entry.pushKV("txid", tx.GetHash().GetHex());
+    if (tx.IsCoinBase())
+        entry.pushKV("type",  "coinbase");
+    else {
+        const auto txClass = ParseTxClass(tx);
+        entry.pushKV("type", TxClassToString(txClass));
+        if (txClass == ETxClass::TX_Vote) {
+            UniValue voting(UniValue::VOBJ);
+            VoteData voteData;
+            ParseVote(tx,voteData);
+            voting.pushKV("version", voteData.nVersion);
+            voting.pushKV("vote", voteData.voteBits.isRttAccepted() ? "valid" : "invalid");
+            entry.pushKV("voting", voting);
+        } else if (txClass == ETxClass::TX_BuyTicket) {
+            UniValue staking(UniValue::VOBJ);
+            StakingToUniv(tx, staking);
+            entry.pushKV("staking", staking);
+        } else if (txClass == ETxClass::TX_RevokeTicket) {
+            UniValue staking(UniValue::VOBJ); 
+            const auto ticketHash = tx.vin[0].prevout.hash;
+            if( prevHashToTxMap != nullptr) {
+                const auto& it = prevHashToTxMap->find(ticketHash);
+                if (it != std::end(*prevHashToTxMap)) {
+                    const auto& ticketTx = *it->second;
+                    StakingToUniv(ticketTx, staking);
+                }
+            }
+            entry.pushKV("staking", staking);
+        }
+    }
+
     entry.pushKV("hash", tx.GetWitnessHash().GetHex());
     entry.pushKV("version", tx.nVersion);
     entry.pushKV("size", (int)::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION));

@@ -241,7 +241,14 @@ UniValue getrawtransaction(const JSONRPCRequest& request)
         return EncodeHexTx(*tx, RPCSerializationFlags());
 
     UniValue result(UniValue::VOBJ);
-    TxToJSON(*tx, hashBlock, result);
+
+    lt_HashToTransactionMap prevOutMap;
+    if (ETxClass::TX_RevokeTicket == ParseTxClass(*tx)) {
+        // extract the revoked ticket tx here
+        const auto& ticketHash = tx->vin[revocationStakeInputIndex].prevout.hash;
+        prevOutMap[ticketHash] = GetTicket(ticketHash);
+    }
+    TxToJSON(*tx, hashBlock, result, &prevOutMap);
     return result;
 }
 
