@@ -101,8 +101,9 @@ void CTicketBuyer::mainLoop()
 
         height = chainActive.Height();
 
-        // do not try to purchase tickets before the stake enabling height
-        if (height < Params().GetConsensus().nStakeEnabledHeight)
+        // do not try to purchase tickets before the stake enabling height - ticket maturity,
+        // so they are mature at stake enabling height
+        if (height < Params().GetConsensus().nStakeEnabledHeight - Params().GetConsensus().nTicketMaturity)
             continue;
 
         // unlock wallet
