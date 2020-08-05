@@ -107,6 +107,13 @@ private:
     CAmount _revocationFeeLimit;
 };
 
+// NOTE:
+// VoterStakeVersion is useful to establish if a majority of nodes upgraded to a version containing certain rule change implementations,
+// so that voting can begin on those rule changes.
+// It falls to the rule change implementer to increase this version. Going backward is not allowed (see calcStakeVersion in stakeversion.cpp)
+
+const uint32_t defaultVoterStakeVersion = 0;
+
 struct VoteData {
     VoteData() : nVersion{}, blockHash{}, blockHeight{}, voteBits{}, voterStakeVersion{}, extendedVoteBits{} {}
     VoteData(int nVersion, uint256 blockHash, uint32_t blockHeight, VoteBits voteBits, uint32_t voterStakeVersion, ExtendedVoteBits extendedVoteBits)

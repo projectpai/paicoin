@@ -223,12 +223,18 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
-    int64_t nStakeDifficulty;
+
+    int64_t  nStakeDifficulty;
+
+    // TODO: the following fields are not serialized in CDiskBlockIndex, check if any needs serialization
     VoteBits nVoteBits;
     uint32_t nTicketPoolSize;
     StakeState ticketLotteryState;
-    uint8_t nFreshStake;
-    uint32_t nStakeVersion;
+    uint16_t   nVoters;
+    uint8_t    nFreshStake;
+    uint8_t    nRevocations;
+    uint256    extraData;
+    uint32_t   nStakeVersion;
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t nSequenceId;
@@ -268,8 +274,11 @@ public:
         nStakeDifficulty = 0;
         nVoteBits      = VoteBits::rttAccepted;
         nTicketPoolSize = 0;
-        std::fill(ticketLotteryState.begin(), ticketLotteryState.end(), 0);
+        ticketLotteryState.SetNull();
+        nVoters = 0;
         nFreshStake = 0;
+        nRevocations = 0;
+        extraData.SetNull();
         nStakeVersion  = 0;
     }
 
@@ -291,7 +300,10 @@ public:
         nVoteBits      = block.nVoteBits;
         nTicketPoolSize = block.nTicketPoolSize;
         ticketLotteryState = block.ticketLotteryState;
+        nVoters        = block.nVoters;
         nFreshStake    = block.nFreshStake;
+        nRevocations   = block.nRevocations;
+        extraData      = block.extraData;
         nStakeVersion  = block.nStakeVersion;
     }
 
@@ -336,7 +348,10 @@ public:
         block.nVoteBits      = nVoteBits;
         block.nTicketPoolSize = nTicketPoolSize;
         block.ticketLotteryState = ticketLotteryState;
-        block.nFreshStake = nFreshStake;
+        block.nVoters        = nVoters;
+        block.nFreshStake    = nFreshStake;
+        block.nRevocations   = nRevocations;
+        block.extraData      = extraData;
         block.nStakeVersion = nStakeVersion;
         return block;
     }

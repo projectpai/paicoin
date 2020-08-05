@@ -313,7 +313,7 @@ uint256 WalletStakeTestingSetup::AddVoteTx(const uint256& ticketHash, bool forei
 
     // outputs
 
-    VoteData voteData{1, hash, static_cast<uint32_t>(height), VoteBits::rttAccepted, 0, extendedVoteBitsData.empty};
+    VoteData voteData{1, hash, static_cast<uint32_t>(height), VoteBits::rttAccepted, defaultVoterStakeVersion, extendedVoteBitsData.empty};
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 
@@ -672,7 +672,7 @@ void WalletStakeTestingSetup::CheckVote(const CTransaction& vote, const CTransac
     BOOST_CHECK_EQUAL(voteData.nVersion, 1);
     BOOST_CHECK(voteData.blockHash == (inMempool ? chainTip->GetBlockHash() : chainTip->pprev->GetBlockHash()));
     BOOST_CHECK_EQUAL(voteData.blockHeight, static_cast<uint32_t>(inMempool ? chainTip->nHeight : chainTip->pprev->nHeight));
-    BOOST_CHECK_EQUAL(voteData.voterStakeVersion, 0U);
+    BOOST_CHECK_EQUAL(voteData.voterStakeVersion, defaultVoterStakeVersion);
     BOOST_CHECK(voteData.extendedVoteBits.isValid());
 
     // reward outputs

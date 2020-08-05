@@ -914,9 +914,8 @@ CMutableTransaction CreateDummyVote(const uint256& txBuyTicketHash, const uint25
 
     // create a structured OP_RETURN output containing tx declaration and dummy voting data
     VoteBits voteBits = VoteBits::rttAccepted;
-    uint32_t voterStakeVersion = 0;
     ExtendedVoteBits extendedVoteBits;
-    VoteData voteData = { 1, blockHashToVoteOn, blockHeight, voteBits, voterStakeVersion, extendedVoteBits };
+    VoteData voteData = { 1, blockHashToVoteOn, blockHeight, voteBits, defaultVoterStakeVersion, extendedVoteBits };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 

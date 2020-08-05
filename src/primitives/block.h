@@ -38,7 +38,7 @@ public:
     uint16_t   nVoters;
     uint8_t    nFreshStake;
     uint8_t    nRevocations;
-    int8_t     extraData[32];
+    uint256    extraData;
     uint32_t   nStakeVersion;
 
     CBlockHeader()
@@ -65,7 +65,7 @@ public:
             READWRITE(nVoters);
             READWRITE(nFreshStake);
             READWRITE(nRevocations);
-            READWRITE(FLATDATA(extraData));
+            READWRITE(extraData);
             READWRITE(nStakeVersion);
         }
         else if (ser_action.ForRead())
@@ -91,7 +91,7 @@ public:
         nVoters = 0;
         nFreshStake = 0;
         nRevocations = 0;
-        std::fill(std::begin(extraData), std::end(extraData), 0);
+        extraData.SetNull();
         nStakeVersion = 0;
     }
 
@@ -147,21 +147,21 @@ public:
     CBlockHeader GetBlockHeader() const
     {
         CBlockHeader block;
-        block.nVersion              = nVersion;
-        block.hashPrevBlock         = hashPrevBlock;
-        block.hashMerkleRoot        = hashMerkleRoot;
-        block.nTime                 = nTime;
-        block.nBits                 = nBits;
-        block.nNonce                = nNonce;
-        block.nVoteBits             = nVoteBits;
-        block.nStakeDifficulty      = nStakeDifficulty;
-        block.nTicketPoolSize       = nTicketPoolSize;
-        block.ticketLotteryState    = ticketLotteryState;
-        block.nVoters               = nVoters;
-        block.nFreshStake           = nFreshStake;
-        block.nRevocations          = nRevocations;
-        std::copy(extraData, extraData+sizeof(extraData), block.extraData);
-        block.nStakeVersion         = nStakeVersion;
+        block.nVersion       = nVersion;
+        block.hashPrevBlock  = hashPrevBlock;
+        block.hashMerkleRoot = hashMerkleRoot;
+        block.nTime          = nTime;
+        block.nBits          = nBits;
+        block.nNonce         = nNonce;
+        block.nVoteBits      = nVoteBits;
+        block.nStakeDifficulty = nStakeDifficulty;
+        block.nTicketPoolSize = nTicketPoolSize;
+        block.ticketLotteryState = ticketLotteryState;
+        block.nVoters        = nVoters;
+        block.nFreshStake    = nFreshStake;
+        block.nRevocations   = nRevocations;
+        block.extraData      = extraData;
+        block.nStakeVersion  = nStakeVersion;
         return block;
     }
 

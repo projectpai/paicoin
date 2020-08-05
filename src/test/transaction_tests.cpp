@@ -930,9 +930,8 @@ CMutableTransaction CreateDummyVote()
     uint256 dummyBlockHash = uint256();
     uint32_t dummyBlockHeight = 55;
     VoteBits dummyVoteBits = VoteBits::rttAccepted;
-    uint32_t dummyVoteStakeVerion = 1;
     ExtendedVoteBits dummyExtendedVoteBits;
-    VoteData voteData = { 1, dummyBlockHash, dummyBlockHeight, dummyVoteBits, dummyVoteStakeVerion, dummyExtendedVoteBits };
+    VoteData voteData = { 1, dummyBlockHash, dummyBlockHeight, dummyVoteBits, defaultVoterStakeVersion, dummyExtendedVoteBits };
     CScript declScript = GetScriptForVoteDecl(voteData);
     mtx.vout.push_back(CTxOut(0, declScript));
 
