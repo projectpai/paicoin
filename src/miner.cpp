@@ -167,6 +167,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         assert(pindexPrev->pstakeNode != nullptr);
         auto winningHashes = pindexPrev->pstakeNode->Winners();
 
+        int nNewVotes = 0;
         for (auto votetxiter = votesForBlockHash.first; votetxiter != votesForBlockHash.second; ++votetxiter) {
             const auto& spentTicketHash = votetxiter->GetTx().vin[voteStakeInputIndex].prevout.hash;
             if (std::find(winningHashes.begin(), winningHashes.end(), spentTicketHash) == winningHashes.end())
@@ -175,7 +176,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             // tx must be included in the block
             auto txiter = mempool.mapTx.project<0>(votetxiter);
             AddToBlock(txiter);
+            ++nNewVotes;
         }
+        pblock->nVoters = nNewVotes;
     }
 
     // Get the newly purchased tickets
@@ -210,13 +213,16 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         assert(pindexPrev->pstakeNode != nullptr);
         auto missedTickets = pindexPrev->pstakeNode->MissedTickets();
 
+        int nNewRevocations = 0;
         for (auto revocationtxiter = revocations.first; revocationtxiter != revocations.second; ++revocationtxiter) {
             const auto& ticketHash = revocationtxiter->GetTx().vin[revocationStakeInputIndex].prevout.hash;
             if (std::find(missedTickets.begin(), missedTickets.end(), ticketHash) == missedTickets.end())
                 continue; // Skip all missed tickets that we've never heard of
             auto txiter = mempool.mapTx.project<0>(revocationtxiter);
             AddToBlock(txiter);
+            ++nNewRevocations;
         }
+        pblock->nRevocations = nNewRevocations;
     }
 
     // Add all the funding (ancestor) transactions that are in the mempool for the ticket just included.

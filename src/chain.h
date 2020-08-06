@@ -36,7 +36,7 @@ public:
     unsigned int nBlocks;      //!< number of blocks stored in file
     unsigned int nSize;        //!< number of used bytes of block file
     unsigned int nUndoSize;    //!< number of used bytes in the undo file
-    unsigned int nStakeSize;   //!< number of used bytes in the stake file
+    // unsigned int nStakeSize;   //!< number of used bytes in the stake file
     unsigned int nHeightFirst; //!< lowest height of block in file
     unsigned int nHeightLast;  //!< highest height of block in file
     uint64_t nTimeFirst;       //!< earliest time of block in file
@@ -53,15 +53,15 @@ public:
         READWRITE(VARINT(nHeightLast));
         READWRITE(VARINT(nTimeFirst));
         READWRITE(VARINT(nTimeLast));
-        if (s.GetVersion() > 70015)
-            READWRITE(VARINT(nStakeSize));
+        // if (s.GetVersion() > 70015)
+        //     READWRITE(VARINT(nStakeSize));
     }
 
      void SetNull() {
          nBlocks = 0;
          nSize = 0;
          nUndoSize = 0;
-         nStakeSize = 0;
+        //  nStakeSize = 0;
          nHeightFirst = 0;
          nHeightLast = 0;
          nTimeFirst = 0;
@@ -167,7 +167,7 @@ enum BlockStatus: uint32_t {
 
     BLOCK_OPT_WITNESS       =   128, //!< block data in blk*.data was received with a witness-enforcing client
 
-    BLOCK_HAVE_STAKE        =   256, //!< stake data available in stk*.dat
+    // BLOCK_HAVE_STAKE        =   256, //!< stake data available in stk*.dat
 };
 
 /** The block chain is a tree shaped structure starting with the
@@ -200,7 +200,7 @@ public:
     unsigned int nUndoPos;
 
     //! Byte offset within stk?????.dat where this block's stake data is stored
-    unsigned int nStakePos;
+    // unsigned int nStakePos;
 
     //! (memory only) Total amount of work (expected number of hashes) in the chain up to and including this block
     arith_uint256 nChainWork;
@@ -258,7 +258,7 @@ public:
         nFile = 0;
         nDataPos = 0;
         nUndoPos = 0;
-        nStakePos = 0;
+        // nStakePos = 0;
         nChainWork = arith_uint256();
         nTx = 0;
         nChainTx = 0;
@@ -325,14 +325,14 @@ public:
         return ret;
     }
 
-    CDiskBlockPos GetStakePos() const {
-        CDiskBlockPos ret;
-        if (nStatus & BLOCK_HAVE_STAKE) {
-            ret.nFile = nFile;
-            ret.nPos  = nStakePos;
-        }
-        return ret;
-    }
+    // CDiskBlockPos GetStakePos() const {
+    //     CDiskBlockPos ret;
+    //     if (nStatus & BLOCK_HAVE_STAKE) {
+    //         ret.nFile = nFile;
+    //         ret.nPos  = nStakePos;
+    //     }
+    //     return ret;
+    // }
 
     CBlockHeader GetBlockHeader() const
     {
@@ -470,8 +470,8 @@ public:
             READWRITE(VARINT(nDataPos));
         if (nStatus & BLOCK_HAVE_UNDO)
             READWRITE(VARINT(nUndoPos));
-        if (nStatus & BLOCK_HAVE_STAKE)
-            READWRITE(VARINT(nStakePos));
+        // if (nStatus & BLOCK_HAVE_STAKE)
+        //     READWRITE(VARINT(nStakePos));
 
         // block header
         READWRITE(this->nVersion);
@@ -480,7 +480,25 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
-        READWRITE(nStakeDifficulty);
+
+        if (this->nVersion & HARDFORK_VERSION_BIT) {
+            READWRITE(nStakeDifficulty);
+            // READWRITE(pstakeNode);
+            // READWRITE(nVoteBits);
+            // READWRITE(nTicketPoolSize);
+            // READWRITE(ticketLotteryState);
+            // READWRITE(nVoters);
+            // READWRITE(nFreshStake);
+            // READWRITE(nRevocations);
+            // READWRITE(extraData);
+            // READWRITE(nStakeVersion);
+        }
+        else if (ser_action.ForRead())
+        {
+            nStakeDifficulty = 0;
+        //    SetReadStakeDefaultBeforeFork(); 
+        }
+        // READWRITE(nStakeDifficulty);
     }
 
     uint256 GetBlockHash() const

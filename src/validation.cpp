@@ -1607,32 +1607,32 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
 namespace {
 
 
-bool StakeWriteToDisk(const StakeNode& stakeNode, CDiskBlockPos& pos, const uint256& hashBlock, const CMessageHeader::MessageStartChars& messageStart)
-{
-    // Open history file to append
-    CAutoFile fileout(OpenStakeFile(pos), SER_DISK, CLIENT_VERSION);
-    if (fileout.IsNull())
-        return error("%s: OpenStakeFile failed", __func__);
+// bool StakeWriteToDisk(const StakeNode& stakeNode, CDiskBlockPos& pos, const uint256& hashBlock, const CMessageHeader::MessageStartChars& messageStart)
+// {
+//     // Open history file to append
+//     CAutoFile fileout(OpenStakeFile(pos), SER_DISK, CLIENT_VERSION);
+//     if (fileout.IsNull())
+//         return error("%s: OpenStakeFile failed", __func__);
 
-    // Write index header
-    unsigned int nSize = GetSerializeSize(fileout, stakeNode);
-    fileout << FLATDATA(messageStart) << nSize;
+//     // Write index header
+//     unsigned int nSize = GetSerializeSize(fileout, stakeNode);
+//     fileout << FLATDATA(messageStart) << nSize;
 
-    // Write undo data
-    long fileOutPos = ftell(fileout.Get());
-    if (fileOutPos < 0)
-        return error("%s: ftell failed", __func__);
-    pos.nPos = (unsigned int)fileOutPos;
-    fileout << stakeNode;
+//     // Write undo data
+//     long fileOutPos = ftell(fileout.Get());
+//     if (fileOutPos < 0)
+//         return error("%s: ftell failed", __func__);
+//     pos.nPos = (unsigned int)fileOutPos;
+//     fileout << stakeNode;
 
-    // calculate & write checksum
-    CHashWriter hasher(SER_GETHASH, PROTOCOL_VERSION);
-    hasher << hashBlock;
-    hasher << stakeNode;
-    fileout << hasher.GetHash();
+//     // calculate & write checksum
+//     CHashWriter hasher(SER_GETHASH, PROTOCOL_VERSION);
+//     hasher << hashBlock;
+//     hasher << stakeNode;
+//     fileout << hasher.GetHash();
 
-    return true;
-}
+//     return true;
+// }
 
 bool UndoWriteToDisk(const CBlockUndo& blockundo, CDiskBlockPos& pos, const uint256& hashBlock, const CMessageHeader::MessageStartChars& messageStart)
 {
@@ -1687,31 +1687,31 @@ bool UndoReadFromDisk(CBlockUndo& blockundo, const CDiskBlockPos& pos, const uin
     return true;
 }
 
-bool StakeReadFromDisk(StakeNode& stakeNode, const CDiskBlockPos& pos, const uint256& hashBlock)
-{
-    // Open history file to read
-    CAutoFile filein(OpenUndoFile(pos, true), SER_DISK, CLIENT_VERSION);
-    if (filein.IsNull())
-        return error("%s: OpenStakeFile failed", __func__);
+// bool StakeReadFromDisk(StakeNode& stakeNode, const CDiskBlockPos& pos, const uint256& hashBlock)
+// {
+//     // Open history file to read
+//     CAutoFile filein(OpenUndoFile(pos, true), SER_DISK, CLIENT_VERSION);
+//     if (filein.IsNull())
+//         return error("%s: OpenStakeFile failed", __func__);
 
-    // Read block
-    uint256 hashChecksum;
-    CHashVerifier<CAutoFile> verifier(&filein); // We need a CHashVerifier as reserializing may lose data
-    try {
-        verifier << hashBlock;
-        verifier >> stakeNode;
-        filein >> hashChecksum;
-    }
-    catch (const std::exception& e) {
-        return error("%s: Deserialize or I/O error - %s", __func__, e.what());
-    }
+//     // Read block
+//     uint256 hashChecksum;
+//     CHashVerifier<CAutoFile> verifier(&filein); // We need a CHashVerifier as reserializing may lose data
+//     try {
+//         verifier << hashBlock;
+//         verifier >> stakeNode;
+//         filein >> hashChecksum;
+//     }
+//     catch (const std::exception& e) {
+//         return error("%s: Deserialize or I/O error - %s", __func__, e.what());
+//     }
 
-    // Verify checksum
-    if (hashChecksum != verifier.GetHash())
-        return error("%s: Checksum mismatch", __func__);
+//     // Verify checksum
+//     if (hashChecksum != verifier.GetHash())
+//         return error("%s: Checksum mismatch", __func__);
 
-    return true;
-}
+//     return true;
+// }
 
 /** Abort with a message */
 bool AbortNode(const std::string& strMessage, const std::string& userMessage="")
@@ -1914,7 +1914,7 @@ void static FlushBlockFile(bool fFinalize = false)
 }
 
 static bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize);
-static bool FindStakePos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize);
+// static bool FindStakePos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize);
 
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
@@ -2328,7 +2328,6 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
             return state.DoS(100,
                 error("ConnectBlock(): FetchStakeNode - Failed to get Stake data"),
                 REJECT_INVALID, "bad-stake-data");
-
     }
 
     // if(pindex->GetStakePos().IsNull()){
@@ -3241,36 +3240,36 @@ static bool FindBlockPos(CValidationState &state, CDiskBlockPos &pos, unsigned i
     return true;
 }
 
-static bool FindStakePos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize)
-{
-    pos.nFile = nFile;
+// static bool FindStakePos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize)
+// {
+//     pos.nFile = nFile;
 
-    LOCK(cs_LastBlockFile);
+//     LOCK(cs_LastBlockFile);
 
-    unsigned int nNewSize;
-    pos.nPos = vinfoBlockFile[nFile].nStakeSize;
-    nNewSize = vinfoBlockFile[nFile].nStakeSize += nAddSize;
-    setDirtyFileInfo.insert(nFile);
+//     unsigned int nNewSize;
+//     pos.nPos = vinfoBlockFile[nFile].nStakeSize;
+//     nNewSize = vinfoBlockFile[nFile].nStakeSize += nAddSize;
+//     setDirtyFileInfo.insert(nFile);
 
-    unsigned int nOldChunks = (pos.nPos + STAKEFILE_CHUNK_SIZE - 1) / STAKEFILE_CHUNK_SIZE;
-    unsigned int nNewChunks = (nNewSize + STAKEFILE_CHUNK_SIZE - 1) / STAKEFILE_CHUNK_SIZE;
-    if (nNewChunks > nOldChunks) {
-        if (fPruneMode)
-            fCheckForPruning = true;
-        if (CheckDiskSpace(nNewChunks * STAKEFILE_CHUNK_SIZE - pos.nPos)) {
-            FILE *file = OpenUndoFile(pos);
-            if (file) {
-                LogPrintf("Pre-allocating up to position 0x%x in stk%05u.dat\n", nNewChunks * STAKEFILE_CHUNK_SIZE, pos.nFile);
-                AllocateFileRange(file, pos.nPos, nNewChunks * STAKEFILE_CHUNK_SIZE - pos.nPos);
-                fclose(file);
-            }
-        }
-        else
-            return state.Error("out of disk space");
-    }
+//     unsigned int nOldChunks = (pos.nPos + STAKEFILE_CHUNK_SIZE - 1) / STAKEFILE_CHUNK_SIZE;
+//     unsigned int nNewChunks = (nNewSize + STAKEFILE_CHUNK_SIZE - 1) / STAKEFILE_CHUNK_SIZE;
+//     if (nNewChunks > nOldChunks) {
+//         if (fPruneMode)
+//             fCheckForPruning = true;
+//         if (CheckDiskSpace(nNewChunks * STAKEFILE_CHUNK_SIZE - pos.nPos)) {
+//             FILE *file = OpenUndoFile(pos);
+//             if (file) {
+//                 LogPrintf("Pre-allocating up to position 0x%x in stk%05u.dat\n", nNewChunks * STAKEFILE_CHUNK_SIZE, pos.nFile);
+//                 AllocateFileRange(file, pos.nPos, nNewChunks * STAKEFILE_CHUNK_SIZE - pos.nPos);
+//                 fclose(file);
+//             }
+//         }
+//         else
+//             return state.Error("out of disk space");
+//     }
 
-    return true;
-}
+//     return true;
+// }
 
 static bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigned int nAddSize)
 {
@@ -3378,7 +3377,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
 
     // Before stake validation begins, a block must not contain any votes or revocations, its vote bits
     // must be 0x0001, and its ticket lottery state must be all zeroes.
-    if (blockHeight < consensusParams.nStakeValidationHeight) {
+    if (blockHeight > 1 // genesis + 1, NOTE: when comming from LoadExternalBlockFile, all blocks are checked without constructing the chain
+       && blockHeight < consensusParams.nStakeValidationHeight) {
         if (numVotes > 0)
             return state.DoS(50, false, REJECT_INVALID, "votes-too-early", false, "vote transactions present before stake validation time");
 
@@ -3408,10 +3408,14 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     if (numTickets > consensusParams.nMaxFreshStakePerBlock)
         return state.DoS(50, false, REJECT_INVALID, "too-many-tickets", false, "block contains more than the maximum allowed number of tickets per block");
 
-    // A block header must commit to the actual number of tickets purchases that
+    // A block header must commit to the actual number of tickets purchases, votes and revocations that
     // are in the block.
     if (block.nFreshStake != numTickets)
         return state.DoS(50, false, REJECT_INVALID, "number-tickets-mismatch", false, "block header fresh stake does not match number of tickets contained in block");
+    if (block.nVoters != numVotes)
+        return state.DoS(50, false, REJECT_INVALID, "number-votes-mismatch", false, "block header votes does not match number of vote transactions contained in block");
+    if (block.nRevocations != numRevocations)
+        return state.DoS(50, false, REJECT_INVALID, "number-revocations-mismatch", false, "block header revocations does not match number of revoke transactions contained in block");
 
 
     // All ticket purchases must meet the difficulty specified by the block header.
@@ -3510,7 +3514,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     // type at the current time is ticket purchases, however, if another
     // stake type is ever added, consensus would break without this check.
     // It's better to be safe and it's a cheap check.
-    if (blockHeight < consensusParams.nStakeValidationHeight)
+    if (blockHeight > 1 // genesis + 1, NOTE: when comming from LoadExternalBlockFile, all blocks are checked without constructing the chain
+       && blockHeight < consensusParams.nStakeValidationHeight)
     {
         if (numStakeTx != numTickets)
             return state.DoS(100, false, REJECT_INVALID, "nontickets-too-early", false, "block contains non-ticket stake transactions before stake validation height");
@@ -3754,7 +3759,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
     }
 
     // Ensure that votes and revocations refer only to tickets that are valid from the perspective of this block
-    if (nHeight >= consensusParams.nStakeValidationHeight)
+    if (nHeight >= consensusParams.nStakeValidationHeight && pindexPrev->pstakeNode != nullptr)
     {
         if (!checkAllowedVotes(block, state, consensusParams, pindexPrev))
             return state.DoS(100, false, REJECT_INVALID, "bad-ticket-reference-in-vote", false, "vote transaction references a ticket that isn't eligible to vote");
