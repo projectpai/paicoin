@@ -483,20 +483,26 @@ public:
 
         if (this->nVersion & HARDFORK_VERSION_BIT) {
             READWRITE(nStakeDifficulty);
-            // READWRITE(pstakeNode);
-            // READWRITE(nVoteBits);
-            // READWRITE(nTicketPoolSize);
-            // READWRITE(ticketLotteryState);
-            // READWRITE(nVoters);
-            // READWRITE(nFreshStake);
-            // READWRITE(nRevocations);
-            // READWRITE(extraData);
-            // READWRITE(nStakeVersion);
+            READWRITE(nVoteBits);
+            READWRITE(nTicketPoolSize);
+            READWRITE(ticketLotteryState);
+            READWRITE(nVoters);
+            READWRITE(nFreshStake);
+            READWRITE(nRevocations);
+            READWRITE(extraData);
+            READWRITE(nStakeVersion);
         }
         else if (ser_action.ForRead())
         {
-            nStakeDifficulty = 0;
-        //    SetReadStakeDefaultBeforeFork(); 
+            nStakeDifficulty = Params().GetConsensus().nMinimumStakeDiff;
+            nVoteBits = VoteBits::rttAccepted;
+            nTicketPoolSize = 0;
+            ticketLotteryState.SetNull();
+            nVoters = 0;
+            nFreshStake = 0;
+            nRevocations = 0;
+            extraData.SetNull();
+            nStakeVersion = 0;
         }
         // READWRITE(nStakeDifficulty);
     }
@@ -514,7 +520,10 @@ public:
         block.nVoteBits       = nVoteBits;
         block.nTicketPoolSize = nTicketPoolSize;
         block.ticketLotteryState = ticketLotteryState;
+        block.nVoters         = nVoters;
         block.nFreshStake     = nFreshStake;
+        block.nRevocations    = nRevocations;
+        block.extraData       = extraData;
         block.nStakeVersion   = nStakeVersion;
         return block.GetHash();
     }

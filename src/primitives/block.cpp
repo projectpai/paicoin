@@ -49,6 +49,6 @@ void CBlockHeader::SetReadStakeDefaultBeforeFork()
     nVoters = 0;
     nFreshStake = 0;
     nRevocations = 0;
-    std::fill(std::begin(extraData), std::end(extraData), 0);
+    extraData.SetNull();
     nStakeVersion = 0;
 }
