@@ -206,7 +206,7 @@ static void FindFilesToPruneManual(std::set<int>& setFilesToPrune, int nManualPr
 static void FindFilesToPrune(std::set<int>& setFilesToPrune, uint64_t nPruneAfterHeight);
 bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsViewCache &inputs, bool fScriptChecks, unsigned int flags, bool cacheSigStore, bool cacheFullScriptStore, PrecomputedTransactionData& txdata, std::vector<CScriptCheck> *pvChecks = nullptr);
 static FILE* OpenUndoFile(const CDiskBlockPos &pos, bool fReadOnly = false);
-static FILE* OpenStakeFile(const CDiskBlockPos &pos, bool fReadOnly = false);
+// static FILE* OpenStakeFile(const CDiskBlockPos &pos, bool fReadOnly = false);
 
 bool CheckFinalTx(const CTransaction &tx, int flags)
 {
@@ -1812,9 +1812,18 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
     // }
     //TODO use the read StakeNode info, in case only Regular transactions are disconnected we won't need to do it
 
+    std::vector<unsigned int> reorderedIndexes, reorderedStakes;
+    for (unsigned int i = 0; i < block.vtx.size(); ++i)
+        if (ParseTxClass(*(block.vtx[i])) == TX_Regular)
+            reorderedIndexes.push_back(i);
+        else
+            reorderedStakes.push_back(i);
+    reorderedIndexes.insert(reorderedIndexes.end(), std::make_move_iterator(reorderedStakes.begin()), std::make_move_iterator(reorderedStakes.end()));
+    assert(reorderedIndexes.size() == block.vtx.size());
+
     // undo transactions in reverse order
-    for (int i = block.vtx.size() - 1; i >= 0; i--) {
-        const CTransaction &tx = *(block.vtx[i]);
+    for (int i = reorderedIndexes.size() -1; i >= 0; --i) {
+        const CTransaction &tx = *(block.vtx[reorderedIndexes[i]]);
 
         uint256 hash = tx.GetHash();
         bool is_coinbase = tx.IsCoinBase();
@@ -1838,15 +1847,17 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
         }
 
         // restore inputs
-        if (i > 0) { // not coinbases
-            CTxUndo &txundo = blockUndo.vtxundo[i-1];
-            if (txundo.vprevout.size() != tx.vin.size()) {
+        if (reorderedIndexes[i] > 0) { // not coinbases
+            CTxUndo &txundo = blockUndo.vtxundo[reorderedIndexes[i]-1];
+            // in case of Vote tx, skip first vin, it is stakebase, see UpdateCoins
+            const auto& startIndex = ParseTxClass(tx) == ETxClass::TX_Vote ? voteStakeInputIndex : 0;
+            if (txundo.vprevout.size() != tx.vin.size() - startIndex) {
                 error("DisconnectBlock(): transaction and undo data inconsistent");
                 return DISCONNECT_FAILED;
             }
-            for (unsigned int j = tx.vin.size(); j-- > 0;) {
+            for (unsigned int j = tx.vin.size(); j-- > startIndex;) {
                 const COutPoint &out = tx.vin[j].prevout;
-                int res = ApplyTxInUndo(std::move(txundo.vprevout[j]), view, out);
+                int res = ApplyTxInUndo(std::move(txundo.vprevout[j - startIndex]), view, out);
                 if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
                 fClean = fClean && res != DISCONNECT_UNCLEAN;
             }
@@ -4224,9 +4235,9 @@ static FILE* OpenUndoFile(const CDiskBlockPos &pos, bool fReadOnly) {
 }
 
 /** Open a stake file (stk?????.dat) */
-static FILE* OpenStakeFile(const CDiskBlockPos &pos, bool fReadOnly) {
-    return OpenDiskFile(pos, "stk", fReadOnly);
-}
+// static FILE* OpenStakeFile(const CDiskBlockPos &pos, bool fReadOnly) {
+//     return OpenDiskFile(pos, "stk", fReadOnly);
+// }
 
 fs::path GetBlockPosFilename(const CDiskBlockPos &pos, const char *prefix)
 {
@@ -4261,7 +4272,7 @@ bool static LoadBlockIndexDB(const CChainParams& chainparams)
     // Calculate nChainWork
     std::vector<std::pair<int, CBlockIndex*> > vSortedByHeight;
     vSortedByHeight.reserve(mapBlockIndex.size());
-    for (const std::pair<uint256, CBlockIndex*>& item : mapBlockIndex)
+    for (const std::pair<const uint256, CBlockIndex*>& item : mapBlockIndex)
     {
         CBlockIndex* pindex = item.second;
         vSortedByHeight.push_back(std::make_pair(pindex->nHeight, pindex));
@@ -4327,7 +4338,7 @@ bool static LoadBlockIndexDB(const CChainParams& chainparams)
     // Check presence of blk files
     LogPrintf("Checking all blk files are present...\n");
     std::set<int> setBlkDataFiles;
-    for (const std::pair<uint256, CBlockIndex*>& item : mapBlockIndex)
+    for (const std::pair<const uint256, CBlockIndex*>& item : mapBlockIndex)
     {
         CBlockIndex* pindex = item.second;
         if (pindex->nStatus & BLOCK_HAVE_DATA) {
