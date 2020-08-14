@@ -43,17 +43,27 @@ public:
     ETxClass txClass;
 
     //! construct a Coin from a CTxOut and height/coinbase information.
-    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn, ETxClass txClassIn) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), txClass(txClassIn) {}
-    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn, ETxClass txClassIn) : out(outIn), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), txClass(txClassIn) {}
+    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn, ETxClass txClassIn) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), txClass(txClassIn) 
+    {
+        ;
+    }
+    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn, ETxClass txClassIn) : out(outIn), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), txClass(txClassIn) 
+    {
+        ;
+    }
 
     void Clear() {
         out.SetNull();
         fCoinBase = false;
         nHeight = 0;
+        txClass = ETxClass::TX_Regular;
     }
 
     //! empty constructor
-    Coin() : fCoinBase(false), nHeight(0) { }
+    Coin() : fCoinBase(false), nHeight(0), txClass(ETxClass::TX_Regular) 
+    { 
+        ;
+    }
 
     bool IsCoinBase() const {
         return fCoinBase;

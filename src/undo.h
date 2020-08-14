@@ -31,6 +31,8 @@ public:
             ::Serialize(s, (unsigned char)0);
         }
         ::Serialize(s, CTxOutCompressor(REF(txout->out)));
+        uint32_t txClassInt = (uint32_t) txout->txClass;
+        ::Serialize(s, VARINT(txClassInt));
     }
 
     explicit TxInUndoSerializer(const Coin* coin) : txout(coin) {}
@@ -55,6 +57,9 @@ public:
             ::Unserialize(s, VARINT(nVersionDummy));
         }
         ::Unserialize(s, REF(CTxOutCompressor(REF(txout->out))));
+        uint32_t txClassInt;
+        ::Unserialize(s, VARINT(txClassInt));
+        txout->txClass = (ETxClass) txClassInt;
     }
 
     explicit TxInUndoDeserializer(Coin* coin) : txout(coin) {}

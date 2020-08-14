@@ -648,7 +648,13 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins, const CChainParams& chainp
         setEntries setParentCheck;
         int64_t parentSizes = 0;
         int64_t parentSigOpCost = 0;
-        for (const CTxIn &txin : tx.vin) {
+
+        for (size_t in = 0; in < tx.vin.size(); ++in) {
+            if (ParseTxClass(tx) == TX_Vote && in == voteSubsidyInputIndex)
+                continue; //skip the stakebase as coin doesn't exist
+
+            const CTxIn& txin = tx.vin[in];
+
             // Check that every mempool transaction's inputs refer to available coins, or other mempool tx's.
             indexed_transaction_set::const_iterator it2 = mapTx.find(txin.prevout.hash);
             if (it2 != mapTx.end()) {
