@@ -3353,7 +3353,7 @@ bool CheckProofOfStake(const CBlock& block, int64_t posLimit)
     return true;
 }
 
-static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, int nBlockHeight, bool fCheckPOW = true)
+static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true)
 {
     // Check proof of work matches claimed amount
     if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, consensusParams))
@@ -3370,50 +3370,19 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
 bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase, int blockHeight)
 {
     // These are checks that are independent of context.
-    if (blockHeight < 0) {
-        blockHeight = chainActive.Height() + 1;
-    }
 
     if (block.fChecked)
         return true;
 
     // Check that the header is valid (particularly PoW).  This is mostly
     // redundant with the call in AcceptBlockHeader.
-    if (!CheckBlockHeader(block, state, consensusParams, blockHeight, fCheckPOW))
+    if (!CheckBlockHeader(block, state, consensusParams, fCheckPOW))
         return false;
 
     // Count transactions by class
     int numTickets, numVotes, numRevocations;
     int numStakeTx = CountStakeTransactions(block, numTickets, numVotes, numRevocations);
 
-    // Before stake validation begins, a block must not contain any votes or revocations, its vote bits
-    // must be 0x0001, and its ticket lottery state must be all zeroes.
-    if (blockHeight > 1 // genesis + 1, NOTE: when comming from LoadExternalBlockFile, all blocks are checked without constructing the chain
-       && blockHeight < consensusParams.nStakeValidationHeight) {
-        if (numVotes > 0)
-            return state.DoS(50, false, REJECT_INVALID, "votes-too-early", false, "vote transactions present before stake validation time");
-
-        if (numRevocations > 0)
-            return state.DoS(50, false, REJECT_INVALID, "revocations-too-early", false, "revocation transactions present before stake validation time");
-
-        if (block.nVoteBits != VoteBits::rttAccepted)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
-            return state.DoS(50, false, REJECT_INVALID, "voteBits-too-early", false, "voteBits present before stake validation time");
-
-        StakeState earlyLotteryState;
-        std::fill(earlyLotteryState.begin(), earlyLotteryState.end(), 0);
-        if (block.ticketLotteryState != earlyLotteryState)
-            return state.DoS(50, false, REJECT_INVALID, "lottery-too-early", false, "ticket lottery state non-zero before stake validation time");
-    }
-
-    // Check that the number of votes in a block is within limits
-    if (blockHeight >= consensusParams.nStakeValidationHeight)
-    {
-        auto majority = (consensusParams.nTicketsPerBlock / 2) + 1;
-        if (numVotes < majority)
-            return state.DoS(50, false, REJECT_INVALID, "too-few-votes", false, "block does not contain the minimum required number of votes");
-        if (numVotes > consensusParams.nTicketsPerBlock)
-            return state.DoS(50, false, REJECT_INVALID, "too-many-votes", false, "block contains more than the maximum allowed number of votes");
-    }
 
     // The block must not contain more ticket purchases than the maximum allowed.
     if (numTickets > consensusParams.nMaxFreshStakePerBlock)
@@ -3461,42 +3430,17 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     if (block.vtx.empty() || !block.vtx[0]->IsCoinBase())
         return state.DoS(100, false, REJECT_INVALID, "bad-cb-missing", false, "first tx is not coinbase");
 
-    // After coinbase must come stake transactions, followed by regular transactions
-    unsigned firstRegularTxIndex = 1 + numStakeTx;
     for (unsigned int i = 1; i < block.vtx.size(); i++) {
         if (block.vtx[i]->IsCoinBase())
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-multiple", false, "more than one coinbase");
-        if (blockHeight >= consensusParams.nStakeValidationHeight) {
-            ETxClass txClass = ParseTxClass(*block.vtx[i]);
-            if (i > firstRegularTxIndex && txClass != TX_Regular) {
-                auto report = strprintf("transactions not sorted: found a tx of class %d at index %d; stake transactions counted as %d", (int) txClass, i, numStakeTx);
-                return state.DoS(100, false, REJECT_INVALID, "transactions-not-sorted", false, report);
-            }
-        }
     }
 
-    // Check transactions
-    int numYesVotes = 0;
     for (const auto& tx : block.vtx)
     {
         if (!CheckTransaction(*tx, state, true))
             return state.Invalid(false, state.GetRejectCode(), state.GetRejectReason(),
                                  strprintf("Transaction check failed (tx hash %s) %s", tx->GetHash().ToString(), state.GetDebugMessage()));
 
-        ETxClass txClass = ParseTxClass(*tx);
-
-        // All votes in a block must commit to the parent of the block once stake validation height has been reached.
-        if (txClass == TX_Vote && blockHeight >= consensusParams.nStakeValidationHeight)
-        {
-            VoteData voteData;
-            ParseVote(*tx, voteData);
-            if (voteData.blockHash != block.hashPrevBlock || voteData.blockHeight != (uint32_t)blockHeight - 1)
-                return state.DoS(100, false, REJECT_INVALID, "vote-for-wrong-block", false, "vote transaction references unexpected block");
-
-            // Tally how many votes approve the previous block's regular transactions tree for use.
-            if (voteData.voteBits.isRttAccepted())
-                ++numYesVotes;
-        }
     }
 
     // A block must not contain more than the maximum allowed number of revocations.
@@ -3508,30 +3452,10 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     if (numStakeTx != numTickets + numVotes + numRevocations)
         return state.DoS(100, false, REJECT_INVALID, "unrecognized-staketx-present", false, "block contains unrecognized stake transactions");
 
-    // Block header voteBits must match actual votes contained in the block
-    if (blockHeight >= consensusParams.nStakeValidationHeight) {
-        int numNoVotes = numVotes - numYesVotes;
-        bool votesApprovePrevBlock = numYesVotes > numNoVotes;
-        bool headerApprovesPrevBlock = block.nVoteBits.isRttAccepted();
-        if (votesApprovePrevBlock != headerApprovesPrevBlock)
-            return state.DoS(100, false, REJECT_INVALID, "header-votebits-incorrect", false, "header voteBits does not match votes");
-    }
 
-    // A block must not contain any other stake transactions than ticket purchases prior to stake validation height.
-    //
-    // NOTE: This case is impossible to hit at this point at the time this
-    // comment was written since the votes and revocations have already been
-    // proven to be zero before stake validation height and the only other
-    // type at the current time is ticket purchases, however, if another
-    // stake type is ever added, consensus would break without this check.
-    // It's better to be safe and it's a cheap check.
-    if (blockHeight > 1 // genesis + 1, NOTE: when comming from LoadExternalBlockFile, all blocks are checked without constructing the chain
-       && blockHeight < consensusParams.nStakeValidationHeight)
-    {
-        if (numStakeTx != numTickets)
-            return state.DoS(100, false, REJECT_INVALID, "nontickets-too-early", false, "block contains non-ticket stake transactions before stake validation height");
+    if (blockHeight < 0) {
+        blockHeight = chainActive.Height() + 1;
     }
-
     if (fCheckCoinbase && block.GetHash() != consensusParams.hashGenesisBlock && blockHeight < consensusParams.nStakeValidationHeight + nNumBlocksPastStakeValidationToKeepWhitelist) {
         const auto& coinbaseAddrs = Params().coinbaseAddrs;
         if (!coinbaseAddrs.empty()) {
@@ -3761,14 +3685,93 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
                               ? pindexPrev->GetMedianTimePast()
                               : block.GetBlockTime();
 
-    // Check that all transactions are finalized and that they aren't expired
-    for (const auto& tx : block.vtx) {
-        if (!IsFinalTx(*tx, nHeight, nLockTimeCutoff))
-            return state.DoS(10, false, REJECT_INVALID, "bad-txns-nonfinal", false, "non-final transaction");
-        if (IsExpiredTx(*tx, nHeight))
-            return state.DoS(10, false, REJECT_INVALID, "bad-txns-expired", false, "expired transaction");
+    // Count transactions by class
+    int numTickets, numVotes, numRevocations;
+    int numStakeTx = CountStakeTransactions(block, numTickets, numVotes, numRevocations);
+
+    // Before stake validation begins, a block must not contain any votes or revocations, its vote bits
+    // must be 0x0001, and its ticket lottery state must be all zeroes.
+    if (nHeight < consensusParams.nStakeValidationHeight) {
+        if (numVotes > 0)
+            return state.DoS(50, false, REJECT_INVALID, "votes-too-early", false, "vote transactions present before stake validation time");
+
+        if (numRevocations > 0)
+            return state.DoS(50, false, REJECT_INVALID, "revocations-too-early", false, "revocation transactions present before stake validation time");
+
+        if (block.nVoteBits != VoteBits::rttAccepted)   // before stake validation height, blocks must all have voteBits set to 1 (simple approval)
+            return state.DoS(50, false, REJECT_INVALID, "voteBits-too-early", false, "voteBits present before stake validation time");
+
+        StakeState earlyLotteryState;
+        std::fill(earlyLotteryState.begin(), earlyLotteryState.end(), 0);
+        if (block.ticketLotteryState != earlyLotteryState)
+            return state.DoS(50, false, REJECT_INVALID, "lottery-too-early", false, "ticket lottery state non-zero before stake validation time");
     }
 
+    // Check that the number of votes in a block is within limits
+    if (nHeight >= consensusParams.nStakeValidationHeight)
+    {
+        auto majority = (consensusParams.nTicketsPerBlock / 2) + 1;
+        if (numVotes < majority)
+            return state.DoS(50, false, REJECT_INVALID, "too-few-votes", false, "block does not contain the minimum required number of votes");
+        if (numVotes > consensusParams.nTicketsPerBlock)
+            return state.DoS(50, false, REJECT_INVALID, "too-many-votes", false, "block contains more than the maximum allowed number of votes");
+    }
+
+    // After coinbase must come stake transactions, followed by regular transactions
+    unsigned firstRegularTxIndex = 1 + numStakeTx;
+    // Check transactions
+    int numYesVotes = 0;
+
+    // Check that all transactions are finalized and that they aren't expired
+    for (auto i = 0; i < block.vtx.size(); i++) {
+        if (!IsFinalTx(*block.vtx[i], nHeight, nLockTimeCutoff))
+            return state.DoS(10, false, REJECT_INVALID, "bad-txns-nonfinal", false, "non-final transaction");
+        if (IsExpiredTx(*block.vtx[i], nHeight))
+            return state.DoS(10, false, REJECT_INVALID, "bad-txns-expired", false, "expired transaction");
+        if (nHeight >= consensusParams.nStakeValidationHeight) {
+            ETxClass txClass = ParseTxClass(*block.vtx[i]);
+            if (i > firstRegularTxIndex && txClass != TX_Regular) {
+                auto report = strprintf("transactions not sorted: found a tx of class %d at index %d; stake transactions counted as %d", (int) txClass, i, numStakeTx);
+                return state.DoS(100, false, REJECT_INVALID, "transactions-not-sorted", false, report);
+            }
+            // All votes in a block must commit to the parent of the block once stake validation height has been reached.
+            if (txClass == TX_Vote)
+            {
+                VoteData voteData;
+                ParseVote(*block.vtx[i], voteData);
+                if (voteData.blockHash != block.hashPrevBlock || voteData.blockHeight != (uint32_t)nHeight - 1)
+                    return state.DoS(100, false, REJECT_INVALID, "vote-for-wrong-block", false, "vote transaction references unexpected block");
+
+                // Tally how many votes approve the previous block's regular transactions tree for use.
+                if (voteData.voteBits.isRttAccepted())
+                    ++numYesVotes;
+            }
+        }
+
+    }
+
+    // Block header voteBits must match actual votes contained in the block
+    if (nHeight >= consensusParams.nStakeValidationHeight) {
+        int numNoVotes = numVotes - numYesVotes;
+        bool votesApprovePrevBlock = numYesVotes > numNoVotes;
+        bool headerApprovesPrevBlock = block.nVoteBits.isRttAccepted();
+        if (votesApprovePrevBlock != headerApprovesPrevBlock)
+            return state.DoS(100, false, REJECT_INVALID, "header-votebits-incorrect", false, "header voteBits does not match votes");
+    }
+
+    // A block must not contain any other stake transactions than ticket purchases prior to stake validation height.
+    //
+    // NOTE: This case is impossible to hit at this point at the time this
+    // comment was written since the votes and revocations have already been
+    // proven to be zero before stake validation height and the only other
+    // type at the current time is ticket purchases, however, if another
+    // stake type is ever added, consensus would break without this check.
+    // It's better to be safe and it's a cheap check.
+    if (nHeight < consensusParams.nStakeValidationHeight)
+    {
+        if (numStakeTx != numTickets)
+            return state.DoS(100, false, REJECT_INVALID, "nontickets-too-early", false, "block contains non-ticket stake transactions before stake validation height");
+    }
     // Ensure that votes and revocations refer only to tickets that are valid from the perspective of this block
     if (nHeight >= consensusParams.nStakeValidationHeight && pindexPrev->pstakeNode != nullptr)
     {
@@ -3867,8 +3870,7 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
         if (pindexPrev->nStatus & BLOCK_FAILED_MASK)
             return state.DoS(100, error("%s: prev block invalid", __func__), REJECT_INVALID, "bad-prevblk");
 
-        int nHeight = *ppindex ? (*ppindex)->nHeight : (pindexPrev->nHeight + 1);
-        if (!CheckBlockHeader(block, state, chainparams.GetConsensus(), nHeight))
+        if (!CheckBlockHeader(block, state, chainparams.GetConsensus()))
             return error("%s: Consensus::CheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
 
         if (!ContextualCheckBlockHeader(block, state, chainparams, pindexPrev, GetAdjustedTime()))
