@@ -176,6 +176,30 @@ statefulset.apps/paicoin-node1   1/1     34s
 statefulset.apps/paicoin-node2   1/1     34s
 ```
 
+**IMPORTANT NOTE**: To be able to mine past the stake validation height we need to import the *private key* of the *address* that cpuminer uses as coinbase address.
+That is so that *autobuyer* can access the funds needed to buy tickets.
+
+That means that we need to execute an import command on the paicoin-node2-0 pod:
+```
+$ kubectl exec -it paicoin-node2-0 -- /bin/bash
+root@paicoin-node2-0:/# paicoin-cli importprivkey aTHcf6yqGwRE4ntF8Hvy2vgCnzDKnBnHFiRCHEniQYUYfWNPx9XZ
+root@paicoin-node2-0:/#
+```
+
+Datadir is persisted on the minukube:
+```
+$ minikube ssh
+docker@minikube:~$ ls -la /datadir/
+total 16
+drwxr-xr-x 4 root root 4096 Aug 19 15:39 .
+drwxr-xr-x 1 root root 4096 Aug 19 13:33 ..
+drwxr-xr-x 3 root root 4096 Aug 19 15:39 paicoin-node1
+drwxr-xr-x 3 root root 4096 Aug 19 15:39 paicoin-node2
+```
+
+When you want to start the chain from scratch just delete these folders and **do not forget to re-import the private key** as explained above.
+
+
 To follow the blockchain progress, we first need to get the url of the explorer-service:
 ```
 $ minikube service list 

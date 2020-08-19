@@ -68,7 +68,8 @@ data:
     rpcallowip=0.0.0.0/0
     rpcbind=0.0.0.0
     testnet=1
-    txindex=1
+    # reindex=1
+    # txindex=1
     onlynet=ipv4
     listenonion=0
     listen=1
@@ -76,6 +77,9 @@ data:
     datadir=/root/data
     # dnsseed=0
     # connect=0
+    autostake=1
+    tblimit=5
+    checklevel=4
     maxtipage = 8640000 # this is default = 100 days in seconds
 
 ---
@@ -97,7 +101,9 @@ spec:
     spec:
       volumes:
       - name: paicoin-datadir
-        emptyDir: {}
+        # emptyDir: {}
+        hostPath:
+          path: /datadir/paicoin-node1
       - name: paicoin-config
         configMap:
           name: paicoin-config-map
@@ -107,6 +113,10 @@ spec:
       containers:
       - name: paicoin-node
         image: feature/hybrid-consensus/kubernetes:0.16.1
+        # lifecycle:
+        #   preStop:
+        #     exec:
+        #       command: ["/bin/sh", "-c", "paicoin-cli stop"]
         imagePullPolicy: Never
         ports:
         - containerPort: 18566
@@ -146,7 +156,9 @@ spec:
     spec:
       volumes:
       - name: paicoin-datadir
-        emptyDir: {}
+        # emptyDir: {}
+        hostPath:
+          path: /datadir/paicoin-node2
       - name: paicoin-config
         configMap:
           name: paicoin-config-map
@@ -156,7 +168,13 @@ spec:
       containers:
       - name: paicoin-node
         image: feature/hybrid-consensus/kubernetes:0.16.1
-        # image: feature/hybrid-consensus/gbt-updates:0.16.3
+        # lifecycle:
+          # postStart:
+            # exec:
+              # command: ["/bin/sh", "-c", "while [ $(paicoin-cli importprivkey aTHcf6yqGwRE4ntF8Hvy2vgCnzDKnBnHFiRCHEniQYUYfWNPx9XZ) != \"\"]; do sleep 5; done"]
+          # preStop:
+          #   exec:
+          #     command: ["/bin/sh", "-c", "paicoin-cli stop"]
         imagePullPolicy: Never
         ports:
         - containerPort: 18566
@@ -253,9 +271,8 @@ spec:
         imagePullPolicy: Never
         command: ["/bin/bash", "-c"]
         args:
-        - echo "starting miner using cbaddr=2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK";
-          echo "on http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC/";
-          ./minerd -o http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC/ -u paicoin -p PAI -a paicoin --no-longpoll --no-getwork --no-stratum --coinbase-addr=2FV2yM5FHytBMU9HLnJgfc83Ud7iw1DbqCK
+        - echo "on http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC/";
+          ./minerd -o http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC/ -u paicoin -p PAI -a paicoin --no-longpoll --no-getwork --no-stratum --coinbase-addr=MpT49fdZpetioCyWXU3BiCNHVnMFL27XbK
       initContainers:
       - name: init-paicoin-service
         image: busybox:1.28
