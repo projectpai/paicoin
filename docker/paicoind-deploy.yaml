@@ -68,7 +68,7 @@ data:
     rpcallowip=0.0.0.0/0
     rpcbind=0.0.0.0
     testnet=1
-    # reindex=1
+    reindex=1
     # txindex=1
     onlynet=ipv4
     listenonion=0
@@ -79,7 +79,7 @@ data:
     # connect=0
     autostake=1
     tblimit=5
-    checklevel=4
+    # checklevel=4
     maxtipage = 8640000 # this is default = 100 days in seconds
 
 ---
@@ -205,7 +205,7 @@ spec:
     matchLabels:
       app: miningcore-live
   serviceName: miningcore-service
-  replicas: 0
+  replicas: 1
   template:
     metadata:
       labels:
@@ -213,21 +213,24 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:latest
+        image: postgres-miningcore:latest
         imagePullPolicy: Never
-        env:
-         - name: POSTGRES_USER
-           value: miningcore # creates both user and db with same name
-         - name: POSTGRES_PASSWORD
-           value: miningcore1234
         ports:
           - containerPort: 5432
       - name: miningcore
-        image: miningcore:latest
+        image: pai-miningcore:latest
         imagePullPolicy: Never
         env:
+        - name: POSTGRES_HOST
+          value: localhost
         - name: POSTGRES_PORT
           value: "5432"
+        - name: POSTGRES_USER
+          value: miningcore
+        - name: POSTGRES_PASSWORD
+          value: miningcore1234
+        - name: POSTGRES_DATABASE
+          value: miningcore
         - name: PHONE_NUMBER_UNIQUE
           value: "000"
         - name: PAICOIND_HOST
@@ -258,7 +261,7 @@ spec:
     matchLabels:
       app: cpuminer-live
   serviceName: cpuminer-service
-  replicas: 1
+  replicas: 0
   template:
     metadata:
       labels:
