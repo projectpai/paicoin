@@ -2,11 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "stake/treap/tickettreap.h"
 #include "test/test_paicoin.h"
 #include <boost/test/unit_test.hpp>
-#include "stake/treap/tickettreap.h"
 
-uint256 uint32ToKey(uint32_t val)
+BOOST_FIXTURE_TEST_SUITE(tickettreap_tests, BasicTestingSetup)
+
+static uint256 uint32ToKey(uint32_t val)
 {
   unsigned char buf[4];
   uint32_t uval = val;
@@ -20,7 +22,7 @@ uint256 uint32ToKey(uint32_t val)
   return uint256(v);
 }
 
-uint256 uint32ToHash(uint32_t val)
+static uint256 uint32ToHash(uint32_t val)
 {
   unsigned char buf[4];
   uint32_t uval = val;
@@ -31,8 +33,6 @@ uint256 uint32ToHash(uint32_t val)
 
   return Hash(std::begin(buf),std::end(buf)); 
 }
-
-BOOST_FIXTURE_TEST_SUITE(tickettreap_tests, BasicTestingSetup)
 
 // TestParentStack ensures the treapParentStack functionality works as intended.
 BOOST_AUTO_TEST_CASE(parent_stack)
@@ -79,11 +79,11 @@ BOOST_AUTO_TEST_CASE(parent_stack)
 
         // Ensure attempting to retrieve a node at an index beyond the
         // stack's length returns nullptr.
-        BOOST_CHECK_EQUAL(stack.at(2), nullptr);
+        BOOST_CHECK(stack.at(2) == nullptr);
 
         // Ensure attempting to pop a node from an empty stack returns
         // nullptr.
-        BOOST_CHECK_EQUAL(stack.pop(), nullptr);
+        BOOST_CHECK(stack.pop() == nullptr);
     }
 }
 

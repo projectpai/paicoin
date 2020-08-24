@@ -79,7 +79,7 @@ uint256 WalletStakeTestingSetup::SendMoney(const std::vector<std::pair<CTxDestin
 uint256 WalletStakeTestingSetup::AddTicketTx(bool useVsp, bool foreign)
 {
     const CBlockIndex* chainTip = chainActive.Tip();
-    BOOST_CHECK_NE(chainTip, nullptr);
+    BOOST_CHECK(chainTip != nullptr);
 
     // ticket settings
 
@@ -136,8 +136,8 @@ uint256 WalletStakeTestingSetup::AddTicketTx(bool useVsp, bool foreign)
     BOOST_CHECK(splitTxHash != emptyData.hash);
 
     const CWalletTx* splitWTx = wallet->GetWalletTx(splitTxHash);
-    BOOST_CHECK_NE(splitWTx, nullptr);
-    BOOST_CHECK_NE(splitWTx->tx, nullptr);
+    BOOST_CHECK(splitWTx != nullptr);
+    BOOST_CHECK(splitWTx->tx != nullptr);
 
     CTransactionRef splitTx = splitWTx->tx;
     if (useVsp) {
@@ -257,7 +257,7 @@ uint256 WalletStakeTestingSetup::AddVoteTx(const uint256& ticketHash, bool forei
     // block being voted
 
     const CBlockIndex *chainTip = chainActive.Tip();
-    BOOST_CHECK_NE(chainTip, nullptr);
+    BOOST_CHECK(chainTip != nullptr);
 
     const uint256& hash{chainTip->GetBlockHash()};
     BOOST_CHECK(hash != emptyData.hash);
@@ -278,12 +278,12 @@ uint256 WalletStakeTestingSetup::AddVoteTx(const uint256& ticketHash, bool forei
         BOOST_CHECK(!ticket->IsNull());
     } else {
         const CWalletTx* wticket = wallet->GetWalletTx(ticketHash);
-        BOOST_CHECK_NE(wticket, nullptr);
+        BOOST_CHECK(wticket != nullptr);
 
         ticket = wticket->tx;
     }
 
-    BOOST_CHECK_NE(ticket.get(), nullptr);
+    BOOST_CHECK(ticket.get() != nullptr);
 
     BOOST_CHECK_MESSAGE(ValidateBuyTicketStructure(*ticket, reason), ((reason.size() > 0) ? reason : "ValidateBuyTicketStructure"));
 
@@ -381,7 +381,7 @@ uint256 WalletStakeTestingSetup::AddRevokeTx(const uint256& ticketHash, bool for
     // ticket
 
     const CBlockIndex *chainTip = chainActive.Tip();
-    BOOST_CHECK_NE(chainTip, nullptr);
+    BOOST_CHECK(chainTip != nullptr);
 
     std::string reason;
 
@@ -394,12 +394,12 @@ uint256 WalletStakeTestingSetup::AddRevokeTx(const uint256& ticketHash, bool for
         BOOST_CHECK(!ticket->IsNull());
     } else {
         const CWalletTx* wticket = wallet->GetWalletTx(ticketHash);
-        BOOST_CHECK_NE(wticket, nullptr);
+        BOOST_CHECK(wticket != nullptr);
 
         ticket = wticket->tx;
     }
 
-    BOOST_CHECK_NE(ticket.get(), nullptr);
+    BOOST_CHECK(ticket.get() != nullptr);
 
     BOOST_CHECK_MESSAGE(ValidateBuyTicketStructure(*ticket, reason), ((reason.size() > 0) ? reason : "ValidateBuyTicketStructure"));
 
@@ -706,16 +706,16 @@ void WalletStakeTestingSetup::CheckVote(const uint256& voteHash, const uint256& 
     BOOST_CHECK(ticketHash != emptyData.hash);
 
     const CWalletTx* voteWtx = wallet->GetWalletTx(voteHash);
-    BOOST_CHECK_NE(voteWtx, nullptr);
+    BOOST_CHECK(voteWtx != nullptr);
 
     const CTransactionRef vote = voteWtx->tx;
-    BOOST_CHECK_NE(vote.get(), nullptr);
+    BOOST_CHECK(vote.get() != nullptr);
 
     const CWalletTx* ticketWtx = wallet->GetWalletTx(ticketHash);
-    BOOST_CHECK_NE(ticketWtx, nullptr);
+    BOOST_CHECK(ticketWtx != nullptr);
 
     const CTransactionRef ticket = ticketWtx->tx;
-    BOOST_CHECK_NE(ticket.get(), nullptr);
+    BOOST_CHECK(ticket.get() != nullptr);
 
     CheckVote(*vote, *ticket);
 
@@ -825,16 +825,16 @@ void WalletStakeTestingSetup::CheckRevocation(const uint256& revocationHash, con
     BOOST_CHECK(ticketHash != emptyData.hash);
 
     const CWalletTx* voteWtx = wallet->GetWalletTx(revocationHash);
-    BOOST_CHECK_NE(voteWtx, nullptr);
+    BOOST_CHECK(voteWtx != nullptr);
 
     const CTransactionRef vote = voteWtx->tx;
-    BOOST_CHECK_NE(vote.get(), nullptr);
+    BOOST_CHECK(vote.get() != nullptr);
 
     const CWalletTx* ticketWtx = wallet->GetWalletTx(ticketHash);
-    BOOST_CHECK_NE(ticketWtx, nullptr);
+    BOOST_CHECK(ticketWtx != nullptr);
 
     const CTransactionRef ticket = ticketWtx->tx;
-    BOOST_CHECK_NE(ticket.get(), nullptr);
+    BOOST_CHECK(ticket.get() != nullptr);
 
     CheckRevocation(*vote, *ticket);
 }

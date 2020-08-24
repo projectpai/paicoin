@@ -386,7 +386,7 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
     {
         CWallet wallet;
         AddKey(wallet, coinbaseKey);
-        BOOST_CHECK_EQUAL(nullBlock, wallet.ScanForWalletTransactions(oldTip, nullptr));
+        BOOST_CHECK(nullBlock == wallet.ScanForWalletTransactions(oldTip, nullptr));
         // PAICOIN Note: If the initial block subsidy has been changed,
         // update this sum with the correct value
         BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 3000 * COIN);
@@ -401,7 +401,7 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
     {
         CWallet wallet;
         AddKey(wallet, coinbaseKey);
-        BOOST_CHECK_EQUAL(oldTip, wallet.ScanForWalletTransactions(oldTip, nullptr));
+        BOOST_CHECK(oldTip == wallet.ScanForWalletTransactions(oldTip, nullptr));
         // PAICOIN Note: If the initial block subsidy has been changed,
         // update the subsidy with the correct value
         BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 1500 * COIN);
