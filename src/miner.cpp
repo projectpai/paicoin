@@ -468,6 +468,12 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
         modtxscoreiter modit = mapModifiedTx.get<ancestor_score>().begin();
         if (mi == mempool.mapTx.get<ancestor_score>().end()) {
             // We're out of entries in mapTx; use the entry from mapModifiedTx
+            // However, we only deal with non-stake tx in this loop
+            if (modit->iter->GetTxClass() != TX_Regular) {
+                mapModifiedTx.get<ancestor_score>().erase(modit);
+                continue;
+            }
+
             iter = modit->iter;
             fUsingModified = true;
         } else {
