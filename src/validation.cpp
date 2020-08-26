@@ -11,6 +11,7 @@
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "checkqueue.h"
+#include "coinbase_index.h"
 #include "consensus/consensus.h"
 #include "consensus/merkle.h"
 #include "consensus/tx_verify.h"
@@ -2004,6 +2005,18 @@ bool static FlushStateToDisk(const CChainParams& chainparams, CValidationState &
         GetMainSignals().SetBestChain(chainActive.GetLocator());
         nLastSetChain = nNow;
     }
+
+    {
+        if (gCoinbaseIndex.IsInitialized()) {
+            // Flush the coinbase index and the coinbase index cache
+            if (!CoinbaseIndexDisk(gCoinbaseIndex).SaveToDisk()) {
+                return state.Error("Unable to save coinbase index to disk");
+            }
+            if (!CoinbaseIndexCacheDisk(gCoinbaseIndexCache).SaveToDisk()) {
+                return state.Error("Unable to save coinbase index cache to disk");
+            }
+        }
+    }
     } catch (const std::runtime_error& e) {
         return AbortNode(state, std::string("System error while flushing: ") + e.what());
     }
@@ -2517,6 +2530,8 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
     } while (pindexNewTip != pindexMostWork);
     CheckBlockIndex(chainparams.GetConsensus());
 
+    gCoinbaseIndex.PruneAddrsWithBlocks(mapBlockIndex);
+
     // Write changes periodically to disk, after relay.
     if (!FlushStateToDisk(chainparams, state, FLUSH_STATE_PERIODIC)) {
         return false;
@@ -2890,7 +2905,24 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
                     if (ExtractDestination(out.scriptPubKey, address)) {
                         std::string pubKey(EncodeDestination(address));
                         auto validCoinbaseIter = coinbaseAddrs.find(pubKey);
-                        if (validCoinbaseIter == coinbaseAddrs.end() || (validCoinbaseIter->second > -1 && validCoinbaseIter->second < blockHeight)) {
+                        bool validWithLegacyCoinbaseAddrs = !(validCoinbaseIter == coinbaseAddrs.end() ||
+                            (validCoinbaseIter->second > -1 && validCoinbaseIter->second < blockHeight));
+                        
+                        bool validWithCbIndex = false;
+                        auto foundCbIndexAddr = gCoinbaseIndex.GetCoinbaseWithAddr(pubKey);
+                        auto cbIndexAddrHeight = -1;
+                        if (foundCbIndexAddr) {
+                            cbIndexAddrHeight = foundCbIndexAddr->GetExpirationHeight();
+
+                            if (cbIndexAddrHeight == -1) {
+                                validWithCbIndex = true;
+                            }
+                            else if (cbIndexAddrHeight > -1 && blockHeight <= cbIndexAddrHeight) {
+                                validWithCbIndex = true;
+                            }
+                        }
+
+                        if (!validWithLegacyCoinbaseAddrs && !validWithCbIndex) {
                             return state.DoS(100, error("CheckBlock(): invalid coinbase address %s", pubKey),
                                 REJECT_INVALID, "bad-cb-address");
                         }
@@ -3256,6 +3288,8 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
                 AbortNode(state, "Failed to write block");
         if (!ReceivedBlockTransactions(block, state, pindex, blockPos, chainparams.GetConsensus()))
             return error("AcceptBlock(): ReceivedBlockTransactions failed");
+
+        gCoinbaseIndexCache.ScanNewBlockForCoinbaseTxs(pblock);
     } catch (const std::runtime_error& e) {
         return AbortNode(state, std::string("System error: ") + e.what());
     }
