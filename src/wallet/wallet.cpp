@@ -1479,6 +1479,33 @@ bool CWallet::IsMyTicket(const uint256& ticketHash) const
     return IsMyTicket(*wtx->tx);
 }
 
+bool CWallet::IsTicketInMempool(const CTransaction& ticket) const
+{
+    std::string reason;
+
+    auto& txClassIndex = mempool.mapTx.get<tx_class>();
+    auto tickets = txClassIndex.equal_range(ETxClass::TX_BuyTicket);
+
+    for (auto ticketTxIter = tickets.first; ticketTxIter != tickets.second; ++ticketTxIter) {
+        const CTransaction& tx = ticketTxIter->GetTx();
+
+        if (!ValidateBuyTicketStructure(tx, reason))
+            continue;
+
+        // same ticket?
+        if (ticket.GetHash() == tx.GetHash())
+            return true;
+
+        // spend same funding transaction?
+        for (auto& ticketIn: ticket.vin)
+            for (auto& txIn: tx.vin)
+                if (ticketIn.prevout == txIn.prevout)
+                    return true;
+    }
+
+    return false;
+}
+
 bool CWallet::IsTicketRevokedInMempool(const uint256& ticketHash) const
 {
     std::string reason;
@@ -1964,6 +1991,9 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
             error.Load(CWalletError::TRANSACTION_ERROR, "Signing transaction failed");
             return std::make_pair(results, error);
         }
+
+        if (IsTicketInMempool(mTicketTx))
+            continue;
 
         CValidationState state;
         CWalletTx wtx;
