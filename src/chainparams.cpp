@@ -333,10 +333,10 @@ public:
 
         // stake parameters
         consensus.nMinimumStakeDiff                 = COIN * 0.2;
-        consensus.nTicketPoolSize                   = 1024;
+        consensus.nTicketPoolSize                   = 24;
         consensus.nTicketsPerBlock                  = 5;
         consensus.nTicketMaturity                   = 16;
-        consensus.nTicketExpiry                     = 6 * consensus.nTicketPoolSize;
+        consensus.nTicketExpiry                     = 5 * consensus.nTicketPoolSize;
         // consensus.nCoinbaseMaturity                 = 16;
         consensus.nSStxChangeMaturity               = 1;
         consensus.nTicketPoolSizeWeight             = 4;
