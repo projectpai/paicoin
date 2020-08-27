@@ -29,6 +29,27 @@ class TicketOperations(PAIcoinTestFramework):
         self.num_nodes = 1
         self.extra_args = [['-txindex']] 
 
+    def test_tx_type_info_last_block(self, expected_tx_types = []):
+        # test getblock and getrawtransaction
+        chainInfo = self.nodes[0].getblockchaininfo()
+        last_block = self.nodes[0].getblock(chainInfo['bestblockhash'],2)
+        for tx in last_block['tx']:
+            raw_tx = self.nodes[0].getrawtransaction(tx['txid'],True)
+            # print(raw_tx)
+            raw_tx_type = raw_tx['type']
+            assert(raw_tx_type in expected_tx_types)
+            assert(raw_tx_type == tx['type']) # check that type is present in both raw and block output
+
+            if raw_tx_type == 'stake_purchase' or raw_tx_type == 'stake_revocation':
+                assert(raw_tx['staking']['ticket_price'] > 0)
+                assert(raw_tx['staking']['fee_limit'] > 0)
+                assert(raw_tx['staking'] == tx['staking'])# check that same info is present in both raw and block output
+
+            elif raw_tx_type == 'vote':
+                assert(raw_tx['voting']['version'] == 1)
+                assert(raw_tx['voting']['vote'] == 'valid' or raw_tx['voting']['vote'] == 'invalid')
+                assert(raw_tx['voting'] == tx['voting'])# check that sme info is present in both raw and block output
+
 
     def run_test(self):
         # these are the same values as in chainparams.cpp for REGTEST, update them if they change
@@ -74,6 +95,8 @@ class TicketOperations(PAIcoinTestFramework):
             stakeinfo = self.nodes[0].getstakeinfo()
             assert(stakeinfo['ownmempooltix'] == 0) # no ticket tx in mempool after generate
             assert(stakeinfo['ownmempooltix'] == stakeinfo['allmempooltix'])
+
+        self.test_tx_type_info_last_block(['coinbase', 'standard', 'stake_purchase'])
 
         # we should be at nStakeEnabledHeight, so only tickets in txs[0] should be live
         assert(blkidx == nStakeEnabledHeight)
@@ -307,11 +330,19 @@ class TicketOperations(PAIcoinTestFramework):
                 votehash = self.nodes[0].generatevote(blockhash, blockheight, tickethash, dummyVoteBits, dummyVoteBitsExt)
                 totalVotes += 1
             
+            missed = self.nodes[0].missedtickets()
+            assert(blkidx <= nHeightExpiredBecomeMissed or len(missed["tickets"]) > 0) # we expect missed tickets 
+            for tickethash in missed['tickets']:
+                revokehash = self.nodes[0].revoketicket(tickethash)
+
+            stakeinfo = self.nodes[0].getstakeinfo()
+            assert(stakeinfo['missed'] == len(missed['tickets']))
+
             self.nodes[0].generate(1)
             self.sync_all()
             chainInfo = self.nodes[0].getblockchaininfo()
             assert(chainInfo['blocks'] == blkidx)
-            # print("generated block ", blkidx)
+
             stakeinfo = self.nodes[0].getstakeinfo()
             # print(stakeinfo)
             allPurchasedTickets -=  len(winners['tickets'])
@@ -324,9 +355,8 @@ class TicketOperations(PAIcoinTestFramework):
             live = self.nodes[0].livetickets()
             assert(stakeinfo['live'] == len(live['tickets']))
 
-            missed = self.nodes[0].missedtickets()
-            assert(stakeinfo['missed'] == len(missed['tickets']))
-            assert(blkidx < nHeightExpiredBecomeMissed or len(missed["tickets"]) > 0) # we expect missed tickets 
+        
+        self.test_tx_type_info_last_block(['coinbase', 'vote', 'stake_revocation'])
         
         # getstakeversioninfo
         numintervals = 2

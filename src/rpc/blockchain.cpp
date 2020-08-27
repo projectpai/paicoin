@@ -203,7 +203,13 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
         if(txDetails)
         {
             UniValue objTx{UniValue::VOBJ};
-            TxToUniv(*tx, uint256(), objTx, true, RPCSerializationFlags());
+            std::map<uint256, CTransactionRef> prevOutMap;
+            if (ETxClass::TX_RevokeTicket == ParseTxClass(*tx)) {
+                // extract the revoked ticket tx here
+                const auto& ticketHash = tx->vin[revocationStakeInputIndex].prevout.hash;
+                prevOutMap[ticketHash] = GetTicket(ticketHash);
+            }
+            TxToUniv(*tx, uint256(), objTx, true, RPCSerializationFlags(), &prevOutMap);
             txs.push_back(objTx);
         }
         else
