@@ -404,6 +404,7 @@ public:
         vSeeds.clear();
 
         // nodes with support for servicebits filtering should be at the top
+        vSeeds.emplace_back("testnet-hybrid-seed1.projectpai.com", false);
         // vSeeds.emplace_back("52.37.189.65", false);
         // vSeeds.emplace_back("13.59.205.159", false);
         // vSeeds.emplace_back("52.78.224.215", false);
