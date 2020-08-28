@@ -175,6 +175,36 @@ bool IsStakeTx(ETxClass eTxClass)
     return eTxClass == TX_BuyTicket || eTxClass == TX_Vote || eTxClass == TX_RevokeTicket;
 }
 
+bool IsStakeTx(const CTransaction& tx)
+{
+    return IsStakeTx(ParseTxClass(tx));
+}
+
+bool IsStakeTxOutSpendableByRegularTx(const CTransaction& tx, const uint32_t txoutIndex)
+{
+    // the stake transaction outputs that can be spent directly by a regular transaction are:
+    // - ticket purchase: any change output (but not the stake output)
+    // - vote: any reward output
+    // - revocation: any refund output
+
+    ETxClass txClass = ParseTxClass(tx);
+    switch (txClass) {
+        case TX_Regular:
+            return false;
+
+        case TX_BuyTicket:
+            return (txoutIndex >= ticketChangeOutputIndex) && ((txoutIndex - ticketChangeOutputIndex) % 2 == 0);
+
+        case TX_Vote:
+            return txoutIndex >= voteRewardOutputIndex;
+
+        case TX_RevokeTicket:
+            return txoutIndex >= revocationRefundOutputIndex;
+    }
+
+    return false;
+}
+
 bool HasStakebaseContents(const CTxIn& txIn)
 {
     return txIn.prevout.n == std::numeric_limits<uint32_t>::max() && txIn.scriptSig == Params().GetConsensus().stakeBaseSigScript && txIn.prevout.hash == uint256();

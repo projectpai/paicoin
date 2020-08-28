@@ -3161,11 +3161,11 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
                     continue;
                 }
 
-                // TODO: we are now setting every output of a stake tx as not spendable, but some should be spendable
-                // for example: the change ouput of a buy ticket transaction. We need to correct this
-                const auto& bStakeTx = IsStakeTx(ParseTxClass(*(pcoin->tx)));
+                // A stake transaction output is spendable by regular transactions only in some cases,
+                // such as if it is a ticket purchase change, a vote reward or revocation refund
+                const auto& bSpendableByRegularTx = (!IsStakeTx(*(pcoin->tx)) || IsStakeTxOutSpendableByRegularTx(*(pcoin->tx), i));
 
-                bool fSpendableIn = !bStakeTx && (((mine & ISMINE_SPENDABLE) != ISMINE_NO) || (coinControl && coinControl->fAllowWatchOnly && (mine & ISMINE_WATCH_SOLVABLE) != ISMINE_NO));
+                bool fSpendableIn = bSpendableByRegularTx && (((mine & ISMINE_SPENDABLE) != ISMINE_NO) || (coinControl && coinControl->fAllowWatchOnly && (mine & ISMINE_WATCH_SOLVABLE) != ISMINE_NO));
                 bool fSolvableIn = (mine & (ISMINE_SPENDABLE | ISMINE_WATCH_SOLVABLE)) != ISMINE_NO;
 
                 vCoins.push_back(COutput(pcoin, i, nDepth, fSpendableIn, fSolvableIn, safeTx));

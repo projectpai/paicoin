@@ -189,6 +189,8 @@ bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContr
 bool ParseTicketContribs(const CTransaction& tx, std::vector<TicketContribData>& contributions, CAmount& totalContribution, CAmount& totalVoteFeeLimit, CAmount& totalRevocationFeeLimit);
 bool ParseVote(const CTransaction& tx, VoteData& data);
 bool IsStakeTx(ETxClass txClass);
+bool IsStakeTx(const CTransaction& tx);
+bool IsStakeTxOutSpendableByRegularTx(const CTransaction& tx, const uint32_t txoutIndex);
 bool HasStakebaseContents(const CTxIn& txIn);
 
 bool ValidateStakeTxDeclStructure(const CTransaction& tx, ETxClass eTxClassExpected, unsigned numExpectedItems, unsigned expectedItemSizes[], std::string& reason);
