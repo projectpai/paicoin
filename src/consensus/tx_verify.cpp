@@ -212,8 +212,18 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
         if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-length");
     }
+    else if (txClass == TX_BuyTicket)
+    {
+        // Check number of inputs.
+        if (tx.vin.size() < 1)
+            return state.DoS(100, false, REJECT_INVALID, "bad-stake-input-count");
+    }
     else if (txClass == TX_Vote)
     {
+        // Check number of inputs.
+        if (tx.vin.size() < voteStakeInputIndex+1)
+            return state.DoS(100, false, REJECT_INVALID, "bad-stakereward-input-count");
+
         // Check length of subsidy scriptSig.
         if (tx.vin[voteSubsidyInputIndex].scriptSig.size() < 2 || tx.vin[voteSubsidyInputIndex].scriptSig.size() > 100)
             return state.DoS(100, false, REJECT_INVALID, "bad-stakereward-length");
@@ -224,6 +234,16 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
 
         // The ticket reference must not be null.
         if (tx.vin[voteStakeInputIndex].prevout.IsNull())
+            return state.DoS(100, false, REJECT_INVALID, "bad-ticket-ref");
+    }
+    else if (txClass == TX_RevokeTicket)
+    {
+        // Check number of inputs.
+        if (tx.vin.size() < revocationStakeInputIndex+1)
+            return state.DoS(100, false, REJECT_INVALID, "bad-stakerefund-input-count");
+
+        // The ticket reference must not be null.
+        if (tx.vin[revocationStakeInputIndex].prevout.IsNull())
             return state.DoS(100, false, REJECT_INVALID, "bad-ticket-ref");
     }
     else
