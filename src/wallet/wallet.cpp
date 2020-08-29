@@ -2691,6 +2691,10 @@ CAmount CWalletTx::GetCredit(const isminefilter& filter) const
     if (IsCoinBase() && GetBlocksToMaturity() > 0)
         return 0;
 
+    // Must wait until stake transaction is safely deep enough in the chain before valuing it
+    if (IsStakeTx(*tx) && GetBlocksToMaturity() > 0)
+        return 0;
+
     CAmount credit = 0;
     if (filter & ISMINE_SPENDABLE)
     {
@@ -2720,7 +2724,7 @@ CAmount CWalletTx::GetCredit(const isminefilter& filter) const
 
 CAmount CWalletTx::GetImmatureCredit(bool fUseCache) const
 {
-    if (IsCoinBase() && GetBlocksToMaturity() > 0 && IsInMainChain())
+    if (((IsCoinBase() || IsStakeTx(*tx)) && GetBlocksToMaturity() > 0) && IsInMainChain())
     {
         if (fUseCache && fImmatureCreditCached)
             return nImmatureCreditCached;
@@ -2739,6 +2743,10 @@ CAmount CWalletTx::GetAvailableCredit(bool fUseCache) const
 
     // Must wait until coinbase is safely deep enough in the chain before valuing it
     if (IsCoinBase() && GetBlocksToMaturity() > 0)
+        return 0;
+
+    // Must wait until stake transaction is safely deep enough in the chain before valuing it
+    if (IsStakeTx(*tx) && GetBlocksToMaturity() > 0)
         return 0;
 
     if (fUseCache && fAvailableCreditCached)
@@ -2764,7 +2772,7 @@ CAmount CWalletTx::GetAvailableCredit(bool fUseCache) const
 
 CAmount CWalletTx::GetImmatureWatchOnlyCredit(const bool& fUseCache) const
 {
-    if (IsCoinBase() && GetBlocksToMaturity() > 0 && IsInMainChain())
+    if (((IsCoinBase() || IsStakeTx(*tx)) && GetBlocksToMaturity() > 0) && IsInMainChain())
     {
         if (fUseCache && fImmatureWatchCreditCached)
             return nImmatureWatchCreditCached;
@@ -2783,6 +2791,10 @@ CAmount CWalletTx::GetAvailableWatchOnlyCredit(const bool& fUseCache) const
 
     // Must wait until coinbase is safely deep enough in the chain before valuing it
     if (IsCoinBase() && GetBlocksToMaturity() > 0)
+        return 0;
+
+    // Must wait until stake transaction is safely deep enough in the chain before valuing it
+    if (IsStakeTx(*tx) && GetBlocksToMaturity() > 0)
         return 0;
 
     if (fUseCache && fAvailableWatchCreditCached)
@@ -3090,7 +3102,7 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
             if (!CheckFinalTx(*pcoin->tx))
                 continue;
 
-            if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
+            if ((pcoin->IsCoinBase() || IsStakeTx(*pcoin->tx)) && pcoin->GetBlocksToMaturity() > 0)
                 continue;
 
             int nDepth = pcoin->GetDepthInMainChain();
@@ -3163,7 +3175,7 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
 
                 // A stake transaction output is spendable by regular transactions only in some cases,
                 // such as if it is a ticket purchase change, a vote reward or revocation refund
-                const auto& bSpendableByRegularTx = (!IsStakeTx(*(pcoin->tx)) || IsStakeTxOutSpendableByRegularTx(*(pcoin->tx), i));
+                const auto& bSpendableByRegularTx = ((!IsStakeTx(*pcoin->tx)) || IsStakeTxOutSpendableByRegularTx(*pcoin->tx, i));
 
                 bool fSpendableIn = bSpendableByRegularTx && (((mine & ISMINE_SPENDABLE) != ISMINE_NO) || (coinControl && coinControl->fAllowWatchOnly && (mine & ISMINE_WATCH_SOLVABLE) != ISMINE_NO));
                 bool fSolvableIn = (mine & (ISMINE_SPENDABLE | ISMINE_WATCH_SOLVABLE)) != ISMINE_NO;
@@ -4378,7 +4390,7 @@ std::map<CTxDestination, CAmount> CWallet::GetAddressBalances()
             if (!pcoin->IsTrusted())
                 continue;
 
-            if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
+            if ((pcoin->IsCoinBase() || IsStakeTx(*pcoin->tx)) && pcoin->GetBlocksToMaturity() > 0)
                 continue;
 
             int nDepth = pcoin->GetDepthInMainChain();
@@ -5043,9 +5055,21 @@ int CMerkleTx::GetDepthInMainChain(const CBlockIndex* &pindexRet) const
 
 int CMerkleTx::GetBlocksToMaturity() const
 {
-    if (!IsCoinBase())
-        return 0;
-    return std::max(0, (COINBASE_MATURITY+1) - GetDepthInMainChain());
+    if (IsCoinBase())
+        return std::max(0, (COINBASE_MATURITY+1) - GetDepthInMainChain());
+
+    auto txClass = ParseTxClass(*tx);
+    switch (txClass) {
+        case TX_Regular: // fallthrough
+        case TX_BuyTicket: // ticket contribution changes are spendable at any time
+            return 0;
+
+        case TX_Vote: // fallthrough, same maturity interval
+        case TX_RevokeTicket:
+            return std::max(0, (COINBASE_MATURITY+1) - GetDepthInMainChain());
+    }
+
+    return 0;
 }
 
 

@@ -190,7 +190,7 @@ bool IsStakeTxOutSpendableByRegularTx(const CTransaction& tx, const uint32_t txo
     ETxClass txClass = ParseTxClass(tx);
     switch (txClass) {
         case TX_Regular:
-            return false;
+            return true;
 
         case TX_BuyTicket:
             return (txoutIndex >= ticketChangeOutputIndex) && ((txoutIndex - ticketChangeOutputIndex) % 2 == 0);
