@@ -30,10 +30,18 @@ CTicketBuyer::~CTicketBuyer()
         thread.join();
 }
 
-void CTicketBuyer::UpdatedBlockTip(const CBlockIndex *, const CBlockIndex *, bool fInitialDownload)
+void CTicketBuyer::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *, bool fInitialDownload)
 {
     // we have to wait until the entire blockchain is downloaded
     if (fInitialDownload)
+        return;
+
+    LOCK(cs_main);
+
+    const CBlockIndex* tip = chainActive.Tip();
+
+    // check if the new tip is indeed on chain active
+    if (pindexNew == nullptr || tip == nullptr || pindexNew->GetBlockHash() != tip->GetBlockHash())
         return;
 
     std::unique_lock<std::mutex> lck{mtx};
