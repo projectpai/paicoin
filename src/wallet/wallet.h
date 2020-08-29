@@ -1219,6 +1219,12 @@ public:
        Returns false otherwise. */
     bool IsTicketInMempool(const CTransaction& ticket) const;
 
+    /* Verify if a ticket has already been voted and the corresponding transaction is in the mempool
+       - ticketHash: the hash of the ticket transaction
+       Returns true if the mempool contains a vote transaction for the specified ticket.
+       Returns false otherwise. */
+    bool IsTicketVotedInMempool(const uint256& ticketHash) const;
+
     /* Verify if a ticket has already been revoked and the corresponding transaction is in the mempool
        - ticketHash: the hash of the ticket transaction
        Returns true if the mempool contains a revoke transaction for the specified ticket.

@@ -1506,6 +1506,26 @@ bool CWallet::IsTicketInMempool(const CTransaction& ticket) const
     return false;
 }
 
+bool CWallet::IsTicketVotedInMempool(const uint256& ticketHash) const
+{
+    std::string reason;
+
+    auto& txClassIndex = mempool.mapTx.get<tx_class>();
+    auto votes = txClassIndex.equal_range(ETxClass::TX_Vote);
+
+    for (auto voteTxIter = votes.first; voteTxIter != votes.second; ++voteTxIter) {
+        const CTransaction& tx = voteTxIter->GetTx();
+
+        if (!ValidateVoteStructure(tx, reason))
+            continue;
+
+        if (ticketHash == tx.vin[voteStakeInputIndex].prevout.hash)
+            return true;
+    }
+
+    return false;
+}
+
 bool CWallet::IsTicketRevokedInMempool(const uint256& ticketHash) const
 {
     std::string reason;
