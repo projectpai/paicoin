@@ -2012,8 +2012,10 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
             return std::make_pair(results, error);
         }
 
-        if (IsTicketInMempool(mTicketTx))
-            continue;
+        // Uncommenting the following lines will disable replacing-by-fee of this ticket transaction
+        // This might be undesirable, so caution must be taken if uncommenting these lines
+        //if (IsTicketInMempool(mTicketTx))
+        //    continue;
 
         CValidationState state;
         CWalletTx wtx;
@@ -2074,6 +2076,13 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
         error.Load(CWalletError::INVALID_PARAMETER, "Invalid extended vote bits");
         return std::make_pair(voteHash, error);
     }
+
+    // Uncommenting the following lines will disable replacing-by-fee of this vote transaction
+    // This might be undesirable, so caution must be taken if uncommenting these lines
+    //if (IsTicketVotedInMempool(ticketHash)){
+    //    error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is already used for a vote in mempool");
+    //    return std::make_pair(voteHash, error);
+    //}
 
     const CWalletTx* ticketWtx = GetWalletTx(ticketHash);
     if (ticketWtx == nullptr) {
@@ -2236,10 +2245,12 @@ std::pair<std::string, CWalletError> CWallet::Revoke(const uint256& ticketHash)
         return std::make_pair(revocationHash, error);
     }
 
-    if (IsTicketRevokedInMempool(ticketHash)){
-        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is already revoked in mempool");
-        return std::make_pair(revocationHash, error);
-    }
+    // Uncommenting the following lines will disable replacing-by-fee this revocation transaction
+    // This might be undesirable, so caution must be taken if uncommenting these lines
+    //if (IsTicketRevokedInMempool(ticketHash)){
+    //    error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is already revoked in mempool");
+    //    return std::make_pair(revocationHash, error);
+    //}
 
     const CWalletTx* ticketWtx = GetWalletTx(ticketHash);
     if (ticketWtx == nullptr) {
