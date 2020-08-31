@@ -1255,6 +1255,7 @@ public:
        - spendlimit: limit on the amount to spend on ticket
        - minConf: minimum number of block confirmations required
        - ticketAddress: override the ticket address to which voting rights are given
+       - rewardAddress: the address where the reward is paid
        - numTickets: number of tickets to purchase
        - vspAddress: address to pay stake pool fees to
        - vspFeePercent: percent from the voter subsidy to pay to the stake pool
@@ -1269,6 +1270,7 @@ public:
                    CAmount spendLimit,
                    int minConf,
                    CTxDestination ticketAddress,
+                   CTxDestination rewardAddress,
                    unsigned int numTickets,
                    CTxDestination vspAddress,
                    double vspFeePercent,

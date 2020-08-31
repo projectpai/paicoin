@@ -183,7 +183,7 @@ void CTicketBuyer::mainLoop()
         if (config.limit > 0 && buy > config.limit)
             buy = config.limit;
 
-        const auto&& r = pwallet->PurchaseTicket(config.account, spendable, config.minConf, config.votingAddress, static_cast<unsigned int>(buy), config.poolFeeAddress, config.poolFees, expiry, 0 /*TODO Make sure this is handled correctly*/);
+        const auto&& r = pwallet->PurchaseTicket(config.account, spendable, config.minConf, config.votingAddress, config.rewardAddress, static_cast<unsigned int>(buy), config.poolFeeAddress, config.poolFees, expiry, 0 /*TODO Make sure this is handled correctly*/);
 
         if (r.second.code != CWalletError::SUCCESSFUL)
             LogPrintf("CTicketBuyer: Failed to purchase tickets: (%d) %s\n", r.second.code, r.second.message.c_str());

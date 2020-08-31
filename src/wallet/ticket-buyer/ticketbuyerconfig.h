@@ -28,6 +28,9 @@ public:
     // Address to assign voting rights; overrides VotingAccount
     CTxDestination votingAddress;
 
+    // Address where to send the reward;
+    CTxDestination rewardAddress;
+
     // Commitment address for stakepool fees
     CTxDestination poolFeeAddress;
 

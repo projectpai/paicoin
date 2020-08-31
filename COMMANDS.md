@@ -384,6 +384,10 @@ Wallet options:
        able to sign the input corresponding to this output, so it must own the
        address.
 
+  -tbrewardaddress
+     Specify the address to be used when sending the reward. The voter or revoker
+     will send the reward or refund to this address.
+
   -tblimit
        The maximum number of tickets to purchase in one batch.
 

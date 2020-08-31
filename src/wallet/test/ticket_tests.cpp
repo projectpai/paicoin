@@ -557,14 +557,14 @@ BOOST_FIXTURE_TEST_CASE(is_my_ticket, WalletStakeTestingSetup)
         std::vector<std::string> txHashes;
         CWalletError we;
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", MAX_MONEY, 1, key.GetPubKey().GetID(), 1, CNoDestination(), 0.0, 0);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", MAX_MONEY, 1, key.GetPubKey().GetID(), CNoDestination(), 1, CNoDestination(), 0.0, 0);
         BOOST_CHECK(we.code == CWalletError::SUCCESSFUL);
         BOOST_CHECK(txHashes.size() > 0);
 
         BOOST_CHECK_EQUAL(wallet->IsMyTicket(uint256S(txHashes[0])), false);
     }
 
-    // valid ticket
+    // valid ticket (generated reward address)
 
     {
         CPubKey pubKey;
@@ -573,11 +573,36 @@ BOOST_FIXTURE_TEST_CASE(is_my_ticket, WalletStakeTestingSetup)
         std::vector<std::string> txHashes;
         CWalletError we;
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", MAX_MONEY, 1, pubKey.GetID(), 1, CNoDestination(), 0.0, 0);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", MAX_MONEY, 1, pubKey.GetID(), CNoDestination(), 1, CNoDestination(), 0.0, 0);
         BOOST_CHECK(we.code == CWalletError::SUCCESSFUL);
         BOOST_CHECK(txHashes.size() > 0);
 
         BOOST_CHECK_EQUAL(wallet->IsMyTicket(uint256S(txHashes[0])), true);
+    }
+
+    // valid ticket (explicit reward address)
+
+    {
+        CPubKey pubKey;
+        wallet->GetKeyFromPool(pubKey);
+
+        CPubKey rewardPubKey;
+        wallet->GetKeyFromPool(rewardPubKey);
+        CKeyID rewardAddr = rewardPubKey.GetID();
+
+        std::vector<std::string> txHashes;
+        CWalletError we;
+
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", MAX_MONEY, 1, pubKey.GetID(), rewardAddr, 1, CNoDestination(), 0.0, 0);
+        BOOST_CHECK(we.code == CWalletError::SUCCESSFUL);
+        BOOST_CHECK(txHashes.size() > 0);
+
+        BOOST_CHECK_EQUAL(wallet->IsMyTicket(uint256S(txHashes[0])), true);
+
+        TicketContribData contrib;
+        BOOST_CHECK(ParseTicketContrib(*wallet->GetWalletTx(uint256S(txHashes[0]))->tx, ticketContribOutputIndex, contrib));
+        BOOST_CHECK(contrib.rewardAddr == rewardAddr);
+        BOOST_CHECK(contrib.whichAddr == 1);
     }
 }
 
@@ -897,12 +922,12 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
     {
         txHashes.clear();
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", 100000 * COIN, 1, ticketKeyId, 10, CNoDestination(), 0.0, 0, 1000 * COIN);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", 100000 * COIN, 1, ticketKeyId, CNoDestination(), 10, CNoDestination(), 0.0, 0, 1000 * COIN);
         BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_INSUFFICIENT_FUNDS);
 
         GetSomeCoins();
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", 100 * COIN, 1, ticketKeyId, 10000, CNoDestination(), 0.0, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", 100 * COIN, 1, ticketKeyId, CNoDestination(), 10000, CNoDestination(), 0.0, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::WALLET_ERROR);
     }
 
@@ -912,7 +937,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
     {
         txHashes.clear();
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, 1, CNoDestination(), 0.0, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 1, CNoDestination(), 0.0, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
         BOOST_CHECK_EQUAL(txHashes.size(), 1U);
@@ -926,7 +951,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
     {
         txHashes.clear();
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, 1, vspKeyId, vspFeePercent, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 1, vspKeyId, vspFeePercent, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
         BOOST_CHECK_EQUAL(txHashes.size(), 1U);
@@ -942,7 +967,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         unsigned int numTickets{10};
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, numTickets, CNoDestination(), 0.0, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), numTickets, CNoDestination(), 0.0, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
         BOOST_CHECK_EQUAL(txHashes.size(), static_cast<size_t>(numTickets));
@@ -959,7 +984,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         unsigned int numTickets{10};
 
-        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, numTickets, vspKeyId, vspFeePercent, 0, feeRate);
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), numTickets, vspKeyId, vspFeePercent, 0, feeRate);
         BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
 
         BOOST_CHECK_EQUAL(txHashes.size(), static_cast<size_t>(numTickets));
@@ -1232,6 +1257,11 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     CTxDestination ticketKeyId = ticketPubKey.GetID();
     std::string ticketAddress{EncodeDestination(ticketKeyId)};
 
+    CPubKey rewardPubKey;
+    BOOST_CHECK(wallet->GetKeyFromPool(rewardPubKey));
+    CTxDestination rewardKeyId = rewardPubKey.GetID();
+    std::string rewardAddress{EncodeDestination(rewardKeyId)};
+
     CPubKey vspPubKey;
     BOOST_CHECK(wallet->GetKeyFromPool(vspPubKey));
     CTxDestination vspKeyId = vspPubKey.GetID();
@@ -1254,6 +1284,9 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
 
     BOOST_CHECK_THROW(CallRpc("setticketbuyervotingaddress"), std::runtime_error);
     BOOST_CHECK_NO_THROW(CallRpc("setticketbuyervotingaddress " + ticketAddress));
+
+    BOOST_CHECK_THROW(CallRpc("setticketbuyerrewardaddress"), std::runtime_error);
+    BOOST_CHECK_NO_THROW(CallRpc("setticketbuyerrewardaddress " + rewardAddress));
 
     BOOST_CHECK_THROW(CallRpc("setticketbuyerpooladdress"), std::runtime_error);
     BOOST_CHECK_NO_THROW(CallRpc("setticketbuyerpooladdress " + vspAddress));
@@ -1282,6 +1315,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "maintain").get_int64(), 12300000000);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "votingAccount").get_str(), "");
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "votingAddress").get_str(), ticketAddress);
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "rewardAddress").get_str(), rewardAddress);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "poolFeeAddress").get_str(), vspAddress);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "poolFees").get_real(), 5.0);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "limit").get_int(), 5);
@@ -1308,7 +1342,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, false);
 
-    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 \"\" votingaccount ") + ticketAddress + " " + vspAddress + " 10.0 8"));
+    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 \"\" votingaccount ") + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8"));
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, true);
     BOOST_CHECK_EQUAL(cfg.account, "fromaccount");
@@ -1336,9 +1370,9 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
 
     BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124"), std::runtime_error);
     BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124 wrongP4ssword!"), std::runtime_error);
-    BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124 wrongP4ssword votingaccount " + ticketAddress + " " + vspAddress + " 10.0 8"), std::runtime_error);
+    BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124 wrongP4ssword votingaccount " + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8"), std::runtime_error);
 
-    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 ") + std::string(passphrase.c_str()) + " votingaccount " + ticketAddress + " " + vspAddress + " 10.0 8"));
+    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 ") + std::string(passphrase.c_str()) + " votingaccount " + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8"));
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, true);
     BOOST_CHECK_EQUAL(cfg.account, "fromaccount");
