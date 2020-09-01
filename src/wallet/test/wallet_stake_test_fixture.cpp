@@ -225,7 +225,7 @@ uint256 WalletStakeTestingSetup::AddTicketTx(bool useVsp, bool foreign)
     // commitment
 
     if (foreign) {
-        BOOST_CHECK(mempool.addUnchecked(mtx.GetHash(), CTxMemPoolEntry(MakeTransactionRef(mtx), ticketFee, GetTime(), static_cast<unsigned int>(chainTip->nHeight+1), false, 0, LockPoints())));
+        BOOST_CHECK(mempool.addUnchecked(mtx.GetHash(), CTxMemPoolEntry(MakeTransactionRef(mtx), ticketFee, GetTime(), static_cast<unsigned int>(chainTip->nHeight+1), false, false, 0, LockPoints())));
 
         const uint256 hash = mtx.GetHash();
         foreignData.AddTicketKey(ticketKey, hash);
@@ -359,7 +359,7 @@ uint256 WalletStakeTestingSetup::AddVoteTx(const uint256& ticketHash, bool forei
     // commitment
 
     if (foreignSignature) {
-        BOOST_CHECK(mempool.addUnchecked(mtx.GetHash(), CTxMemPoolEntry(MakeTransactionRef(mtx), 0, GetTime(), static_cast<unsigned int>(chainTip->nHeight+1), false, 0, LockPoints())));
+        BOOST_CHECK(mempool.addUnchecked(mtx.GetHash(), CTxMemPoolEntry(MakeTransactionRef(mtx), 0, GetTime(), static_cast<unsigned int>(chainTip->nHeight+1), false, false, 0, LockPoints())));
         return mtx.GetHash();
     } else {
         CWalletTx wtx;
@@ -480,7 +480,7 @@ uint256 WalletStakeTestingSetup::AddRevokeTx(const uint256& ticketHash, bool for
     // commitment
 
     if (foreignSignature) {
-        BOOST_CHECK(mempool.addUnchecked(mtx.GetHash(), CTxMemPoolEntry(MakeTransactionRef(mtx), 0, GetTime(), static_cast<unsigned int>(chainTip->nHeight+1), false, 0, LockPoints())));
+        BOOST_CHECK(mempool.addUnchecked(mtx.GetHash(), CTxMemPoolEntry(MakeTransactionRef(mtx), 0, GetTime(), static_cast<unsigned int>(chainTip->nHeight+1), false, false, 0, LockPoints())));
         return mtx.GetHash();
     } else {
         CWalletTx wtx;
