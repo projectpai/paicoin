@@ -656,16 +656,15 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         // Keep track of transactions that spend a coinbase, which we re-scan
         // during reorgs to ensure COINBASE_MATURITY is still met.
         bool fSpendsCoinbase = false;
+        bool fSpendsStake = false;
         for (const CTxIn &txin : tx.vin) {
             const Coin &coin = view.AccessCoin(txin.prevout);
-            if (coin.IsCoinBase()) {
-                fSpendsCoinbase = true;
-                break;
-            }
+            fSpendsCoinbase |= coin.IsCoinBase();
+            fSpendsStake |= IsStakeTx(coin.txClass);
         }
 
         CTxMemPoolEntry entry(ptx, nFees, nAcceptTime, chainActive.Height(),
-                              fSpendsCoinbase, nSigOpsCost, lp);
+                              fSpendsCoinbase, fSpendsStake, nSigOpsCost, lp);
         unsigned int nSize = entry.GetTxSize();
 
         // Check that the transaction doesn't have an excessive number of

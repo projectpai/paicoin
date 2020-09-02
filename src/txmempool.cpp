@@ -20,9 +20,9 @@
 
 CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFee,
                                  int64_t _nTime, unsigned int _entryHeight,
-                                 bool _spendsCoinbase, int64_t _sigOpsCost, LockPoints lp):
+                                 bool _spendsCoinbase, bool _spendsStake, int64_t _sigOpsCost, LockPoints lp):
     tx(_tx), nFee(_nFee), nTime(_nTime), entryHeight(_entryHeight),
-    spendsCoinbase(_spendsCoinbase), sigOpCost(_sigOpsCost), lockPoints(lp)
+    spendsCoinbase(_spendsCoinbase), spendsStake(_spendsStake), sigOpCost(_sigOpsCost), lockPoints(lp)
 {
     nTxWeight = GetTransactionWeight(*tx);
     nUsageSize = RecursiveDynamicUsage(tx);
@@ -505,7 +505,7 @@ void CTxMemPool::removeRecursive(const CTransaction &origTx, MemPoolRemovalReaso
 
 void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMemPoolHeight, int flags)
 {
-    // Remove transactions spending a coinbase which are now immature and no-longer-final transactions
+    // Remove transactions spending a coinbase or a stake tx which are now immature and no-longer-final transactions
     LOCK(cs);
     setEntries txToRemove;
     for (indexed_transaction_set::const_iterator it = mapTx.begin(); it != mapTx.end(); it++) {
@@ -516,19 +516,23 @@ void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMem
             // Note if CheckSequenceLocks fails the LockPoints may still be invalid
             // So it's critical that we remove the tx and not depend on the LockPoints.
             txToRemove.insert(it);
-        } else if (it->GetSpendsCoinbase()) {
+        } else if (it->GetSpendsCoinbase() || it->GetSpendsStake()) {
             for (const CTxIn& txin : tx.vin) {
                 indexed_transaction_set::const_iterator it2 = mapTx.find(txin.prevout.hash);
                 if (it2 != mapTx.end())
                     continue;
                 const Coin &coin = pcoins->AccessCoin(txin.prevout);
                 if (nCheckFrequency != 0) assert(!coin.IsSpent());
-                if (coin.IsSpent() || (coin.IsCoinBase() && ((signed long)nMemPoolHeight) - coin.nHeight < COINBASE_MATURITY)) {
+                if (   coin.IsSpent()
+                   || (coin.IsCoinBase() && ((signed long)nMemPoolHeight) - coin.nHeight < COINBASE_MATURITY)
+                   || (IsStakeTx(coin.txClass) && coin.txClass != TX_BuyTicket && ((signed long)nMemPoolHeight) - coin.nHeight < COINBASE_MATURITY)
+                   ) {
                     txToRemove.insert(it);
                     break;
                 }
             }
         }
+
         if (!validLP) {
             mapTx.modify(it, update_lock_points(lp));
         }
