@@ -1778,7 +1778,7 @@ std::pair<uint256, CWalletError> CWallet::CreateTicketPurchaseSplitTx(std::strin
     return std::make_pair(wtx.GetHash(), error);
 }
 
-std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::string fromAccount, CAmount spendLimit, int minConf, CTxDestination ticketAddress, unsigned int numTickets, CTxDestination vspAddress, double vspFeePercent, int64_t expiry, CAmount feeRate)
+std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::string fromAccount, CAmount spendLimit, int minConf, CTxDestination ticketAddress, CTxDestination rewardAddress, unsigned int numTickets, CTxDestination vspAddress, double vspFeePercent, int64_t expiry, CAmount feeRate)
 {
     std::vector<std::string> results;
     CWalletError error;
@@ -1966,8 +1966,10 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
             }
 
             // contribution output
-            CKeyID userAddress;
-            {
+            CTxDestination userAddress;
+            if (IsValidDestination(rewardAddress))
+                userAddress = rewardAddress;
+            else {
                 // Generate a new key that is added to wallet
                 CPubKey newKey;
                 if (!GetKeyFromPool(newKey)) {

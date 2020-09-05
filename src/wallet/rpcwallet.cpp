@@ -3305,12 +3305,13 @@ UniValue purchaseticket(const JSONRPCRequest& request)
             "2.  spendlimit         (numeric, required)            Limit on the amount to spend on ticket\n"
             "3.  minconf            (numeric, optional, default=1) Minimum number of block confirmations required\n"
             "4.  \"ticketaddress\"   (string, optional)             Override the ticket address to which voting rights are given\n"
-            "5.  numtickets         (numeric, optional)            The number of tickets to purchase\n"
-            "6.  \"pooladdress\"     (string, optional)             The address to pay stake pool fees to\n"
-            "7.  poolfees           (numeric, optional)            The amount of fees to pay to the stake pool\n"
-            "8.  expiry             (numeric, optional)            Height at which the purchase tickets expire\n"
-            "9.  \"comment\"         (string, optional)             Unused\n"
-            "10. ticketfee          (numeric, optional)            The transaction fee rate (PAI/kB) to use (overrides fees set by the wallet config or settxfee RPC)\n"
+            "5.  \"rewardaddress\"   (string, optional)             The address where the reward is paid\n"
+            "6.  numtickets         (numeric, optional)            The number of tickets to purchase\n"
+            "7.  \"pooladdress\"     (string, optional)             The address to pay stake pool fees to\n"
+            "8.  poolfees           (numeric, optional)            The amount of fees to pay to the stake pool\n"
+            "9.  expiry             (numeric, optional)            Height at which the purchase tickets expire\n"
+            "10.  \"comment\"         (string, optional)             Unused\n"
+            "11. ticketfee          (numeric, optional)            The transaction fee rate (PAI/kB) to use (overrides fees set by the wallet config or settxfee RPC)\n"
 
             "\nResult:\n"
             "\"value\"              (string) Hashes of resulting ticket transactions\n"
@@ -3320,11 +3321,11 @@ UniValue purchaseticket(const JSONRPCRequest& request)
             + HelpExampleCli("purchaseticket", "\"default\" 50")
             + HelpExampleRpc("purchaseticket", "\"default\" 50") +
             "\nPurchase 5 tickets, as the 5th argument (numtickets) is set to 5\n"
-            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" 5")
-            + HelpExampleRpc("purchaseticket", "\"default\" 50 1 \"\" 5") +
+            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" \"\" 5")
+            + HelpExampleRpc("purchaseticket", "\"default\" 50 1 \"\" \"\" 5") +
             "\nPurchase 5 tickets that would expire from the mempool if not mined by block 100,000, as the 8th argument (expiry) is set to 100000\n"
-            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" 5 \"\" 0 100000")
-            + HelpExampleRpc("purchaseticket", "\"default\" 50 1 \"\" 5 \"\" 0 100000")
+            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" \"\" 5 \"\" 0 100000")
+            + HelpExampleRpc("purchaseticket", "\"default\" 50 1 \"\" \"\" 5 \"\" 0 100000")
         };
 
     ObserveSafeMode();
@@ -3351,17 +3352,28 @@ UniValue purchaseticket(const JSONRPCRequest& request)
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid ticket address.");
     }
 
+    // Reward address
+    std::string rewardAddr;
+    if (!request.params[4].isNull())
+        rewardAddr = request.params[4].get_str();
+    CTxDestination rewardAddress{CNoDestination()};
+    if (!rewardAddr.empty()) {
+        rewardAddress = DecodeDestination(rewardAddr);
+        if (!IsValidDestination(rewardAddress))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid reward address.");
+    }
+
     // Number of tickets
     int numTickets{1};
-    if (!request.params[4].isNull())
-        numTickets = request.params[4].get_int();
+    if (!request.params[5].isNull())
+        numTickets = request.params[5].get_int();
     if (numTickets < 0)
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid number of tickets.");
 
     // Pool address
     std::string poolAddr;
-    if (!request.params[5].isNull())
-        poolAddr = request.params[5].get_str();
+    if (!request.params[6].isNull())
+        poolAddr = request.params[6].get_str();
     CTxDestination poolAddress{CNoDestination()};
     if (!poolAddr.empty()) {
         poolAddress = DecodeDestination(poolAddr);
@@ -3370,20 +3382,20 @@ UniValue purchaseticket(const JSONRPCRequest& request)
     }
 
     double dfPoolFee{0.0};
-    if (!request.params[6].isNull())
+    if (!request.params[7].isNull())
         dfPoolFee = request.params[6].get_real();
 
     // Expiry
     int nExpiry{0};
-    if (!request.params[7].isNull())
+    if (!request.params[8].isNull())
         nExpiry = request.params[7].get_int();
 
     // Ticket Fee
     CAmount ticketFeeIncrement{0};
-    if (!request.params[9].isNull())
-        ticketFeeIncrement = AmountFromValue(request.params[9]);
+    if (!request.params[10].isNull())
+        ticketFeeIncrement = AmountFromValue(request.params[10]);
 
-    const auto&& r = pwallet->PurchaseTicket(strAccount, nSpendLimit, nMinDepth, ticketAddress, static_cast<unsigned int>(numTickets), poolAddress, dfPoolFee, nExpiry, ticketFeeIncrement);
+    const auto&& r = pwallet->PurchaseTicket(strAccount, nSpendLimit, nMinDepth, ticketAddress, rewardAddress, static_cast<unsigned int>(numTickets), poolAddress, dfPoolFee, nExpiry, ticketFeeIncrement);
 
     UniValue results{UniValue::VARR};
     for (auto&& txid: r.first)
@@ -3416,9 +3428,10 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
             "3.  \"passphrase\"       (string, optional)   The passphrase to use for unlocking the wallet\n"
             "4.  \"votingaccount\"    (string, optional)   Account to derive voting addresses from; overridden by votingaddress\n"
             "5.  \"votingaddress\"    (string, optional)   Address to assign voting rights; overrides votingaccount\n"
-            "6.  \"poolfeeaddress\"   (string, optional)   The address to pay stake pool fees to\n"
-            "7.  poolfees             (numeric, optional)  The amount of fees to pay to the stake pool\n"
-            "8.  limit                (numeric, optional)  Limit maximum number of purchased tickets per block\n"
+            "6.  \"rewardaddress\"    (string, optional)   Address where to send the reward\n"
+            "7.  \"poolfeeaddress\"   (string, optional)   The address to pay stake pool fees to\n"
+            "8.  poolfees             (numeric, optional)  The amount of fees to pay to the stake pool\n"
+            "9.  limit                (numeric, optional)  Limit maximum number of purchased tickets per block\n"
             "\nExamples:\n"
             "\nStart the ticket buyer from your default account to purchase tickets and leaving at least 50 PAI\n"
             + HelpExampleCli("startticketbuyer", "\"default\" 50")
@@ -3459,10 +3472,21 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid voting address.");
     }
 
+    // Reward address
+    std::string rewardAddr;
+    if (!request.params[5].isNull())
+        rewardAddr = request.params[5].get_str();
+    CTxDestination rewardAddress{CNoDestination()};
+    if (!rewardAddr.empty()) {
+        rewardAddress = DecodeDestination(rewardAddr);
+        if (!IsValidDestination(rewardAddress))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid reward address.");
+    }
+
     // Pool fee address
     std::string poolFeeAddr;
-    if (!request.params[5].isNull())
-        poolFeeAddr = request.params[5].get_str();
+    if (!request.params[6].isNull())
+        poolFeeAddr = request.params[6].get_str();
     CTxDestination poolFeeAddress{CNoDestination()};
     if (!poolFeeAddr.empty()) {
         poolFeeAddress = DecodeDestination(poolFeeAddr);
@@ -3472,22 +3496,22 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
 
     // Pool fees
     double poolFees{0.0};
-    if (!request.params[6].isNull()) {
-        if (!request.params[6].isNum())
+    if (!request.params[7].isNull()) {
+        if (!request.params[7].isNum())
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool fee.");
 
-        poolFees = request.params[6].get_real();
+        poolFees = request.params[7].get_real();
         if (poolFees < 0.0)
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The pool fee cannot be negative.");
     }
 
     // Limit
     int limit{1};
-    if (!request.params[7].isNull()) {
-        if (!request.params[7].isNum())
+    if (!request.params[8].isNull()) {
+        if (!request.params[8].isNum())
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid limit.");
 
-        limit = request.params[7].get_int();
+        limit = request.params[8].get_int();
         if (limit < 1)
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The number of tickets must be at least 1.");
     }
@@ -3502,6 +3526,7 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
     cfg.passphrase = passphrase;
     cfg.votingAccount = votingAccount;
     cfg.votingAddress = votingAddress;
+    cfg.rewardAddress = rewardAddress;
     cfg.poolFeeAddress = poolFeeAddress;
     cfg.poolFees = poolFees;
     cfg.limit = limit;
@@ -3557,6 +3582,7 @@ UniValue ticketbuyerconfig(const JSONRPCRequest& request)
             "  \"maintain\" : n,                         (numeric) minimum amount to maintain in purchasing account\n"
             "  \"votingaccount\" : \"votingaccount\",    (string)  account to derive voting addresses from; overridden by votingaddress\n"
             "  \"votingaddress\" : \"votingaddress\",    (string)  address to assign voting rights; overrides votingaccount\n"
+            "  \"rewardaddress\" : \"rewardaddress\",    (string)  address where to send the reward\n"
             "  \"poolfeeaddress\" : \"poolfeeaddress\",  (string)  address to pay stake pool fees to\n"
             "  \"poolfees\" : x.xxx,                     (numeric) amount of fees to pay to the stake pool\n"
             "  \"limit\" : n,                            (numeric) maximum number of purchased tickets per block\n"
@@ -3582,6 +3608,7 @@ UniValue ticketbuyerconfig(const JSONRPCRequest& request)
     result.push_back(Pair("maintain", cfg.maintain));
     result.push_back(Pair("votingAccount", cfg.votingAccount));
     result.push_back(Pair("votingAddress", EncodeDestination(cfg.votingAddress)));
+    result.push_back(Pair("rewardAddress", EncodeDestination(cfg.rewardAddress)));
     result.push_back(Pair("poolFeeAddress", EncodeDestination(cfg.poolFeeAddress)));
     result.push_back(Pair("poolFees", cfg.poolFees));
     result.push_back(Pair("limit", cfg.limit));
@@ -3666,7 +3693,7 @@ UniValue setticketbuyervotingaddress(const JSONRPCRequest& request)
             "setticketbuyervotingaddress \"votingaddress\"\n"
             "\nConfigure the address to assign voting rights when automatically purchasing tickets; overrides votingaccount.\n"
             "\nArguments:\n"
-            "1.  \"votingaddress\"  (string, required)  The address to assign voting rights\n"
+            "1.  \"votingaddress\"  (string, required)  The address where to assign voting rights\n"
             "\nExample:\n"
             + HelpExampleCli("setticketbuyervotingaddress", "your_address")
             + HelpExampleRpc("setticketbuyervotingaddress", "your_address")
@@ -3693,6 +3720,49 @@ UniValue setticketbuyervotingaddress(const JSONRPCRequest& request)
     CTicketBuyerConfig& cfg = tb->GetConfig();
 
     cfg.votingAddress = votingAddress;
+
+    return NullUniValue;
+}
+
+UniValue setticketbuyerrewardaddress(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketbuyerrewardaddress \"rewardaddress\"\n"
+            "\nConfigure the address where to send the reward or refund when automatically purchasing tickets.\n"
+            "\nArguments:\n"
+            "1.  \"rewardaddress\"  (string, required)  The address where to send the reward\n"
+            "\nExample:\n"
+            + HelpExampleCli("setticketbuyerrewardaddress", "your_address")
+            + HelpExampleRpc("setticketbuyerrewardaddress", "your_address")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    if (!request.params[0].isStr())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid reward address.");
+
+    std::string rewardAddr = request.params[0].get_str();
+
+    CTxDestination rewardAddress{CNoDestination()};
+    if (!rewardAddr.empty())
+        rewardAddress = DecodeDestination(rewardAddr);
+    if (!IsValidDestination(rewardAddress))
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid reward address.");
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
+    cfg.rewardAddress = rewardAddress;
 
     return NullUniValue;
 }
@@ -5337,13 +5407,14 @@ static const CRPCCommand commands[] =
     { "wallet",             "listsinceblock",                   &listsinceblock,                    {"blockhash","target_confirmations","include_watchonly","include_removed"} },
     { "wallet",             "listtransactions",                 &listtransactions,                  {"account","count","skip","include_watchonly"} },
     { "wallet",             "listunspent",                      &listunspent,                       {"minconf","maxconf","addresses","include_unsafe","query_options"} },
-    { "wallet",             "purchaseticket",                   &purchaseticket,                    {"fromaccount","spendlimit","minconf","ticketaddress","numtickets","pooladdress","poolfees","expiry","comment","ticketfee"} },
+    { "wallet",             "purchaseticket",                   &purchaseticket,                    {"fromaccount","spendlimit","minconf","ticketaddress","rewardaddress","numtickets","pooladdress","poolfees","expiry","comment","ticketfee"} },
     { "wallet",             "startticketbuyer",                 &startticketbuyer,                  {"fromaccount","maintain","passphrase","votingaccount","votingaddress","poolfeeaddress","poolfees","limit"} },
     { "wallet",             "stopticketbuyer",                  &stopticketbuyer,                   {} },
     { "wallet",             "ticketbuyerconfig",                &ticketbuyerconfig,                 {} },
     { "wallet",             "setticketbuyeraccount",            &setticketbuyeraccount,             {"fromaccount"} },
     { "wallet",             "setticketbuyerbalancetomaintain",  &setticketbuyerbalancetomaintain,   {"maintain"} },
     { "wallet",             "setticketbuyervotingaddress",      &setticketbuyervotingaddress,       {"votingaddress"} },
+    { "wallet",             "setticketbuyerrewardaddress",      &setticketbuyerrewardaddress,       {"rewardaddress"} },
     { "wallet",             "setticketbuyerpooladdress",        &setticketbuyerpooladdress,         {"pooladdress"} },
     { "wallet",             "setticketbuyerpoolfees",           &setticketbuyerpoolfees,            {"poolfees"} },
     { "wallet",             "setticketbuyermaxperblock",        &setticketbuyermaxperblock,         {"limit"} },

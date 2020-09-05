@@ -42,6 +42,7 @@ std::string GetWalletHelpString(bool showDebug)
     strUsage += HelpMessageOpt("-autobuy", strprintf(_("Enable the automatic ticket buyer. This is purchasing tickets on behalf of the user as soon as all the criteria is met. Please make sure to specify the voting address and other parameters as desired. (default: %u)"), DEFAULT_AUTO_BUY));
     strUsage += HelpMessageOpt("-tbbalancetomaintainabsolute", strprintf(_("The funds to preserve in the wallet when purchasing tickets. This ensures that at least this amount is still available in the wallet. No purchase is made if the funds for tickets are not enough.")));
     strUsage += HelpMessageOpt("-tbvotingaddress", strprintf(_("Specify the address to be used when voting. The voter or revoker must be able to sign the input corresponding to this output, so it must own the address.")));
+    strUsage += HelpMessageOpt("-tbrewardaddress", strprintf(_("Specify the address to be used when sending the reward. The voter or revoker will send the reward or refund to this address.")));
     strUsage += HelpMessageOpt("-tblimit", strprintf(_("The maximum number of tickets to purchase in one batch.")));
     strUsage += HelpMessageOpt("-tbvotingaccount", strprintf(_("Specify the account to be used for voting.")));
     strUsage += HelpMessageOpt("-autovote", strprintf(_("Enable the automatic voter. This is going to send the votes for the tickets belonging to the wallet as soon as they are selected as winners. (default: %u)"), DEFAULT_AUTO_VOTE));

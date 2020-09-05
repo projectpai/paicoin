@@ -9,6 +9,7 @@ CTicketBuyerConfig::CTicketBuyerConfig() :
     buyTickets(false),
     maintain(0),
     votingAddress(CNoDestination()),
+    rewardAddress(CNoDestination()),
     poolFeeAddress(CNoDestination()),
     poolFees(0.0),
     limit(1)
@@ -23,6 +24,11 @@ void CTicketBuyerConfig::ParseCommandline()
     if (gArgs.IsArgSet("-tbvotingaddress")) {
         std::string addr = gArgs.GetArg("-tbvotingaddress", "");
         votingAddress = DecodeDestination(addr);
+    }
+
+    if (gArgs.IsArgSet("-tbrewardaddress")) {
+        std::string addr = gArgs.GetArg("-tbrewardaddress", "");
+        rewardAddress = DecodeDestination(addr);
     }
 
     if (gArgs.IsArgSet("-tblimit"))
