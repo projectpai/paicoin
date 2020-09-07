@@ -3188,6 +3188,11 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
                 continue;
 
             for (unsigned int i = 0; i < pcoin->tx->vout.size(); i++) {
+                // Outputs with a value of zero are not useful for spending, being
+                // either a nulldata (OP_RETURN) or the change output of ticket purchase
+                if (pcoin->tx->vout[i].nValue == 0)
+                    continue;
+
                 if (pcoin->tx->vout[i].nValue < nMinimumAmount || pcoin->tx->vout[i].nValue > nMaximumAmount)
                     continue;
 
