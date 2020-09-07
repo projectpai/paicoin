@@ -1585,7 +1585,7 @@ std::pair<uint256, CWalletError> CWallet::CreateTicketPurchaseSplitTx(std::strin
 
     LOCK2(cs_main, cs_wallet);
 
-    if (neededPerTicket * numTickets > GetBalance()) {
+    if (neededPerTicket * numTickets > GetAvailableBalance()) {
         error.Load(CWalletError::WALLET_INSUFFICIENT_FUNDS, "Insufficient funds");
         return std::make_pair(uint256(), error);
     }
