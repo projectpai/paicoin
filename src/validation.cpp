@@ -1462,7 +1462,6 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txund
     if (!tx.IsCoinBase()) {
         unsigned startInput = ParseTxClass(tx) == TX_Vote ? voteStakeInputIndex : 0;    // first input in a vote is subsidy generation; skip it
         txundo.vprevout.reserve(tx.vin.size() - startInput);
-        // for (const CTxIn &txin : tx.vin) {
         for (unsigned int i = startInput; i < tx.vin.size(); ++i) {
             txundo.vprevout.emplace_back();
             bool is_spent = inputs.SpendCoin(tx.vin[i].prevout, &txundo.vprevout.back());
@@ -4524,8 +4523,9 @@ static bool RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& inputs,
 
     for (const CTransactionRef& tx : block.vtx) {
         if (!tx->IsCoinBase()) {
-            for (const CTxIn &txin : tx->vin) {
-                inputs.SpendCoin(txin.prevout);
+            unsigned startInput = ParseTxClass(*tx) == TX_Vote ? voteStakeInputIndex : 0;    // first input in a vote is subsidy generation; skip it
+            for (unsigned int i = startInput; i < tx->vin.size(); ++i) {
+                inputs.SpendCoin(tx->vin[i].prevout);
             }
         }
         // Pass check = true as every addition may be an overwrite.

@@ -1585,7 +1585,7 @@ std::pair<uint256, CWalletError> CWallet::CreateTicketPurchaseSplitTx(std::strin
 
     LOCK2(cs_main, cs_wallet);
 
-    if (neededPerTicket * numTickets > GetBalance()) {
+    if (neededPerTicket * numTickets > GetAvailableBalance()) {
         error.Load(CWalletError::WALLET_INSUFFICIENT_FUNDS, "Insufficient funds");
         return std::make_pair(uint256(), error);
     }
@@ -3188,6 +3188,11 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
                 continue;
 
             for (unsigned int i = 0; i < pcoin->tx->vout.size(); i++) {
+                // Outputs with a value of zero are not useful for spending, being
+                // either a nulldata (OP_RETURN) or the change output of ticket purchase
+                if (pcoin->tx->vout[i].nValue == 0)
+                    continue;
+
                 if (pcoin->tx->vout[i].nValue < nMinimumAmount || pcoin->tx->vout[i].nValue > nMaximumAmount)
                     continue;
 
