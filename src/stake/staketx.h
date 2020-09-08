@@ -184,6 +184,20 @@ enum ETxClass {         // these values must not be changed (they are stored in 
     TX_RevokeTicket
 };
 
+static std::string TxClassToString(ETxClass txClass) 
+{
+    switch (txClass) {
+        case ETxClass::TX_Regular: return "standard";
+        case ETxClass::TX_BuyTicket: return "stake_purchase";
+        case ETxClass::TX_RevokeTicket: return "stake_revocation";
+        case ETxClass::TX_Vote: return "vote";
+        default:
+            assert(!"unknown ETxClass");
+            return "unknown";
+    }
+}
+
+
 ETxClass ParseTxClass(const CTransaction& tx);
 bool ParseTicketContrib(const CTransaction& tx, uint32_t txoutIndex, TicketContribData& data);
 bool ParseTicketContribs(const CTransaction& tx, std::vector<TicketContribData>& contributions, CAmount& totalContribution, CAmount& totalVoteFeeLimit, CAmount& totalRevocationFeeLimit);

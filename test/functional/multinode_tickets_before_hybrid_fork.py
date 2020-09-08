@@ -44,10 +44,11 @@ class MultinodeHybridConsensusForkWithTickets(PAIcoinTestFramework):
 
         nMaxFreshStakePerBlock = 20
         txaddress = self.nodes[0].getnewaddress()
+        rewardaddress = self.nodes[0].getnewaddress()
         txs = []
         for blkidx in range(BlockHeightBeforeBuy + 1, HybridForkHeight):
             print("purchase", nMaxFreshStakePerBlock, "at", blkidx)
-            txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, nMaxFreshStakePerBlock))
+            txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, rewardaddress, nMaxFreshStakePerBlock))
             assert(len(txs[-1])==nMaxFreshStakePerBlock)
 
             self.nodes[0].generate(1)

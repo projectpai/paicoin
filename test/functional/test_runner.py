@@ -56,6 +56,7 @@ BASE_SCRIPTS= [
     # Longest test should go first, to favor running tests in parallel
     'wallet-hd.py',
     'walletbackup.py',
+    'multinode_stake_sync.py',
     # vv Tests less than 5m vv
     'p2p-fullblocktest.py',
     'fundrawtransaction.py',

@@ -3297,7 +3297,7 @@ UniValue purchaseticket(const JSONRPCRequest& request)
 
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 10)
         throw std::runtime_error{
-            "purchaseticket \"fromaccount\" spendlimit (minconf=1 \"ticketaddress\" numtickets \"pooladdress\" poolfees expiry \"comment\" ticketfee)\n"
+            "purchaseticket \"fromaccount\" spendlimit (minconf=1 \"ticketaddress\" \"rewardaddress\" numtickets \"pooladdress\" poolfees expiry \"comment\" ticketfee)\n"
             "\nPurchase ticket using available funds.\n"
             + HelpRequiringPassphrase(pwallet) +
             "\nArguments:\n"

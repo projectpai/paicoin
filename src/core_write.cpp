@@ -155,19 +155,6 @@ void ScriptPubKeyToUniv(const CScript& scriptPubKey,
     out.pushKV("addresses", a);
 }
 
-static std::string TxClassToString(ETxClass txClass) 
-{
-    switch (txClass) {
-        case ETxClass::TX_Regular: return "standard";
-        case ETxClass::TX_BuyTicket: return "stake_purchase";
-        case ETxClass::TX_RevokeTicket: return "stake_revocation";
-        case ETxClass::TX_Vote: return "vote";
-        default:
-            assert(!"unknown ETxClass");
-            return "unknown";
-    }
-}
-
 static void StakingToUniv(const CTransaction &tx, UniValue& entry) 
 {
     std::vector<TicketContribData> contributions;
