@@ -302,7 +302,7 @@ public:
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
-        consensus.HybridConsensusHeight = 150; // must be above coinbase maturity (>100)
+        consensus.HybridConsensusHeight = 76640; // must be above coinbase maturity (>100)
         consensus.powLimit = TESTNET_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 1 * 24 * 60 * 60; // one day //two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -337,7 +337,7 @@ public:
         consensus.nTicketsPerBlock                  = 5;
         consensus.nTicketMaturity                   = 16;
         consensus.nTicketExpiry                     = 5 * consensus.nTicketPoolSize;
-        // consensus.nCoinbaseMaturity                 = 16;
+        consensus.nCoinbaseMaturity                 = 100;
         consensus.nSStxChangeMaturity               = 1;
         consensus.nTicketPoolSizeWeight             = 4;
         consensus.nStakeDiffAlpha                   = 1;
@@ -345,8 +345,8 @@ public:
         consensus.nStakeDiffWindows                 = 20;
         consensus.nStakeVersionInterval             = 144 * 2 * 7; // ~2 weeks
         consensus.nMaxFreshStakePerBlock            = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight               = 166;         // consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
-        consensus.nStakeValidationHeight            = 200;         // Arbitrary chosen into the future; height is 46261 at the moment
+        consensus.nStakeEnabledHeight               = 76770;         // consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
+        consensus.nStakeValidationHeight            = 76800;         // Arbitrary chosen into the future; height is 46261 at the moment
         consensus.stakeBaseSigScript                = CScript() << 0x00 << 0x00;
         consensus.nStakeMajorityMultiplier          = 3;
         consensus.nStakeMajorityDivisor             = 4;
