@@ -38,14 +38,14 @@
 #define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343")
 #define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x585ac65f505138efceefb3255086b6d7f63c606219b01f115a2941bb93c8362b")
 
-#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
-#define TESTNET_GENESIS_BLOCK_POW_BITS   20 //36 // 24
-#define TESTNET_GENESIS_BLOCK_NBITS      0x2001ffff //0x1c09fe61 // 0x1e00ffff
+#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
+#define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
+#define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
 #define TESTNET_GENESIS_BLOCK_SIGNATURE  "9a8abac6c3d97d37d627e6ebcaf68be72275168b"
 
-#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1592242315
-#define TESTNET_GENESIS_BLOCK_NONCE          1176762
-#define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x000007becd450bd8af0085d8a81da851a91c4cd1913bbb2d085ad560793b5001")
+#define TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP 1504706516
+#define TESTNET_GENESIS_BLOCK_NONCE          2253953817
+#define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x0000000003976df1a1393912d10ea68fae1175ee2c7e6011a0dc4e05f18f8403")
 #define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19")
 
 #define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
@@ -304,12 +304,12 @@ public:
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
         consensus.HybridConsensusHeight = 76640; // must be above coinbase maturity (>100)
         consensus.powLimit = TESTNET_CONSENSUS_POW_LIMIT;
-        consensus.nPowTargetTimespan = 1 * 24 * 60 * 60; // one day //two weeks
+        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = false;
-        consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
-        consensus.nMinerConfirmationWindow = 144; // nPowTargetTimespan / nPowTargetSpacing
+        consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
+        consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
 
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
@@ -326,10 +326,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x00");
+        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000c886e8450964");
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x00");
+        consensus.defaultAssumeValid = uint256S("0x0000000000b13e58c76917eb3b416fc284e36641d952a96c3422b0808d828646");
 
         // stake parameters
         consensus.nMinimumStakeDiff                 = COIN * 0.2;
