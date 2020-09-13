@@ -337,7 +337,7 @@ public:
         consensus.nTicketsPerBlock                  = 5;
         consensus.nTicketMaturity                   = 16;
         consensus.nTicketExpiry                     = 5 * consensus.nTicketPoolSize;
-        consensus.nCoinbaseMaturity                 = 100;
+        //consensus.nCoinbaseMaturity                 = 100;
         consensus.nSStxChangeMaturity               = 1;
         consensus.nTicketPoolSizeWeight             = 4;
         consensus.nStakeDiffAlpha                   = 1;
