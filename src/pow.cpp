@@ -139,7 +139,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex *pindexPrev, const CBlockHead
 
     if (IsHybridConsensusForkEnabled(pindexPrev, params)) {
         if (pindexPrev->nHeight <= params.HybridConsensusHeight + 10) {
-            return 0x1c03e75d;
+            return 0x1e03e75d;
         }
         return GetNextCashWorkRequired(pindexPrev, pblock, params);
     }

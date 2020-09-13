@@ -38,7 +38,7 @@
 #define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343")
 #define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x585ac65f505138efceefb3255086b6d7f63c606219b01f115a2941bb93c8362b")
 
-#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0x000000003e75d000000000000000000000000000000000000000000000000000")
+#define TESTNET_CONSENSUS_POW_LIMIT      uint256S("000003e75d000000000000000000000000000000000000000000000000000000")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
 #define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
 #define TESTNET_GENESIS_BLOCK_SIGNATURE  "9a8abac6c3d97d37d627e6ebcaf68be72275168b"
@@ -306,7 +306,7 @@ public:
         consensus.powLimit = TESTNET_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
-        consensus.fPowAllowMinDifficultyBlocks = false; //Disable for now to rule out weird behavior once mainnet is tried
+        consensus.fPowAllowMinDifficultyBlocks = false; //Disable for now to rule out weird behavior once mainnet
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
