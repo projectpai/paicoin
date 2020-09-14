@@ -1029,7 +1029,7 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
         unsigned int extraNonce = 0;
         IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
 
-        while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus())) ++block.nNonce;
+        while (!CheckProofOfWork(block.GetHash(), block.nBits, block.nVersion, chainparams.GetConsensus())) ++block.nNonce;
 
         std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
         ProcessNewBlock(chainparams, shared_pblock, true, nullptr);

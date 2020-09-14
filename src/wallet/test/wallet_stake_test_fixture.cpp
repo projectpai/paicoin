@@ -548,7 +548,7 @@ CBlock WalletStakeTestingSetup::CreateAndProcessBlock()
     unsigned int extraNonce = 0;
     IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
 
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, consensus)) ++block.nNonce;
+    while (!CheckProofOfWork(block.GetHash(), block.nBits, block.nVersion, consensus)) ++block.nNonce;
 
     std::shared_ptr<const CBlock> sharedBlock = std::make_shared<const CBlock>(block);
     ProcessNewBlock(params, sharedBlock, true, nullptr);

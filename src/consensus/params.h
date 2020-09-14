@@ -62,8 +62,6 @@ struct Params {
     int BIP65Height;
     /** Block height at which BIP66 becomes active */
     int BIP66Height;
-    /** Block height at which Hybrid Consensus becomes active */
-    int HybridConsensusHeight;
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
@@ -81,6 +79,16 @@ struct Params {
     int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
+
+    /** Hybrid Consensus fork paramters */
+    // Block height at which Hybrid Consensus becomes active
+    int nHybridConsensusHeight;
+    // Proof of work limit to be used after the Hybrid Consensus fork activates
+    uint256 hybridConsensusPowLimit;
+    // Difficulty of the first blocks after the hybrid consensus fork
+    uint32_t nHybridConsensusInitialDifficulty;
+    // Number of blocks to apply the initial Hybrid Consensus difficulty to
+    int nHybridConsensusInitialDifficultyBlockCount;
 
     /** Proof of stake parameters */
 

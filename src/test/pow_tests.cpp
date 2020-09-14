@@ -105,6 +105,8 @@ static CBlockIndex GetBlockIndex(CBlockIndex *pindexPrev, int64_t nTimeInterval,
 
 BOOST_AUTO_TEST_CASE(cash_difficulty_test)
 {
+    // TODO: update this test to use the hybridConsensusPowLimit when needed
+
     const auto chainParams = CreateChainParams(CBaseChainParams::MAIN);
 
     std::vector<CBlockIndex> blocks(3000);

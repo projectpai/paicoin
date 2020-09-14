@@ -820,7 +820,7 @@ BOOST_FIXTURE_TEST_CASE(split_transaction_reordering, WalletStakeTestingSetup)
     unsigned int extraNonce = 0;
     IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
 
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, consensus)) ++block.nNonce;
+    while (!CheckProofOfWork(block.GetHash(), block.nBits, block.nVersion, consensus)) ++block.nNonce;
 
     std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
     BOOST_CHECK(ProcessNewBlock(params, shared_pblock, true, nullptr));

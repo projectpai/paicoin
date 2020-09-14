@@ -21,7 +21,7 @@ static unsigned int GetNextLegacyWorkRequired(const CBlockIndex* pindexLast, con
     assert(pindexLast != nullptr);
     unsigned int nProofOfWorkLimit = UintToArith256(params.powLimit).GetCompact();
 
-    // assert(params.HybridConsensusHeight < 0 || params.HybridConsensusHeight % params.DifficultyAdjustmentInterval() == 0);
+    // assert(params.nHybridConsensusHeight < 0 || params.nHybridConsensusHeight % params.DifficultyAdjustmentInterval() == 0);
 
     // Only change once per difficulty adjustment interval
     if ((pindexLast->nHeight+1) % params.DifficultyAdjustmentInterval() != 0)
@@ -45,7 +45,7 @@ static unsigned int GetNextLegacyWorkRequired(const CBlockIndex* pindexLast, con
         return pindexLast->nBits;
     }
 
-    // if (pindexLast->nHeight + 1 == params.HybridConsensusHeight)
+    // if (pindexLast->nHeight + 1 == params.nHybridConsensusHeight)
     //     return 0x207ffffe;
 
     // Go back by what we want to be 14 days worth of blocks
@@ -138,9 +138,6 @@ unsigned int GetNextWorkRequired(const CBlockIndex *pindexPrev, const CBlockHead
     }
 
     if (IsHybridConsensusForkEnabled(pindexPrev, params)) {
-        if (pindexPrev->nHeight <= params.HybridConsensusHeight + 10) {
-            return 0x1e03e75d;
-        }
         return GetNextCashWorkRequired(pindexPrev, pblock, params);
     }
 
@@ -172,7 +169,7 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
     return bnNew.GetCompact();
 }
 
-bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params)
+bool CheckProofOfWork(uint256 hash, unsigned int nBits, int nVersion, const Consensus::Params& params)
 {
     bool fNegative;
     bool fOverflow;
@@ -181,7 +178,7 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
     bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
 
     // Check range
-    if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit))
+    if (fNegative || bnTarget == 0 || fOverflow || bnTarget > ((nVersion & HARDFORK_VERSION_BIT) ? UintToArith256(params.hybridConsensusPowLimit) : UintToArith256(params.powLimit)))
         return false;
 
     // Check proof of work matches claimed amount
@@ -206,17 +203,23 @@ uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
     // This cannot handle the genesis block and early blocks in general.
     assert(pindexPrev);
 
+    // if the block is just after the Hybrid Consensus fork,
+    // enforce the initial difficulty
+    if (pindexPrev->nHeight < params.nHybridConsensusHeight + params.nHybridConsensusInitialDifficultyBlockCount) {
+        return params.nHybridConsensusInitialDifficulty;
+    }
+
     // Special difficulty rule for testnet:
     // If the new block's timestamp is more than 2* 10 minutes then allow
     // mining of a min-difficulty block.
     if (params.fPowAllowMinDifficultyBlocks &&
         (pblock->GetBlockTime() >
          pindexPrev->GetBlockTime() + 2 * params.nPowTargetSpacing)) {
-        return UintToArith256(params.powLimit).GetCompact();
+        return UintToArith256(params.hybridConsensusPowLimit).GetCompact();
     }
 
     // Compute the difficulty based on the full adjustment interval.
-    const uint32_t nHeight = pindexPrev->nHeight;
+    const int nHeight = pindexPrev->nHeight;
     assert(nHeight >= params.DifficultyAdjustmentInterval());
 
     // Get the last suitable block of the difficulty interval.
@@ -224,8 +227,8 @@ uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
     assert(pindexLast);
 
     // Get the first suitable block of the difficulty interval.
-    //Do not consider blocks before hybrid consensus takes effect
-    uint32_t nHeightFirst = (nHeight - 144) < (int) params.HybridConsensusHeight + 2 ? params.HybridConsensusHeight + 2: (nHeight - 144);
+    // Do not consider blocks before hybrid consensus takes effect.
+    int nHeightFirst = (nHeight - 144) < params.nHybridConsensusHeight ? params.nHybridConsensusHeight : (nHeight - 144);
     const CBlockIndex *pindexFirst =
         GetSuitableBlock(pindexPrev->GetAncestor(nHeightFirst));
     assert(pindexFirst);
@@ -233,7 +236,7 @@ uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
     const arith_uint256 nextTarget =
         ComputeTarget(pindexFirst, pindexLast, params);
 
-    const arith_uint256 powLimit = UintToArith256(params.powLimit);
+    const arith_uint256 powLimit = UintToArith256(params.hybridConsensusPowLimit);
     if (nextTarget > powLimit) {
         return powLimit.GetCompact();
     }

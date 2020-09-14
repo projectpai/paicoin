@@ -1116,7 +1116,7 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus:
     }
 
     // Check the header
-    if (!CheckProofOfWork(block.GetHash(), block.nBits, consensusParams))
+    if (!CheckProofOfWork(block.GetHash(), block.nBits, block.nVersion, consensusParams))
         return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
 
     return true;
@@ -3354,11 +3354,11 @@ bool CheckProofOfStake(const CBlock& block, int64_t posLimit)
 static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true)
 {
     // Check proof of work matches claimed amount
-    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, consensusParams))
+    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, block.nVersion, consensusParams))
         return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
 
     // Consensus checks rely on this assumption
-    if (consensusParams.HybridConsensusHeight > consensusParams.nStakeEnabledHeight || 
+    if (consensusParams.nHybridConsensusHeight > consensusParams.nStakeEnabledHeight ||
         consensusParams.nStakeEnabledHeight > consensusParams.nStakeValidationHeight)
         return state.Error("bad stake height consensus parameters");
 
@@ -3499,7 +3499,7 @@ bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& pa
 bool IsHybridConsensusForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
 {
     AssertLockHeld(cs_main);
-    return (params.HybridConsensusHeight >= 0 && pindexPrev && pindexPrev->nHeight >= params.HybridConsensusHeight);
+    return (params.nHybridConsensusHeight >= 0 && pindexPrev && pindexPrev->nHeight >= params.nHybridConsensusHeight);
 }
 
 // Compute at which vout of the block's coinbase transaction the witness

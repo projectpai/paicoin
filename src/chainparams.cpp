@@ -38,6 +38,9 @@
 #define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343")
 #define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x585ac65f505138efceefb3255086b6d7f63c606219b01f115a2941bb93c8362b")
 
+#define MAINNET_HYBRID_CONSENSUS_POW_LIMIT          MAINNET_CONSENSUS_POW_LIMIT
+#define MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x1c09fe61
+
 #define TESTNET_CONSENSUS_POW_LIMIT      uint256S("000003e75d000000000000000000000000000000000000000000000000000000")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
 #define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
@@ -48,6 +51,9 @@
 #define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x0000000003976df1a1393912d10ea68fae1175ee2c7e6011a0dc4e05f18f8403")
 #define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19")
 
+#define TESTNET_HYBRID_CONSENSUS_POW_LIMIT          TESTNET_CONSENSUS_POW_LIMIT
+#define TESTNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x1e03e75d
+
 #define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define REGTEST_GENESIS_BLOCK_POW_BITS   1
 #define REGTEST_GENESIS_BLOCK_NBITS      0x207fffff
@@ -57,6 +63,9 @@
 #define REGTEST_GENESIS_BLOCK_NONCE          0
 #define REGTEST_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x47b736c948f15d787327c84bb3ad30a064e67c79154c7608da4b062c1adfe7bb")
 #define REGTEST_GENESIS_HASH_MERKLE_ROOT     uint256S("0xcaed1b804a2aa916d899cb398aed398fa9316d972f615903aafe06d10bedca44")
+
+#define REGTEST_HYBRID_CONSENSUS_POW_LIMIT          REGTEST_CONSENSUS_POW_LIMIT
+#define REGTEST_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x207fffff
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
@@ -137,7 +146,6 @@ public:
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
-        consensus.HybridConsensusHeight = -1; // Never
         consensus.powLimit = MAINNET_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -165,6 +173,12 @@ public:
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
+
+        // hybrid consensus fork parameters
+        consensus.nHybridConsensusHeight = -1; // Never
+        consensus.hybridConsensusPowLimit = MAINNET_HYBRID_CONSENSUS_POW_LIMIT;
+        consensus.nHybridConsensusInitialDifficulty = MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
+        consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
 
         // stake parameters
         consensus.nMinimumStakeDiff                 = COIN * 2;
@@ -302,7 +316,6 @@ public:
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
-        consensus.HybridConsensusHeight = 76640; // must be above coinbase maturity (>100)
         consensus.powLimit = TESTNET_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -330,6 +343,12 @@ public:
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000000b13e58c76917eb3b416fc284e36641d952a96c3422b0808d828646");
+
+        // hybrid consensus fork parameters
+        consensus.nHybridConsensusHeight = 76640; // must be above coinbase maturity (>100)
+        consensus.hybridConsensusPowLimit = TESTNET_HYBRID_CONSENSUS_POW_LIMIT;
+        consensus.nHybridConsensusInitialDifficulty = TESTNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
+        consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
 
         // stake parameters
         consensus.nMinimumStakeDiff                 = COIN * 0.2;
@@ -467,7 +486,6 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
-        consensus.HybridConsensusHeight = 1500;// with the new DAA it is not required to be a multiple of DifficultyAdjustmentInterval
         consensus.powLimit = REGTEST_CONSENSUS_POW_LIMIT;
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
@@ -494,6 +512,12 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x00");
 
+        // hybrid consensus fork parameters
+        consensus.nHybridConsensusHeight = 1500; // with the new DAA it is not required to be a multiple of DifficultyAdjustmentInterval
+        consensus.hybridConsensusPowLimit = REGTEST_HYBRID_CONSENSUS_POW_LIMIT;
+        consensus.nHybridConsensusInitialDifficulty = REGTEST_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
+        consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
+
         // stake paramters
         consensus.nMinimumStakeDiff               = 20000;
         consensus.nTicketPoolSize                 = 64;
@@ -508,7 +532,7 @@ public:
         consensus.nStakeDiffWindows               = 8;
         consensus.nStakeVersionInterval           = 6 * 24; // ~1 day
         consensus.nMaxFreshStakePerBlock          = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight             = 2000;//must be above HybridConsensusHeight
+        consensus.nStakeEnabledHeight             = 2000;//must be above nHybridConsensusHeight
         consensus.nStakeValidationHeight          = 2100;//must be above nStakeEnabledHeight
         consensus.stakeBaseSigScript              = CScript() << 0x73 << 0x57;
         consensus.nStakeMajorityMultiplier        = 3;
