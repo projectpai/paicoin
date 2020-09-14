@@ -345,7 +345,7 @@ public:
         consensus.nStakeDiffWindows                 = 20;
         consensus.nStakeVersionInterval             = 144 * 2 * 7; // ~2 weeks
         consensus.nMaxFreshStakePerBlock            = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight               = 76770;         // consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
+        consensus.nStakeEnabledHeight               = 76700;         // consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
         consensus.nStakeValidationHeight            = 76800;         // Arbitrary chosen into the future; height is 46261 at the moment
         consensus.stakeBaseSigScript                = CScript() << 0x00 << 0x00;
         consensus.nStakeMajorityMultiplier          = 3;
