@@ -318,8 +318,11 @@ bool checkBuyTicketInputs(const CTransaction& tx, CValidationState& state, const
     // check transaction structure
     std::string reason;
     if (!ValidateBuyTicketStructure(tx, reason))
+    {
         //return state.DoS(100, false, REJECT_INVALID, "bad-buyticket-structure", false, reason);
+        LogPrintf("Warning: bad-buyticket-structure for transaction %s and height: %d", tx.GetHash().GetHex(), nSpendHeight);
         return true;
+    }
 
     CAmount totalVoteFeeLimit{0};
     CAmount totalRevocationFeeLimit{0};
