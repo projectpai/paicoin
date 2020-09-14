@@ -225,11 +225,10 @@ uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
 
     // Get the first suitable block of the difficulty interval.
     //Do not consider blocks before hybrid consensus takes effect
-    uint32_t nHeightFirst = (nHeight - 144) < params.HybridConsensusHeight ? params.HybridConsensusHeight : (nHeight - 144);
+    uint32_t nHeightFirst = (nHeight - 144) < (int) params.HybridConsensusHeight + 2 ? params.HybridConsensusHeight + 2: (nHeight - 144);
     const CBlockIndex *pindexFirst =
         GetSuitableBlock(pindexPrev->GetAncestor(nHeightFirst));
     assert(pindexFirst);
-
     // Compute the target based on time and work done during the interval.
     const arith_uint256 nextTarget =
         ComputeTarget(pindexFirst, pindexLast, params);
