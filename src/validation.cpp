@@ -104,8 +104,6 @@ CScript COINBASE_FLAGS;
 
 const std::string strMessageMagic = "PAIcoin Signed Message:\n";
 
-static const auto nNumBlocksPastStakeValidationToKeepWhitelist = 100u;
-
 // Internal stuff
 namespace {
 
@@ -3454,7 +3452,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     if (blockHeight < 0) {
         blockHeight = chainActive.Height() + 1;
     }
-    if (fCheckCoinbase && block.GetHash() != consensusParams.hashGenesisBlock && blockHeight < consensusParams.nStakeValidationHeight + nNumBlocksPastStakeValidationToKeepWhitelist) {
+    if (fCheckCoinbase && block.GetHash() != consensusParams.hashGenesisBlock && blockHeight < consensusParams.nStakeValidationHeight + consensusParams.nCoinbaseWhitelistExpiration) {
         const auto& coinbaseAddrs = Params().coinbaseAddrs;
         if (!coinbaseAddrs.empty()) {
             for (const CTxOut& out : block.vtx[0]->vout) {

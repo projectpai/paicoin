@@ -174,6 +174,9 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
 
+        // coinbase whitelist parameters
+        consensus.nCoinbaseWhitelistExpiration = 2016; // two weeks
+
         // hybrid consensus fork parameters
         consensus.nHybridConsensusHeight = -1; // Never
         consensus.hybridConsensusPowLimit = MAINNET_HYBRID_CONSENSUS_POW_LIMIT;
@@ -344,6 +347,9 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000000b13e58c76917eb3b416fc284e36641d952a96c3422b0808d828646");
 
+        // coinbase whitelist parameters
+        consensus.nCoinbaseWhitelistExpiration = 144; // one day
+
         // hybrid consensus fork parameters
         consensus.nHybridConsensusHeight = 76640; // must be above coinbase maturity (>100)
         consensus.hybridConsensusPowLimit = TESTNET_HYBRID_CONSENSUS_POW_LIMIT;
@@ -511,6 +517,9 @@ public:
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x00");
+
+        // coinbase whitelist parameters
+        consensus.nCoinbaseWhitelistExpiration = 1; // one block
 
         // hybrid consensus fork parameters
         consensus.nHybridConsensusHeight = 1500; // with the new DAA it is not required to be a multiple of DifficultyAdjustmentInterval
