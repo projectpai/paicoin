@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Up and Running Software
+// Copyright (c) 2017-2020 Project PAI Foundation
 // All rights reserved.
 
 #if defined(HAVE_CONFIG_H)
