@@ -1,3 +1,8 @@
+/* * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 #ifndef COINBASE_ADDRESSES_H
 #define COINBASE_ADDRESSES_H
 

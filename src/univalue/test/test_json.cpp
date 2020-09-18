@@ -1,3 +1,9 @@
+//
+// Copyright (c) 2017-2020 Project PAI Foundation
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 // Test program that can be called by the JSON test suite at
 // https://github.com/nst/JSONTestSuite.
 //
