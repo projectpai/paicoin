@@ -355,7 +355,7 @@ public:
         consensus.nCoinbaseWhitelistExpiration = 144; // one day
 
         // hybrid consensus fork parameters
-        consensus.nHybridConsensusHeight = 78600; // must be above coinbase maturity (>100)
+        consensus.nHybridConsensusHeight = 76640; // must be above coinbase maturity (>100)
         consensus.hybridConsensusPowLimit = TESTNET_HYBRID_CONSENSUS_POW_LIMIT;
         consensus.nHybridConsensusInitialDifficulty = TESTNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
