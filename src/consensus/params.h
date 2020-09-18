@@ -83,6 +83,10 @@ struct Params {
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
 
+    /** Coinbase address whitelist parameters */
+    // Number of blocks after the stake validation height when to disable the coinbase address whitelist
+    int nCoinbaseWhitelistExpiration;
+
     /** Hybrid Consensus fork paramters */
     // Block height at which Hybrid Consensus becomes active
     int nHybridConsensusHeight;
