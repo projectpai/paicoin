@@ -524,7 +524,6 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         // Store the pindexBest used before CreateNewBlock, to avoid races
         nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
         auto* const pindexPrevNew = chainActive.Tip();
-        nStart = GetTime();
         fLastTemplateSupportsSegwit = fSupportsSegwit;
 
         // Create new block
@@ -533,6 +532,15 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         if (!pblocktemplate)
             throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Out of memory");
 
+        if ( pindexPrevNew->nHeight >= Params().GetConsensus().nStakeValidationHeight
+           && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock 
+           && GetTime() - nStart < 10 ) 
+        { 
+            //not enough votes yet, wait no more than 10 seconds
+            throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not reached maximum votes");
+        }
+
+        nStart = GetTime();
         // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
     }

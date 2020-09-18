@@ -3710,7 +3710,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
     // Check that the number of votes in a block is within limits
     if (nHeight >= consensusParams.nStakeValidationHeight)
     {
-        auto majority = (consensusParams.nTicketsPerBlock / 2) + 1;
+        const auto& majority = (consensusParams.nTicketsPerBlock / 2) + 1;
         if (numVotes < majority)
             return state.DoS(50, false, REJECT_INVALID, "too-few-votes", false, "block does not contain the minimum required number of votes");
         if (numVotes > consensusParams.nTicketsPerBlock)
