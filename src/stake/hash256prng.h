@@ -1,3 +1,8 @@
+/* * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 #ifndef PAICOIN_STAKE_HASH256PRNG_H
 #define PAICOIN_STAKE_HASH256PRNG_H
 
