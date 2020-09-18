@@ -433,10 +433,11 @@ public:
         vSeeds.clear();
 
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.emplace_back("34.212.218.239", false);
-        vSeeds.emplace_back("13.59.205.159", false);
-        vSeeds.emplace_back("52.78.224.215", false);
-        vSeeds.emplace_back("13.251.4.241", false);
+        vSeeds.emplace_back("testnet-hybrid-seed1.projectpai.com", false);
+        // vSeeds.emplace_back("34.212.218.239", false);
+        // vSeeds.emplace_back("13.59.205.159", false);
+        // vSeeds.emplace_back("52.78.224.215", false);
+        // vSeeds.emplace_back("13.251.4.241", false);
 
         // vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 
