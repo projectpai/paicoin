@@ -144,8 +144,8 @@ public:
 
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.nTotalBlockSubsidy = 1500;
-        consensus.nWorkSubsidyProportion = 7;
-        consensus.nStakeSubsidyProportion = 3;
+        consensus.nWorkSubsidyProportion = 4;
+        consensus.nStakeSubsidyProportion = 6;
 
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
@@ -317,8 +317,8 @@ public:
 
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.nTotalBlockSubsidy = 1500;
-        consensus.nWorkSubsidyProportion = 7;
-        consensus.nStakeSubsidyProportion = 3;
+        consensus.nWorkSubsidyProportion = 4;
+        consensus.nStakeSubsidyProportion = 6;
 
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
@@ -362,10 +362,10 @@ public:
 
         // stake parameters
         consensus.nMinimumStakeDiff                 = COIN * 0.2;
-        consensus.nTicketPoolSize                   = 1500;
+        consensus.nTicketPoolSize                   = 1024;
         consensus.nTicketsPerBlock                  = 5;
-        consensus.nTicketMaturity                   = 128;
-        consensus.nTicketExpiry                     = 5 * consensus.nTicketPoolSize;
+        consensus.nTicketMaturity                   = 16;
+        consensus.nTicketExpiry                     = 6 * consensus.nTicketPoolSize;
         //consensus.nCoinbaseMaturity                 = 100;
         consensus.nSStxChangeMaturity               = 1;
         consensus.nTicketPoolSizeWeight             = 4;
@@ -374,8 +374,8 @@ public:
         consensus.nStakeDiffWindows                 = 20;
         consensus.nStakeVersionInterval             = 144 * 2 * 7; // ~2 weeks
         consensus.nMaxFreshStakePerBlock            = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight               = 76770;         // > nHybridConsensusHeight + nTicketMaturity
-        consensus.nStakeValidationHeight            = 76880;         // > CoinbaseMaturity (100) + nHybridConsensusHeight;
+        consensus.nStakeEnabledHeight               = 78700;         // > nHybridConsensusHeight + nTicketMaturity
+        consensus.nStakeValidationHeight            = 78800;         // > CoinbaseMaturity (100) + nHybridConsensusHeight;
         consensus.stakeBaseSigScript                = CScript() << 0x00 << 0x00;
         consensus.nStakeMajorityMultiplier          = 3;
         consensus.nStakeMajorityDivisor             = 4;
@@ -490,8 +490,8 @@ public:
 
         consensus.nSubsidyHalvingInterval = 150;
         consensus.nTotalBlockSubsidy = 1500;
-        consensus.nWorkSubsidyProportion = 7;
-        consensus.nStakeSubsidyProportion = 3;
+        consensus.nWorkSubsidyProportion = 4;
+        consensus.nStakeSubsidyProportion = 6;
 
         // NOTE PAICOIN Do not mofify the BIP settings, otherwise the current txvalidationcache_tests will fail
         consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
