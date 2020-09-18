@@ -880,7 +880,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
         CFeeRate txFeeRate{feeRate};
         CAmount ticketFee{std::max(txFeeRate.GetFee(txSize), wallet->minTxFee.GetFee(txSize))};
         CAmount neededPerTicket = ticketPrice + ticketFee;
-        CAmount vspFee = (useVsp ? StakePoolTicketFee(ticketPrice, ticketFee, chainActive.Height(), vspFeePercent) : 0);
+        CAmount vspFee = (useVsp ? StakePoolTicketFee(ticketPrice, ticketFee, chainActive.Height() + 1, vspFeePercent) : 0);
         uint32_t userOutput = 2 + (useVsp ? 2 : 0);
 
         // check VSP outputs, if present

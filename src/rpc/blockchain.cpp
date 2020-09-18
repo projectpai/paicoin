@@ -2039,7 +2039,7 @@ UniValue getblocksubsidy(const JSONRPCRequest& request)
     UniValue result{UniValue::VOBJ};
     const auto& height = static_cast<uint32_t>(request.params[0].get_int());
     const auto& voters = static_cast<uint32_t>(request.params[1].get_int());
-    const auto& voterSubsidy = GetVoterSubsidy(height-1,Params().GetConsensus()) * voters;
+    const auto& voterSubsidy = GetVoterSubsidy(height,Params().GetConsensus()) * voters;
     const auto& minerSubsidy = GetMinerSubsidy(height,Params().GetConsensus());
     const auto& totalSubsidy = voterSubsidy + minerSubsidy;
 

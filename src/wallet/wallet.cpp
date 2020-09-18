@@ -1871,7 +1871,7 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
     }
 
     // calculate the VSP fee, if needed
-    CAmount vspFee = (useVsp ? StakePoolTicketFee(ticketPrice, ticketFee, chainActive.Height(), vspFeePercent) : 0);
+    CAmount vspFee = (useVsp ? StakePoolTicketFee(ticketPrice, ticketFee, chainActive.Height() + 1, vspFeePercent) : 0);
     if (useVsp && ((vspFee == 0) || (!MoneyRange(vspFee)))) {
         error.Load(CWalletError::INVALID_PARAMETER, "Stakepool fee is required, but calculated as invalid");
         return std::make_pair(results, error);
