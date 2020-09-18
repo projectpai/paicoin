@@ -181,12 +181,18 @@ echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.3
 tar -xzvf db-4.8.30.NC.tar.gz
 
 # Build the library and install to our prefix
-cd db-4.8.30.NC/build_unix/
+cd db-4.8.30.NC/
+
+# patch it
+wget https://raw.github.com/narkoleptik/os-x-berkeleydb-patch/master/atomic.patch
+patch dbinc/atomic.h < atomic.patch
+
 #  Note: Do a static build so that it can be embedded into the executable, instead of having to find a .so at runtime
+cd build_unix/
 ../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
 make install
 
-# Configure PAI Coin Core to use our own-built instance of BDB
+# Configure PAIcoin Core to use our own-built instance of BDB
 cd $PAICOIN_ROOT
 ./autogen.sh
 ./configure LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/" # (other args...)
