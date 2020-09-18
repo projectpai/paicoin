@@ -1,3 +1,8 @@
+/* 
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 // tiny_sha3.c
 // 19-Nov-11  Markku-Juhani O. Saarinen <mjos@iki.fi>
 

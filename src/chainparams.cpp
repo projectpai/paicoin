@@ -1,7 +1,11 @@
-// Copyright (c) 2010 Satoshi Nakamoto
+//
+// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "chainparams.h"
 #include "consensus/merkle.h"
@@ -351,7 +355,7 @@ public:
         consensus.nCoinbaseWhitelistExpiration = 144; // one day
 
         // hybrid consensus fork parameters
-        consensus.nHybridConsensusHeight = 76640; // must be above coinbase maturity (>100)
+        consensus.nHybridConsensusHeight = 78600; // must be above coinbase maturity (>100)
         consensus.hybridConsensusPowLimit = TESTNET_HYBRID_CONSENSUS_POW_LIMIT;
         consensus.nHybridConsensusInitialDifficulty = TESTNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
@@ -429,11 +433,10 @@ public:
         vSeeds.clear();
 
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.emplace_back("testnet-hybrid-seed1.projectpai.com", false);
-        // vSeeds.emplace_back("52.37.189.65", false);
-        // vSeeds.emplace_back("13.59.205.159", false);
-        // vSeeds.emplace_back("52.78.224.215", false);
-        // vSeeds.emplace_back("193.112.4.118", false);
+        vSeeds.emplace_back("34.212.218.239", false);
+        vSeeds.emplace_back("13.59.205.159", false);
+        vSeeds.emplace_back("52.78.224.215", false);
+        vSeeds.emplace_back("13.251.4.241", false);
 
         // vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 
@@ -451,11 +454,14 @@ public:
         checkpointData = (CCheckpointData) {
             {
                 {    0, TESTNET_CONSENSUS_HASH_GENESIS_BLOCK },
-                // {    1, uint256S("0x0000000007f33c46116ced43fbb7eb0307080ab7071c134e4b9ccd1334c61177")},
-                // { 1000, uint256S("0x0000000008668e5c597a6f0a97c3aced17389a8bd842afe61dd2310b4f301c9a")},
-                // { 2000, uint256S("0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b")},
-                // {25000, uint256S("0x0000000001a2549ab5b9496082d269abfece06fdf156899f9163e86414613765")}
-                
+                 {    1, uint256S("0x0000000007f33c46116ced43fbb7eb0307080ab7071c134e4b9ccd1334c61177")},
+                 { 1000, uint256S("0x0000000008668e5c597a6f0a97c3aced17389a8bd842afe61dd2310b4f301c9a")},
+                 { 2000, uint256S("0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b")},
+                 {25000, uint256S("0x0000000001a2549ab5b9496082d269abfece06fdf156899f9163e86414613765")},
+                 {40000, uint256S("0x00000000071942d9765ecbf1fd5e267b747975bf3143bdaf58915eb52e595802")},
+                 {50000, uint256S("0x00000000000be7744de43a52e6830cafaec5bc2dfa6e446c2dfe0f59fa2c2ff0")},
+                 {60000, uint256S("0x00000000040ea839b380c6be96bf8584d6079e0e7c6f772f979d2cafe98f1043")},
+                 {70000, uint256S("0x000000000005f2259dfe38b1c2f63726c4c61224800966eacf400ffd2bb46be6")}
             }
         };
 

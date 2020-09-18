@@ -1,6 +1,8 @@
-// Copyright (c) 2020 The Project PAI Foundation
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_WALLET_AUTOVOTER_AUTOVOTERCFG_H
 #define PAICOIN_WALLET_AUTOVOTER_AUTOVOTERCFG_H
