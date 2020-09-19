@@ -461,7 +461,8 @@ public:
                  {40000, uint256S("0x00000000071942d9765ecbf1fd5e267b747975bf3143bdaf58915eb52e595802")},
                  {50000, uint256S("0x00000000000be7744de43a52e6830cafaec5bc2dfa6e446c2dfe0f59fa2c2ff0")},
                  {60000, uint256S("0x00000000040ea839b380c6be96bf8584d6079e0e7c6f772f979d2cafe98f1043")},
-                 {70000, uint256S("0x000000000005f2259dfe38b1c2f63726c4c61224800966eacf400ffd2bb46be6")}
+                 {70000, uint256S("0x000000000005f2259dfe38b1c2f63726c4c61224800966eacf400ffd2bb46be6")},
+                 {77839, uint256S("0x0000000000000ed9faec080ad18e821413f47ea055acc149ad03fba825e82537")} //Pre hybrid consensus checkpoint
             }
         };
 
