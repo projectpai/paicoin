@@ -369,7 +369,7 @@ static bool rest_tx(HTTPRequest* req, const std::string& strURIPart)
 
     case RetFormat::JSON: {
         UniValue objTx{UniValue::VOBJ};
-        TxToUniv(*tx, hashBlock, objTx);
+        TxToUniv(*tx, hashBlock, objTx, true);
         JsonReply(req, objTx);
         return true;
     }

@@ -3500,8 +3500,13 @@ bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& pa
 
 bool IsHybridConsensusForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
 {
+    return pindexPrev && IsHybridConsensusForkEnabled(pindexPrev->nHeight, params);
+}
+
+bool IsHybridConsensusForkEnabled(const int height, const Consensus::Params& params)
+{
     AssertLockHeld(cs_main);
-    return (params.nHybridConsensusHeight >= 0 && pindexPrev && pindexPrev->nHeight >= params.nHybridConsensusHeight);
+    return (params.nHybridConsensusHeight >= 0 && height >= params.nHybridConsensusHeight);
 }
 
 // Compute at which vout of the block's coinbase transaction the witness

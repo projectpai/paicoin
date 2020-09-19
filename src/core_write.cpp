@@ -164,18 +164,19 @@ static void StakingToUniv(const CTransaction &tx, UniValue& entry)
     std::vector<TicketContribData> contributions;
     CAmount totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit;
     const auto& result = ParseTicketContribs(tx, contributions, totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit);
-    assert(result);
-    entry.pushKV("ticket_price", totalContribution);
-    entry.pushKV("fee_limit", totalVoteFeeLimit + totalRevocationFeeLimit);
+    if (result) {
+        entry.pushKV("ticket_price", totalContribution);
+        entry.pushKV("fee_limit", totalVoteFeeLimit + totalRevocationFeeLimit);
+    }
 }
 
-void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry, bool include_hex, int serialize_flags
+void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry, bool include_stake, bool include_hex, int serialize_flags
             , const std::map<uint256,std::shared_ptr<const CTransaction>>* const prevHashToTxMap)
 {
     entry.pushKV("txid", tx.GetHash().GetHex());
     if (tx.IsCoinBase())
         entry.pushKV("type",  "coinbase");
-    else {
+    else if (include_stake) {
         const auto txClass = ParseTxClass(tx);
         entry.pushKV("type", TxClassToString(txClass));
         if (txClass == ETxClass::TX_Vote) {

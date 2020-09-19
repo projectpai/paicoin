@@ -54,7 +54,7 @@ static std::mutex cs_blockchange;
 static std::condition_variable cond_blockchange;
 static CUpdatedBlock latestblock;
 
-extern void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry);
+extern void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry, bool includeStake);
 
 double GetDifficulty(const CBlockIndex* blockindex)
 {
@@ -201,6 +201,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("version", block.nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", block.nVersion)));
     result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
+    bool includeStake = (!gArgs.GetBoolArg("-testnet", false)) || IsHybridConsensusForkEnabled(blockindex, Params().GetConsensus());
     UniValue txs{UniValue::VARR};
     for(const auto& tx : block.vtx)
     {
@@ -213,7 +214,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
                 const auto& ticketHash = tx->vin[revocationStakeInputIndex].prevout.hash;
                 prevOutMap[ticketHash] = GetTicket(ticketHash);
             }
-            TxToUniv(*tx, uint256(), objTx, true, RPCSerializationFlags(), &prevOutMap);
+            TxToUniv(*tx, uint256(), objTx, includeStake, true, RPCSerializationFlags(), &prevOutMap);
             txs.push_back(objTx);
         }
         else
@@ -226,7 +227,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-    if (IsHybridConsensusForkEnabled(blockindex, Params().GetConsensus())) {
+    if (includeStake) {
         result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
         result.push_back(Pair("votebits", strprintf("%04x", blockindex->nVoteBits.getBits())));
         result.push_back(Pair("ticketpoolsize", strprintf("%08x", blockindex->nTicketPoolSize)));
