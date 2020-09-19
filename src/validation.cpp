@@ -53,6 +53,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/thread.hpp>
+#include <boost/bind/bind.hpp>
 
 #if defined(NDEBUG)
 # error "PAIcoin cannot be compiled without assertions."
@@ -105,6 +106,8 @@ CScript COINBASE_FLAGS;
 const std::string strMessageMagic = "PAIcoin Signed Message:\n";
 
 static const auto nNumBlocksPastStakeValidationToKeepWhitelist = 100u;
+
+using namespace boost::placeholders;
 
 // Internal stuff
 namespace {

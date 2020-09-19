@@ -37,6 +37,7 @@
 #include "util.h"
 
 #include <iostream>
+#include <boost/bind/bind.hpp>
 
 #include <QAction>
 #include <QApplication>
@@ -77,6 +78,8 @@ const std::string PAIcoinGUI::DEFAULT_UIPLATFORM =
 /** Display name for default wallet name. Uses tilde to avoid name
  * collisions in the future with additional wallets */
 const QString PAIcoinGUI::DEFAULT_WALLET = "~Default";
+
+using namespace boost::placeholders;
 
 PAIcoinGUI::PAIcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *networkStyle, QWidget *parent) :
     QMainWindow(parent),

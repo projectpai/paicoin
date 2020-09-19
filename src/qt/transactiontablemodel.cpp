@@ -20,11 +20,15 @@
 #include "util.h"
 #include "wallet/wallet.h"
 
+#include <boost/bind/bind.hpp>
+
 #include <QColor>
 #include <QDateTime>
 #include <QDebug>
 #include <QIcon>
 #include <QList>
+
+using namespace boost::placeholders;
 
 // Amount column is right-aligned it contains numbers
 static int column_alignments[] = {

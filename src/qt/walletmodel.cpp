@@ -30,12 +30,14 @@
 #include "wallet/walletdb.h" // for BackupWallet
 
 #include <stdint.h>
+#include <boost/bind/bind.hpp>
 
 #include <QDebug>
 #include <QMessageBox>
 #include <QSet>
 #include <QTimer>
 
+using namespace boost::placeholders;
 
 WalletModel::WalletModel(const PlatformStyle *platformStyle, CWallet *_wallet, OptionsModel *_optionsModel, QObject *parent) :
     QObject(parent), wallet(_wallet), optionsModel(_optionsModel), addressTableModel(0),
