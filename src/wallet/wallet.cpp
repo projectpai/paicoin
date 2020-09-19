@@ -2083,10 +2083,13 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
         return std::make_pair(voteHash, error);
     }
 
-    // Uncommenting the following lines will disable replacing-by-fee of this vote transaction
-    // This might be undesirable, so caution must be taken if uncommenting these lines
-    if (IsTicketVotedInMempool(ticketHash)){
+    if (IsTicketVotedInMempool(ticketHash)) {
        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is already used for a vote in mempool");
+       return std::make_pair(voteHash, error);
+    }
+
+    if (IsTicketRevokedInMempool(ticketHash)) {
+       error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is already used for a revocation in mempool");
        return std::make_pair(voteHash, error);
     }
 
@@ -2251,10 +2254,13 @@ std::pair<std::string, CWalletError> CWallet::Revoke(const uint256& ticketHash)
         return std::make_pair(revocationHash, error);
     }
 
-    // Uncommenting the following lines will disable replacing-by-fee this revocation transaction
-    // This might be undesirable, so caution must be taken if uncommenting these lines
-    if (IsTicketRevokedInMempool(ticketHash)){
+    if (IsTicketRevokedInMempool(ticketHash)) {
        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is already revoked in mempool");
+       return std::make_pair(revocationHash, error);
+    }
+
+    if (IsTicketVotedInMempool(ticketHash)) {
+       error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is already used for a vote in mempool");
        return std::make_pair(revocationHash, error);
     }
 
