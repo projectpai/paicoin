@@ -2999,8 +2999,13 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
 
     // remove expired mempool votes
     if (fDiscardExpiredMempoolVotes) {
-        LOCK(cs_main);
-        mempool.removeExpiredVotes(chainActive.Height(), chainparams.GetConsensus());
+        const auto& height = []()
+        {
+            LOCK(cs_main);
+            return chainActive.Height();
+        }();
+
+        mempool.removeExpiredVotes(height, chainparams.GetConsensus());
     }
 
     // Write changes periodically to disk, after relay.
@@ -3507,12 +3512,12 @@ bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& pa
 
 bool IsHybridConsensusForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
 {
+    AssertLockHeld(cs_main);
     return pindexPrev && IsHybridConsensusForkEnabled(pindexPrev->nHeight, params);
 }
 
 bool IsHybridConsensusForkEnabled(const int height, const Consensus::Params& params)
 {
-    AssertLockHeld(cs_main);
     return (params.nHybridConsensusHeight >= 0 && height >= params.nHybridConsensusHeight);
 }
 

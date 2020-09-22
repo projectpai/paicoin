@@ -606,6 +606,7 @@ void CTxMemPool::removeExpiredVotes(const uint32_t currentHeight, const Consensu
     if (!IsHybridConsensusForkEnabled(currentHeight, params))
         return;
 
+    LOCK(cs);
     // get the votes
     auto& tx_class_index = mapTx.get<tx_class>();
     auto votes = tx_class_index.equal_range(ETxClass::TX_Vote);
