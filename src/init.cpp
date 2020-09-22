@@ -355,6 +355,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-maxorphantx=<n>", strprintf(_("Keep at most <n> unconnectable transactions in memory (default: %u)"), DEFAULT_MAX_ORPHAN_TRANSACTIONS));
     strUsage += HelpMessageOpt("-maxmempool=<n>", strprintf(_("Keep the transaction memory pool below <n> megabytes (default: %u)"), DEFAULT_MAX_MEMPOOL_SIZE));
     strUsage += HelpMessageOpt("-mempoolexpiry=<n>", strprintf(_("Do not keep transactions in the mempool longer than <n> hours (default: %u)"), DEFAULT_MEMPOOL_EXPIRY));
+    strUsage += HelpMessageOpt("-discardexpiredmempoolvotes", strprintf(_("Enable or disable the mempool vote expiration. When a vote in mempool doesn't make it into a block, it becomes missed and after a delay expired. Once expired it can be discarded from the mempool. This flag enables or disables this mechanism. Disabling this mechanism leaves the vote in mempool indefinitely. Please note that this can crowd the mempool if multiple such votes linger. (default: %u)"), DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES));
     if (showDebug) {
         strUsage += HelpMessageOpt("-minimumchainwork=<hex>", strprintf("Minimum work assumed to exist on a valid chain in hex (default: %s, testnet: %s)", defaultChainParams->GetConsensus().nMinimumChainWork.GetHex(), testnetChainParams->GetConsensus().nMinimumChainWork.GetHex()));
     }
@@ -1122,6 +1123,8 @@ bool AppInitParameterInteraction()
         boost::split(vstrReplacementModes, strReplacementModeList, boost::is_any_of(","));
         fEnableReplacement = (std::find(vstrReplacementModes.begin(), vstrReplacementModes.end(), "fee") != vstrReplacementModes.end());
     }
+
+    fDiscardExpiredMempoolVotes = gArgs.GetBoolArg("-discardexpiredmempoolvotes", DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES);
 
     if (gArgs.IsArgSet("-vbparams")) {
         // Allow overriding version bits parameters for testing

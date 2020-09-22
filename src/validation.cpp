@@ -91,6 +91,7 @@ size_t nCoinCacheUsage = 5000 * 300;
 uint64_t nPruneTarget = 0;
 int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 bool fEnableReplacement = DEFAULT_ENABLE_REPLACEMENT;
+bool fDiscardExpiredMempoolVotes = DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES;
 
 uint256 hashAssumeValid;
 arith_uint256 nMinimumChainWork;
@@ -2995,6 +2996,12 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
         if (nStopAtHeight && pindexNewTip && pindexNewTip->nHeight >= nStopAtHeight) StartShutdown();
     } while (pindexNewTip != pindexMostWork);
     CheckBlockIndex(chainparams.GetConsensus());
+
+    // remove expired mempool votes
+    if (fDiscardExpiredMempoolVotes) {
+        LOCK(cs_main);
+        mempool.removeExpiredVotes(chainActive.Height(), chainparams.GetConsensus());
+    }
 
     // Write changes periodically to disk, after relay.
     if (!FlushStateToDisk(chainparams, state, FLUSH_STATE_PERIODIC)) {

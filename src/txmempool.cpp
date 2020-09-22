@@ -597,6 +597,40 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
     blockSinceLastRollingFeeBump = true;
 }
 
+void CTxMemPool::removeExpiredVotes(const uint32_t currentHeight, const Consensus::Params& params)
+{
+    // When a vote is lingering in the mempool for longer that the specified delay,
+    // it is removed as it cannot be useful anymore. All its mempool descendants are
+    // also removed.
+
+    if (!IsHybridConsensusForkEnabled(currentHeight, params))
+        return;
+
+    // get the votes
+    auto& tx_class_index = mapTx.get<tx_class>();
+    auto votes = tx_class_index.equal_range(ETxClass::TX_Vote);
+
+    CTxMemPool::setEntries txToRemove;
+    for (auto votetxiter = votes.first; votetxiter != votes.second; ++votetxiter) {
+        if (!IsHybridConsensusForkEnabled(votetxiter->GetHeight(), params))
+            continue;
+
+        VoteData voteData;
+        if (!ParseVote(votetxiter->GetTx(), voteData))
+            continue;
+
+        if (voteData.blockHeight < currentHeight - params.nMempoolVoteExpiry) {
+            auto txiter = mapTx.project<0>(votetxiter);
+
+            txToRemove.insert(txiter);
+
+            CalculateDescendants(txiter, txToRemove);
+        }
+    }
+
+    RemoveStaged(txToRemove, true, MemPoolRemovalReason::EXPIRY);
+}
+
 void CTxMemPool::_clear()
 {
     mapLinks.clear();

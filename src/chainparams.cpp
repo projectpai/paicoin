@@ -193,6 +193,7 @@ public:
         consensus.nTicketsPerBlock                  = 5;
         consensus.nTicketMaturity                   = 256;
         consensus.nTicketExpiry                     = 5 * consensus.nTicketPoolSize;
+        consensus.nMempoolVoteExpiry                = 10;
         // consensus.nCoinbaseMaturity                 = 256;
         consensus.nSStxChangeMaturity               = 1;
         consensus.nTicketPoolSizeWeight             = 4;
@@ -366,6 +367,7 @@ public:
         consensus.nTicketsPerBlock                  = 5;
         consensus.nTicketMaturity                   = 16;
         consensus.nTicketExpiry                     = 100; //Set arbitrarily low to check revocation handling
+        consensus.nMempoolVoteExpiry                = 10;
         //consensus.nCoinbaseMaturity                 = 100;
         consensus.nSStxChangeMaturity               = 1;
         consensus.nTicketPoolSizeWeight             = 4;
@@ -540,6 +542,7 @@ public:
         consensus.nTicketsPerBlock                = 5;
         consensus.nTicketMaturity                 = 8;
         consensus.nTicketExpiry                   = 3 * consensus.nTicketPoolSize;
+        consensus.nMempoolVoteExpiry              = 10;
         // consensus.nCoinbaseMaturity               = 16;
         consensus.nSStxChangeMaturity             = 1;
         consensus.nTicketPoolSizeWeight           = 4;

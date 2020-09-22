@@ -113,6 +113,9 @@ struct Params {
     // Number of blocks for tickets to expire after they have matured. This MUST
     // be >= (StakeEnabledHeight + StakeValidationHeight).
     uint32_t nTicketExpiry;
+    // Number of blocks after which a vote that has not been included in the chain and still
+    // lingers in the mempool will be discarded. Must be less than nTicketExpiry.
+    uint32_t nMempoolVoteExpiry;
     // CoinbaseMaturity is the number of blocks required before newly mined
     // coins (coinbase transactions) can be spent.
     // uint16_t nCoinbaseMaturity; We have a constant for this purpose in consensus.h, COINBASE_MATURITY
