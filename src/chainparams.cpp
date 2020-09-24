@@ -182,13 +182,7 @@ public:
         consensus.nCoinbaseWhitelistExpiration = 144; // two weeks
 
         // hybrid consensus fork parameters
-        consensus.nHybridConsensusHeight = -1; // Never
-        consensus.hybridConsensusPowLimit = MAINNET_HYBRID_CONSENSUS_POW_LIMIT;
-        consensus.nHybridConsensusInitialDifficulty = MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
-        consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
-
-        // hybrid consensus fork parameters
-        consensus.nHybridConsensusHeight = 154350; // must be above coinbase maturity (>100)
+        consensus.nHybridConsensusHeight = 152840; // must be above coinbase maturity (>100)
         consensus.hybridConsensusPowLimit = MAINNET_HYBRID_CONSENSUS_POW_LIMIT;
         consensus.nHybridConsensusInitialDifficulty = MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
@@ -208,8 +202,8 @@ public:
         consensus.nStakeDiffWindows                 = 20;
         consensus.nStakeVersionInterval             = 144 * 2 * 7; // ~2 weeks
         consensus.nMaxFreshStakePerBlock            = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight               = 154862;         //Hybrid fork height + (consensus.nTicketMaturity * 2)
-        consensus.nStakeValidationHeight            = 155374;        // Stake enabled height + (consensus.nTicketMaturity * 2)
+        consensus.nStakeEnabledHeight               = 155352;         //Hybrid fork height + (consensus.nTicketMaturity * 2)
+        consensus.nStakeValidationHeight            = 155864;        // Stake enabled height + (consensus.nTicketMaturity * 2)
         consensus.stakeBaseSigScript                = CScript() << 0x00 << 0x00;
         consensus.nStakeMajorityMultiplier          = 3;
         consensus.nStakeMajorityDivisor             = 4;
@@ -271,11 +265,13 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
         // Note that of those with the service bits flag, most only support a subset of possible options
+        vSeeds.emplace_back("mainnet-hybrid-seed1.projectpai.com", false);
+/*
         vSeeds.emplace_back("34.215.125.66", false);
         vSeeds.emplace_back("13.58.110.183", false);
         vSeeds.emplace_back("13.124.177.237", false);
         vSeeds.emplace_back("193.112.7.193", false);
-
+*/
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,56);  // P
