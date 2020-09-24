@@ -71,6 +71,7 @@ static int AppInitRawTx(int argc, char* argv[])
         strUsage += HelpMessageOpt("-create", _("Create new, empty TX."));
         strUsage += HelpMessageOpt("-json", _("Select JSON output"));
         strUsage += HelpMessageOpt("-txid", _("Output only the hex-encoded transaction id of the resultant transaction."));
+        strUsage += HelpMessageOpt("-stake", _("Output stake information"));
         AppendParamsHelpMessages(strUsage);
 
         fprintf(stdout, "%s", strUsage.c_str());
@@ -711,10 +712,10 @@ static void MutateTx(CMutableTransaction& tx, const std::string& command,
         throw std::runtime_error("unknown command");
 }
 
-static void OutputTxJSON(const CTransaction& tx)
+static void OutputTxJSON(const CTransaction& tx, bool includeStake)
 {
     UniValue entry(UniValue::VOBJ);
-    TxToUniv(tx, uint256(), entry);
+    TxToUniv(tx, uint256(), entry, includeStake);
 
     std::string jsonOutput = entry.write(4);
     fprintf(stdout, "%s\n", jsonOutput.c_str());
@@ -737,7 +738,7 @@ static void OutputTxHex(const CTransaction& tx)
 static void OutputTx(const CTransaction& tx)
 {
     if (gArgs.GetBoolArg("-json", false))
-        OutputTxJSON(tx);
+        OutputTxJSON(tx, gArgs.GetBoolArg("-stake", false));
     else if (gArgs.GetBoolArg("-txid", false))
         OutputTxHash(tx);
     else

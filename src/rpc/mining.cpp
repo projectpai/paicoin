@@ -20,6 +20,7 @@
 #include <miner.h>
 #include <net.h>
 #include <policy/fees.h>
+#include <policy/policy.h>
 #include <pow.h>
 #include <rpc/blockchain.h>
 #include <rpc/mining.h>
@@ -507,6 +508,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     // don't).
     const auto fSupportsSegwit = setClientRules.find(segwit_info.name) != setClientRules.end();
 
+    const auto nBlockVotesWaitTime = gArgs.GetArg("-blockvoteswaittime", DEFAULT_BLOCK_VOTES_WAIT_TIME);
+
     // Update block
     static CBlockIndex* pindexPrev;
     static int64_t nStart;
@@ -514,8 +517,9 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     // Cache whether the last invocation was with segwit support, to avoid returning
     // a segwit-block to a non-segwit caller.
     static bool fLastTemplateSupportsSegwit = true;
+    const auto nTimeElapsed = GetTime() - nStart;
     if (pindexPrev != chainActive.Tip() ||
-        (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 5) ||
+        (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && nTimeElapsed > 5) ||
         fLastTemplateSupportsSegwit != fSupportsSegwit)
     {
         // Clear pindexPrev so future calls make a new block, despite any failures from here on
@@ -524,6 +528,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         // Store the pindexBest used before CreateNewBlock, to avoid races
         nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
         auto* const pindexPrevNew = chainActive.Tip();
+        nStart = GetTime();
         fLastTemplateSupportsSegwit = fSupportsSegwit;
 
         // Create new block
@@ -532,15 +537,14 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         if (!pblocktemplate)
             throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Out of memory");
 
-        if ( pindexPrevNew->nHeight >= Params().GetConsensus().nStakeValidationHeight
-           && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock 
-           && GetTime() - nStart < 10 ) 
-        { 
-            //not enough votes yet, wait no more than 10 seconds
+        if ( pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight
+           && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock
+           && nTimeElapsed > nBlockVotesWaitTime)
+        {
+            //not enough votes yet, wait no more than nBlockVotesWaitTime seconds
             throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not reached maximum votes");
         }
 
-        nStart = GetTime();
         // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
     }

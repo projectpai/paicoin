@@ -322,11 +322,7 @@ bool checkBuyTicketInputs(const CTransaction& tx, CValidationState& state, const
     // check transaction structure
     std::string reason;
     if (!ValidateBuyTicketStructure(tx, reason))
-    {
-        //return state.DoS(100, false, REJECT_INVALID, "bad-buyticket-structure", false, reason);
-        LogPrintf("Warning: bad-buyticket-structure for transaction %s and height: %d", tx.GetHash().GetHex(), nSpendHeight);
-        return true;
-    }
+        return state.DoS(100, false, REJECT_INVALID, "bad-buyticket-structure", false, reason);
 
     CAmount totalVoteFeeLimit{0};
     CAmount totalRevocationFeeLimit{0};
@@ -475,18 +471,21 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
                          strprintf("%s: inputs missing/spent", __func__));
     }
 
+    // do not check test transactions on the testnet chain that are before the hybrid consensus fork
+    bool fCheckStake = (!gArgs.GetBoolArg("-testnet", false)) || IsHybridConsensusForkEnabled(nSpendHeight, chainparams.GetConsensus());
+
     // parse tx
-    ETxClass txClass = ParseTxClass(tx);
+    ETxClass txClass = fCheckStake ? ParseTxClass(tx) : TX_Regular;
     VoteData voteData;
-    if (txClass == TX_Vote && !ParseVote(tx, voteData))
+    if (fCheckStake && txClass == TX_Vote && !ParseVote(tx, voteData))
         return state.DoS(100, false, REJECT_INVALID, "could-not-parse-vote-tx", false);
 
     // check inputs of stake transactions
-    if (txClass == TX_BuyTicket && !checkBuyTicketInputs(tx, state, inputs, nSpendHeight, chainparams))
+    if (fCheckStake && txClass == TX_BuyTicket && !checkBuyTicketInputs(tx, state, inputs, nSpendHeight, chainparams))
         return false;
-    if (txClass == TX_Vote && !checkVoteOrRevokeTicketInputs(tx, true, state, inputs, nSpendHeight, chainparams))
+    if (fCheckStake && txClass == TX_Vote && !checkVoteOrRevokeTicketInputs(tx, true, state, inputs, nSpendHeight, chainparams))
         return false;
-    if (txClass == TX_RevokeTicket && !checkVoteOrRevokeTicketInputs(tx, false, state, inputs, nSpendHeight, chainparams))
+    if (fCheckStake && txClass == TX_RevokeTicket && !checkVoteOrRevokeTicketInputs(tx, false, state, inputs, nSpendHeight, chainparams))
         return false;
 
     // general inputs check and summation of input amounts
@@ -496,7 +495,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         // vote reward input doesn't reference existing coins
         // (instead, like with coinbase, coins are generated out of thin air)
         // so we'll skip the checks
-        if (txClass == TX_Vote && i == voteSubsidyInputIndex)
+        if (fCheckStake && txClass == TX_Vote && i == voteSubsidyInputIndex)
         {
             nValueIn += GetVoterSubsidy(nSpendHeight/*voteData.blockHeight*/, chainparams.GetConsensus());
             continue;
@@ -516,12 +515,14 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         }
 
         // Unless the tx is a vote or a revocation, it is forbidden to spend ticket stake
-        if (txClass != TX_Vote && txClass != TX_RevokeTicket && isBuyTicketStake(coin, prevout.n))
+        if (fCheckStake
+                && txClass != TX_Vote && txClass != TX_RevokeTicket && isBuyTicketStake(coin, prevout.n))
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-illegal-spend-of-ticket-stake");
 
         // Vote reward and revocation refund payments can only be spent after coinbase maturity many blocks.
-        if ((isVoteReward(coin, prevout.n) || isRevokeTicketRefund(coin, prevout.n))
-            && nSpendHeight - coin.nHeight < COINBASE_MATURITY)
+        if (fCheckStake
+                && (isVoteReward(coin, prevout.n) || isRevokeTicketRefund(coin, prevout.n))
+                && nSpendHeight - coin.nHeight < COINBASE_MATURITY)
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-reward-or-refund-immature");
 
         // Check for negative or overflow input values

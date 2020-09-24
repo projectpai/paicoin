@@ -402,6 +402,13 @@ Wallet options:
      Enable the automatic revoker. As soon as a ticket becomes expired or missed,
      the automatic revoker creates and publishes a transaction that is unlocking the
      staked funds.
+     
+  -discardexpiredmempoolvotes
+     Enable or disable the mempool vote expiration. When a vote in mempool doesn't
+     make it into a block, it becomes missed and after a delay expired. Once expired
+     it can be discarded from the mempool. This flag enables or disables this mechanism.
+     Disabling this mechanism leaves the vote in mempool indefinitely. Please note that
+     this can crowd the mempool if multiple such votes linger.
 
 Debugging/Testing options:
 

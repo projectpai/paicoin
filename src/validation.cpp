@@ -91,6 +91,7 @@ size_t nCoinCacheUsage = 5000 * 300;
 uint64_t nPruneTarget = 0;
 int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 bool fEnableReplacement = DEFAULT_ENABLE_REPLACEMENT;
+bool fDiscardExpiredMempoolVotes = DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES;
 
 uint256 hashAssumeValid;
 arith_uint256 nMinimumChainWork;
@@ -2996,6 +2997,17 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
     } while (pindexNewTip != pindexMostWork);
     CheckBlockIndex(chainparams.GetConsensus());
 
+    // remove expired mempool votes
+    if (fDiscardExpiredMempoolVotes) {
+        const auto& height = []()
+        {
+            LOCK(cs_main);
+            return chainActive.Height();
+        }();
+
+        mempool.removeExpiredVotes(height, chainparams.GetConsensus());
+    }
+
     // Write changes periodically to disk, after relay.
     if (!FlushStateToDisk(chainparams, state, FLUSH_STATE_PERIODIC)) {
         return false;
@@ -3501,7 +3513,12 @@ bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& pa
 bool IsHybridConsensusForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
 {
     AssertLockHeld(cs_main);
-    return (params.nHybridConsensusHeight >= 0 && pindexPrev && pindexPrev->nHeight >= params.nHybridConsensusHeight);
+    return pindexPrev && IsHybridConsensusForkEnabled(pindexPrev->nHeight, params);
+}
+
+bool IsHybridConsensusForkEnabled(const int height, const Consensus::Params& params)
+{
+    return (params.nHybridConsensusHeight >= 0 && height >= params.nHybridConsensusHeight);
 }
 
 // Compute at which vout of the block's coinbase transaction the witness

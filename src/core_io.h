@@ -36,7 +36,7 @@ UniValue ValueFromAmount(const CAmount& amount);
 std::string FormatScript(const CScript& script);
 std::string EncodeHexTx(const CTransaction& tx, const int serializeFlags = 0);
 void ScriptPubKeyToUniv(const CScript& scriptPubKey, UniValue& out, bool fIncludeHex);
-void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry, bool include_hex = true, int serialize_flags = 0
+void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry, bool include_stake, bool include_hex = true, int serialize_flags = 0
 , const std::map<uint256,std::shared_ptr<const CTransaction>>* const prevHashToTxMap = nullptr);
 
 #endif // PAICOIN_CORE_IO_H

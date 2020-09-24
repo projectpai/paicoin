@@ -115,14 +115,14 @@ bool CheckFilterAgainstVoutTxs(const CTransaction& tx, const lt_DestinationSet& 
 }
 
 
-void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry, const lt_HashToTransactionMap * const pHashToTransactionMap = nullptr)
+void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry, bool includeStake, const lt_HashToTransactionMap * const pHashToTransactionMap = nullptr)
 {
     // Call into TxToUniv() in paicoin-common to decode the transaction hex.
     //
     // Blockchain contextual information (confirmations and blocktime) is not
     // available to code in paicoin-common, so we query them here and push the
     // data into the returned UniValue.
-    TxToUniv(tx, uint256(), entry, true, RPCSerializationFlags(), pHashToTransactionMap);
+    TxToUniv(tx, uint256(), entry, includeStake, true, RPCSerializationFlags(), pHashToTransactionMap);
 
     if (!hashBlock.IsNull()) {
         entry.push_back(Pair("blockhash", hashBlock.GetHex()));
@@ -138,6 +138,18 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry, 
                 entry.push_back(Pair("confirmations", 0));
         }
     }
+}
+
+bool IsBlockAfterHybridConsensusFork(const uint256& hash)
+{
+    if (mapBlockIndex.count(hash) == 0)
+        return false;
+
+    const auto * const pblockindex = mapBlockIndex[hash];
+    if (fHavePruned && !(pblockindex->nStatus & BLOCK_HAVE_DATA) && pblockindex->nTx > 0)
+        return false;
+
+    return IsHybridConsensusForkEnabled(pblockindex->nHeight, Params().GetConsensus());
 }
 
 UniValue getrawtransaction(const JSONRPCRequest& request)
@@ -246,13 +258,16 @@ UniValue getrawtransaction(const JSONRPCRequest& request)
 
     UniValue result(UniValue::VOBJ);
 
+    bool includeStake = (!gArgs.GetBoolArg("-testnet", false)) || IsBlockAfterHybridConsensusFork(hashBlock);
+
     lt_HashToTransactionMap prevOutMap;
-    if (ETxClass::TX_RevokeTicket == ParseTxClass(*tx)) {
+    if (includeStake && ETxClass::TX_RevokeTicket == ParseTxClass(*tx)) {
         // extract the revoked ticket tx here
         const auto& ticketHash = tx->vin[revocationStakeInputIndex].prevout.hash;
         prevOutMap[ticketHash] = GetTicket(ticketHash);
     }
-    TxToJSON(*tx, hashBlock, result, &prevOutMap);
+
+    TxToJSON(*tx, hashBlock, result, includeStake, &prevOutMap);
     return result;
 }
 
@@ -341,6 +356,8 @@ UniValue searchrawtransactions(const JSONRPCRequest& request)
 
     while (it != setpos.end() && nSkip--) ++it;
 
+    bool isTestnet = gArgs.GetBoolArg("-testnet", false);
+
     UniValue result(UniValue::VARR);
     while (it != setpos.end() && nCount--) {
         CTransactionRef tx;
@@ -357,7 +374,7 @@ UniValue searchrawtransactions(const JSONRPCRequest& request)
             if (! ( CheckFilterAgainstVinTxs(*tx, fVinExtra, setFilterAddrs, prevOutMap) || CheckFilterAgainstVoutTxs(*tx, setFilterAddrs)) )
                 continue;
             UniValue object(UniValue::VOBJ);
-            TxToJSON(*tx, hashBlock, object, &prevOutMap);
+            TxToJSON(*tx, hashBlock, object, (!isTestnet) || IsBlockAfterHybridConsensusFork(hashBlock), &prevOutMap);
             object.push_back(Pair("hex", strHex));
             result.push_back(object);
         } else {
@@ -731,7 +748,7 @@ UniValue decoderawtransaction(const JSONRPCRequest& request)
         throw JSONRPCError(RPCErrorCode::DESERIALIZATION_ERROR, "TX decode failed");
 
     UniValue result(UniValue::VOBJ);
-    TxToUniv(CTransaction(std::move(mtx)), uint256(), result, false);
+    TxToUniv(CTransaction(std::move(mtx)), uint256(), result, true, false);
 
     return result;
 }

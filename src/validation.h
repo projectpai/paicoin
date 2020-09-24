@@ -145,6 +145,8 @@ static const bool DEFAULT_PERSIST_MEMPOOL = true;
 static const bool DEFAULT_ENABLE_REPLACEMENT = true;
 /** Default for using fee filter */
 static const bool DEFAULT_FEEFILTER = true;
+/** Default for discarding expired mempool votes */
+static const bool DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES = true;
 
 /** Maximum number of headers to announce when relaying blocks with headers message.*/
 static const unsigned int MAX_BLOCKS_TO_ANNOUNCE = 8;
@@ -190,6 +192,7 @@ extern CAmount maxTxFee;
 /** If the tip is older than this (in seconds), the node is considered to be in initial block download. */
 extern int64_t nMaxTipAge;
 extern bool fEnableReplacement;
+extern bool fDiscardExpiredMempoolVotes;
 
 /** Block hash whose ancestors we will assume to have valid scripts without checking them. */
 extern uint256 hashAssumeValid;
@@ -436,6 +439,7 @@ bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& pa
 
 /** Check whether hardfork rules are applicable to a block. */
 bool IsHybridConsensusForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
+bool IsHybridConsensusForkEnabled(const int height, const Consensus::Params& params);
 
 /** When there are blocks in the active chain with missing data, rewind the chainstate and remove them from the block index */
 bool RewindBlockIndex(const CChainParams& params);
@@ -519,6 +523,5 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
 
 /** Check existence of address in the address index */
 bool AddressExistsInIndex(const std::string& address);
-
 
 #endif // PAICOIN_VALIDATION_H
