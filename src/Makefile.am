@@ -36,9 +36,6 @@ LIBSECP256K1=secp256k1/libsecp256k1.la
 if ENABLE_ZMQ
 LIBPAICOIN_ZMQ=libpaicoin_zmq.a
 endif
-if BUILD_PAICOIN_LIBS
-LIBPAICOINCONSENSUS=libpaicoinconsensus.la
-endif
 if ENABLE_WALLET
 LIBPAICOIN_WALLET=libpaicoin_wallet.a
 endif
@@ -57,8 +54,6 @@ EXTRA_LIBRARIES += \
   $(LIBPAICOIN_CLI) \
   $(LIBPAICOIN_WALLET) \
   $(LIBPAICOIN_ZMQ)
-
-lib_LTLIBRARIES = $(LIBPAICOINCONSENSUS)
 
 bin_PROGRAMS =
 noinst_PROGRAMS =
@@ -494,24 +489,6 @@ paicoin_tx_LDADD = \
   $(LIBSECP256K1)
 
 paicoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
-#
-
-# paicoinconsensus library #
-if BUILD_PAICOIN_LIBS
-include_HEADERS = script/paicoinconsensus.h
-libpaicoinconsensus_la_SOURCES = $(crypto_libpaicoin_crypto_a_SOURCES) $(libpaicoin_consensus_a_SOURCES)
-libpaicoinconsensus_la_SOURCES += support/cleanse.cpp sync.cpp fs.cpp random.cpp utiltime.cpp util.cpp
-
-if GLIBC_BACK_COMPAT
-  libpaicoinconsensus_la_SOURCES += compat/glibc_compat.cpp
-endif
-
-libpaicoinconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
-libpaicoinconsensus_la_LIBADD = $(LIBSECP256K1) $(LIBUNIVALUE) $(BOOST_LIBS) $(CRYPTO_LIBS)
-libpaicoinconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) $(UNIVALUE_CFLAGS) $(BOOST_CPPFLAGS) $(CRYPTO_CFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_PAICOIN_INTERNAL
-libpaicoinconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-
-endif
 #
 
 CTAES_DIST =  crypto/ctaes/bench.c
