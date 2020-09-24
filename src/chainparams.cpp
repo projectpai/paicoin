@@ -202,8 +202,8 @@ public:
         consensus.nStakeDiffWindows                 = 20;
         consensus.nStakeVersionInterval             = 144 * 2 * 7; // ~2 weeks
         consensus.nMaxFreshStakePerBlock            = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight               = 155352;         //Hybrid fork height + (consensus.nTicketMaturity * 2)
-        consensus.nStakeValidationHeight            = 155864;        // Stake enabled height + (consensus.nTicketMaturity * 2)
+        consensus.nStakeEnabledHeight               = 153421;         //Hybrid fork height + (consensus.nTicketMaturity * 2)
+        consensus.nStakeValidationHeight            = 153933;        // Stake enabled height + (consensus.nTicketMaturity * 2)
         consensus.stakeBaseSigScript                = CScript() << 0x00 << 0x00;
         consensus.nStakeMajorityMultiplier          = 3;
         consensus.nStakeMajorityDivisor             = 4;
