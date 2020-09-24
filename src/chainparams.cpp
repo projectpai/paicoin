@@ -42,8 +42,8 @@
 #define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343")
 #define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x585ac65f505138efceefb3255086b6d7f63c606219b01f115a2941bb93c8362b")
 
-#define MAINNET_HYBRID_CONSENSUS_POW_LIMIT          MAINNET_CONSENSUS_POW_LIMIT
-#define MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x1c09fe61
+#define MAINNET_HYBRID_CONSENSUS_POW_LIMIT          uint256S("000003e75d000000000000000000000000000000000000000000000000000000");
+#define MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x1e03e75d
 
 #define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
@@ -179,10 +179,16 @@ public:
         consensus.defaultAssumeValid = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
 
         // coinbase whitelist parameters
-        consensus.nCoinbaseWhitelistExpiration = 2016; // two weeks
+        consensus.nCoinbaseWhitelistExpiration = 144; // two weeks
 
         // hybrid consensus fork parameters
         consensus.nHybridConsensusHeight = -1; // Never
+        consensus.hybridConsensusPowLimit = MAINNET_HYBRID_CONSENSUS_POW_LIMIT;
+        consensus.nHybridConsensusInitialDifficulty = MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
+        consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
+
+        // hybrid consensus fork parameters
+        consensus.nHybridConsensusHeight = 154350; // must be above coinbase maturity (>100)
         consensus.hybridConsensusPowLimit = MAINNET_HYBRID_CONSENSUS_POW_LIMIT;
         consensus.nHybridConsensusInitialDifficulty = MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
@@ -201,8 +207,8 @@ public:
         consensus.nStakeDiffWindows                 = 20;
         consensus.nStakeVersionInterval             = 144 * 2 * 7; // ~2 weeks
         consensus.nMaxFreshStakePerBlock            = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight               = 356;         //consensus.nCoinbaseMaturity + consensus.nTicketMaturity;
-        consensus.nStakeValidationHeight            = 4096;        // ~ 14 days
+        consensus.nStakeEnabledHeight               = 154862;         //Hybrid fork height + (consensus.nTicketMaturity * 2)
+        consensus.nStakeValidationHeight            = 155374;        // Stake enabled height + (consensus.nTicketMaturity * 2)
         consensus.stakeBaseSigScript                = CScript() << 0x00 << 0x00;
         consensus.nStakeMajorityMultiplier          = 3;
         consensus.nStakeMajorityDivisor             = 4;
@@ -288,7 +294,16 @@ public:
                 { 15000, uint256S("0x00000000000031c7063e5c25c471474d8e983a0456944bef32a09ebfbe38adcd")},
                 { 25000, uint256S("0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec")},
                 { 50000, uint256S("0x000000000000003d4edeac906ef9f89754d41d13a6a899b6001c0fab6040c3e1")}
-                
+                { 60000, uint256S("0x0000000000000058a109ea89e318e96742afcac4d7e255d24ca623c5d59438f5")}
+                { 70000, uint256S("0x00000000000000485bef5d43df2af26334cf4d8ada499932b6310d31b8304727")}
+                { 80000, uint256S("0x0000000000000048234cb97daa5dd2ade2134958c36b561c303f14f7aee19b84")}
+                { 90000, uint256S("0x00000000000000355d4cc5892252b99b497e6d004704da252e2c20147d6252de")}
+                { 100000, uint256S("0x000000000000001f63655bcc07ca1940e0413eae21129d55a314f6edcd11adf4")}
+                { 110000, uint256S("0x000000000000006276a6b130c48867c725cc46d2dce0b1fd85e57a03b8e62b51")}
+                { 120000, uint256S("0x000000000000009a81363c9b3ba2dfc722a7df8ac8a0a78e12eefb6dba9bfe5a")}
+                { 130000, uint256S("0x000000000000002a0f12ad179996aa0a5efed53717aa6854be34f9d94c8cef5a")}
+                { 140000, uint256S("0x000000000000004ea95aeaf16356c0061e530bcf796beccc657b931dad51ea2a")}
+                { 150000, uint256S("0x00000000000000dde450506496572c1825c1ccf682699398f4df8a8219bc33a2")}
             }
         };
 
