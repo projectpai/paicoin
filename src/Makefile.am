@@ -1,3 +1,4 @@
+# Copyright (c) 2018-2020 The Project PAI Foundation
 # Copyright (c) 2013-2016 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -35,9 +36,6 @@ LIBSECP256K1=secp256k1/libsecp256k1.la
 if ENABLE_ZMQ
 LIBPAICOIN_ZMQ=libpaicoin_zmq.a
 endif
-if BUILD_PAICOIN_LIBS
-LIBPAICOINCONSENSUS=libpaicoinconsensus.la
-endif
 if ENABLE_WALLET
 LIBPAICOIN_WALLET=libpaicoin_wallet.a
 endif
@@ -56,8 +54,6 @@ EXTRA_LIBRARIES += \
   $(LIBPAICOIN_CLI) \
   $(LIBPAICOIN_WALLET) \
   $(LIBPAICOIN_ZMQ)
-
-lib_LTLIBRARIES = $(LIBPAICOINCONSENSUS)
 
 bin_PROGRAMS =
 noinst_PROGRAMS =
@@ -139,6 +135,8 @@ PAICOIN_CORE_H = \
   script/sign.h \
   script/standard.h \
   script/ismine.h \
+  stake/stakepoolfee.h \
+  stake/stakeversion.h \
   streams.h \
   support/allocators/secure.h \
   support/allocators/zeroafterfree.h \
@@ -190,7 +188,6 @@ libpaicoin_server_a_SOURCES = \
   addrman.cpp \
   bloom.cpp \
   blockencodings.cpp \
-  chain.cpp \
   checkpoints.cpp \
   consensus/tx_verify.cpp \
   httprpc.cpp \
@@ -214,8 +211,10 @@ libpaicoin_server_a_SOURCES = \
   rpc/rawtransaction.cpp \
   rpc/safemode.cpp \
   rpc/server.cpp \
+  rpc/stakeapi.cpp \
   script/sigcache.cpp \
   script/ismine.cpp \
+  stake/stakeversion.cpp \
   timedata.cpp \
   torcontrol.cpp \
   txdb.cpp \
@@ -248,11 +247,19 @@ libpaicoin_wallet_a_SOURCES = \
   wallet/init.cpp \
   wallet/rpcdump.cpp \
   wallet/rpcwallet.cpp \
+  wallet/auto-revoker/autorevokerconfig.cpp \
+  wallet/auto-revoker/autorevoker.cpp \
+  wallet/auto-voter/autovoterconfig.cpp \
+  wallet/auto-voter/autovoter.cpp \
+  wallet/ticket-buyer/ticketbuyerconfig.cpp \
+  wallet/ticket-buyer/ticketbuyer.cpp \
   wallet/wallet.cpp \
   wallet/walletdb.cpp \
+  stake/stakepoolfee.cpp \
   $(PAICOIN_CORE_H)
 
 # crypto primitives library
+crypto_libpaicoin_crypto_a_CFLAGS = $(AM_CFLAGS) $(PIC_FLAGS)
 crypto_libpaicoin_crypto_a_CPPFLAGS = $(AM_CPPFLAGS)
 crypto_libpaicoin_crypto_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 crypto_libpaicoin_crypto_a_SOURCES = \
@@ -272,7 +279,9 @@ crypto_libpaicoin_crypto_a_SOURCES = \
   crypto/sha256.cpp \
   crypto/sha256.h \
   crypto/sha512.cpp \
-  crypto/sha512.h
+  crypto/sha512.h \
+  crypto/tiny_sha3.c \
+  crypto/tiny_sha3.h
 
 if USE_ASM
 crypto_libpaicoin_crypto_a_SOURCES += crypto/sha256_sse4.cpp
@@ -285,6 +294,9 @@ libpaicoin_consensus_a_SOURCES = \
   amount.h \
   arith_uint256.cpp \
   arith_uint256.h \
+  chain.cpp \
+  chainparams.cpp \
+  chainparamsbase.cpp \
   consensus/merkle.cpp \
   consensus/merkle.h \
   consensus/params.h \
@@ -305,7 +317,26 @@ libpaicoin_consensus_a_SOURCES = \
   script/script.h \
   script/script_error.cpp \
   script/script_error.h \
+  script/standard.cpp \
   serialize.h \
+  stake/extendedvotebits.cpp \
+  stake/extendedvotebits.h \
+  stake/hash256prng.cpp \
+  stake/hash256prng.h \
+  stake/hasher.cpp \
+  stake/hasher.h \
+  stake/treap/value.cpp \
+  stake/treap/value.h \
+  stake/treap/treapnode.cpp \
+  stake/treap/treapnode.h \
+  stake/treap/tickettreap.cpp \
+  stake/treap/tickettreap.h \
+  stake/stakenode.cpp \
+  stake/stakenode.h \
+  stake/staketx.cpp \
+  stake/staketx.h \
+  stake/votebits.cpp \
+  stake/votebits.h \
   tinyformat.h \
   uint256.cpp \
   uint256.h \
@@ -333,6 +364,7 @@ libpaicoin_common_a_SOURCES = \
   scheduler.cpp \
   script/sign.cpp \
   script/standard.cpp \
+  stake/stakepoolfee.cpp \
   warnings.cpp \
   $(PAICOIN_CORE_H)
 
@@ -457,23 +489,6 @@ paicoin_tx_LDADD = \
   $(LIBSECP256K1)
 
 paicoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
-#
-
-# paicoinconsensus library #
-if BUILD_PAICOIN_LIBS
-include_HEADERS = script/paicoinconsensus.h
-libpaicoinconsensus_la_SOURCES = $(crypto_libpaicoin_crypto_a_SOURCES) $(libpaicoin_consensus_a_SOURCES)
-
-if GLIBC_BACK_COMPAT
-  libpaicoinconsensus_la_SOURCES += compat/glibc_compat.cpp
-endif
-
-libpaicoinconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
-libpaicoinconsensus_la_LIBADD = $(LIBSECP256K1)
-libpaicoinconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_PAICOIN_INTERNAL
-libpaicoinconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-
-endif
 #
 
 CTAES_DIST =  crypto/ctaes/bench.c

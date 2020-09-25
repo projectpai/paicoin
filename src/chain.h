@@ -1,7 +1,10 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_CHAIN_H
 #define PAICOIN_CHAIN_H
@@ -11,6 +14,8 @@
 #include "pow.h"
 #include "tinyformat.h"
 #include "uint256.h"
+#include "stake/stakenode.h"
+#include "stake/votebits.h"
 
 #include <vector>
 
@@ -34,6 +39,7 @@ public:
     unsigned int nBlocks;      //!< number of blocks stored in file
     unsigned int nSize;        //!< number of used bytes of block file
     unsigned int nUndoSize;    //!< number of used bytes in the undo file
+    // unsigned int nStakeSize;   //!< number of used bytes in the stake file
     unsigned int nHeightFirst; //!< lowest height of block in file
     unsigned int nHeightLast;  //!< highest height of block in file
     uint64_t nTimeFirst;       //!< earliest time of block in file
@@ -50,12 +56,15 @@ public:
         READWRITE(VARINT(nHeightLast));
         READWRITE(VARINT(nTimeFirst));
         READWRITE(VARINT(nTimeLast));
+        // if (s.GetVersion() > 70015)
+        //     READWRITE(VARINT(nStakeSize));
     }
 
      void SetNull() {
          nBlocks = 0;
          nSize = 0;
          nUndoSize = 0;
+        //  nStakeSize = 0;
          nHeightFirst = 0;
          nHeightLast = 0;
          nTimeFirst = 0;
@@ -160,6 +169,8 @@ enum BlockStatus: uint32_t {
     BLOCK_FAILED_MASK        =   BLOCK_FAILED_VALID | BLOCK_FAILED_CHILD,
 
     BLOCK_OPT_WITNESS       =   128, //!< block data in blk*.data was received with a witness-enforcing client
+
+    // BLOCK_HAVE_STAKE        =   256, //!< stake data available in stk*.dat
 };
 
 /** The block chain is a tree shaped structure starting with the
@@ -191,6 +202,9 @@ public:
     //! Byte offset within rev?????.dat where this block's undo data is stored
     unsigned int nUndoPos;
 
+    //! Byte offset within stk?????.dat where this block's stake data is stored
+    // unsigned int nStakePos;
+
     //! (memory only) Total amount of work (expected number of hashes) in the chain up to and including this block
     arith_uint256 nChainWork;
 
@@ -213,21 +227,41 @@ public:
     uint32_t nBits;
     uint32_t nNonce;
 
+    int64_t  nStakeDifficulty;
+
+    // TODO: the following fields are not serialized in CDiskBlockIndex, check if any needs serialization
+    VoteBits nVoteBits;
+    uint32_t nTicketPoolSize;
+    StakeState ticketLotteryState;
+    uint16_t   nVoters;
+    uint8_t    nFreshStake;
+    uint8_t    nRevocations;
+    uint256    extraData;
+    uint32_t   nStakeVersion;
+
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t nSequenceId;
 
     //! (memory only) Maximum nTime in the chain up to and including this block.
     unsigned int nTimeMax;
 
+    std::shared_ptr<StakeNode> pstakeNode;
+    std::shared_ptr<HashVector> newTickets;
+    HashVector ticketsVoted;
+    HashVector ticketsRevoked;
+    VoteVersionVector votes;
+
     void SetNull()
     {
         phashBlock = nullptr;
         pprev = nullptr;
         pskip = nullptr;
+        pstakeNode = nullptr;
         nHeight = 0;
         nFile = 0;
         nDataPos = 0;
         nUndoPos = 0;
+        // nStakePos = 0;
         nChainWork = arith_uint256();
         nTx = 0;
         nChainTx = 0;
@@ -240,6 +274,15 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
+        nStakeDifficulty = 0;
+        nVoteBits      = VoteBits::rttAccepted;
+        nTicketPoolSize = 0;
+        ticketLotteryState.SetNull();
+        nVoters = 0;
+        nFreshStake = 0;
+        nRevocations = 0;
+        extraData.SetNull();
+        nStakeVersion  = 0;
     }
 
     CBlockIndex()
@@ -256,6 +299,15 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
+        nStakeDifficulty = block.nStakeDifficulty;
+        nVoteBits      = block.nVoteBits;
+        nTicketPoolSize = block.nTicketPoolSize;
+        ticketLotteryState = block.ticketLotteryState;
+        nVoters        = block.nVoters;
+        nFreshStake    = block.nFreshStake;
+        nRevocations   = block.nRevocations;
+        extraData      = block.extraData;
+        nStakeVersion  = block.nStakeVersion;
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -276,6 +328,15 @@ public:
         return ret;
     }
 
+    // CDiskBlockPos GetStakePos() const {
+    //     CDiskBlockPos ret;
+    //     if (nStatus & BLOCK_HAVE_STAKE) {
+    //         ret.nFile = nFile;
+    //         ret.nPos  = nStakePos;
+    //     }
+    //     return ret;
+    // }
+
     CBlockHeader GetBlockHeader() const
     {
         CBlockHeader block;
@@ -286,8 +347,21 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.nStakeDifficulty = nStakeDifficulty;
+        block.nVoteBits      = nVoteBits;
+        block.nTicketPoolSize = nTicketPoolSize;
+        block.ticketLotteryState = ticketLotteryState;
+        block.nVoters        = nVoters;
+        block.nFreshStake    = nFreshStake;
+        block.nRevocations   = nRevocations;
+        block.extraData      = extraData;
+        block.nStakeVersion = nStakeVersion;
         return block;
     }
+
+    // LotteryIV returns the initialization vector for the deterministic PRNG used
+    // to determine winning tickets.
+    uint256 LotteryIV() const;
 
     uint256 GetBlockHash() const
     {
@@ -357,6 +431,9 @@ public:
     //! Efficiently find an ancestor of this block.
     CBlockIndex* GetAncestor(int height);
     const CBlockIndex* GetAncestor(int height) const;
+    const CBlockIndex* GetRelativeAncestor(int distance) const;
+
+    void PopulateTicketInfo(const SpentTicketsInBlock& spentTicketsInBlock);
 };
 
 arith_uint256 GetBlockProof(const CBlockIndex& block);
@@ -364,7 +441,6 @@ arith_uint256 GetBlockProof(const CBlockIndex& block);
 int64_t GetBlockProofEquivalentTime(const CBlockIndex& to, const CBlockIndex& from, const CBlockIndex& tip, const Consensus::Params&);
 /** Find the forking point between two chain tips. */
 const CBlockIndex* LastCommonAncestor(const CBlockIndex* pa, const CBlockIndex* pb);
-
 
 /** Used to marshal pointers into hashes for db storage. */
 class CDiskBlockIndex : public CBlockIndex
@@ -397,6 +473,8 @@ public:
             READWRITE(VARINT(nDataPos));
         if (nStatus & BLOCK_HAVE_UNDO)
             READWRITE(VARINT(nUndoPos));
+        // if (nStatus & BLOCK_HAVE_STAKE)
+        //     READWRITE(VARINT(nStakePos));
 
         // block header
         READWRITE(this->nVersion);
@@ -405,6 +483,31 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+
+        if (this->nVersion & HARDFORK_VERSION_BIT) {
+            READWRITE(nStakeDifficulty);
+            READWRITE(nVoteBits);
+            READWRITE(nTicketPoolSize);
+            READWRITE(ticketLotteryState);
+            READWRITE(nVoters);
+            READWRITE(nFreshStake);
+            READWRITE(nRevocations);
+            READWRITE(extraData);
+            READWRITE(nStakeVersion);
+        }
+        else if (ser_action.ForRead())
+        {
+            nStakeDifficulty = Params().GetConsensus().nMinimumStakeDiff;
+            nVoteBits = VoteBits::rttAccepted;
+            nTicketPoolSize = 0;
+            ticketLotteryState.SetNull();
+            nVoters = 0;
+            nFreshStake = 0;
+            nRevocations = 0;
+            extraData.SetNull();
+            nStakeVersion = 0;
+        }
+        // READWRITE(nStakeDifficulty);
     }
 
     uint256 GetBlockHash() const
@@ -416,6 +519,15 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
+        block.nStakeDifficulty = nStakeDifficulty;
+        block.nVoteBits       = nVoteBits;
+        block.nTicketPoolSize = nTicketPoolSize;
+        block.ticketLotteryState = ticketLotteryState;
+        block.nVoters         = nVoters;
+        block.nFreshStake     = nFreshStake;
+        block.nRevocations    = nRevocations;
+        block.extraData       = extraData;
+        block.nStakeVersion   = nStakeVersion;
         return block.GetHash();
     }
 

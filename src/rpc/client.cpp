@@ -1,7 +1,11 @@
-// Copyright (c) 2010 Satoshi Nakamoto
+//
+// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "rpc/client.h"
 #include "rpc/protocol.h"
@@ -95,6 +99,12 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "createrawtransaction", 3, "replaceable" },
     { "signrawtransaction", 1, "prevtxs" },
     { "signrawtransaction", 2, "privkeys" },
+    { "searchrawtransactions", 1, "verbose"},
+    { "searchrawtransactions", 2, "skip"},
+    { "searchrawtransactions", 3, "count"},
+    { "searchrawtransactions", 4, "vinextra"},
+    { "searchrawtransactions", 5, "reverse"},
+    { "searchrawtransactions", 6, "filteraddrs"},
     { "sendrawtransaction", 1, "allowhighfees" },
     { "combinerawtransaction", 0, "txs" },
     { "fundrawtransaction", 1, "options" },
@@ -109,6 +119,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "importpubkey", 2, "rescan" },
     { "importmulti", 0, "requests" },
     { "importmulti", 1, "options" },
+    { "importscript", 1, "rescan" },
+    { "importscript", 2, "scanfrom" },
     { "verifychain", 0, "checklevel" },
     { "verifychain", 1, "nblocks" },
     { "pruneblockchain", 0, "height" },
@@ -129,6 +141,49 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "logging", 0, "include" },
     { "logging", 1, "exclude" },
     { "disconnectnode", 1, "nodeid" },
+    { "estimatestakediff", 0, "numtickets" },
+    { "getstakeversioninfo", 0, "count" },
+    { "getstakeversions", 1, "count" },
+    { "txfeeinfo", 0, "blocks" },
+    { "txfeeinfo", 1, "rangestart" },
+    { "txfeeinfo", 2, "rangeend" },
+    { "getblocksubsidy", 0, "height" },
+    { "getblocksubsidy", 1, "voters" },
+    { "getmultisigoutinfo", 1, "index"},
+    { "gettickets", 0, "includeimmature"},
+    { "gettickets", 1, "verbose"},
+    { "livetickets", 0, "verbose"},
+    { "livetickets", 1, "blockheight"},
+    { "missedtickets", 0, "verbose"},
+    { "missedtickets", 1, "blockheight"},
+    { "winningtickets", 0, "blockheight"},
+    { "redeemmultisigout", 1, "index"},
+    { "redeemmultisigout", 2, "tree"},
+    { "redeemmultisigouts", 2, "number"},
+    { "sendtomultisig", 2, "pubkeys"},
+    { "sendtomultisig", 3, "nrequired"},
+    { "sendtomultisig", 4, "minconf"},
+    { "setticketfee", 0, "fee" },
+    { "ticketfeeinfo", 0, "blocks" },
+    { "ticketfeeinfo", 1, "windows" },
+    { "ticketvwap", 0, "start" },
+    { "ticketvwap", 1, "end" },
+    { "purchaseticket", 1, "spendlimit" },
+    { "purchaseticket", 2, "minconf" },
+    { "purchaseticket", 5, "numtickets" },
+    { "purchaseticket", 7, "poolfees" },
+    { "purchaseticket", 8, "expiry" },
+    { "purchaseticket", 10, "ticketfee" },
+    { "startticketbuyer", 1, "maintain" },
+    { "startticketbuyer", 6, "poolfees" },
+    { "startticketbuyer", 7, "limit" },
+    { "setticketbuyerbalancetomaintain", 0, "maintain" },
+    { "setticketbuyerpoolfees", 0, "poolfees" },
+    { "setticketbuyermaxperblock", 0, "limit" },
+    { "generatevote", 1, "height" },
+    { "generatevote", 3, "votebits" },
+    { "startautovoter", 0, "votebits" },
+    { "setautovotervotebits", 0, "votebits" },
     // Echo with conversion (For testing only)
     { "echojson", 0, "arg0" },
     { "echojson", 1, "arg1" },

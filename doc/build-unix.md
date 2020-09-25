@@ -80,19 +80,11 @@ install necessary parts of boost:
         sudo apt-get install libboost-all-dev
 
 BerkeleyDB is required for the wallet.
-
-**For Ubuntu only:** db4.8 packages are available [here](https://launchpad.net/~bitcoin/+archive/bitcoin).
-You can add the repository and install using the following commands:
-
-    sudo apt-get install software-properties-common
-    sudo add-apt-repository ppa:bitcoin/bitcoin
-    sudo apt-get update
-    sudo apt-get install libdb4.8-dev libdb4.8++-dev
-
+    
 Ubuntu and Debian have their own libdb-dev and libdb++-dev packages, but these will install
 BerkeleyDB 5.1 or later, which break binary wallet compatibility with the distributed executables which
 are based on BerkeleyDB 4.8. If you do not care about wallet compatibility,
-pass `--with-incompatible-bdb` to configure.
+pass `--with-incompatible-bdb` to configure.  If you want to maintain compability then see section "Berkeley DB" for instructions on building it from source.
 
 See the section "Disable-wallet mode" to build PAIcoin Core without wallet.
 
@@ -191,6 +183,27 @@ cd $PAICOIN_ROOT
 ./autogen.sh
 ./configure LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/" # (other args...)
 ```
+
+If you receive an error like the following when building Berkeley DB:
+```
+$ make install
+...
+...
+libtool: compile:  g++ -c -I. -I../dist/.. -D_GNU_SOURCE -D_REENTRANT -O ../dist/../cxx/cxx_db.cpp  -fPIC -DPIC -o cxx_db.o
+In file included from ../dist/../dbinc/mutex_int.h:12,
+                 from ../dist/../dbinc/mutex.h:15,
+                 from ./db_int.h:884,
+                 from ../dist/../cxx/cxx_db.cpp:11:
+../dist/../dbinc/atomic.h:179:19: error: definition of ‘int __atomic_compare_exchange(db_atomic_t*, atomic_value_t, atomic_value_t)’ ambiguates built-in declaration ‘bool __atomic_compare_exchange(long unsigned int, volatile void*, void*, void*, int, int)’
+  179 | static inline int __atomic_compare_exchange(
+      |                   ^~~~~~~~~~~~~~~~~~~~~~~~~
+make: *** [Makefile:2018: cxx_db.o] Error 1
+```
+You will have to manually patch it to avoid an issue with `atomic_compare_exchange`
+```
+sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' db-4.8.30.NC/dbinc/atomic.h
+```
+and then do `make install` again from the `db-4.8.30.NC` directory.
 
 **Note**: You only need Berkeley DB if the wallet is enabled (see the section *Disable-Wallet mode* below).
 

@@ -1,6 +1,10 @@
-// Copyright (c) 2017 The Bitcoin Core developers
+//
+// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "key.h"
 #include "keystore.h"
@@ -90,7 +94,7 @@ BOOST_AUTO_TEST_CASE(script_standard_Solver_success)
         std::vector<unsigned char>({255});
     BOOST_CHECK(Solver(s, whichType, solutions));
     BOOST_CHECK_EQUAL(whichType, TX_NULL_DATA);
-    BOOST_CHECK_EQUAL(solutions.size(), 0);
+    BOOST_CHECK_EQUAL(solutions.size(), 3);
 
     // TX_WITNESS_V0_KEYHASH
     s.clear();

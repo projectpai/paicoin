@@ -1,7 +1,11 @@
+//
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "miner.h"
 
@@ -26,6 +30,7 @@
 #include "util.h"
 #include "utilmoneystr.h"
 #include "validationinterface.h"
+#include "stake/stakeversion.h"
 
 #include <algorithm>
 #include <queue>
@@ -129,6 +134,18 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     nHeight = pindexPrev->nHeight + 1;
 
     pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
+    const auto& hybridForkEnabled = IsHybridConsensusForkEnabled(pindexPrev,chainparams.GetConsensus());
+    if (hybridForkEnabled) {
+        pblock->nVersion |= HARDFORK_VERSION_BIT;
+    }
+
+    pblock->nStakeVersion = calcStakeVersion(pindexPrev, chainparams.GetConsensus());
+    pblock->nStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev,chainparams.GetConsensus());
+    if (pindexPrev->pstakeNode != nullptr) {
+        pblock->ticketLotteryState = pindexPrev->pstakeNode->FinalState();
+        pblock->nTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
+    }
+
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
     if (chainparams.MineBlocksOnDemand())
@@ -140,6 +157,112 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     nLockTimeCutoff = (STANDARD_LOCKTIME_VERIFY_FLAGS & LOCKTIME_MEDIAN_TIME_PAST)
                        ? nMedianTimePast
                        : pblock->GetBlockTime();
+
+    // Votes should be present after this height.
+    if (nHeight >= chainparams.GetConsensus().nStakeValidationHeight) {
+        auto& voted_hash_index = mempool.mapTx.get<voted_block_hash>();
+        auto votesForBlockHash = voted_hash_index.equal_range(pindexPrev->GetBlockHash());
+        // Check to see if the vote tx actually uses a ticket that is
+        // valid for the next block.
+        // it seems this is already done in checkAllowedVotes called from TestBlockValidity
+
+        // normally should not happen, except in case of constructing invalid block chains above StakeValidationHeight,
+        // see miner_tests.cpp (search SetBestBlock)
+        assert(pindexPrev->pstakeNode != nullptr);
+        auto winningHashes = pindexPrev->pstakeNode->Winners();
+
+        int nNewVotes = 0;
+        for (auto votetxiter = votesForBlockHash.first; votetxiter != votesForBlockHash.second; ++votetxiter) {
+            const auto& spentTicketHash = votetxiter->GetTx().vin[voteStakeInputIndex].prevout.hash;
+            if (std::find(winningHashes.begin(), winningHashes.end(), spentTicketHash) == winningHashes.end())
+                continue; //not a winner
+
+            // tx must be included in the block
+            auto txiter = mempool.mapTx.project<0>(votetxiter);
+            AddToBlock(txiter);
+            ++nNewVotes;
+        }
+        pblock->nVoters = nNewVotes;
+    }
+
+    // Get the newly purchased tickets
+    CTxMemPool::setEntries ticketAncestors;
+    if (nHeight >= chainparams.GetConsensus().nStakeEnabledHeight - chainparams.GetConsensus().nTicketMaturity)
+    {
+        auto& tx_class_index = mempool.mapTx.get<tx_class>();
+        auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+        int nNewTickets = 0;
+        uint64_t nNoLimit = std::numeric_limits<uint64_t>::max();
+        std::string dummy;
+        for (auto tickettxiter = existingTickets.first; tickettxiter != existingTickets.second; ++tickettxiter) {
+            if (nNewTickets >= chainparams.GetConsensus().nMaxFreshStakePerBlock) //new ticket purchases not more than max allowed in block
+                break;
+            // tx must be included in the block
+            auto txiter = mempool.mapTx.project<0>(tickettxiter);
+            AddToBlock(txiter);
+            ++nNewTickets;
+
+            // store all unconfirmed ancestors in order to include them in this block
+            mempool.CalculateMemPoolAncestors(*txiter, ticketAncestors, nNoLimit, nNoLimit, nNoLimit, nNoLimit, dummy, false);
+            onlyUnconfirmed(ticketAncestors);
+        }
+        pblock->nFreshStake = nNewTickets;
+    }
+
+    // No revocation transaction should be present before this height
+    if (nHeight >= chainparams.GetConsensus().nStakeValidationHeight) {
+        auto& tx_class_index = mempool.mapTx.get<tx_class>();
+        auto revocations = tx_class_index.equal_range(ETxClass::TX_RevokeTicket);
+
+        assert(pindexPrev->pstakeNode != nullptr);
+        auto missedTickets = pindexPrev->pstakeNode->MissedTickets();
+
+        int nNewRevocations = 0;
+        for (auto revocationtxiter = revocations.first; revocationtxiter != revocations.second; ++revocationtxiter) {
+            const auto& ticketHash = revocationtxiter->GetTx().vin[revocationStakeInputIndex].prevout.hash;
+            if (std::find(missedTickets.begin(), missedTickets.end(), ticketHash) == missedTickets.end())
+                continue; // Skip all missed tickets that we've never heard of
+            auto txiter = mempool.mapTx.project<0>(revocationtxiter);
+            AddToBlock(txiter);
+            ++nNewRevocations;
+        }
+        pblock->nRevocations = nNewRevocations;
+    }
+
+    // Add all the funding (ancestor) transactions that are in the mempool for the ticket just included.
+    // Make sure that the funding transactions are ordered themselves by ancestry, if needed.
+    // Normally, at this point no circular or multiple dependencies should be present.
+    // However, a watchdog monitoring is implemented.
+    // TODO: verify the case where a ticket is funded by other stake transaction spendable output
+    std::vector<CTxMemPool::txiter> reorderedTicketAncestors;
+    for (auto& ticketAncestorIter : ticketAncestors)
+        reorderedTicketAncestors.push_back(ticketAncestorIter);
+    const size_t reorderedTicketAncestorsSize = reorderedTicketAncestors.size();
+    if (reorderedTicketAncestorsSize > 0) {
+        int watchdog = static_cast<int>(std::pow(2, reorderedTicketAncestorsSize));
+        CTxMemPool::txiter b;
+        uint256 hash;
+        bool swapped;
+        do {
+            swapped = false;
+            for (size_t i = 0; (i < reorderedTicketAncestorsSize - 1) && (!swapped); ++i) {
+                for (size_t j = i + 1; (j < reorderedTicketAncestorsSize) && (!swapped); ++j) {
+                    hash = reorderedTicketAncestors[j]->GetTx().GetHash();
+                    for (size_t k = 0; (k < reorderedTicketAncestors[i]->GetTx().vin.size()) && (!swapped); ++k)
+                        if (reorderedTicketAncestors[i]->GetTx().vin[k].prevout.hash == hash) {
+                            std::swap(reorderedTicketAncestors[i], reorderedTicketAncestors[j]);
+                            swapped = true;
+                        }
+                }
+            }
+        } while (swapped && (--watchdog > 0));
+
+        if (watchdog == 0)
+            throw std::runtime_error(strprintf("%s: Split transaction reordering failed (%llu transactions)", __func__, reorderedTicketAncestorsSize));
+
+        for (auto& reorderedTicketAncestorIter : reorderedTicketAncestors)
+            AddToBlock(reorderedTicketAncestorIter);
+    }
 
     // Decide whether to include witness transactions
     // This is only needed in case the witness softfork activation is reverted
@@ -164,7 +287,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     coinbaseTx.vin[0].prevout.SetNull();
     coinbaseTx.vout.resize(1);
     coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
-    coinbaseTx.vout[0].nValue = nFees + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+    coinbaseTx.vout[0].nValue = nFees + GetMinerSubsidy(nHeight, chainparams.GetConsensus());
     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
@@ -335,7 +458,9 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
     {
         // First try to find a new transaction in mapTx to evaluate.
         if (mi != mempool.mapTx.get<ancestor_score>().end() &&
-                SkipMapTxEntry(mempool.mapTx.project<0>(mi), mapModifiedTx, failedTx)) {
+                (SkipMapTxEntry(mempool.mapTx.project<0>(mi), mapModifiedTx, failedTx) ||
+                mi->GetTxClass() != TX_Regular) //we only deal with non-stake tx in this loop
+                ) {
             ++mi;
             continue;
         }
@@ -347,6 +472,12 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
         modtxscoreiter modit = mapModifiedTx.get<ancestor_score>().begin();
         if (mi == mempool.mapTx.get<ancestor_score>().end()) {
             // We're out of entries in mapTx; use the entry from mapModifiedTx
+            // However, we only deal with non-stake tx in this loop
+            if (modit->iter->GetTxClass() != TX_Regular) {
+                mapModifiedTx.get<ancestor_score>().erase(modit);
+                continue;
+            }
+
             iter = modit->iter;
             fUsingModified = true;
         } else {

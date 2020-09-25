@@ -268,6 +268,54 @@ Wallet options:
        account owner and payment request information, 2 = drop tx meta
        data)
 
+  -autostake
+       Enable the automatic ticket buyer, the automatic voter and the automatic
+       revoker. These are performing the staking operations on behalf of the user
+       and as soon as possible. Please note that the ticket buyer requires more
+       settings to perform correctly, such as -tbvotingaddress, -tblimit or
+       -tbbalancetomaintainabsolute.
+
+  -autobuy
+       Enable the automatic ticket buyer. This is purchasing tickets on behalf of
+       the user as soon as all the criteria is met. Please make sure to specify
+       the voting address and other parameters as desired.
+
+  -tbbalancetomaintainabsolute
+       The funds to preserve in the wallet when purchasing tickets. This ensures
+       that at least this amount is still available in the wallet. No purchase
+       is made if the funds for tickets are not enough.
+
+  -tbvotingaddress
+       Specify the address to be used when voting. The voter or revoker must be
+       able to sign the input corresponding to this output, so it must own the
+       address.
+
+  -tbrewardaddress
+       Specify the address to be used when sending the reward. The voter or revoker
+       will send the reward or refund to this address.
+
+  -tblimit
+       The maximum number of tickets to purchase in one batch.
+
+  -tbvotingaccount
+       Specify the account to be used for voting.
+
+  -autovote
+       Enable the automatic voter. This is going to send the votes for the tickets
+       belonging to the wallet as soon as they are selected as winners.
+
+  -autorevoke
+       Enable the automatic revoker. As soon as a ticket becomes expired or missed,
+       the automatic revoker creates and publishes a transaction that is unlocking the
+       staked funds.
+
+  -discardexpiredmempoolvotes
+       Enable or disable the mempool vote expiration. When a vote in mempool doesn't
+       make it into a block, it becomes missed and after a delay expired. Once expired
+       it can be discarded from the mempool. This flag enables or disables this mechanism.
+       Disabling this mechanism leaves the vote in mempool indefinitely. Please note that
+       this can crowd the mempool if multiple such votes linger.
+
 ZeroMQ notification options:
 
   -zmqpubhashblock=<address>

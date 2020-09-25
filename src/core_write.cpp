@@ -1,6 +1,10 @@
+//
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include <core_io.h>
 
@@ -15,6 +19,7 @@
 #include <util.h>
 #include <utilmoneystr.h>
 #include <utilstrencodings.h>
+#include <stake/staketx.h>
 
 UniValue ValueFromAmount(const CAmount& amount)
 {
@@ -154,14 +159,77 @@ void ScriptPubKeyToUniv(const CScript& scriptPubKey,
     out.pushKV("addresses", a);
 }
 
-void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry, bool include_hex, int serialize_flags)
+void StakingToUniv(const CTransaction& tx, UniValue& entry, bool fIncludeContrib) 
+{
+    std::vector<TicketContribData> contributions;
+    CAmount totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit;
+    const auto& result = ParseTicketContribs(tx, contributions, totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit);
+    if (result) {
+        entry.pushKV("ticket_price", ValueFromAmount(totalContribution));
+        entry.pushKV("fee_limit", ValueFromAmount(totalVoteFeeLimit + totalRevocationFeeLimit));
+        if (fIncludeContrib) {
+            auto contribs = UniValue(UniValue::VARR);
+            for (const auto& contribData : contributions) {
+                auto contrib = UniValue(UniValue::VOBJ);
+                contrib.pushKV("rewardAddr", EncodeDestination(contribData.rewardAddr));
+                contrib.pushKV("contributedAmount", ValueFromAmount(contribData.contributedAmount));
+                contribs.push_back(contrib);
+            }
+            entry.pushKV("contributions", contribs);
+        }
+    }
+}
+
+void StakeInfoToUniv(const CTransaction& tx, UniValue& entry, const std::map<uint256,std::shared_ptr<const CTransaction>>* const prevHashToTxMap)
+{
+    const auto txClass = ParseTxClass(tx);
+    entry.pushKV("type", TxClassToString(txClass));
+    if (txClass == ETxClass::TX_Vote) {
+        UniValue voting(UniValue::VOBJ);
+        const auto ticketHash = tx.vin[voteStakeInputIndex].prevout.hash;
+        voting.pushKV("ticket", ticketHash.GetHex());
+        VoteData voteData;
+        ParseVote(tx, voteData);
+        voting.pushKV("version", voteData.nVersion);
+        voting.pushKV("vote", voteData.voteBits.isRttAccepted() ? "valid" : "invalid");
+        voting.pushKV("blockhash", voteData.blockHash.GetHex());
+        voting.pushKV("blockheight", (int64_t)voteData.blockHeight);
+        entry.pushKV("voting", voting);
+    } else if (txClass == ETxClass::TX_BuyTicket) {
+        UniValue staking(UniValue::VOBJ);
+        StakingToUniv(tx, staking);
+        entry.pushKV("staking", staking);
+    } else if (txClass == ETxClass::TX_RevokeTicket) {
+        UniValue staking(UniValue::VOBJ);
+        const auto ticketHash = tx.vin[revocationStakeInputIndex].prevout.hash;
+        staking.pushKV("ticket", ticketHash.GetHex());
+        if (prevHashToTxMap != nullptr) {
+            const auto& it = prevHashToTxMap->find(ticketHash);
+            if (it != std::end(*prevHashToTxMap)) {
+                const auto& ticketTx = *it->second;
+                StakingToUniv(ticketTx, staking);
+            }
+        }
+        entry.pushKV("staking", staking);
+    }
+}
+
+void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry, bool include_stake, bool include_hex, int serialize_flags
+            , const std::map<uint256,std::shared_ptr<const CTransaction>>* const prevHashToTxMap)
 {
     entry.pushKV("txid", tx.GetHash().GetHex());
+    if (tx.IsCoinBase())
+        entry.pushKV("type",  "coinbase");
+    else if (include_stake) {
+        StakeInfoToUniv(tx, entry, prevHashToTxMap);
+    }
+
     entry.pushKV("hash", tx.GetWitnessHash().GetHex());
     entry.pushKV("version", tx.nVersion);
     entry.pushKV("size", (int)::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION));
     entry.pushKV("vsize", (GetTransactionWeight(tx) + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR);
     entry.pushKV("locktime", (int64_t)tx.nLockTime);
+    entry.pushKV("expiry", (int64_t)tx.nExpiry);
 
     UniValue vin(UniValue::VARR);
     for (unsigned int i = 0; i < tx.vin.size(); i++) {
@@ -176,12 +244,36 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
             o.pushKV("asm", ScriptToAsmStr(txin.scriptSig, true));
             o.pushKV("hex", HexStr(txin.scriptSig.begin(), txin.scriptSig.end()));
             in.pushKV("scriptSig", o);
-            if (!tx.vin[i].scriptWitness.IsNull()) {
+            if (!txin.scriptWitness.IsNull()) {
                 UniValue txinwitness(UniValue::VARR);
-                for (const auto& item : tx.vin[i].scriptWitness.stack) {
+                for (const auto& item : txin.scriptWitness.stack) {
                     txinwitness.push_back(HexStr(item.begin(), item.end()));
                 }
                 in.pushKV("txinwitness", txinwitness);
+            }
+            if( prevHashToTxMap != nullptr) {
+                const auto& it = prevHashToTxMap->find(txin.prevout.hash);
+                if (it != std::end(*prevHashToTxMap) ){
+                    UniValue prevOut(UniValue::VARR);
+                    const auto& prevTx = it->second;
+                    for (const auto& txOut : prevTx->vout) {
+                        txnouttype type;
+                        std::vector<CTxDestination> addresses;
+                        int nRequired;
+                        if (ExtractDestinations(txOut.scriptPubKey, type, addresses, nRequired)) {
+                            UniValue a(UniValue::VARR);
+                            for (const CTxDestination& addr : addresses) {
+                                a.push_back(EncodeDestination(addr));
+                            }
+
+                            UniValue vout(UniValue::VOBJ);
+                            vout.pushKV("addresses", a);
+                            vout.pushKV("value", ValueFromAmount(txOut.nValue));
+                            prevOut.push_back(vout);
+                        }
+                    }
+                    in.pushKV("prevOut", prevOut);
+                }
             }
         }
         in.pushKV("sequence", (int64_t)txin.nSequence);

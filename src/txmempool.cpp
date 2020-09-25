@@ -1,7 +1,11 @@
+//
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "txmempool.h"
 
@@ -20,9 +24,9 @@
 
 CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFee,
                                  int64_t _nTime, unsigned int _entryHeight,
-                                 bool _spendsCoinbase, int64_t _sigOpsCost, LockPoints lp):
+                                 bool _spendsCoinbase, bool _spendsStake, int64_t _sigOpsCost, LockPoints lp):
     tx(_tx), nFee(_nFee), nTime(_nTime), entryHeight(_entryHeight),
-    spendsCoinbase(_spendsCoinbase), sigOpCost(_sigOpsCost), lockPoints(lp)
+    spendsCoinbase(_spendsCoinbase), spendsStake(_spendsStake), sigOpCost(_sigOpsCost), lockPoints(lp)
 {
     nTxWeight = GetTransactionWeight(*tx);
     nUsageSize = RecursiveDynamicUsage(tx);
@@ -32,6 +36,7 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFe
     nModFeesWithDescendants = nFee;
 
     feeDelta = 0;
+    txClass = ParseTxClass(*tx);
 
     nCountWithAncestors = 1;
     nSizeWithAncestors = GetTxSize();
@@ -504,7 +509,7 @@ void CTxMemPool::removeRecursive(const CTransaction &origTx, MemPoolRemovalReaso
 
 void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMemPoolHeight, int flags)
 {
-    // Remove transactions spending a coinbase which are now immature and no-longer-final transactions
+    // Remove transactions spending a coinbase or a stake tx which are now immature and no-longer-final transactions
     LOCK(cs);
     setEntries txToRemove;
     for (indexed_transaction_set::const_iterator it = mapTx.begin(); it != mapTx.end(); it++) {
@@ -515,19 +520,23 @@ void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMem
             // Note if CheckSequenceLocks fails the LockPoints may still be invalid
             // So it's critical that we remove the tx and not depend on the LockPoints.
             txToRemove.insert(it);
-        } else if (it->GetSpendsCoinbase()) {
+        } else if (it->GetSpendsCoinbase() || it->GetSpendsStake()) {
             for (const CTxIn& txin : tx.vin) {
                 indexed_transaction_set::const_iterator it2 = mapTx.find(txin.prevout.hash);
                 if (it2 != mapTx.end())
                     continue;
                 const Coin &coin = pcoins->AccessCoin(txin.prevout);
                 if (nCheckFrequency != 0) assert(!coin.IsSpent());
-                if (coin.IsSpent() || (coin.IsCoinBase() && ((signed long)nMemPoolHeight) - coin.nHeight < COINBASE_MATURITY)) {
+                if (   coin.IsSpent()
+                   || (coin.IsCoinBase() && ((signed long)nMemPoolHeight) - coin.nHeight < COINBASE_MATURITY)
+                   || (IsStakeTx(coin.txClass) && coin.txClass != TX_BuyTicket && ((signed long)nMemPoolHeight) - coin.nHeight < COINBASE_MATURITY)
+                   ) {
                     txToRemove.insert(it);
                     break;
                 }
             }
         }
+
         if (!validLP) {
             mapTx.modify(it, update_lock_points(lp));
         }
@@ -588,6 +597,41 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
     blockSinceLastRollingFeeBump = true;
 }
 
+void CTxMemPool::removeExpiredVotes(const uint32_t currentHeight, const Consensus::Params& params)
+{
+    // When a vote is lingering in the mempool for longer that the specified delay,
+    // it is removed as it cannot be useful anymore. All its mempool descendants are
+    // also removed.
+
+    if (!IsHybridConsensusForkEnabled(currentHeight, params))
+        return;
+
+    LOCK(cs);
+    // get the votes
+    auto& tx_class_index = mapTx.get<tx_class>();
+    auto votes = tx_class_index.equal_range(ETxClass::TX_Vote);
+
+    CTxMemPool::setEntries txToRemove;
+    for (auto votetxiter = votes.first; votetxiter != votes.second; ++votetxiter) {
+        if (!IsHybridConsensusForkEnabled(votetxiter->GetHeight(), params))
+            continue;
+
+        VoteData voteData;
+        if (!ParseVote(votetxiter->GetTx(), voteData))
+            continue;
+
+        if (voteData.blockHeight < currentHeight - params.nMempoolVoteExpiry) {
+            auto txiter = mapTx.project<0>(votetxiter);
+
+            txToRemove.insert(txiter);
+
+            CalculateDescendants(txiter, txToRemove);
+        }
+    }
+
+    RemoveStaged(txToRemove, true, MemPoolRemovalReason::EXPIRY);
+}
+
 void CTxMemPool::_clear()
 {
     mapLinks.clear();
@@ -607,16 +651,16 @@ void CTxMemPool::clear()
     _clear();
 }
 
-static void CheckInputsAndUpdateCoins(const CTransaction& tx, CCoinsViewCache& mempoolDuplicate, const int64_t spendheight)
+static void CheckInputsAndUpdateCoins(const CTransaction& tx, CCoinsViewCache& mempoolDuplicate, const int64_t spendheight, const CChainParams& chainparams)
 {
     CValidationState state;
     CAmount txfee = 0;
-    bool fCheckResult = tx.IsCoinBase() || Consensus::CheckTxInputs(tx, state, mempoolDuplicate, spendheight, txfee);
+    bool fCheckResult = tx.IsCoinBase() || Consensus::CheckTxInputs(tx, state, mempoolDuplicate, spendheight, txfee, chainparams);
     assert(fCheckResult);
     UpdateCoins(tx, mempoolDuplicate, 1000000);
 }
 
-void CTxMemPool::check(const CCoinsViewCache *pcoins) const
+void CTxMemPool::check(const CCoinsViewCache *pcoins, const CChainParams& chainparams) const
 {
     if (nCheckFrequency == 0)
         return;
@@ -647,7 +691,13 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
         setEntries setParentCheck;
         int64_t parentSizes = 0;
         int64_t parentSigOpCost = 0;
-        for (const CTxIn &txin : tx.vin) {
+
+        for (size_t in = 0; in < tx.vin.size(); ++in) {
+            if (ParseTxClass(tx) == TX_Vote && in == voteSubsidyInputIndex)
+                continue; //skip the stakebase as coin doesn't exist
+
+            const CTxIn& txin = tx.vin[in];
+
             // Check that every mempool transaction's inputs refer to available coins, or other mempool tx's.
             indexed_transaction_set::const_iterator it2 = mapTx.find(txin.prevout.hash);
             if (it2 != mapTx.end()) {
@@ -709,7 +759,7 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
         if (fDependsWait)
             waitingOnDependants.push_back(&(*it));
         else {
-            CheckInputsAndUpdateCoins(tx, mempoolDuplicate, spendheight);
+            CheckInputsAndUpdateCoins(tx, mempoolDuplicate, spendheight, chainparams);
         }
     }
     unsigned int stepsSinceLastRemove = 0;
@@ -722,7 +772,7 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
             stepsSinceLastRemove++;
             assert(stepsSinceLastRemove < waitingOnDependants.size());
         } else {
-            CheckInputsAndUpdateCoins(entry->GetTx(), mempoolDuplicate, spendheight);
+            CheckInputsAndUpdateCoins(entry->GetTx(), mempoolDuplicate, spendheight, chainparams);
             stepsSinceLastRemove = 0;
         }
     }
@@ -895,7 +945,7 @@ bool CCoinsViewMemPool::GetCoin(const COutPoint &outpoint, Coin &coin) const {
     CTransactionRef ptx = mempool.get(outpoint.hash);
     if (ptx) {
         if (outpoint.n < ptx->vout.size()) {
-            coin = Coin(ptx->vout[outpoint.n], MEMPOOL_HEIGHT, false);
+            coin = Coin(ptx->vout[outpoint.n], MEMPOOL_HEIGHT, false, ParseTxClass(*ptx));
             return true;
         } else {
             return false;

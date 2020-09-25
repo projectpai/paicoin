@@ -1,9 +1,16 @@
-// Copyright (c) 2017 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_RPC_BLOCKCHAIN_H
 #define PAICOIN_RPC_BLOCKCHAIN_H
+
+#include "amount.h"
+#include "stake/staketx.h"
+#include <vector>
 
 class CBlock;
 class CBlockIndex;
@@ -32,6 +39,12 @@ UniValue mempoolToJSON(bool fVerbose = false);
 
 /** Block header to JSON */
 UniValue blockheaderToJSON(const CBlockIndex* blockindex);
+
+CAmount ComputeMeanAmount(const std::vector<CAmount>& txFees);
+CAmount ComputeMedianAmount(std::vector<CAmount> txFees);
+CAmount ComputeStdDevAmount(const std::vector<CAmount>& txFees);
+UniValue FormatTxFeesInfo(const std::vector<CAmount>& txFees);
+UniValue ComputeBlocksTxFees(uint32_t startBlockHeight, uint32_t endBlockHeight, ETxClass txClass);
 
 #endif
 

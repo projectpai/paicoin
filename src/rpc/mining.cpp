@@ -1,7 +1,11 @@
-// Copyright (c) 2010 Satoshi Nakamoto
+//
+// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include <amount.h>
 #include <chain.h>
@@ -16,6 +20,7 @@
 #include <miner.h>
 #include <net.h>
 #include <policy/fees.h>
+#include <policy/policy.h>
 #include <pow.h>
 #include <rpc/blockchain.h>
 #include <rpc/mining.h>
@@ -129,7 +134,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
             LOCK(cs_main);
             IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
         }
-        while (nMaxTries > 0 && pblock->nNonce < nInnerLoopCount && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus())) {
+        while (nMaxTries > 0 && pblock->nNonce < nInnerLoopCount && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, pblock->nVersion, Params().GetConsensus())) {
             ++pblock->nNonce;
             --nMaxTries;
         }
@@ -503,6 +508,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     // don't).
     const auto fSupportsSegwit = setClientRules.find(segwit_info.name) != setClientRules.end();
 
+    const auto nBlockVotesWaitTime = gArgs.GetArg("-blockvoteswaittime", DEFAULT_BLOCK_VOTES_WAIT_TIME);
+
     // Update block
     static CBlockIndex* pindexPrev;
     static int64_t nStart;
@@ -510,8 +517,9 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     // Cache whether the last invocation was with segwit support, to avoid returning
     // a segwit-block to a non-segwit caller.
     static bool fLastTemplateSupportsSegwit = true;
+    const auto nTimeElapsed = GetTime() - nStart;
     if (pindexPrev != chainActive.Tip() ||
-        (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 5) ||
+        (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && nTimeElapsed > 5) ||
         fLastTemplateSupportsSegwit != fSupportsSegwit)
     {
         // Clear pindexPrev so future calls make a new block, despite any failures from here on
@@ -528,6 +536,14 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
         if (!pblocktemplate)
             throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Out of memory");
+
+        if ( pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight
+           && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock
+           && nTimeElapsed > nBlockVotesWaitTime)
+        {
+            //not enough votes yet, wait no more than nBlockVotesWaitTime seconds
+            throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not reached maximum votes");
+        }
 
         // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
@@ -677,6 +693,24 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     result.push_back(Pair("bits", strprintf("%08x", pblock->nBits)));
     result.push_back(Pair("height", static_cast<int64_t>((pindexPrev->nHeight+1))));
 
+    if (IsHybridConsensusForkEnabled(pindexPrev, Params().GetConsensus())) {
+        // large values are not correctly interpreted by the miner, thus we use hex strings where needed
+        result.push_back(Pair("stakedifficulty", strprintf("%016x", pblock->nStakeDifficulty)));
+        result.push_back(Pair("votebits", pblock->nVoteBits.getBits()));
+        result.push_back(Pair("ticketpoolsize", static_cast<int64_t>(pblock->nTicketPoolSize)));
+        result.push_back(Pair("ticketlotterystate", StakeStateToString(pblock->ticketLotteryState)));
+        result.push_back(Pair("voters", pblock->nVoters));
+        result.push_back(Pair("freshstake", pblock->nFreshStake));
+        result.push_back(Pair("revocations", pblock->nRevocations));
+
+        std::string extraData;
+        for (auto& byte: pblock->extraData)
+            extraData += strprintf("%02x", byte);
+        result.push_back(Pair("extradata", extraData));
+
+        result.push_back(Pair("stakeversion", static_cast<int64_t>(pblock->nStakeVersion)));
+    }
+
     if (!pblocktemplate->vchCoinbaseCommitment.empty() && fSupportsSegwit) {
         result.push_back(Pair("default_witness_commitment", HexStr(pblocktemplate->vchCoinbaseCommitment)));
     }
@@ -711,7 +745,7 @@ UniValue submitblock(const JSONRPCRequest& request)
             "\nAttempts to submit new block to network.\n"
             "See https://en.paicoin.it/wiki/BIP_0022 for full specification.\n"
 
-            "\nArguments\n"
+            "\nArguments:\n"
             "1. \"hexdata\"        (string, required) the hex-encoded block data to submit\n"
             "2. \"dummy\"          (optional) dummy value, for compatibility with BIP22. This value is ignored.\n"
             "\nResult:\n"
@@ -770,6 +804,606 @@ UniValue submitblock(const JSONRPCRequest& request)
         return "inconclusive";
     }
     return BIP22ValidationResult(sc.state);
+}
+
+UniValue existsexpiredtickets(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) 
+        throw std::runtime_error{
+            "existsexpiredtickets \"txhashes\"\n"
+            "\nTest for the existence of the provided tickets in the expired ticket map.\n"
+            "\nArguments:\n"
+            "1. \"txhashes\"       (array, required)   Array of hashes to check\n"
+            "\nResult:\n"
+            "{                   (dictionary)        Dictionary having txhashes as keys, showing if ticket exists in the expired ticket database or not\n"
+            "  \"txhash\": true|false,\n"
+            "  ...\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("existsexpiredtickets", "[\"txhash1\", \"txhash2\"]")
+            + HelpExampleRpc("existsexpiredtickets", "[\"txhash1\", \"txhash2\"]")
+        };
+
+    std::vector<uint256> vTxids;
+    UniValue txids = request.params[0].get_array();
+    for (unsigned int idx = 0; idx < txids.size(); idx++) {
+        const UniValue& txid = txids[idx];
+        const auto& txhash = ParseHashStr(txid.get_str(), "txhash");
+        vTxids.push_back(txhash);
+    }
+
+    auto result = UniValue{UniValue::VOBJ};
+
+    LOCK(cs_main);
+
+    CBlockIndex* pblockindex = chainActive.Tip();
+
+    for (unsigned int idx = 0; idx < vTxids.size(); idx++) {
+        const auto& tx = vTxids[idx];
+        const auto& exists = pblockindex->pstakeNode->ExistsExpiredTicket(tx);
+        result.push_back(Pair(tx.GetHex(), exists));
+    }
+
+    return result;
+}
+
+UniValue existsliveticket(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) 
+        throw std::runtime_error{
+            "existsliveticket \"txhash\"\n"
+            "\nTest for the existence of the provided ticket.\n"
+            "\nArguments:\n"
+            "1. \"txhash\"  (string, required)  The ticket hash to check\n"
+            "\nResult:\n"
+            "   true|false  (boolean)           Bool showing if address exists in the live ticket database or not\n"
+            "\nExamples:\n"
+            + HelpExampleCli("existsliveticket", "\"txhash\"")
+            + HelpExampleRpc("existsliveticket", "\"txhash\"")
+        };
+
+    const auto& txhash = ParseHashStr(request.params[0].get_str(), "txhash");
+
+    LOCK(cs_main);
+    CBlockIndex* pblockindex = chainActive.Tip();
+    const auto& exists = pblockindex->pstakeNode->ExistsLiveTicket(txhash);
+    return UniValue(exists);
+}
+
+UniValue existslivetickets(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) 
+        throw std::runtime_error{
+            "existslivetickets \"txhashes\"\n"
+            "\nTest for the existence of the provided tickets in the live ticket map.\n"
+            "\nArguments:\n"
+            "1. \"txhashes\"       (array, required)   Array of hashes to check\n"
+            "\nResult:\n"
+            "{                   (dictionary)        Dictionary having txhashes as keys, showing if ticket exists in the live ticket database or not\n"
+            "  \"txhash\": true|false,\n"
+            "  ...\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("existslivetickets", "[\"txhash1\", \"txhash2\"]")
+            + HelpExampleRpc("existslivetickets", "[\"txhash1\", \"txhash2\"]")
+        };
+
+    std::vector<uint256> vTxids;
+    UniValue txids = request.params[0].get_array();
+    for (unsigned int idx = 0; idx < txids.size(); idx++) {
+        const UniValue& txid = txids[idx];
+        const auto& txhash = ParseHashStr(txid.get_str(), "txhash");
+        vTxids.push_back(txhash);
+    }
+
+    auto result = UniValue{UniValue::VOBJ};
+
+    LOCK(cs_main);
+
+    CBlockIndex* pblockindex = chainActive.Tip();
+
+    for (unsigned int idx = 0; idx < vTxids.size(); idx++) {
+        const auto& tx = vTxids[idx];
+        const auto& exists = pblockindex->pstakeNode->ExistsLiveTicket(tx);
+        result.push_back(Pair(tx.GetHex(), exists));
+    }
+
+    return result;
+}
+
+UniValue existsmissedtickets(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) 
+        throw std::runtime_error{
+            "existsmissedtickets \"txhashes\"\n"
+            "\nTest for the existence of the provided tickets in the missed ticket map.\n"
+            "\nArguments:\n"
+            "1. \"txhashes\"       (array, required)   Array of hashes to check\n"
+            "\nResult:\n"
+            "{                   (dictionary)        Dictionary having txhashes as keys, showing if ticket exists in the missed ticket database or not\n"
+            "  \"txhash\": true|false,\n"
+            "  ...\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("existsmissedtickets", "[\"txhash1\", \"txhash2\"]")
+            + HelpExampleRpc("existsmissedtickets", "[\"txhash1\", \"txhash2\"]")
+        };
+
+    std::vector<uint256> vTxids;
+    UniValue txids = request.params[0].get_array();
+    for (unsigned int idx = 0; idx < txids.size(); idx++) {
+        const UniValue& txid = txids[idx];
+        const auto& txhash = ParseHashStr(txid.get_str(), "txhash");
+        vTxids.push_back(txhash);
+    }
+
+    auto result = UniValue{UniValue::VOBJ};
+
+    LOCK(cs_main);
+
+    CBlockIndex* pblockindex = chainActive.Tip();
+
+    for (unsigned int idx = 0; idx < vTxids.size(); idx++) {
+        const auto& tx = vTxids[idx];
+        const auto& exists = pblockindex->pstakeNode->ExistsMissedTicket(tx);
+        result.push_back(Pair(tx.GetHex(), exists));
+    }
+
+    return result;
+}
+
+UniValue getticketpoolvalue(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 0) 
+        throw std::runtime_error{
+            "getticketpoolvalue\n"
+            "\nReturn the current value of all locked funds in the ticket pool.\n"
+            "\nResult:\n"
+            "   n.nnn (numeric) Total value of ticket pool\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getticketpoolvalue", "")
+            + HelpExampleRpc("getticketpoolvalue", "")
+        };
+
+    LOCK(cs_main);
+    CBlockIndex* pblockindex = chainActive.Tip();
+    const auto& liveTickets = pblockindex->pstakeNode->LiveTickets();
+    auto sum = CAmount{};
+    for (const auto& tx : liveTickets){
+        const COutPoint out{tx, static_cast<uint32_t>(ticketStakeOutputIndex)};
+        Coin coin;
+        if (!pcoinsTip->GetCoin(out, coin)) {
+            return NullUniValue;
+        }
+        sum += coin.out.nValue;
+    }
+    return ValueFromAmount(sum);
+}
+
+static int getTicketPurchaseHeight(const uint256& hashBlock)
+{
+    auto purchaseHeight = -1;
+    BlockMap::iterator mi = mapBlockIndex.find(hashBlock);
+    if (mi != mapBlockIndex.end() && (*mi).second) {
+        CBlockIndex* pindex = (*mi).second;
+        if (chainActive.Contains(pindex))
+            purchaseHeight = pindex->nHeight;
+    }
+    if (purchaseHeight < Params().GetConsensus().nHybridConsensusHeight)
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Error getting the block including the ticket purchase transaction");
+    return purchaseHeight;
+}
+
+UniValue livetickets(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 2) 
+        throw std::runtime_error{
+            "livetickets ( verbose blockheight )\n"
+            "\nReturns live ticket hashes from the ticket database\n"
+            "\nArguments:\n"
+            "1. verbose        (boolean, optional, default=false) Set true for additional information about tickets\n"
+            "2. blockheight    (numeric, optional)                The height index, if not given the tip height is used\n"
+            "\nResult:\n"
+            "{\n"
+            "   \"tickets\": [\"value\",...], (array of string) List of live tickets\n"
+            "}\n" 
+            "\nExamples:\n"
+            + HelpExampleCli("livetickets", "")
+            + HelpExampleRpc("livetickets", "")
+        };
+
+    auto fVerbose = false;
+    if (!request.params[0].isNull())
+        fVerbose = request.params[0].get_bool();
+
+    auto nHeight = chainActive.Height();
+    if (!request.params[1].isNull()) {
+        nHeight = request.params[1].get_int();
+        if (nHeight < 0 || nHeight > chainActive.Height())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Block height out of range");
+    }
+
+    LOCK(cs_main);
+    CBlockIndex* pblockindex = chainActive[nHeight];
+    const auto& liveTickets = pblockindex->pstakeNode->LiveTickets();
+    auto result = UniValue{UniValue::VOBJ};
+    auto array = UniValue{UniValue::VARR};
+    for (const auto& txhash : liveTickets){
+        if (fVerbose) {
+            CTransactionRef tx;
+            uint256 hashBlock;
+            if (!GetTransaction(txhash, tx, Params().GetConsensus(), hashBlock, true, false))
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "No such blockchain transaction");
+
+            auto info = UniValue{UniValue::VOBJ};
+            info.pushKV("txid", txhash.GetHex());
+            StakingToUniv(*tx, info, false);
+
+            const auto& purchaseHeight =  getTicketPurchaseHeight(hashBlock);
+            info.push_back(Pair("purchase_height", purchaseHeight));
+
+            array.push_back(info);
+        } else {
+            array.push_back(txhash.GetHex());
+        }
+    }
+    result.push_back(Pair("tickets",array));
+    return result;
+}
+
+UniValue winningtickets(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 1) 
+        throw std::runtime_error{
+            "winningtickets ( blockheight )\n"
+            "\nReturns winning ticket hashes from the chain tip's ticket database\n"
+            "\nArguments:\n"
+            "1. blockheight     (numeric, optional)     The height index, if not given the tip height is used\n"
+            "\nResult:\n"
+            "{\n"
+            "   \"tickets\": [\"value\",...], (array of string) List of winning tickets\n"
+            "}\n" 
+            "\nExamples:\n"
+            + HelpExampleCli("winningtickets", "")
+            + HelpExampleRpc("winningtickets", "")
+        };
+
+    auto nHeight = chainActive.Height();
+    if (!request.params[0].isNull()) {
+        nHeight = request.params[0].get_int();
+        if (nHeight < 0 || nHeight > chainActive.Height())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Block height out of range");
+    }
+
+    LOCK(cs_main);
+    CBlockIndex* pblockindex = chainActive[nHeight];
+    const auto& winningTickets = pblockindex->pstakeNode->Winners();
+    auto result = UniValue{UniValue::VOBJ};
+    auto array = UniValue{UniValue::VARR};
+    for (const auto& tx : winningTickets){
+        array.push_back(tx.GetHex());
+    }
+    result.push_back(Pair("tickets",array));
+    return result;
+}
+
+UniValue missedtickets(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 2) 
+        throw std::runtime_error{
+            "missedtickets ( verbose blockheight )\n"
+            "\nReturns missed ticket hashes from the ticket database\n"
+            "\nArguments:\n"
+            "1. verbose        (boolean, optional, default=false) Set true for additional information about tickets\n"
+            "2. blockheight    (numeric, optional)                The height index, if not given the tip height is used\n"
+            "\nResult:\n"
+            "{\n"
+            "   \"tickets\": [\"value\",...], (array of string) List of missed tickets\n"
+            "}\n" 
+            "\nExamples:\n"
+            + HelpExampleCli("missedtickets", "")
+            + HelpExampleRpc("missedtickets", "")
+        };
+
+    auto fVerbose = false;
+    if (!request.params[0].isNull())
+        fVerbose = request.params[0].get_bool();
+
+    auto nHeight = chainActive.Height();
+    if (!request.params[1].isNull()) {
+        nHeight = request.params[1].get_int();
+        if (nHeight < 0 || nHeight > chainActive.Height())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Block height out of range");
+    }
+
+    LOCK(cs_main);
+    CBlockIndex* pblockindex = chainActive[nHeight];
+    const auto& missedTickets = pblockindex->pstakeNode->MissedTickets();
+    auto result = UniValue{UniValue::VOBJ};
+    auto array = UniValue{UniValue::VARR};
+    for (const auto& txhash : missedTickets){
+        if (fVerbose) {
+            CTransactionRef tx;
+            uint256 hashBlock;
+            if (!GetTransaction(txhash, tx, Params().GetConsensus(), hashBlock, true, false))
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "No such blockchain transaction");
+
+            auto info = UniValue{UniValue::VOBJ};
+            info.pushKV("txid", txhash.GetHex());
+            StakingToUniv(*tx, info, false);
+
+            const auto& purchaseHeight =  getTicketPurchaseHeight(hashBlock);
+            info.push_back(Pair("purchase_height", purchaseHeight));
+
+            const auto& bExpired = pblockindex->pstakeNode->ExistsExpiredTicket(txhash);
+            info.push_back(Pair("cause", bExpired ? "expiration" : "missed_vote"));
+            if (!bExpired) {
+                auto missedHeight = nHeight - 1;
+                for (; missedHeight > purchaseHeight + Params().GetConsensus().nTicketMaturity 
+                       && chainActive[missedHeight]->pstakeNode->ExistsMissedTicket(txhash); --missedHeight);
+                info.push_back(Pair("missed_height", missedHeight + 1));
+            } else {
+                info.push_back(Pair("missed_height", nullptr));
+            }
+
+            array.push_back(info);
+        } else {
+            array.push_back(txhash.GetHex());
+        }
+    }
+    result.push_back(Pair("tickets",array));
+    return result;
+}
+
+UniValue ticketfeeinfo(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 2) 
+        throw std::runtime_error{
+            "ticketfeeinfo (blocks windows)\n"
+            "\nGet various information about ticket fees from the mempool, blocks, and difficulty windows (units: PAI/kB)\n"
+            "\nArguments:\n"
+            "1. blocks  (numeric, optional) The number of blocks, starting from the chain tip and descending, to return fee information about\n"
+            "2. windows (numeric, optional) The number of difficulty windows to return ticket fee information about\n"
+            "\nResult:\n"
+            "{\n"
+            "   \"feeinfomempool\": {   (object)          Ticket fee information for all tickets in the mempool (units: PAI/kB)\n"
+            "   \"number\": n,          (numeric)         Number of transactions in the mempool\n"
+            "   \"min\": n.nnn,         (numeric)         Minimum transaction fee in the mempool\n"
+            "   \"max\": n.nnn,         (numeric)         Maximum transaction fee in the mempool\n"
+            "   \"mean\": n.nnn,        (numeric)         Mean of transaction fees in the mempool\n"
+            "   \"median\": n.nnn,      (numeric)         Median of transaction fees in the mempool\n"
+            "   \"stddev\": n.nnn,      (numeric)         Standard deviation of transaction fees in the mempool\n"
+            "   },\n"
+            "   \"feeinfoblocks\": [{   (array of object) Ticket fee information for a given list of blocks descending from the chain tip (units: PAI/kB)\n"
+            "   \"height\": n,          (numeric)         Height of the block\n"
+            "   \"number\": n,          (numeric)         Number of transactions in the block\n"
+            "   \"min\": n.nnn,         (numeric)         Minimum transaction fee in the block\n"
+            "   \"max\": n.nnn,         (numeric)         Maximum transaction fee in the block\n"
+            "   \"mean\": n.nnn,        (numeric)         Mean of transaction fees in the block\n"
+            "   \"median\": n.nnn,      (numeric)         Median of transaction fees in the block\n"
+            "   \"stddev\": n.nnn,      (numeric)         Standard deviation of transaction fees in the block\n"
+            "   },...],\n"
+            "   \"feeinfowindows\": [{  (array of object) Ticket fee information for a window period where the stake difficulty was the same (units: PAI/kB)\n"
+            "   \"startheight\": n,     (numeric)         First block in the window (inclusive)\n"
+            "   \"endheight\": n,       (numeric)         Last block in the window (exclusive)\n"
+            "   \"number\": n,          (numeric)         Number of transactions in the window\n"
+            "   \"min\": n.nnn,         (numeric)         Minimum transaction fee in the window\n"
+            "   \"max\": n.nnn,         (numeric)         Maximum transaction fee in the window\n"
+            "   \"mean\": n.nnn,        (numeric)         Mean of transaction fees in the window\n"
+            "   \"median\": n.nnn,      (numeric)         Median of transaction fees in the window\n"
+            "   \"stddev\": n.nnn,      (numeric)         Standard deviation of transaction fees in the window\n"
+            "   },...],\n"
+            "}\n"  
+            "\nExamples:\n"
+            + HelpExampleCli("ticketfeeinfo", "5 3")
+            + HelpExampleRpc("ticketfeeinfo", "5 3")
+        };
+    LOCK(cs_main);
+
+    const auto& blocksTip = chainActive.Tip();
+    const auto& currHeight = static_cast<uint32_t>(blocksTip->nHeight);
+
+    auto blocks = uint32_t{0};
+    auto windows = uint32_t{0};
+
+    if (!request.params[0].isNull()) {
+        blocks = request.params[0].get_int();
+    }
+    if (!request.params[1].isNull()) {
+        windows = request.params[1].get_int();
+    }
+
+    if (blocks > currHeight) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid parameter for blocks");
+    }
+
+    // mempool fee rates
+    auto mempool_feerates = std::vector<CAmount>{};
+
+    auto& tx_class_index = mempool.mapTx.get<tx_class>();
+    auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+    for (auto tickettxiter = existingTickets.first; tickettxiter != existingTickets.second; ++tickettxiter) {
+        auto txiter = mempool.mapTx.project<0>(tickettxiter);
+        const auto& fee_rate = CFeeRate(txiter->GetModifiedFee(), txiter->GetTxSize());
+        mempool_feerates.push_back(fee_rate.GetFeePerK());
+    }
+
+    auto fee_info_mempool = FormatTxFeesInfo(mempool_feerates);
+
+    // block fee rates
+    auto fee_info_blocks = UniValue{UniValue::VARR};
+    if (blocks > 0) {
+        auto start = currHeight;
+        auto end = currHeight - blocks;
+
+        for (auto i = start; i > end; --i) {
+            auto blockFee = ComputeBlocksTxFees(i, i + 1, ETxClass::TX_BuyTicket);
+            blockFee.pushKV("height", static_cast<int32_t>(i));
+
+            fee_info_blocks.push_back(blockFee);
+        }
+    }
+
+    // window fee rates
+    auto fee_info_windows = UniValue{UniValue::VARR};
+    if (windows > 0) {
+        // The first window is special because it may not be finished.
+        // Perform this first and return if it's the only window the
+        // user wants. Otherwise, append and continue.
+        const auto& winLen = Params().GetConsensus().nStakeDiffWindowSize;
+        const auto& lastChange = (currHeight / winLen) * winLen;
+
+        auto windowFee = ComputeBlocksTxFees(lastChange, currHeight + 1, ETxClass::TX_BuyTicket);
+        windowFee.pushKV("startheight", static_cast<int32_t>(lastChange));
+        windowFee.pushKV("endheight", static_cast<int32_t>(currHeight + 1));
+        fee_info_windows.push_back(windowFee);
+
+        // We need data on windows from before this. Start from
+        // the last adjustment and move backwards through window
+        // lengths, calculating the fees data and appending it
+        // each time.
+        if (windows > 1) {
+            // Go down to the last height requested, except
+            // in the case that the user has specified to
+            // many windows. In that case, just proceed to the
+            // first block.
+            auto end = int64_t{-1};
+            if (lastChange - windows * winLen > end) {
+                end = lastChange - windows*winLen;
+            }
+            for (auto i = lastChange; i > end+winLen; i -= winLen) {
+                auto windowFee = ComputeBlocksTxFees(i-winLen, i, ETxClass::TX_BuyTicket);
+                windowFee.pushKV("startheight", static_cast<int32_t>(i-winLen));
+                windowFee.pushKV("endheight", static_cast<int32_t>(i));
+                fee_info_windows.push_back(windowFee);
+            }
+        }
+    }
+
+    auto result = UniValue{UniValue::VOBJ};
+    result.pushKV("feeinfomempool", fee_info_mempool);
+    result.pushKV("feeinfoblocks", fee_info_blocks);
+    result.pushKV("feeinfowindows", fee_info_windows);
+
+    return result;
+}
+
+UniValue ticketsforaddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) 
+        throw std::runtime_error{
+            "ticketsforaddress \"address\"\n"
+            "\nRequest all the tickets for an address.\n"
+            "\nArguments:\n"
+            "1. address (string, required) Address to look for.\n"
+            "\nResult:\n"
+            "{\n"
+            "   \"tickets\": [\"value\",...], (array of string) Tickets owned by the specified address.\n"
+            "}\n" 
+            "\nExamples:\n"
+            + HelpExampleCli("ticketsforaddress", "\"address\"")
+            + HelpExampleRpc("ticketsforaddress", "\"address\"")
+        };
+
+    const auto destination = DecodeDestination(request.params[0].get_str());
+    if (!IsValidDestination(destination)) {
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Error: Invalid address");
+    }
+
+    auto result = UniValue{UniValue::VOBJ};
+    auto array = UniValue{UniValue::VARR};
+
+    LOCK(cs_main);
+
+    CBlockIndex* pblockindex = chainActive.Tip();
+    const auto& liveTickets = pblockindex->pstakeNode->LiveTickets();
+    for (const auto& tx : liveTickets) {
+        const auto& ticketTx = GetTicket(tx);
+        const auto& script = ticketTx->vout[ticketStakeOutputIndex].scriptPubKey;
+        CTxDestination addressRet;
+        if (!ExtractDestination(script, addressRet)) {
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Error: Could not extract destination address");
+        }
+
+        if (destination == addressRet) {
+            array.push_back(tx.GetHex());
+        }
+    }
+
+    result.push_back(Pair("tickets",array));
+    return result;
+}
+
+UniValue ticketvwap(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 2) 
+        throw std::runtime_error{
+            "ticketvwap (start end)\n"
+            "\nCalculate the volume weighted average price of tickets for a range of blocks (default: full PoS difficulty adjustment depth)\n"
+            "\nArguments:\n"
+            "1. start (numeric, optional) The start height to begin calculating the VWAP from\n"
+            "2. end   (numeric, optional) The end height to begin calculating the VWAP from\n"
+            "\nResult:\n"
+            "   n.nnn (numeric) The volume weighted average price\n"
+            "\nExamples:\n"
+            + HelpExampleCli("ticketvwap", "10 20")
+            + HelpExampleRpc("ticketvwap", "10 20")
+        };
+
+    // The default VWAP is for the past WorkDiffWindows * WorkDiffWindowSize
+    // many blocks.
+    const auto& blocksTip  = chainActive.Tip();
+    const auto& currHeight = static_cast<uint32_t>(blocksTip->nHeight);
+
+    auto start = uint32_t{0};
+    if (request.params[0].isNull()) {
+        const auto& params =Params().GetConsensus();
+        // In Decred they use params.WorkDiffWindows * params.WorkDiffWindowSize, we do not have these
+        const auto& toEval = params.nStakeDiffWindows * params.nStakeDiffWindowSize;
+        const auto& startI64 = currHeight - toEval;
+
+        // Use 1 as the first block if there aren't enough blocks.
+        if (startI64 <= 0) {
+            start = 1;
+        } else {
+            start = startI64;
+        }
+    }
+    else {
+        start = request.params[0].get_int();
+    }
+
+    auto end = currHeight;
+    if (!request.params[1].isNull()) {
+        end = request.params[1].get_int();
+    }
+
+    if (start > end) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Error: Start height is beyond end height");
+    }
+
+    if (end > currHeight) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Error: End height is beyond blockchain tip height");
+    }
+
+    // Calculate the volume weighted average price of a ticket for the
+    // given range.
+    auto ticketNum  = int64_t{0};
+    auto totalValue = int64_t{0};
+    LOCK(cs_main);
+    for (auto i = start; i <= end; ++i) {
+        const auto& blockindex = chainActive[i];
+        // Decred uses FreshStake = Number of new sstx in this block. We will use number of new tickets
+        // Decred uses SBits = Stake difficulty target, we will use nStakeDifficulty
+        ticketNum += blockindex->newTickets->size(); //int64(blockHeader.FreshStake)
+        totalValue += blockindex->nStakeDifficulty * blockindex->newTickets->size(); //blockHeader.SBits * int64(blockHeader.FreshStake)
+    }
+    auto vwap = int64_t{0};
+    if (ticketNum > 0) {
+        vwap = totalValue / ticketNum;
+    }
+
+    return ValueFromAmount(CAmount(vwap));
 }
 
 UniValue estimatefee(const JSONRPCRequest& request)
@@ -983,6 +1617,17 @@ static const CRPCCommand commands[] =
     { "mining",             "getblocktemplate",       &getblocktemplate,       {"template_request"} },
     { "mining",             "submitblock",            &submitblock,            {"hexdata","dummy"} },
 
+    { "mining",             "existsexpiredtickets",   &existsexpiredtickets,   {"txhashes"} },
+    { "mining",             "existsliveticket",       &existsliveticket,       {"txhash"} },
+    { "mining",             "existsmissedtickets",    &existsmissedtickets,    {"txhashes"} },
+    { "mining",             "existslivetickets",      &existslivetickets,      {"txhashes"} },
+    { "mining",             "getticketpoolvalue",     &getticketpoolvalue,     {} },
+    { "mining",             "livetickets",            &livetickets,            {"verbose", "blockheight"} },
+    { "mining",             "winningtickets",         &winningtickets,         {"blockheight"} },
+    { "mining",             "missedtickets",          &missedtickets,          {"verbose", "blockheight"} },
+    { "mining",             "ticketfeeinfo",          &ticketfeeinfo,          {"blocks","windows"} },
+    { "mining",             "ticketsforaddress",      &ticketsforaddress,      {"address"} },
+    { "mining",             "ticketvwap",             &ticketvwap,             {"start","stop"} },
 
     { "generating",         "generatetoaddress",      &generatetoaddress,      {"nblocks","address","maxtries"} },
 

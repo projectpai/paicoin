@@ -1,7 +1,10 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_PRIMITIVES_TRANSACTION_H
 #define PAICOIN_PRIMITIVES_TRANSACTION_H
@@ -226,6 +229,11 @@ inline void UnserializeTransaction(TxType& tx, Stream& s) {
         throw std::ios_base::failure("Unknown transaction optional data");
     }
     s >> tx.nLockTime;
+    // if (tx.nVersion > 4) {
+    //     s >> tx.nExpiry;
+    // } else {
+        tx.nExpiry = 0;
+    // }
 }
 
 template<typename Stream, typename TxType>
@@ -255,6 +263,9 @@ inline void SerializeTransaction(const TxType& tx, Stream& s) {
         }
     }
     s << tx.nLockTime;
+    // if (tx.nVersion > 4) {
+    //     s << tx.nExpiry;
+    // }
 }
 
 
@@ -282,6 +293,7 @@ public:
     const std::vector<CTxOut> vout;
     const int32_t nVersion;
     const uint32_t nLockTime;
+    const uint32_t nExpiry;
 
 private:
     /** Memory only. */
@@ -365,6 +377,7 @@ struct CMutableTransaction
     std::vector<CTxOut> vout;
     int32_t nVersion;
     uint32_t nLockTime;
+    uint32_t nExpiry;
 
     CMutableTransaction();
     CMutableTransaction(const CTransaction& tx);

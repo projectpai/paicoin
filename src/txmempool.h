@@ -1,7 +1,10 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_TXMEMPOOL_H
 #define PAICOIN_TXMEMPOOL_H
@@ -25,9 +28,12 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/composite_key.hpp>
 #include <boost/signals2/signal.hpp>
 
 class CBlockIndex;
+class CChainParams;
 
 /** Fake height value used in Coin to signify they are only in the memory pool (since 0.8) */
 static const uint32_t MEMPOOL_HEIGHT = 0x7FFFFFFF;
@@ -71,9 +77,11 @@ private:
     int64_t nTime;             //!< Local time when entering the mempool
     unsigned int entryHeight;  //!< Chain height when entering the mempool
     bool spendsCoinbase;       //!< keep track of transactions that spend a coinbase
+    bool spendsStake;          //!< keep track of transactions that spend a stake transaction
     int64_t sigOpCost;         //!< Total sigop cost
     int64_t feeDelta;          //!< Used for determining the priority of the transaction for mining in a block
     LockPoints lockPoints;     //!< Track the height and time at which tx was final
+    ETxClass txClass;
 
     // Information about descendants of this transaction that are in the
     // mempool; if we remove this transaction we must remove all of these
@@ -91,7 +99,7 @@ private:
 public:
     CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFee,
                     int64_t _nTime, unsigned int _entryHeight,
-                    bool spendsCoinbase,
+                    bool spendsCoinbase, bool spendsStake,
                     int64_t nSigOpsCost, LockPoints lp);
 
     const CTransaction& GetTx() const { return *this->tx; }
@@ -105,6 +113,7 @@ public:
     int64_t GetModifiedFee() const { return nFee + feeDelta; }
     size_t DynamicMemoryUsage() const { return nUsageSize; }
     const LockPoints& GetLockPoints() const { return lockPoints; }
+    ETxClass GetTxClass() const { return txClass; }
 
     // Adjusts the descendant state.
     void UpdateDescendantState(int64_t modifySize, CAmount modifyFee, int64_t modifyCount);
@@ -121,6 +130,7 @@ public:
     CAmount GetModFeesWithDescendants() const { return nModFeesWithDescendants; }
 
     bool GetSpendsCoinbase() const { return spendsCoinbase; }
+    bool GetSpendsStake() const { return spendsStake; }
 
     uint64_t GetCountWithAncestors() const { return nCountWithAncestors; }
     uint64_t GetSizeWithAncestors() const { return nSizeWithAncestors; }
@@ -194,6 +204,20 @@ struct mempoolentry_txid
     result_type operator() (const CTransactionRef& tx) const
     {
         return tx->GetHash();
+    }
+};
+
+// extracts the hash of the block that was voted on from CTxMempoolEntry
+struct mempoolentry_voted_blockHash
+{
+    typedef uint256 result_type;
+    result_type operator() (const CTxMemPoolEntry &entry) const
+    {
+        VoteData vote;
+        if (!ParseVote(entry.GetTx(), vote)) 
+            return uint256{};
+
+        return vote.blockHash;
     }
 };
 
@@ -284,11 +308,73 @@ public:
     }
 };
 
+class CompareTxMemPoolEntryByDescendantsOrContribution
+{
+public:
+    bool operator()(const CTxMemPoolEntry& a, const CTxMemPoolEntry& b) const
+    {        
+        const auto& f1 = a.GetCountWithDescendants();
+        const auto& f2 = b.GetCountWithDescendants();
+
+        if (f1 == f2) {
+            const auto& aContribAmount = GetContributedAmount(a);
+            const auto& bContribAmount = GetContributedAmount(b);
+
+            if (aContribAmount == bContribAmount) {
+                return a.GetTx().GetHash() < b.GetTx().GetHash();
+            }
+
+            return aContribAmount > bContribAmount;
+        }
+        
+        return f1 > f2;
+    }
+
+    CAmount GetContributedAmount(const CTxMemPoolEntry& a) const
+    {
+        auto contribAmount = CAmount(0);
+        TicketContribData contribData;
+        if (!ParseTicketContrib(a.GetTx(), ticketContribOutputIndex, contribData))
+        {
+            assert(!"not a vote transaction");
+        }
+        contribAmount = contribData.contributedAmount;
+
+        return contribAmount;
+    }
+};
+
+class CallCompareTxMemPoolEntryByTxClass
+{
+public:
+    bool operator()(const CTxMemPoolEntry& a, const CTxMemPoolEntry& b) const
+    {
+        assert (a.GetTxClass() == b.GetTxClass());
+
+        switch (a.GetTxClass())
+        {
+        case TX_Regular:
+            return CompareTxMemPoolEntryByAncestorFee{}(a,b);
+        case TX_BuyTicket:
+            return CompareTxMemPoolEntryByDescendantsOrContribution{}(a,b);
+        case TX_Vote:
+        case TX_RevokeTicket:
+            return CompareTxMemPoolEntryByAncestorFee{}(a,b);
+        
+        default:
+            assert(!"unknown tx class!");
+        }
+
+    }
+};
+
 // Multi_index tag names
 struct descendant_score {};
 struct entry_time {};
 struct mining_score {};
 struct ancestor_score {};
+struct tx_class {};
+struct voted_block_hash {};
 
 class CBlockPolicyEstimator;
 
@@ -457,6 +543,25 @@ public:
                 boost::multi_index::tag<ancestor_score>,
                 boost::multi_index::identity<CTxMemPoolEntry>,
                 CompareTxMemPoolEntryByAncestorFee
+            >,
+            // sorted by voted block hash
+            boost::multi_index::hashed_non_unique<
+                boost::multi_index::tag<voted_block_hash>,
+                mempoolentry_voted_blockHash,
+                SaltedTxidHasher
+            >,
+            // sorted by TxClass
+            boost::multi_index::ordered_non_unique<
+                boost::multi_index::tag<tx_class>,
+                boost::multi_index::composite_key<
+                    CTxMemPoolEntry,
+                    boost::multi_index::const_mem_fun<CTxMemPoolEntry,ETxClass,&CTxMemPoolEntry::GetTxClass>,
+                    boost::multi_index::identity<CTxMemPoolEntry>
+                >,
+                boost::multi_index::composite_key_compare<
+                    std::less<ETxClass>,
+                    CallCompareTxMemPoolEntryByTxClass
+                >
             >
         >
     > indexed_transaction_set;
@@ -506,7 +611,7 @@ public:
      * all inputs are in the mapNextTx array). If sanity-checking is turned off,
      * check does nothing.
      */
-    void check(const CCoinsViewCache *pcoins) const;
+    void check(const CCoinsViewCache *pcoins, const CChainParams& chainparams) const;
     void setSanityCheck(double dFrequency = 1.0) { nCheckFrequency = static_cast<uint32_t>(dFrequency * 4294967295.0); }
 
     // addUnchecked must updated state for all ancestors of a given transaction,
@@ -520,6 +625,7 @@ public:
     void removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMemPoolHeight, int flags);
     void removeConflicts(const CTransaction &tx);
     void removeForBlock(const std::vector<CTransactionRef>& vtx, unsigned int nBlockHeight);
+    void removeExpiredVotes(const uint32_t currentHeight, const Consensus::Params& params);
 
     void clear();
     void _clear(); //lock free

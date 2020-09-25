@@ -1,12 +1,16 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_COINS_H
 #define PAICOIN_COINS_H
 
 #include "primitives/transaction.h"
+#include "stake/staketx.h"
 #include "compressor.h"
 #include "core_memusage.h"
 #include "hash.h"
@@ -38,18 +42,31 @@ public:
     //! at which height this containing transaction was included in the active block chain
     uint32_t nHeight : 31;
 
+    // type of containing transaction
+    ETxClass txClass;
+
     //! construct a Coin from a CTxOut and height/coinbase information.
-    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn) {}
-    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn) : out(outIn), fCoinBase(fCoinBaseIn),nHeight(nHeightIn) {}
+    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn, ETxClass txClassIn) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), txClass(txClassIn) 
+    {
+        ;
+    }
+    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn, ETxClass txClassIn) : out(outIn), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), txClass(txClassIn) 
+    {
+        ;
+    }
 
     void Clear() {
         out.SetNull();
         fCoinBase = false;
         nHeight = 0;
+        txClass = ETxClass::TX_Regular;
     }
 
     //! empty constructor
-    Coin() : fCoinBase(false), nHeight(0) { }
+    Coin() : fCoinBase(false), nHeight(0), txClass(ETxClass::TX_Regular) 
+    { 
+        ;
+    }
 
     bool IsCoinBase() const {
         return fCoinBase;
@@ -61,6 +78,8 @@ public:
         uint32_t code = nHeight * 2 + fCoinBase;
         ::Serialize(s, VARINT(code));
         ::Serialize(s, CTxOutCompressor(REF(out)));
+        uint32_t txClassInt = (uint32_t) txClass;
+        ::Serialize(s, VARINT(txClassInt));
     }
 
     template<typename Stream>
@@ -70,6 +89,12 @@ public:
         nHeight = code >> 1;
         fCoinBase = code & 1;
         ::Unserialize(s, REF(CTxOutCompressor(out)));
+        txClass = TX_Regular;
+        if (!s.empty()) {
+            uint32_t txClassInt;
+            ::Unserialize(s, VARINT(txClassInt));
+            txClass = (ETxClass) txClassInt;
+        }
     }
 
     bool IsSpent() const {

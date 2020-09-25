@@ -1,7 +1,11 @@
+//
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "chain.h"
 #include "chainparams.h"
@@ -365,7 +369,7 @@ static bool rest_tx(HTTPRequest* req, const std::string& strURIPart)
 
     case RetFormat::JSON: {
         UniValue objTx{UniValue::VOBJ};
-        TxToUniv(*tx, hashBlock, objTx);
+        TxToUniv(*tx, hashBlock, objTx, true);
         JsonReply(req, objTx);
         return true;
     }

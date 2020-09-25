@@ -78,7 +78,7 @@ class WalletTest(PAIcoinTestFramework):
 
         # NOTE: Skip below test until newer getbalance implementation that handles '*' as a dummy first argument gets merged in
         # First argument of getbalance must be set to "*"
-        # assert_raises_jsonrpc(-32, "dummy first argument must be excluded or set to \"*\"", self.nodes[1].getbalance, "")
+        # assert_raises_rpc_error(-32, "dummy first argument must be excluded or set to \"*\"", self.nodes[1].getbalance, "")
 
         self.log.info("Test getbalance and getunconfirmedbalance with unconfirmed inputs")
 

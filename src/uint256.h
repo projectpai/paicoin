@@ -1,7 +1,10 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_UINT256_H
 #define PAICOIN_UINT256_H
@@ -102,6 +105,15 @@ public:
     {
         s.read((char*)data, sizeof(data));
     }
+};
+
+/** 48-bit blob
+ * @note This type is used to represent the final stake state checksum on 6 bytes
+ */
+class uint48 : public base_blob<48>{
+public:
+    uint48() {}
+    explicit uint48(const std::vector<unsigned char>& vch) : base_blob<48>(vch) {}
 };
 
 /** 160-bit opaque blob.

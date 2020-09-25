@@ -1,7 +1,11 @@
+//
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2017 The Bitcoin Core developers
+// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "wallet/init.h"
 
@@ -38,6 +42,15 @@ std::string GetWalletHelpString(bool showDebug)
     strUsage += HelpMessageOpt("-walletnotify=<cmd>", _("Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)"));
     strUsage += HelpMessageOpt("-zapwallettxes=<mode>", _("Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup") +
                                " " + _("(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)"));
+    strUsage += HelpMessageOpt("-autostake", strprintf(_("Enable the automatic ticket buyer, the automatic voter and the automatic revoker. These are performing the staking operations on behalf of the user and as soon as possible. Please note that the ticket buyer requires more settings to perform correctly, such as -tbvotingaddress, -tblimit or -tbbalancetomaintainabsolute. (default: %u)"), false));
+    strUsage += HelpMessageOpt("-autobuy", strprintf(_("Enable the automatic ticket buyer. This is purchasing tickets on behalf of the user as soon as all the criteria is met. Please make sure to specify the voting address and other parameters as desired. (default: %u)"), DEFAULT_AUTO_BUY));
+    strUsage += HelpMessageOpt("-tbbalancetomaintainabsolute", strprintf(_("The funds to preserve in the wallet when purchasing tickets. This ensures that at least this amount is still available in the wallet. No purchase is made if the funds for tickets are not enough.")));
+    strUsage += HelpMessageOpt("-tbvotingaddress", strprintf(_("Specify the address to be used when voting. The voter or revoker must be able to sign the input corresponding to this output, so it must own the address.")));
+    strUsage += HelpMessageOpt("-tbrewardaddress", strprintf(_("Specify the address to be used when sending the reward. The voter or revoker will send the reward or refund to this address.")));
+    strUsage += HelpMessageOpt("-tblimit", strprintf(_("The maximum number of tickets to purchase in one batch.")));
+    strUsage += HelpMessageOpt("-tbvotingaccount", strprintf(_("Specify the account to be used for voting.")));
+    strUsage += HelpMessageOpt("-autovote", strprintf(_("Enable the automatic voter. This is going to send the votes for the tickets belonging to the wallet as soon as they are selected as winners. (default: %u)"), DEFAULT_AUTO_VOTE));
+    strUsage += HelpMessageOpt("-autorevoke", strprintf(_("Enable the automatic revoker. As soon as a ticket becomes expired or missed, the automatic revoker creates and publishes a transaction that is unlocking the staked funds. (default: %u)"), DEFAULT_AUTO_REVOKE));
 
     if (showDebug)
     {
@@ -168,6 +181,10 @@ bool WalletParameterInteraction()
     nTxConfirmTarget = gArgs.GetArg("-txconfirmtarget", DEFAULT_TX_CONFIRM_TARGET);
     bSpendZeroConfChange = gArgs.GetBoolArg("-spendzeroconfchange", DEFAULT_SPEND_ZEROCONF_CHANGE);
     fWalletRbf = gArgs.GetBoolArg("-walletrbf", DEFAULT_WALLET_RBF);
+
+    fAutoBuy = gArgs.GetBoolArg("-autobuy", false) || (!gArgs.IsArgSet("-autobuy") && gArgs.GetBoolArg("-autostake", false));
+    fAutoVote = gArgs.GetBoolArg("-autovote", false) || (!gArgs.IsArgSet("-autovote") && gArgs.GetBoolArg("-autostake", false));
+    fAutoRevoke = gArgs.GetBoolArg("-autorevoke", false) || (!gArgs.IsArgSet("-autorevoke") && gArgs.GetBoolArg("-autostake", false));
 
     return true;
 }

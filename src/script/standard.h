@@ -1,13 +1,17 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_SCRIPT_STANDARD_H
 #define PAICOIN_SCRIPT_STANDARD_H
 
 #include "script/interpreter.h"
 #include "uint256.h"
+#include "pai_data_classifier.h"
 
 #include <boost/variant.hpp>
 
@@ -34,6 +38,12 @@ public:
 static const unsigned int MAX_OP_RETURN_RELAY = 83;
 
 /**
+ * Default setting for nMaxStructDatacarrierBytes. 160 bytes of data, +2 for OP_RETURN OP_STRUCT,
+ * +2 for the pushdata opcodes.
+ */
+static const unsigned int MAX_OP_STRUCT_RELAY = 164;
+
+/**
  * A data carrying output is an unspendable output containing data. The script
  * type is designated as TX_NULL_DATA.
  */
@@ -41,6 +51,9 @@ extern bool fAcceptDatacarrier;
 
 /** Maximum size of TX_NULL_DATA scripts that this node considers standard. */
 extern unsigned nMaxDatacarrierBytes;
+
+/** Maximum size of TX_STRUCT_DATA scripts that this node considers standard. */
+extern unsigned nMaxStructDatacarrierBytes;
 
 /**
  * Mandatory script verification flags that all new blocks must comply with for
@@ -64,6 +77,7 @@ enum txnouttype
     TX_NULL_DATA, //!< unspendable OP_RETURN script that carries data
     TX_WITNESS_V0_SCRIPTHASH,
     TX_WITNESS_V0_KEYHASH,
+    TX_STRUCT_DATA // like TX_NULL_DATA, an OP_RETURN script but contains data classifier
 };
 
 class CNoDestination {
@@ -137,5 +151,10 @@ CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys);
  * P2WSH script.
  */
 CScript GetScriptForWitness(const CScript& redeemscript);
+
+/**
+ * GetScriptForStructuredData provides the common leading part of structured OP_RETURN script
+ */
+CScript GetScriptForStructuredData(EDataClass eDataClass);
 
 #endif // PAICOIN_SCRIPT_STANDARD_H

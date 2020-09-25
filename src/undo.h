@@ -1,7 +1,10 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_UNDO_H
 #define PAICOIN_UNDO_H
@@ -31,6 +34,8 @@ public:
             ::Serialize(s, (unsigned char)0);
         }
         ::Serialize(s, CTxOutCompressor(REF(txout->out)));
+        uint32_t txClassInt = (uint32_t) txout->txClass;
+        ::Serialize(s, VARINT(txClassInt));
     }
 
     explicit TxInUndoSerializer(const Coin* coin) : txout(coin) {}
@@ -55,6 +60,9 @@ public:
             ::Unserialize(s, VARINT(nVersionDummy));
         }
         ::Unserialize(s, REF(CTxOutCompressor(REF(txout->out))));
+        uint32_t txClassInt;
+        ::Unserialize(s, VARINT(txClassInt));
+        txout->txClass = (ETxClass) txClassInt;
     }
 
     explicit TxInUndoDeserializer(Coin* coin) : txout(coin) {}
