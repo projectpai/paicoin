@@ -1,10 +1,10 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=PAIcoin Core
-Comment=Connect to the PAIcoin P2P Network
-Comment[de]=Verbinde mit dem PAIcoin peer-to-peer Netzwerk
-Comment[fr]=PAIcoin, monnaie virtuelle cryptographique pair à pair
-Comment[tr]=PAIcoin, eşten eşe kriptografik sanal para birimi
+Name=PAI Coin Core
+Comment=Connect to the PAI Coin P2P Network
+Comment[de]=Verbinde mit dem PAI Coin peer-to-peer Netzwerk
+Comment[fr]=PAI Coin, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=PAI Coin, eşten eşe kriptografik sanal para birimi
 Exec=paicoin-qt %u
 Terminal=false
 Type=Application

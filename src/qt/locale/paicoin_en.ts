@@ -80,12 +80,12 @@
     </message>
     <message>
         <location line="+7"/>
-        <source>These are your PAIcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your PAI Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>These are your PAIcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your PAI Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -430,8 +430,8 @@
     </message>
     <message>
         <location line="-510"/>
-        <source>Send coins to a PAIcoin address</source>
-        <translation>Send coins to a PAIcoin address</translation>
+        <source>Send coins to a PAI Coin address</source>
+        <translation>Send coins to a PAI Coin address</translation>
     </message>
     <message>
         <location line="+67"/>
@@ -460,8 +460,8 @@
     </message>
     <message>
         <location line="+516"/>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <location line="-741"/>
@@ -495,13 +495,13 @@
     </message>
     <message>
         <location line="+7"/>
-        <source>Sign messages with your PAIcoin addresses to prove you own them</source>
-        <translation>Sign messages with your PAIcoin addresses to prove you own them</translation>
+        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
+        <translation>Sign messages with your PAI Coin addresses to prove you own them</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Verify messages to ensure they were signed with specified PAIcoin addresses</source>
-        <translation>Verify messages to ensure they were signed with specified PAIcoin addresses</translation>
+        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
+        <translation>Verify messages to ensure they were signed with specified PAI Coin addresses</translation>
     </message>
     <message>
         <location line="+58"/>
@@ -550,10 +550,10 @@
     </message>
     <message numerus="yes">
         <location line="+356"/>
-        <source>%n active connection(s) to PAIcoin network</source>
+        <source>%n active connection(s) to PAI Coin network</source>
         <translation>
-            <numerusform>%n active connection to PAIcoin network</numerusform>
-            <numerusform>%n active connections to PAIcoin network</numerusform>
+            <numerusform>%n active connection to PAI Coin network</numerusform>
+            <numerusform>%n active connections to PAI Coin network</numerusform>
         </translation>
     </message>
     <message>
@@ -611,7 +611,7 @@
     </message>
     <message>
         <location line="-440"/>
-        <source>Show the %1 help message to get a list with possible PAIcoin command-line options</source>
+        <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -691,7 +691,7 @@
     </message>
     <message>
         <location filename="../paicoin.cpp" line="+534"/>
-        <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
+        <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -934,7 +934,7 @@
     </message>
     <message>
         <location line="+71"/>
-        <source>The entered address &quot;%1&quot; is not a valid PAIcoin address.</source>
+        <source>The entered address &quot;%1&quot; is not a valid PAI Coin address.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1094,8 +1094,8 @@
     </message>
     <message>
         <location filename="../intro.cpp" line="+20"/>
-        <source>PAIcoin</source>
-        <translation type="unfinished">PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation type="unfinished">PAI Coin</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -1109,7 +1109,7 @@
     </message>
     <message>
         <location line="+8"/>
-        <source>%1 will download and store a copy of the PAIcoin block chain.</source>
+        <source>%1 will download and store a copy of the PAI Coin block chain.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1376,8 +1376,8 @@
     </message>
     <message>
         <location line="+30"/>
-        <source>Automatically open the PAIcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Automatically open the PAIcoin client port on the router. This only works when your router supports UPnP and it is enabled.</translation>
+        <source>Automatically open the PAI Coin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Automatically open the PAI Coin client port on the router. This only works when your router supports UPnP and it is enabled.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1386,7 +1386,7 @@
     </message>
     <message>
         <location line="+17"/>
-        <source>Connect to the PAIcoin network through a SOCKS5 proxy.</source>
+        <source>Connect to the PAI Coin network through a SOCKS5 proxy.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1434,7 +1434,7 @@
     </message>
     <message>
         <location line="+25"/>
-        <source>Connect to the PAIcoin network through a separate SOCKS5 proxy for Tor hidden services.</source>
+        <source>Connect to the PAI Coin network through a separate SOCKS5 proxy for Tor hidden services.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1579,8 +1579,8 @@
     <message>
         <location line="+62"/>
         <location line="+386"/>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAIcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>The displayed information may be out of date. Your wallet automatically synchronizes with the PAIcoin network after a connection is established, but this process has not completed yet.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAI Coin network after a connection is established, but this process has not completed yet.</source>
+        <translation>The displayed information may be out of date. Your wallet automatically synchronizes with the PAI Coin network after a connection is established, but this process has not completed yet.</translation>
     </message>
     <message>
         <location line="-139"/>
@@ -1699,7 +1699,7 @@
     </message>
     <message>
         <location line="+8"/>
-        <source>URI cannot be parsed! This can be caused by an invalid PAIcoin address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid PAI Coin address or malformed URI parameters.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1821,7 +1821,7 @@
     </message>
     <message>
         <location filename="../guiutil.cpp" line="+130"/>
-        <source>Enter a PAIcoin address (e.g. %1)</source>
+        <source>Enter a PAI Coin address (e.g. %1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2407,7 +2407,7 @@
     <message>
         <location line="+14"/>
         <location line="+23"/>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the PAIcoin network.</source>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the PAI Coin network.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2921,7 +2921,7 @@
     </message>
     <message>
         <location line="+101"/>
-        <source>Warning: Invalid PAIcoin address</source>
+        <source>Warning: Invalid PAI Coin address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2976,7 +2976,7 @@
     </message>
     <message>
         <location line="+39"/>
-        <source>The PAIcoin address to send the payment to</source>
+        <source>The PAI Coin address to send the payment to</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3033,7 +3033,7 @@
     </message>
     <message>
         <location line="+47"/>
-        <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAIcoin network.</source>
+        <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3095,7 +3095,7 @@
     </message>
     <message>
         <location line="+18"/>
-        <source>The PAIcoin address to sign the message with</source>
+        <source>The PAI Coin address to sign the message with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3137,8 +3137,8 @@
     </message>
     <message>
         <location line="+21"/>
-        <source>Sign the message to prove you own this PAIcoin address</source>
-        <translation>Sign the message to prove you own this PAIcoin address</translation>
+        <source>Sign the message to prove you own this PAI Coin address</source>
+        <translation>Sign the message to prove you own this PAI Coin address</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -3168,13 +3168,13 @@
     </message>
     <message>
         <location line="+21"/>
-        <source>The PAIcoin address the message was signed with</source>
+        <source>The PAI Coin address the message was signed with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+37"/>
-        <source>Verify the message to ensure it was signed with the specified PAIcoin address</source>
-        <translation>Verify the message to ensure it was signed with the specified PAIcoin address</translation>
+        <source>Verify the message to ensure it was signed with the specified PAI Coin address</source>
+        <translation>Verify the message to ensure it was signed with the specified PAI Coin address</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -4066,8 +4066,8 @@
     </message>
     <message>
         <location line="-386"/>
-        <source>PAIcoin Core</source>
-        <translation type="unfinished">PAIcoin Core</translation>
+        <source>PAI Coin Core</source>
+        <translation type="unfinished">PAI Coin Core</translation>
     </message>
     <message>
         <location line="+1"/>

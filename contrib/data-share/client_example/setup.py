@@ -9,5 +9,5 @@ setup(
     license='MIT',
     author='lucian',
     author_email='lucian.zala@upandrunningsoftware.com',
-    description='PAIcoin OP_RETURN transaction module'
+    description='PAI Coin OP_RETURN transaction module'
 )

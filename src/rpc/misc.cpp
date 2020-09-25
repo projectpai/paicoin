@@ -304,7 +304,7 @@ CScript _createmultisig_redeemScript(const CWallet * const pwallet, const UniVal
     {
         const auto& ks = keys[i].get_str();
 #ifdef ENABLE_WALLET
-        // Case 1: PAIcoin address and we have full public key:
+        // Case 1: PAI Coin address and we have full public key:
         const auto dest = DecodeDestination(ks);
         if (pwallet && IsValidDestination(dest)) {
             const auto * const keyID = boost::get<CKeyID>(&dest);

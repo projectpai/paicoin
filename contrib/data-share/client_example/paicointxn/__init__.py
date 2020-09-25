@@ -1,5 +1,5 @@
 """
-Python module for generating and retrieving OP_RETURN PAIcoin transactions
+Python module for generating and retrieving OP_RETURN PAI Coin transactions
 """
 
 from transaction import Transaction

@@ -1,6 +1,6 @@
 UNIX BUILD NOTES
 ====================
-Some notes on how to build PAIcoin Core in Unix.
+Some notes on how to build PAI Coin Core in Unix.
 
 (for OpenBSD specific instructions, see [build-openbsd.md](build-openbsd.md))
 
@@ -55,7 +55,7 @@ Memory Requirements
 --------------------
 
 C++ compilers are memory-hungry. It is recommended to have at least 1.5 GB of
-memory available when compiling PAIcoin Core. On systems with less, gcc can be
+memory available when compiling PAI Coin Core. On systems with less, gcc can be
 tuned to conserve memory with additional CXXFLAGS:
 
 
@@ -86,7 +86,7 @@ BerkeleyDB 5.1 or later, which break binary wallet compatibility with the distri
 are based on BerkeleyDB 4.8. If you do not care about wallet compatibility,
 pass `--with-incompatible-bdb` to configure.  If you want to maintain compability then see section "Berkeley DB" for instructions on building it from source.
 
-See the section "Disable-wallet mode" to build PAIcoin Core without wallet.
+See the section "Disable-wallet mode" to build PAI Coin Core without wallet.
 
 Optional (see --with-miniupnpc and --enable-upnp-default):
 
@@ -99,7 +99,7 @@ ZMQ dependencies (provides ZMQ API 4.x):
 Dependencies for the GUI: Ubuntu & Debian
 -----------------------------------------
 
-If you want to build PAIcoin-Qt, make sure that the required packages for Qt development
+If you want to build PAI Coin-Qt, make sure that the required packages for Qt development
 are installed. Either Qt 5 or Qt 4 are necessary to build the GUI.
 If both Qt 4 and Qt 5 are installed, Qt 5 will be used. Pass `--with-gui=qt4` to configure to choose Qt4.
 To build without GUI pass `--without-gui`.
@@ -173,8 +173,14 @@ echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.3
 tar -xzvf db-4.8.30.NC.tar.gz
 
 # Build the library and install to our prefix
-cd db-4.8.30.NC/build_unix/
+cd db-4.8.30.NC/
+
+# patch it
+wget https://raw.github.com/narkoleptik/os-x-berkeleydb-patch/master/atomic.patch
+patch dbinc/atomic.h < atomic.patch
+
 #  Note: Do a static build so that it can be embedded into the executable, instead of having to find a .so at runtime
+cd build_unix/
 ../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
 make install
 
@@ -299,7 +305,7 @@ Note:
 Enabling wallet support requires either compiling against a Berkeley DB newer than 4.8 (package `db`) using `--with-incompatible-bdb`,
 or building and depending on a local version of Berkeley DB 4.8. The readily available Arch Linux packages are currently built using
 `--with-incompatible-bdb` according to the [PKGBUILD](https://projects.archlinux.org/svntogit/community.git/tree/paicoin/trunk/PKGBUILD).
-As mentioned above, when maintaining portability of the wallet between the standard PAIcoin Core distributions and independently built
+As mentioned above, when maintaining portability of the wallet between the standard PAI Coin Core distributions and independently built
 node software is desired, Berkeley DB 4.8 must be used.
 
 
@@ -347,7 +353,7 @@ For the wallet (optional):
 This will give a warning "configure: WARNING: Found Berkeley DB other
 than 4.8; wallets opened by this build will not be portable!", but as FreeBSD never
 had a binary release, this may not matter. If backwards compatibility
-with 4.8-built PAIcoin Core is needed follow the steps under "Berkeley DB" above.
+with 4.8-built PAI Coin Core is needed follow the steps under "Berkeley DB" above.
 
 Then build using:
 

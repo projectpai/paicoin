@@ -5,10 +5,10 @@
 
 # paicoin-cli --help
 ```
-PAIcoin Core RPC client 
+PAI Coin Core RPC client 
 
 Usage:
-  paicoin-cli [options] <command> [params]  Send command to PAIcoin Core
+  paicoin-cli [options] <command> [params]  Send command to PAI Coin Core
   paicoin-cli [options] help                List commands
   paicoin-cli [options] help <command>      Get help for a command
 
@@ -46,7 +46,7 @@ Options:
   -rpcpassword=<pw>
        Password for JSON-RPC connections
 
-SSL options: (see the PAIcoin Wiki for SSL setup instructions)
+SSL options: (see the PAI Coin Wiki for SSL setup instructions)
 
   -rpcssl
        Use OpenSSL (https) for JSON-RPC connections
@@ -152,10 +152,10 @@ signmessage "paicoinaddress" "message"
 
 # paicoind --help -help-debug
 ```
-PAIcoin Core Daemon version v0.11.0
+PAI Coin Core Daemon version v0.11.0
 
 Usage:
-  paicoind [options]                     Start PAIcoin Core Daemon
+  paicoind [options]                     Start PAI Coin Core Daemon
 
 Options:
 
@@ -550,7 +550,7 @@ RPC server options:
   -rpckeepalive
        RPC support for HTTP persistent connections (default: 1)
 
-RPC SSL options: (see the PAIcoin Wiki for SSL setup instructions)
+RPC SSL options: (see the PAI Coin Wiki for SSL setup instructions)
 
   -rpcssl
        Use OpenSSL (https) for JSON-RPC connections

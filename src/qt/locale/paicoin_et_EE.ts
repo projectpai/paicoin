@@ -130,8 +130,8 @@
         <translation>Kõvakettal olevate plokkide reindekseerimine...</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -760,8 +760,8 @@
         <translation>Valikud:</translation>
     </message>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>PAIcoin Core</translation>
+        <source>PAI Coin Core</source>
+        <translation>PAI Coin Core</translation>
     </message>
     <message>
         <source>Information</source>

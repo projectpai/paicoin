@@ -1,7 +1,7 @@
-PAIcoin Core Daemon version v0.16.01
+PAI Coin Core Daemon version v0.16.01
 
 Usage:
-  paicoind [options]                     Start PAIcoin Core Daemon
+  paicoind [options]                     Start PAI Coin Core Daemon
 
 Options:
 

@@ -170,8 +170,8 @@
         <translation>Lemezen lévő blokkok újraindexelése...</translation>
     </message>
     <message>
-        <source>Send coins to a PAIcoin address</source>
-        <translation>PAIcoin küldése megadott címre</translation>
+        <source>Send coins to a PAI Coin address</source>
+        <translation>PAI Coin küldése megadott címre</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -194,8 +194,8 @@
         <translation>Üzenet &amp;valódiságának ellenőrzése</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -222,12 +222,12 @@
         <translation>A tárcádhoz tartozó privát kulcsok titkosítása</translation>
     </message>
     <message>
-        <source>Sign messages with your PAIcoin addresses to prove you own them</source>
-        <translation>Üzenetek aláírása a PAIcoin-címmeiddel, amivel bizonyítod, hogy a cím a sajátod</translation>
+        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
+        <translation>Üzenetek aláírása a PAI Coin-címmeiddel, amivel bizonyítod, hogy a cím a sajátod</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified PAIcoin addresses</source>
-        <translation>Üzenetek ellenőrzése, hogy valóban a megjelölt PAIcoin-címekkel vannak-e aláírva</translation>
+        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
+        <translation>Üzenetek ellenőrzése, hogy valóban a megjelölt PAI Coin-címekkel vannak-e aláírva</translation>
     </message>
     <message>
         <source>&amp;File</source>
@@ -266,8 +266,8 @@
         <translation>Paran&amp;cssor kapcsolók</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to PAIcoin network</source>
-        <translation><numerusform>%n aktív kapcsolat a PAIcoin hálózathoz</numerusform><numerusform>%n aktív kapcsolat a PAIcoin hálózathoz</numerusform></translation>
+        <source>%n active connection(s) to PAI Coin network</source>
+        <translation><numerusform>%n aktív kapcsolat a PAI Coin hálózathoz</numerusform><numerusform>%n aktív kapcsolat a PAI Coin hálózathoz</numerusform></translation>
     </message>
     <message numerus="yes">
         <source>Processed %n block(s) of transaction history.</source>
@@ -604,16 +604,16 @@
         <translation>Szakértő</translation>
     </message>
     <message>
-        <source>Automatically open the PAIcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>A PAIcoin-kliens portjának automatikus megnyitása a routeren. Ez csak akkor működik, ha a routered támogatja az UPnP-t és az engedélyezve is van rajta.</translation>
+        <source>Automatically open the PAI Coin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>A PAI Coin-kliens portjának automatikus megnyitása a routeren. Ez csak akkor működik, ha a routered támogatja az UPnP-t és az engedélyezve is van rajta.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
         <translation>&amp;UPnP port-feltérképezés</translation>
     </message>
     <message>
-        <source>Connect to the PAIcoin network through a SOCKS5 proxy.</source>
-        <translation>Csatlakozás a PAIcoin hálózatához SOCKS5 proxyn keresztül</translation>
+        <source>Connect to the PAI Coin network through a SOCKS5 proxy.</source>
+        <translation>Csatlakozás a PAI Coin hálózatához SOCKS5 proxyn keresztül</translation>
     </message>
     <message>
         <source>Proxy &amp;IP:</source>
@@ -707,8 +707,8 @@
         <translation>Űrlap</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAIcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>A kijelzett információ lehet, hogy elavult. A pénztárcája automatikusan szinkronizálja magát a PAIcoin hálózattal miután a kapcsolat létrejön, de ez e folyamat még nem fejeződött be.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAI Coin network after a connection is established, but this process has not completed yet.</source>
+        <translation>A kijelzett információ lehet, hogy elavult. A pénztárcája automatikusan szinkronizálja magát a PAI Coin hálózattal miután a kapcsolat létrejön, de ez e folyamat még nem fejeződött be.</translation>
     </message>
     <message>
         <source>Watch-only:</source>
@@ -776,8 +776,8 @@
         <translation>Összeg</translation>
     </message>
     <message>
-        <source>Enter a PAIcoin address (e.g. %1)</source>
-        <translation>Ad meg egy PAIcoin címet (pl: %1)</translation>
+        <source>Enter a PAI Coin address (e.g. %1)</source>
+        <translation>Ad meg egy PAI Coin címet (pl: %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1305,7 +1305,7 @@
         <translation>A jelenleg kiválasztott aláírás másolása a rendszer-vágólapra</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this PAIcoin address</source>
+        <source>Sign the message to prove you own this PAI Coin address</source>
         <translation>Üzenet </translation>
     </message>
     <message>
@@ -1406,8 +1406,8 @@
 </translation>
     </message>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>PAIcoin Core</translation>
+        <source>PAI Coin Core</source>
+        <translation>PAI Coin Core</translation>
     </message>
     <message>
         <source>Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)</source>

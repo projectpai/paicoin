@@ -140,7 +140,7 @@ public:
 };
 
 /**
- * PAIcoin RPC command dispatcher.
+ * PAI Coin RPC command dispatcher.
  */
 class CRPCTable
 {

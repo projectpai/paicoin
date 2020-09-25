@@ -273,7 +273,7 @@ UniValue importaddress(const JSONRPCRequest& request)
         const auto data = ParseHex(request.params[0].get_str());
         ImportScript(pwallet, CScript(std::begin(data), std::end(data)), strLabel, fP2SH);
     } else {
-        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address or script");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAI Coin address or script");
     }
 
     if (fRescan)
@@ -573,7 +573,7 @@ UniValue dumpprivkey(const JSONRPCRequest& request)
     const auto& strAddress = request.params[0].get_str();
     CTxDestination dest = DecodeDestination(strAddress);
     if (!IsValidDestination(dest)) {
-        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAI Coin address");
     }
     const auto * const keyID = boost::get<CKeyID>(&dest);
     if (!keyID) {
@@ -644,7 +644,7 @@ UniValue dumpwallet(const JSONRPCRequest& request)
     std::sort(vKeyBirth.begin(), vKeyBirth.end());
 
     // produce output
-    file << strprintf("# Wallet dump created by PAIcoin %s\n", CLIENT_BUILD);
+    file << strprintf("# Wallet dump created by PAI Coin %s\n", CLIENT_BUILD);
     file << strprintf("# * Created on %s\n", EncodeDumpTime(GetTime()));
     file << strprintf("# * Best block at time of backup was %i (%s),\n", chainActive.Height(), chainActive.Tip()->GetBlockHash().ToString());
     file << strprintf("#   mined on %s\n", EncodeDumpTime(chainActive.Tip()->GetBlockTime()));

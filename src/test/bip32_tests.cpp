@@ -45,7 +45,7 @@ struct TestVector {
  * For updating the following test vectors:
  * - clone bip32utils from https://github.com/prusnak/bip32utils.git;
  * - in BIP32Key.py (lines 26-29), update the EX_MAIN_PRIVATE, EX_MAIN_PUBLIC, EX_TEST_PRIVATE and EX_TEST_PUBLIC with their corresponding base58Prefixes from chainparams.cpp;
- * - in BIP32Key.py (line 43), change the hmac seed to "PAIcoin seed";
+ * - in BIP32Key.py (line 43), change the hmac seed to "PAI Coin seed";
  * - in BIP32Key.py (at the end of file) add the following lines:
 
     # BIP0032 Test vector 3

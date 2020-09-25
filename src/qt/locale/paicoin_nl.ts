@@ -62,12 +62,12 @@
         <translation>Ontvangstadressen</translation>
     </message>
     <message>
-        <source>These are your PAIcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your PAI Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>Dit zijn uw PAIcoinadressen om betalingen mee te verzenden. Controleer altijd het bedrag en het ontvangstadres voordat u uw paicoins verzendt.</translation>
     </message>
     <message>
-        <source>These are your PAIcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Dit zijn uw PAIcoin-adressen waarmee u betalingen kunt ontvangen. We raden u aan om een nieuw ontvangstadres voor elke transactie te gebruiken.</translation>
+        <source>These are your PAI Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Dit zijn uw PAI Coin-adressen waarmee u betalingen kunt ontvangen. We raden u aan om een nieuw ontvangstadres voor elke transactie te gebruiken.</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
@@ -338,7 +338,7 @@
         <translation>Bezig met herindexeren van blokken op harde schijf...</translation>
     </message>
     <message>
-        <source>Send coins to a PAIcoin address</source>
+        <source>Send coins to a PAI Coin address</source>
         <translation>Verstuur munten naar een PAIcoinadres</translation>
     </message>
     <message>
@@ -362,8 +362,8 @@
         <translation>&amp;Verifiëer bericht...</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -390,11 +390,11 @@
         <translation>Versleutel de geheime sleutels die bij uw portemonnee horen</translation>
     </message>
     <message>
-        <source>Sign messages with your PAIcoin addresses to prove you own them</source>
+        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
         <translation>Onderteken berichten met uw PAIcoinadressen om te bewijzen dat u deze adressen bezit</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified PAIcoin addresses</source>
+        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
         <translation>Verifiëer handtekeningen om zeker te zijn dat de berichten zijn ondertekend met de gespecificeerde PAIcoinadressen</translation>
     </message>
     <message>
@@ -434,7 +434,7 @@
         <translation>&amp;Opdrachtregelopties</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to PAIcoin network</source>
+        <source>%n active connection(s) to PAI Coin network</source>
         <translation><numerusform>%n actieve verbinding met PAIcoinnetwerk</numerusform><numerusform>%n actieve verbindingen met PAIcoinnetwerk</numerusform></translation>
     </message>
     <message>
@@ -478,8 +478,8 @@
         <translation>Bijgewerkt</translation>
     </message>
     <message>
-        <source>Show the %1 help message to get a list with possible PAIcoin command-line options</source>
-        <translation>Toon het %1 hulpbericht om een lijst te krijgen met mogelijke PAIcoin commandoregelopties</translation>
+        <source>Show the %1 help message to get a list with possible PAI Coin command-line options</source>
+        <translation>Toon het %1 hulpbericht om een lijst te krijgen met mogelijke PAI Coin commandoregelopties</translation>
     </message>
     <message>
         <source>%1 client</source>
@@ -548,8 +548,8 @@
         <translation>Portemonnee is &lt;b&gt;versleuteld&lt;/b&gt; en momenteel &lt;b&gt;gesloten&lt;/b&gt;</translation>
     </message>
     <message>
-        <source>A fatal error occurred. PAIcoin can no longer continue safely and will quit.</source>
-        <translation>Een fatale fout heeft zich voorgedaan. PAIcoin kan niet veilig worden verdergezet en wordt afgesloten.</translation>
+        <source>A fatal error occurred. PAI Coin can no longer continue safely and will quit.</source>
+        <translation>Een fatale fout heeft zich voorgedaan. PAI Coin kan niet veilig worden verdergezet en wordt afgesloten.</translation>
     </message>
 </context>
 <context>
@@ -742,7 +742,7 @@
         <translation>Bewerk verzendadres</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid PAIcoin address.</source>
+        <source>The entered address "%1" is not a valid PAI Coin address.</source>
         <translation>Het opgegeven adres "%1" is een ongeldig PAIcoinadres.</translation>
     </message>
     <message>
@@ -851,8 +851,8 @@
         <translation>Omdat dit de eerste keer is dat het programma gestart is, kunt u nu kiezen waar %1 de data moet opslaan.</translation>
     </message>
     <message>
-        <source>%1 will download and store a copy of the PAIcoin block chain. At least %2GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>%1 zal een kopie van de PAIcoin blokketen downloaden en opslaan. Tenminste %2 GB aan data wordt opgeslagen in deze map en het zal groeien in de tijd. De portemonnee wordt ook in deze map opgeslagen.</translation>
+        <source>%1 will download and store a copy of the PAI Coin block chain. At least %2GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <translation>%1 zal een kopie van de PAI Coin blokketen downloaden en opslaan. Tenminste %2 GB aan data wordt opgeslagen in deze map en het zal groeien in de tijd. De portemonnee wordt ook in deze map opgeslagen.</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
@@ -887,7 +887,7 @@
     </message>
     <message>
         <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the paicoin network, as detailed below.</source>
-        <translation>Recente transacties zijn mogelijk nog niet zichtbaar. De balans van de geldbeugel is daarom mogelijk niet correct. Deze informatie is correct van zodra de synchronisatie met het PAIcoin-netwerk werd voltooid, zoals onderaan beschreven.</translation>
+        <translation>Recente transacties zijn mogelijk nog niet zichtbaar. De balans van de geldbeugel is daarom mogelijk niet correct. Deze informatie is correct van zodra de synchronisatie met het PAI Coin-netwerk werd voltooid, zoals onderaan beschreven.</translation>
     </message>
     <message>
         <source>Attempting to spend paicoins that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
@@ -1048,7 +1048,7 @@
         <translation>&amp;Spendeer onbevestigd wisselgeld</translation>
     </message>
     <message>
-        <source>Automatically open the PAIcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Automatically open the PAI Coin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>Open de PAIcoinpoort automatisch op de router. Dit werkt alleen als de router UPnP ondersteunt en het aanstaat.</translation>
     </message>
     <message>
@@ -1056,7 +1056,7 @@
         <translation>Portmapping via &amp;UPnP</translation>
     </message>
     <message>
-        <source>Connect to the PAIcoin network through a SOCKS5 proxy.</source>
+        <source>Connect to the PAI Coin network through a SOCKS5 proxy.</source>
         <translation>Verbind met het PAIcoinnetwerk via een SOCKS5 proxy.</translation>
     </message>
     <message>
@@ -1096,7 +1096,7 @@
         <translation>Tor</translation>
     </message>
     <message>
-        <source>Connect to the PAIcoin network through a separate SOCKS5 proxy for Tor hidden services.</source>
+        <source>Connect to the PAI Coin network through a separate SOCKS5 proxy for Tor hidden services.</source>
         <translation>Maak verbinding met PAIcoinnetwerk door een aparte SOCKS5-proxy voor verborgen diensten van Tor.</translation>
     </message>
     <message>
@@ -1195,7 +1195,7 @@
         <translation>Vorm</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAIcoin network after a connection is established, but this process has not completed yet.</source>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAI Coin network after a connection is established, but this process has not completed yet.</source>
         <translation>De weergegeven informatie kan verouderd zijn. Uw portemonnee synchroniseert automatisch met het PAIcoinnetwerk nadat een verbinding is gelegd, maar dit proces is nog niet voltooid.</translation>
     </message>
     <message>
@@ -1286,8 +1286,8 @@
         <translation>Ongeldig betalingsadres %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid PAIcoin address or malformed URI parameters.</source>
-        <translation>URI kan niet verwerkt worden! Dit kan het gevolg zijn van een ongeldig PAIcoin adres of misvormde URI parameters.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid PAI Coin address or malformed URI parameters.</source>
+        <translation>URI kan niet verwerkt worden! Dit kan het gevolg zijn van een ongeldig PAI Coin adres of misvormde URI parameters.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -1380,7 +1380,7 @@
         <translation>Bedrag</translation>
     </message>
     <message>
-        <source>Enter a PAIcoin address (e.g. %1)</source>
+        <source>Enter a PAI Coin address (e.g. %1)</source>
         <translation>Voer een PAIcoinadres in (bijv. %1)</translation>
     </message>
     <message>
@@ -1804,7 +1804,7 @@
         <translation>H&amp;ergebruik en bestaand ontvangstadres (niet aanbevolen)</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the PAIcoin network.</source>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the PAI Coin network.</source>
         <translation>Een optioneel bericht om bij te voegen aan het betalingsverzoek, welke zal getoond worden wanneer het verzoek is geopend. Opmerking: Het bericht zal niet worden verzonden met de betaling over het PAIcoinnetwerk.</translation>
     </message>
     <message>
@@ -2201,7 +2201,7 @@
         <translation><numerusform>Schatting is dat bevestiging begint over %n blok.</numerusform><numerusform>Schatting is dat bevestiging begint over %n blokken.</numerusform></translation>
     </message>
     <message>
-        <source>Warning: Invalid PAIcoin address</source>
+        <source>Warning: Invalid PAI Coin address</source>
         <translation>Waarschuwing: Ongeldig PAIcoinadres</translation>
     </message>
     <message>
@@ -2244,7 +2244,7 @@
         <translation>Dit is een normale betaling.</translation>
     </message>
     <message>
-        <source>The PAIcoin address to send the payment to</source>
+        <source>The PAI Coin address to send the payment to</source>
         <translation>Het PAIcoinadres om betaling aan te versturen</translation>
     </message>
     <message>
@@ -2288,7 +2288,7 @@
         <translation>Vul een label voor dit adres in om het aan de lijst met gebruikte adressen toe te voegen</translation>
     </message>
     <message>
-        <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAIcoin network.</source>
+        <source>A message that was attached to the paicoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PAI Coin network.</source>
         <translation>Een bericht dat werd toegevoegd aan de paicoin: URI welke wordt opgeslagen met de transactie ter referentie. Opmerking: Dit bericht zal niet worden verzonden over het PAIcoinnetwerk.</translation>
     </message>
     <message>
@@ -2337,7 +2337,7 @@
         <translation>U kunt berichten/overeenkomsten ondertekenen met uw adres om te bewijzen dat u PAIcoins kunt versturen. Wees voorzichtig met het ondertekenen van iets vaags of willekeurigs, omdat phishingaanvallen u kunnen proberen te misleiden tot het ondertekenen van overeenkomsten om uw identiteit aan hen toe te vertrouwen. Onderteken alleen volledig gedetailleerde verklaringen voordat u akkoord gaat.</translation>
     </message>
     <message>
-        <source>The PAIcoin address to sign the message with</source>
+        <source>The PAI Coin address to sign the message with</source>
         <translation>Het PAIcoinadres om bericht mee te ondertekenen</translation>
     </message>
     <message>
@@ -2369,7 +2369,7 @@
         <translation>Kopieer de huidige handtekening naar het systeemklembord</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this PAIcoin address</source>
+        <source>Sign the message to prove you own this PAI Coin address</source>
         <translation>Onderteken een bericht om te bewijzen dat u een bepaald PAIcoinadres bezit</translation>
     </message>
     <message>
@@ -2393,11 +2393,11 @@
         <translation>Voer het adres van de ontvanger in, bericht (zorg ervoor dat de regeleinden, spaties, tabs etc. precies kloppen) en onderteken onderaan om het bericht te verifiëren. Wees voorzicht om niet meer in de ondertekening te lezen dan in het getekende bericht zelf, om te voorkomen dat je wordt aangevallen met een man-in-the-middle attack. Houd er mee rekening dat dit alleen de ondertekende partij bewijst met het ontvangen adres, er kan niet bewezen worden dat er een transactie heeft plaatsgevonden!</translation>
     </message>
     <message>
-        <source>The PAIcoin address the message was signed with</source>
+        <source>The PAI Coin address the message was signed with</source>
         <translation>Het PAIcoinadres waarmee het bericht ondertekend is</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified PAIcoin address</source>
+        <source>Verify the message to ensure it was signed with the specified PAI Coin address</source>
         <translation>Controleer een bericht om te verifiëren dat het gespecificeerde PAIcoinadres het bericht heeft ondertekend.</translation>
     </message>
     <message>
@@ -3054,8 +3054,8 @@
         <translation>Niet mogelijk ok HTTP-server te starten. Zie debuglogboek voor details.</translation>
     </message>
     <message>
-        <source>PAIcoin Core</source>
-        <translation>PAIcoin Core</translation>
+        <source>PAI Coin Core</source>
+        <translation>PAI Coin Core</translation>
     </message>
     <message>
         <source>The %s developers</source>

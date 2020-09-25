@@ -62,12 +62,12 @@
         <translation>Vastuvõtvad aadressid</translation>
     </message>
     <message>
-        <source>These are your PAIcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Need on sinu PAIcoin aadressid maksete saatmiseks. Ennem müntide saatmist kontrolli alati summat ja makse saaja aadressi.</translation>
+        <source>These are your PAI Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Need on sinu PAI Coin aadressid maksete saatmiseks. Ennem müntide saatmist kontrolli alati summat ja makse saaja aadressi.</translation>
     </message>
     <message>
-        <source>These are your PAIcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Need on sinu PAIcoin aadressid sisenevate maksete vastu võtmiseks. Soovitav on iga tehingu tarbeks kasutada uut aadressi.</translation>
+        <source>These are your PAI Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Need on sinu PAI Coin aadressid sisenevate maksete vastu võtmiseks. Soovitav on iga tehingu tarbeks kasutada uut aadressi.</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
@@ -290,7 +290,7 @@
         <translation>Kettal olevate blokkide re-indekseerimine...</translation>
     </message>
     <message>
-        <source>Send coins to a PAIcoin address</source>
+        <source>Send coins to a PAI Coin address</source>
         <translation>Saada münte PAIcoini aadressile</translation>
     </message>
     <message>
@@ -314,8 +314,8 @@
         <translation>&amp;Kontrolli sõnumit...</translation>
     </message>
     <message>
-        <source>PAIcoin</source>
-        <translation>PAIcoin</translation>
+        <source>PAI Coin</source>
+        <translation>PAI Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -342,11 +342,11 @@
         <translation>Krüpteeri oma rahakoti privaatvõtmed</translation>
     </message>
     <message>
-        <source>Sign messages with your PAIcoin addresses to prove you own them</source>
+        <source>Sign messages with your PAI Coin addresses to prove you own them</source>
         <translation>Omandi tõestamiseks allkirjasta sõnumid oma PAIcoini aadressiga</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified PAIcoin addresses</source>
+        <source>Verify messages to ensure they were signed with specified PAI Coin addresses</source>
         <translation>Kinnita sõnumid kindlustamaks et need allkirjastati määratud PAIcoini aadressiga</translation>
     </message>
     <message>
@@ -378,7 +378,7 @@
         <translation>Käsurea valikud</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to PAIcoin network</source>
+        <source>%n active connection(s) to PAI Coin network</source>
         <translation><numerusform>%n aktiivne ühendus PAIcoini võrku</numerusform><numerusform>%n aktiivset ühendust PAIcoini võrku</numerusform></translation>
     </message>
     <message>
@@ -626,8 +626,8 @@
         <translation>Muuda saatvat aadressi</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid PAIcoin address.</source>
-        <translation>Sisestatud aadress "%1" ei ole korrektne PAIcoin aadress.</translation>
+        <source>The entered address "%1" is not a valid PAI Coin address.</source>
+        <translation>Sisestatud aadress "%1" ei ole korrektne PAI Coin aadress.</translation>
     </message>
     <message>
         <source>The entered address "%1" is already in the address book.</source>
@@ -756,7 +756,7 @@
         <translation>Ekspert</translation>
     </message>
     <message>
-        <source>Automatically open the PAIcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Automatically open the PAI Coin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>PAIcoini kliendi pordi automaatne avamine ruuteris. Toimib, kui sinu ruuter aktsepteerib UPnP ühendust.</translation>
     </message>
     <message>
@@ -855,8 +855,8 @@
         <translation>Vorm</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAIcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>Kuvatav info ei pruugi olla ajakohane. Ühenduse loomisel süngitakse sinu rahakott automaatselt PAIcoin võrgustikuga, kuid see toiming on hetkel lõpetamata.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PAI Coin network after a connection is established, but this process has not completed yet.</source>
+        <translation>Kuvatav info ei pruugi olla ajakohane. Ühenduse loomisel süngitakse sinu rahakott automaatselt PAI Coin võrgustikuga, kuid see toiming on hetkel lõpetamata.</translation>
     </message>
     <message>
         <source>Pending:</source>
@@ -1337,8 +1337,8 @@
         <translation>Maksepäring aegunud.</translation>
     </message>
     <message>
-        <source>Warning: Invalid PAIcoin address</source>
-        <translation>Hoiatus: Ebakorrektne PAIcoin aadress</translation>
+        <source>Warning: Invalid PAI Coin address</source>
+        <translation>Hoiatus: Ebakorrektne PAI Coin aadress</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -1417,8 +1417,8 @@
         <translation>&amp;Allkirjastamise teade</translation>
     </message>
     <message>
-        <source>The PAIcoin address to sign the message with</source>
-        <translation>PAIcoin aadress millega sõnum allkirjastada</translation>
+        <source>The PAI Coin address to sign the message with</source>
+        <translation>PAI Coin aadress millega sõnum allkirjastada</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -1449,7 +1449,7 @@
         <translation>Kopeeri praegune signatuur vahemällu</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this PAIcoin address</source>
+        <source>Sign the message to prove you own this PAI Coin address</source>
         <translation>Allkirjasta sõnum PAIcoini aadressi sulle kuulumise tõestamiseks</translation>
     </message>
     <message>
@@ -1469,11 +1469,11 @@
         <translation>&amp;Kinnita Sõnum</translation>
     </message>
     <message>
-        <source>The PAIcoin address the message was signed with</source>
-        <translation>PAIcoin aadress millega sõnum on allkirjastatud</translation>
+        <source>The PAI Coin address the message was signed with</source>
+        <translation>PAI Coin aadress millega sõnum on allkirjastatud</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified PAIcoin address</source>
+        <source>Verify the message to ensure it was signed with the specified PAI Coin address</source>
         <translation>Kinnita sõnum tõestamaks selle allkirjastatust määratud PAIcoini aadressiga.</translation>
     </message>
     <message>
@@ -1758,7 +1758,7 @@
         <translation>Tööta taustal ning aktsepteeri käsklusi</translation>
     </message>
     <message>
-        <source>PAIcoin Core</source>
+        <source>PAI Coin Core</source>
         <translation>PAIcoini tuumik</translation>
     </message>
     <message>

@@ -1,6 +1,6 @@
 # pai_test.py
 #
-# PAIcoin PAI Protocol test script
+# PAI Coin PAI Protocol test script
 #
 # Copyright (c) ObEN, Inc. - https://oben.me/
 #

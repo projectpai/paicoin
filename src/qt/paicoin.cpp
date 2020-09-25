@@ -174,7 +174,7 @@ void DebugMessageHandler(QtMsgType type, const QMessageLogContext& context, cons
 }
 #endif
 
-/** Class encapsulating PAIcoin Core startup and shutdown.
+/** Class encapsulating PAI Coin Core startup and shutdown.
  * Allows running startup and shutdown in a different thread from the UI thread.
  */
 class PAIcoinCore: public QObject
@@ -204,7 +204,7 @@ private:
     void handleRunawayException(const std::exception *e);
 };
 
-/** Main PAIcoin application object */
+/** Main PAI Coin application object */
 class PAIcoinApplication: public QApplication
 {
     Q_OBJECT
@@ -535,7 +535,7 @@ void PAIcoinApplication::shutdownResult()
 
 void PAIcoinApplication::handleRunawayException(const QString &message)
 {
-    QMessageBox::critical(0, "Runaway exception", PAIcoinGUI::tr("A fatal error occurred. PAIcoin can no longer continue safely and will quit.") + QString("\n\n") + message);
+    QMessageBox::critical(0, "Runaway exception", PAIcoinGUI::tr("A fatal error occurred. PAI Coin can no longer continue safely and will quit.") + QString("\n\n") + message);
     ::exit(EXIT_FAILURE);
 }
 

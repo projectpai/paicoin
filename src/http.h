@@ -3,7 +3,6 @@
  * file COPYING or http://www.opensource.org/licenses/mit-license.php.
  */
 
-
 #ifndef PAICOIN_HTTP_H
 #define PAICOIN_HTTP_H
 

@@ -92,7 +92,7 @@ PAIcoinAddressCheckValidator::PAIcoinAddressCheckValidator(QObject *parent) :
 QValidator::State PAIcoinAddressCheckValidator::validate(QString &input, int &pos) const
 {
     Q_UNUSED(pos);
-    // Validate the passed PAIcoin address
+    // Validate the passed PAI Coin address
     if (IsValidDestinationString(input.toStdString())) {
         return QValidator::Acceptable;
     }

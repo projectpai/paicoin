@@ -1,10 +1,10 @@
 """
-PAIcoin configuration constants
+PAI Coin configuration constants
 """
 
 # constants.py
 #
-# PAIcoin configuration constants
+# PAI Coin configuration constants
 #
 # Copyright (c) ObEN, Inc. - https://oben.me/
 #

@@ -1,6 +1,6 @@
 # store_paicoin.py
 # 
-# CLI wrapper for storing PAIcoin transaction with OP_RETURN metadata
+# CLI wrapper for storing PAI Coin transaction with OP_RETURN metadata
 #
 # Copyright (c) ObEN, Inc. - https://oben.me/
 # Copyright (c) Coin Sciences Ltd
