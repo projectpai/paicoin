@@ -840,12 +840,13 @@ UniValue gettickets(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (request.fHelp || request.params.size() != 1)
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw std::runtime_error{
-            "gettickets includeimmature\n"
+            "gettickets includeimmature ( verbose )\n"
             "\nReturning the hashes of the tickets currently owned by wallet.\n"
             "\nArguments:\n"
-            "1. includeimmature                 (boolean, required)     If true include immature tickets in the results.\n"
+            "1. includeimmature     (boolean, required)                     If true include immature tickets in the results.\n"
+            "2. verbose             (boolean, optional, default=false)      Set true for additional information about tickets\n"
             "\nResult:\n"
             "{\n"
             "   \"hashes\": [\"value\",...],    (array of string)       Hashes of the tickets owned by the wallet encoded as strings\n"
@@ -855,6 +856,9 @@ UniValue gettickets(const JSONRPCRequest& request)
         };
 
     const auto& bIncludeImmature = request.params[0].get_bool();
+    auto fVerbose = false;
+    if (!request.params[1].isNull())
+        fVerbose = request.params[1].get_bool();
 
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
@@ -866,7 +870,6 @@ UniValue gettickets(const JSONRPCRequest& request)
         const auto* const pwtx = it.second.first;
 
         if (pwtx != nullptr) {
-
             std::string reason;
             const CTransaction& current_tx = *(pwtx->tx);
             if (ParseTxClass(current_tx) != TX_BuyTicket)
@@ -879,42 +882,61 @@ UniValue gettickets(const JSONRPCRequest& request)
             if (pwtx->isAbandoned())
                 continue;
 
-            if (!bIncludeImmature && confirmations < Params().GetConsensus().nTicketMaturity)
+            const auto& bImmature = confirmations <= Params().GetConsensus().nTicketMaturity;
+            if (!bIncludeImmature && bImmature)
                 continue;
 
-            tx_arr.push_back(pwtx->GetHash().GetHex());
+            if (fVerbose) {
+                CBlockIndex* pblockindex = chainActive.Tip();
+                auto info = UniValue{UniValue::VOBJ};
+                info.pushKV("txid", pwtx->GetHash().GetHex());
+                info.pushKV("confirmations", confirmations);
+                StakingToUniv(*pwtx->tx, info, false);
+
+                if (bImmature) {
+                    info.pushKV("status", "immature");
+                } else if (pblockindex->pstakeNode->ExistsRevokedTicket(pwtx->GetHash())) {
+                    info.pushKV("status", "revoked");
+                } else if (pblockindex->pstakeNode->ExistsMissedTicket(pwtx->GetHash())) {
+                    if (pblockindex->pstakeNode->ExistsExpiredTicket(pwtx->GetHash())) {
+                        info.pushKV("status", "expired");
+                    } else {
+                        info.pushKV("status", "missed_vote");
+                    }
+                } else if (pblockindex->pstakeNode->ExistsLiveTicket(pwtx->GetHash())) {
+                    info.pushKV("status", "live");
+                } else {
+                    info.pushKV("status", "voted");
+                }
+
+                auto spendingWtx = CWalletTx{};
+                if (pwallet->IsSpent(pwtx->GetHash(), ticketStakeOutputIndex, &spendingWtx)) {
+                    auto spentinfo = UniValue{UniValue::VOBJ};
+                    spentinfo.pushKV("confirmations", spendingWtx.GetDepthInMainChain());
+                    const auto& spendingTx = *spendingWtx.tx;
+                    const auto& txClass = ParseTxClass(spendingTx);
+                    switch (txClass) {
+                    case ETxClass::TX_Vote:
+                        spentinfo.pushKV("vote_txid", spendingTx.GetHash().GetHex());
+                        break;
+                    case ETxClass::TX_RevokeTicket:
+                        spentinfo.pushKV("revocation_txid", spendingTx.GetHash().GetHex());
+                        break;
+                    default:
+                        assert(!"Ticket spent by transaction that is neither vote nor revocation!");
+                    }
+                    info.pushKV("spent", spentinfo);
+                }
+
+                tx_arr.push_back(info);
+            } else {
+                tx_arr.push_back(pwtx->GetHash().GetHex());
+            }
         }
     }
 
     auto ret = UniValue{UniValue::VOBJ};
     ret.pushKV("hashes",tx_arr);
-    return ret;
-}
-
-UniValue listtickets(const JSONRPCRequest& request)
-{
-    const auto pwallet = GetWalletForJSONRPCRequest(request);
-    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
-        return NullUniValue;
-    }
-
-    if (request.fHelp || request.params.size() != 0)
-        throw std::runtime_error{
-            "listtickets\n"
-            "\nProduces an array of ticket information objects.\n"
-            "\nArguments:\n"
-            "None\n"
-            "\nResult:\n"
-            "[\n"
-            "   {\n"
-            "       \"ticket\": { ... }   JSON object containting ticket information\n"
-            "   }\n"
-            "]\n"
-            + HelpExampleCli("listtickets", "")
-            + HelpExampleRpc("listtickets", "")
-        };
-
-    auto ret = UniValue{UniValue::VARR};
     return ret;
 }
 
@@ -5387,9 +5409,8 @@ static const CRPCCommand commands[] =
     { "wallet",             "getreceivedbyaccount",             &getreceivedbyaccount,              {"account","minconf"} },
     { "wallet",             "getreceivedbyaddress",             &getreceivedbyaddress,              {"address","minconf"} },
     { "wallet",             "getticketfee",                     &getticketfee,                      {} },
-    { "wallet",             "gettickets",                       &gettickets,                        {"includeimmature"} },
+    { "wallet",             "gettickets",                       &gettickets,                        {"includeimmature","verbose"} },
     { "wallet",             "setticketfee",                     &setticketfee,                      {"fee"} },
-    { "wallet",             "listtickets",                      &listtickets,                       {} },
     { "wallet",             "gettransaction",                   &gettransaction,                    {"txid","include_watchonly"} },
     { "wallet",             "getunconfirmedbalance",            &getunconfirmedbalance,             {} },
     { "wallet",             "getwalletinfo",                    &getwalletinfo,                     {} },
