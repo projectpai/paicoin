@@ -452,7 +452,7 @@ static void entryToJSON(UniValue &info, const CTxMemPoolEntry &e)
 {
     AssertLockHeld(mempool.cs);
 
-    info.push_back(Pair("type", TxClassToString(e.GetTxClass())));
+    StakeInfoToUniv(e.GetTx(), info);
     info.push_back(Pair("size", (int)e.GetTxSize()));
     info.push_back(Pair("fee", ValueFromAmount(e.GetFee())));
     info.push_back(Pair("modifiedfee", ValueFromAmount(e.GetModifiedFee())));

@@ -166,6 +166,19 @@ bool ParseStakeData(const CTransaction& tx, uint32_t txoutIndex, EStakeDataClass
     return true;
 }
 
+std::string TxClassToString(ETxClass txClass) 
+{
+    switch (txClass) {
+        case ETxClass::TX_Regular: return "standard";
+        case ETxClass::TX_BuyTicket: return "stake_purchase";
+        case ETxClass::TX_RevokeTicket: return "stake_revocation";
+        case ETxClass::TX_Vote: return "vote";
+        default:
+            assert(!"unknown ETxClass");
+            return "unknown";
+    }
+}
+
 ETxClass ParseTxClass(const CTransaction& tx)
 {
     int minItems = 4;   // structHeaderVersion, dataClass, stakeDataClass, txClass

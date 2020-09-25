@@ -980,12 +980,29 @@ UniValue getticketpoolvalue(const JSONRPCRequest& request)
     return ValueFromAmount(sum);
 }
 
+static int getTicketPurchaseHeight(const uint256& hashBlock)
+{
+    auto purchaseHeight = -1;
+    BlockMap::iterator mi = mapBlockIndex.find(hashBlock);
+    if (mi != mapBlockIndex.end() && (*mi).second) {
+        CBlockIndex* pindex = (*mi).second;
+        if (chainActive.Contains(pindex))
+            purchaseHeight = pindex->nHeight;
+    }
+    if (purchaseHeight < Params().GetConsensus().nHybridConsensusHeight)
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Error getting the block including the ticket purchase transaction");
+    return purchaseHeight;
+}
+
 UniValue livetickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 0) 
+    if (request.fHelp || request.params.size() > 2) 
         throw std::runtime_error{
-            "livetickets\n"
-            "\nRequest tickets the live ticket hashes from the ticket database\n"
+            "livetickets ( verbose blockheight )\n"
+            "\nReturns live ticket hashes from the ticket database\n"
+            "\nArguments:\n"
+            "1. verbose        (boolean, optional, default=false) Set true for additional information about tickets\n"
+            "2. blockheight    (numeric, optional)                The height index, if not given the tip height is used\n"
             "\nResult:\n"
             "{\n"
             "   \"tickets\": [\"value\",...], (array of string) List of live tickets\n"
@@ -995,13 +1012,40 @@ UniValue livetickets(const JSONRPCRequest& request)
             + HelpExampleRpc("livetickets", "")
         };
 
+    auto fVerbose = false;
+    if (!request.params[0].isNull())
+        fVerbose = request.params[0].get_bool();
+
+    auto nHeight = chainActive.Height();
+    if (!request.params[1].isNull()) {
+        nHeight = request.params[1].get_int();
+        if (nHeight < 0 || nHeight > chainActive.Height())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Block height out of range");
+    }
+
     LOCK(cs_main);
-    CBlockIndex* pblockindex = chainActive.Tip();
+    CBlockIndex* pblockindex = chainActive[nHeight];
     const auto& liveTickets = pblockindex->pstakeNode->LiveTickets();
     auto result = UniValue{UniValue::VOBJ};
     auto array = UniValue{UniValue::VARR};
-    for (const auto& tx : liveTickets){
-        array.push_back(tx.GetHex());
+    for (const auto& txhash : liveTickets){
+        if (fVerbose) {
+            CTransactionRef tx;
+            uint256 hashBlock;
+            if (!GetTransaction(txhash, tx, Params().GetConsensus(), hashBlock, true, false))
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "No such blockchain transaction");
+
+            auto info = UniValue{UniValue::VOBJ};
+            info.pushKV("txid", txhash.GetHex());
+            StakingToUniv(*tx, info, false);
+
+            const auto& purchaseHeight =  getTicketPurchaseHeight(hashBlock);
+            info.push_back(Pair("purchase_height", purchaseHeight));
+
+            array.push_back(info);
+        } else {
+            array.push_back(txhash.GetHex());
+        }
     }
     result.push_back(Pair("tickets",array));
     return result;
@@ -1009,21 +1053,30 @@ UniValue livetickets(const JSONRPCRequest& request)
 
 UniValue winningtickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 0) 
+    if (request.fHelp || request.params.size() > 1) 
         throw std::runtime_error{
-            "winningtickets\n"
-            "\nRequest tickets the winning ticket hashes from the ticket database\n"
+            "winningtickets ( blockheight )\n"
+            "\nReturns winning ticket hashes from the chain tip's ticket database\n"
+            "\nArguments:\n"
+            "1. blockheight     (numeric, optional)     The height index, if not given the tip height is used\n"
             "\nResult:\n"
             "{\n"
-            "   \"tickets\": [\"value\",...], (array of string) List of live tickets\n"
+            "   \"tickets\": [\"value\",...], (array of string) List of winning tickets\n"
             "}\n" 
             "\nExamples:\n"
             + HelpExampleCli("winningtickets", "")
             + HelpExampleRpc("winningtickets", "")
         };
 
+    auto nHeight = chainActive.Height();
+    if (!request.params[0].isNull()) {
+        nHeight = request.params[0].get_int();
+        if (nHeight < 0 || nHeight > chainActive.Height())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Block height out of range");
+    }
+
     LOCK(cs_main);
-    CBlockIndex* pblockindex = chainActive.Tip();
+    CBlockIndex* pblockindex = chainActive[nHeight];
     const auto& winningTickets = pblockindex->pstakeNode->Winners();
     auto result = UniValue{UniValue::VOBJ};
     auto array = UniValue{UniValue::VARR};
@@ -1036,10 +1089,13 @@ UniValue winningtickets(const JSONRPCRequest& request)
 
 UniValue missedtickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 0) 
+    if (request.fHelp || request.params.size() > 2) 
         throw std::runtime_error{
-            "missedtickets\n"
-            "\nRequest tickets the client missed\n"
+            "missedtickets ( verbose blockheight )\n"
+            "\nReturns missed ticket hashes from the ticket database\n"
+            "\nArguments:\n"
+            "1. verbose        (boolean, optional, default=false) Set true for additional information about tickets\n"
+            "2. blockheight    (numeric, optional)                The height index, if not given the tip height is used\n"
             "\nResult:\n"
             "{\n"
             "   \"tickets\": [\"value\",...], (array of string) List of missed tickets\n"
@@ -1049,13 +1105,51 @@ UniValue missedtickets(const JSONRPCRequest& request)
             + HelpExampleRpc("missedtickets", "")
         };
 
+    auto fVerbose = false;
+    if (!request.params[0].isNull())
+        fVerbose = request.params[0].get_bool();
+
+    auto nHeight = chainActive.Height();
+    if (!request.params[1].isNull()) {
+        nHeight = request.params[1].get_int();
+        if (nHeight < 0 || nHeight > chainActive.Height())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Block height out of range");
+    }
+
     LOCK(cs_main);
-    CBlockIndex* pblockindex = chainActive.Tip();
-    const auto& liveTickets = pblockindex->pstakeNode->MissedTickets();
+    CBlockIndex* pblockindex = chainActive[nHeight];
+    const auto& missedTickets = pblockindex->pstakeNode->MissedTickets();
     auto result = UniValue{UniValue::VOBJ};
     auto array = UniValue{UniValue::VARR};
-    for (const auto& tx : liveTickets){
-        array.push_back(tx.GetHex());
+    for (const auto& txhash : missedTickets){
+        if (fVerbose) {
+            CTransactionRef tx;
+            uint256 hashBlock;
+            if (!GetTransaction(txhash, tx, Params().GetConsensus(), hashBlock, true, false))
+                throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "No such blockchain transaction");
+
+            auto info = UniValue{UniValue::VOBJ};
+            info.pushKV("txid", txhash.GetHex());
+            StakingToUniv(*tx, info, false);
+
+            const auto& purchaseHeight =  getTicketPurchaseHeight(hashBlock);
+            info.push_back(Pair("purchase_height", purchaseHeight));
+
+            const auto& bExpired = pblockindex->pstakeNode->ExistsExpiredTicket(txhash);
+            info.push_back(Pair("cause", bExpired ? "expiration" : "missed_vote"));
+            if (!bExpired) {
+                auto missedHeight = nHeight - 1;
+                for (; missedHeight > purchaseHeight + Params().GetConsensus().nTicketMaturity 
+                       && chainActive[missedHeight]->pstakeNode->ExistsMissedTicket(txhash); --missedHeight);
+                info.push_back(Pair("missed_height", missedHeight + 1));
+            } else {
+                info.push_back(Pair("missed_height", nullptr));
+            }
+
+            array.push_back(info);
+        } else {
+            array.push_back(txhash.GetHex());
+        }
     }
     result.push_back(Pair("tickets",array));
     return result;
@@ -1528,9 +1622,9 @@ static const CRPCCommand commands[] =
     { "mining",             "existsmissedtickets",    &existsmissedtickets,    {"txhashes"} },
     { "mining",             "existslivetickets",      &existslivetickets,      {"txhashes"} },
     { "mining",             "getticketpoolvalue",     &getticketpoolvalue,     {} },
-    { "mining",             "livetickets",            &livetickets,            {} },
-    { "mining",             "winningtickets",         &winningtickets,         {} },
-    { "mining",             "missedtickets",          &missedtickets,          {} },
+    { "mining",             "livetickets",            &livetickets,            {"verbose", "blockheight"} },
+    { "mining",             "winningtickets",         &winningtickets,         {"blockheight"} },
+    { "mining",             "missedtickets",          &missedtickets,          {"verbose", "blockheight"} },
     { "mining",             "ticketfeeinfo",          &ticketfeeinfo,          {"blocks","windows"} },
     { "mining",             "ticketsforaddress",      &ticketsforaddress,      {"address"} },
     { "mining",             "ticketvwap",             &ticketvwap,             {"start","stop"} },

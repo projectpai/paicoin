@@ -159,14 +159,58 @@ void ScriptPubKeyToUniv(const CScript& scriptPubKey,
     out.pushKV("addresses", a);
 }
 
-static void StakingToUniv(const CTransaction &tx, UniValue& entry) 
+void StakingToUniv(const CTransaction& tx, UniValue& entry, bool fIncludeContrib) 
 {
     std::vector<TicketContribData> contributions;
     CAmount totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit;
     const auto& result = ParseTicketContribs(tx, contributions, totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit);
     if (result) {
-        entry.pushKV("ticket_price", totalContribution);
-        entry.pushKV("fee_limit", totalVoteFeeLimit + totalRevocationFeeLimit);
+        entry.pushKV("ticket_price", ValueFromAmount(totalContribution));
+        entry.pushKV("fee_limit", ValueFromAmount(totalVoteFeeLimit + totalRevocationFeeLimit));
+        if (fIncludeContrib) {
+            auto contribs = UniValue(UniValue::VARR);
+            for (const auto& contribData : contributions) {
+                auto contrib = UniValue(UniValue::VOBJ);
+                contrib.pushKV("rewardAddr", EncodeDestination(contribData.rewardAddr));
+                contrib.pushKV("contributedAmount", ValueFromAmount(contribData.contributedAmount));
+                contribs.push_back(contrib);
+            }
+            entry.pushKV("contributions", contribs);
+        }
+    }
+}
+
+void StakeInfoToUniv(const CTransaction& tx, UniValue& entry, const std::map<uint256,std::shared_ptr<const CTransaction>>* const prevHashToTxMap)
+{
+    const auto txClass = ParseTxClass(tx);
+    entry.pushKV("type", TxClassToString(txClass));
+    if (txClass == ETxClass::TX_Vote) {
+        UniValue voting(UniValue::VOBJ);
+        const auto ticketHash = tx.vin[voteStakeInputIndex].prevout.hash;
+        voting.pushKV("ticket", ticketHash.GetHex());
+        VoteData voteData;
+        ParseVote(tx, voteData);
+        voting.pushKV("version", voteData.nVersion);
+        voting.pushKV("vote", voteData.voteBits.isRttAccepted() ? "valid" : "invalid");
+        voting.pushKV("blockhash", voteData.blockHash.GetHex());
+        voting.pushKV("blockheight", (int64_t)voteData.blockHeight);
+        entry.pushKV("voting", voting);
+    } else if (txClass == ETxClass::TX_BuyTicket) {
+        UniValue staking(UniValue::VOBJ);
+        StakingToUniv(tx, staking);
+        entry.pushKV("staking", staking);
+    } else if (txClass == ETxClass::TX_RevokeTicket) {
+        UniValue staking(UniValue::VOBJ);
+        const auto ticketHash = tx.vin[revocationStakeInputIndex].prevout.hash;
+        staking.pushKV("ticket", ticketHash.GetHex());
+        if (prevHashToTxMap != nullptr) {
+            const auto& it = prevHashToTxMap->find(ticketHash);
+            if (it != std::end(*prevHashToTxMap)) {
+                const auto& ticketTx = *it->second;
+                StakingToUniv(ticketTx, staking);
+            }
+        }
+        entry.pushKV("staking", staking);
     }
 }
 
@@ -177,31 +221,7 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
     if (tx.IsCoinBase())
         entry.pushKV("type",  "coinbase");
     else if (include_stake) {
-        const auto txClass = ParseTxClass(tx);
-        entry.pushKV("type", TxClassToString(txClass));
-        if (txClass == ETxClass::TX_Vote) {
-            UniValue voting(UniValue::VOBJ);
-            VoteData voteData;
-            ParseVote(tx,voteData);
-            voting.pushKV("version", voteData.nVersion);
-            voting.pushKV("vote", voteData.voteBits.isRttAccepted() ? "valid" : "invalid");
-            entry.pushKV("voting", voting);
-        } else if (txClass == ETxClass::TX_BuyTicket) {
-            UniValue staking(UniValue::VOBJ);
-            StakingToUniv(tx, staking);
-            entry.pushKV("staking", staking);
-        } else if (txClass == ETxClass::TX_RevokeTicket) {
-            UniValue staking(UniValue::VOBJ); 
-            const auto ticketHash = tx.vin[0].prevout.hash;
-            if( prevHashToTxMap != nullptr) {
-                const auto& it = prevHashToTxMap->find(ticketHash);
-                if (it != std::end(*prevHashToTxMap)) {
-                    const auto& ticketTx = *it->second;
-                    StakingToUniv(ticketTx, staking);
-                }
-            }
-            entry.pushKV("staking", staking);
-        }
+        StakeInfoToUniv(tx, entry, prevHashToTxMap);
     }
 
     entry.pushKV("hash", tx.GetWitnessHash().GetHex());

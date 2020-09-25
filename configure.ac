@@ -296,12 +296,6 @@ AC_ARG_WITH([utils],
   [build_paicoin_utils=$withval],
   [build_paicoin_utils=yes])
 
-AC_ARG_WITH([libs],
-  [AS_HELP_STRING([--with-libs],
-  [build libraries (default=yes)])],
-  [build_paicoin_libs=$withval],
-  [build_paicoin_libs=yes])
-
 AC_ARG_WITH([daemon],
   [AS_HELP_STRING([--with-daemon],
   [build paicoind daemon (default=yes)])],
@@ -1039,14 +1033,6 @@ AC_MSG_CHECKING([whether to build utils (paicoin-cli paicoin-block-generator pai
 AM_CONDITIONAL([BUILD_PAICOIN_UTILS], [test x$build_paicoin_utils = xyes])
 AC_MSG_RESULT($build_paicoin_utils)
 
-AC_MSG_CHECKING([whether to build libraries])
-AM_CONDITIONAL([BUILD_PAICOIN_LIBS], [test x$build_paicoin_libs = xyes])
-if test x$build_paicoin_libs = xyes; then
-  AC_DEFINE(HAVE_CONSENSUS_LIB, 1, [Define this symbol if the consensus lib has been built])
-  AC_CONFIG_FILES([libpaicoinconsensus.pc:libpaicoinconsensus.pc.in])
-fi
-AC_MSG_RESULT($build_paicoin_libs)
-
 AC_LANG_POP
 
 if test "x$use_ccache" != "xno"; then
@@ -1163,8 +1149,8 @@ else
   AC_MSG_RESULT([no])
 fi
 
-if test x$build_paicoin_utils$build_paicoin_libs$build_paicoind$paicoin_enable_qt$use_bench$use_tests = xnononononono; then
-  AC_MSG_ERROR([No targets! Please specify at least one of: --with-utils --with-libs --with-daemon --with-gui --enable-bench or --enable-tests])
+if test x$build_paicoin_utils$build_paicoind$paicoin_enable_qt$use_bench$use_tests = xnononononono; then
+  AC_MSG_ERROR([No targets! Please specify at least one of: --with-utils --with-daemon --with-gui --enable-bench or --enable-tests])
 fi
 
 AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])
