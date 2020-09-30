@@ -83,6 +83,7 @@ BASE_SCRIPTS= [
     'reindex.py',
     'searchrawtransactions.py',
     # vv Tests less than 30s vv
+    'rpc_getblocktemplate.py',
     'keypool-topup.py',
     'zmq_test.py',
     'paicoin_cli.py',

@@ -2603,9 +2603,20 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
 
     if (disconnectpool) {
         // Save transactions to re-add to mempool at end of reorg
+        // Use regularTxs to allow reordering so that in:
+        // UpdateMempoolForReorg funding regular txs end up in front of ticket purchase txs
+        auto regulatTxs = std::vector<CTransactionRef>{};
         for (auto it = block.vtx.rbegin(); it != block.vtx.rend(); ++it) {
+            if (!IsStakeTx(**it)) {
+                regulatTxs.push_back(*it);
+                continue;
+            }
             disconnectpool->addTransaction(*it);
         }
+        for (const auto& tx : regulatTxs){
+            disconnectpool->addTransaction(tx);
+        }
+
         while (disconnectpool->DynamicMemoryUsage() > MAX_DISCONNECTED_TX_POOL_SIZE * 1000) {
             // Drop the earliest entry, and remove its children from the mempool.
             auto it = disconnectpool->queuedTx.get<insertion_order>().begin();
@@ -3740,7 +3751,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
     int numYesVotes = 0;
 
     // Check that all transactions are finalized and that they aren't expired
-    for (auto i = 0; i < block.vtx.size(); i++) {
+    for (size_t i = 0; i < block.vtx.size(); i++) {
         if (!IsFinalTx(*block.vtx[i], nHeight, nLockTimeCutoff))
             return state.DoS(10, false, REJECT_INVALID, "bad-txns-nonfinal", false, "non-final transaction");
         if (IsExpiredTx(*block.vtx[i], nHeight))

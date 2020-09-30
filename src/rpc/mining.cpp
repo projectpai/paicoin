@@ -518,6 +518,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     // a segwit-block to a non-segwit caller.
     static bool fLastTemplateSupportsSegwit = true;
     const auto nTimeElapsed = GetTime() - nStart;
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+
     if (pindexPrev != chainActive.Tip() ||
         (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && nTimeElapsed > 5) ||
         fLastTemplateSupportsSegwit != fSupportsSegwit)
@@ -527,20 +529,42 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         // Store the pindexBest used before CreateNewBlock, to avoid races
         nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
-        auto* const pindexPrevNew = chainActive.Tip();
+        auto* pindexPrevNew = chainActive.Tip();
         nStart = GetTime();
         fLastTemplateSupportsSegwit = fSupportsSegwit;
 
         // Create new block
         CScript scriptDummy = CScript() << OP_TRUE;
-        pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
+        bool bTooFewVotes = false;
+        try {
+            pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
+        } catch (const std::runtime_error& error) {
+            if (strstr(error.what(), "too-few-votes") != nullptr) {
+                bTooFewVotes = true;
+            }
+        } catch (...) {
+            throw;
+        }
+
+        if (bTooFewVotes) {
+            if (nTimeElapsed < nBlockVotesWaitTime)
+                throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not enough votes, waiting <blockvoteswaittime>");
+
+            CValidationState state;
+            InvalidateBlock(state, Params(),chainActive.Tip());
+            if (!state.IsValid()) {
+                throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
+            }
+            pindexPrevNew = chainActive.Tip();//invalidate change to previous tip
+            pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
+        }
+
         if (!pblocktemplate)
             throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Out of memory");
 
-        if ( pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight
-           && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock
-           && nTimeElapsed > nBlockVotesWaitTime)
-        {
+        if (  pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight 
+           && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock 
+           && nTimeElapsed < nBlockVotesWaitTime) {
             //not enough votes yet, wait no more than nBlockVotesWaitTime seconds
             throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not reached maximum votes");
         }
@@ -549,7 +573,6 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         pindexPrev = pindexPrevNew;
     }
     auto pblock = &pblocktemplate->block; // pointer for convenience
-    const Consensus::Params& consensusParams = Params().GetConsensus();
 
     // Update nTime
     UpdateTime(pblock, consensusParams, pindexPrev);
