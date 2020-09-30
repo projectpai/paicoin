@@ -909,7 +909,7 @@ BOOST_FIXTURE_TEST_CASE(auto_voter_multiple_tips, WalletStakeTestingSetup)
     CPubKey pubKey;
     wallet->GetKeyFromPool(pubKey);
 
-    std::set<const CBlockIndex*, CompareBlocksByHeight> tips;
+    std::set<CBlockIndex*, CompareBlocksByHeight> tips;
     while ((tips = GetChainTips()).size() < 2) {
         CValidationState state;
 

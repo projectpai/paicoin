@@ -1893,18 +1893,19 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
         // restore inputs
         if (reorderedIndexes[i] > 0) { // not coinbases
             CTxUndo &txundo = blockUndo.vtxundo[reorderedIndexes[i]-1];
-            // in case of Vote tx, skip first vin, it is stakebase, see UpdateCoins
-            const auto& startIndex = ParseTxClass(tx) == ETxClass::TX_Vote ? voteStakeInputIndex : 0;
-            if (txundo.vprevout.size() != tx.vin.size() - startIndex) {
-                error("DisconnectBlock(): transaction and undo data inconsistent");
-                return DISCONNECT_FAILED;
-            }
-            for (unsigned int j = tx.vin.size(); j-- > startIndex;) {
-                const COutPoint &out = tx.vin[j].prevout;
-                int res = ApplyTxInUndo(std::move(txundo.vprevout[j - startIndex]), view, out);
-                if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
-                fClean = fClean && res != DISCONNECT_UNCLEAN;
-            }
+            // in case of Vote tx, skip altogether see UpdateCoins
+                // first vin, it is stakebase, see UpdateCoins
+                const auto& startIndex = ParseTxClass(tx) == ETxClass::TX_Vote ? voteStakeInputIndex : 0;
+                if (txundo.vprevout.size() != tx.vin.size() - startIndex) {
+                    error("DisconnectBlock(): transaction and undo data inconsistent");
+                    return DISCONNECT_FAILED;
+                }
+                for (unsigned int j = tx.vin.size(); j-- > startIndex;) {
+                    const COutPoint& out = tx.vin[j].prevout;
+                    int res = ApplyTxInUndo(std::move(txundo.vprevout[j - startIndex]), view, out);
+                    if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
+                    fClean = fClean && res != DISCONNECT_UNCLEAN;
+                }
             // At this point, all of txundo.vprevout should have been moved out.
         }
     }
@@ -2121,8 +2122,10 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         return error("%s: Consensus::CheckBlock: %s", __func__, FormatStateMessage(state));
 
     // verify that the view's current state corresponds to the previous block
+    // or, when tip has insuffiecient votes and a side chain is mined, check that previous is the one behind tip
+    // or builds on top of a side chain tip
     uint256 hashPrevBlock = pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash();
-    assert(hashPrevBlock == view.GetBestBlock());
+    assert(hashPrevBlock == view.GetBestBlock() || chainActive.Tip()->pprev == pindex->pprev || pindex->pprev->nHeight == chainActive.Height());
 
     // Special case for the genesis block, skipping connection of its transactions
     // (its coinbase is unspendable)
@@ -2266,6 +2269,11 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
             if (!tx.IsCoinBase())
             {
                 CAmount txfee = 0;
+                // auto txClass = ParseTxClass(tx);
+                // LogPrint(BCLog::ALL, "    - CheckTxInputs: %s , %d , vin[0]: %s n: %d -> %s\n", tx.GetHash().GetHex().c_str(),
+                //     txClass, tx.vin[0].prevout.hash.GetHex(), tx.vin[0].prevout.n, view.HaveCoinString(tx.vin[0].prevout).c_str());
+                
+                // LogPrint(BCLog::ALL, "    - CheckTxInputs: coinscacheview best block: %s\n", view.GetBestBlock().GetHex().c_str());
                 if (!Consensus::CheckTxInputs(tx, state, view, pindex->nHeight, txfee, chainparams)) {
                     return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), FormatStateMessage(state));
                 }
@@ -2370,19 +2378,21 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         setDirtyBlockIndex.insert(pindex);
     }
 
-    if (pindex->nHeight == 0) {
-        assert(pindex->pprev == nullptr);
-        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
-    }
-    else{
-        assert(pindex->pprev != nullptr);
-        assert(pindex->pprev->pstakeNode != nullptr);
+    // build stake node information if not already built by AcceptBlock
+    if (pindex->pstakeNode == nullptr) {
+        if (pindex->nHeight == 0) {
+            assert(pindex->pprev == nullptr);
+            pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+        } else {
+            assert(pindex->pprev != nullptr);
+            assert(pindex->pprev->pstakeNode != nullptr);
 
-        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
-        if (pindex->pstakeNode == nullptr)
-            return state.DoS(100,
-                error("ConnectBlock(): FetchStakeNode - Failed to get Stake data"),
-                REJECT_INVALID, "bad-stake-data");
+            pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus());
+            if (pindex->pstakeNode == nullptr)
+                return state.DoS(100,
+                    error("ConnectBlock(): FetchStakeNode - Failed to get Stake data"),
+                    REJECT_INVALID, "bad-stake-data");
+        }
     }
 
     // if(pindex->GetStakePos().IsNull()){
@@ -2646,9 +2656,20 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
 
     if (disconnectpool) {
         // Save transactions to re-add to mempool at end of reorg
+        // Use regularTxs to allow reordering so that in:
+        // UpdateMempoolForReorg funding regular txs end up in front of ticket purchase txs
+        auto regularTxs = std::vector<CTransactionRef>{};
         for (auto it = block.vtx.rbegin(); it != block.vtx.rend(); ++it) {
+            if (!IsStakeTx(**it)) {
+                regularTxs.push_back(*it);
+                continue;
+            }
             disconnectpool->addTransaction(*it);
         }
+        for (const auto& tx : regularTxs){
+            disconnectpool->addTransaction(tx);
+        }
+
         while (disconnectpool->DynamicMemoryUsage() > MAX_DISCONNECTED_TX_POOL_SIZE * 1000) {
             // Drop the earliest entry, and remove its children from the mempool.
             auto it = disconnectpool->queuedTx.get<insertion_order>().begin();
@@ -3008,7 +3029,10 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
 
             bool fInvalidFound = false;
             std::shared_ptr<const CBlock> nullBlockPtr;
-            if (!ActivateBestChainStep(state, chainparams, pindexMostWork, pblock && pblock->GetHash() == pindexMostWork->GetBlockHash() ? pblock : nullBlockPtr, fInvalidFound, connectTrace))
+            // try activating a new block on top of most work chain or on a side chain forking on previous block to the tip
+            if (!ActivateBestChainStep(state, chainparams, pindexMostWork
+            , pblock && (pblock->GetHash() == pindexMostWork->GetBlockHash() || pblock->hashPrevBlock == pindexMostWork->pprev->GetBlockHash()) ? pblock : nullBlockPtr
+            , fInvalidFound, connectTrace))
                 return false;
 
             if (fInvalidFound) {
@@ -3802,7 +3826,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
     int numYesVotes = 0;
 
     // Check that all transactions are finalized and that they aren't expired
-    for (auto i = 0; i < block.vtx.size(); i++) {
+    for (size_t i = 0; i < block.vtx.size(); i++) {
         if (!IsFinalTx(*block.vtx[i], nHeight, nLockTimeCutoff))
             return state.DoS(10, false, REJECT_INVALID, "bad-txns-nonfinal", false, "non-final transaction");
         if (IsExpiredTx(*block.vtx[i], nHeight))
@@ -4056,11 +4080,6 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
         return error("%s: %s", __func__, FormatStateMessage(state));
     }
 
-    // Header is valid/has work, merkle tree and segwit merkle tree are good...RELAY NOW
-    // (but if it does not build on our best tip, let the SendMessages loop relay it)
-    if (!IsInitialBlockDownload() && chainActive.Tip() == pindex->pprev)
-        GetMainSignals().NewPoWValidBlock(pindex, pblock);
-
     int nHeight = pindex->nHeight;
 
     // Write block to history file
@@ -4082,6 +4101,28 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
 
     if (fCheckForPruning)
         FlushStateToDisk(chainparams, state, FLUSH_STATE_NONE); // we just allocated more disk space for block files
+
+    // build the stake node information when a block is accepted, as it is needed in case a side chain tip is checked for votes
+    // either in autovoter, either in getblocktemplate rpc implementation
+    if (pindex->nHeight == 0) {
+        assert(pindex->pprev == nullptr);
+        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+    } else {
+        assert(pindex->pprev != nullptr);
+        if (pindex->pprev->pstakeNode != nullptr) {
+
+        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus());
+        if (pindex->pstakeNode == nullptr)
+            return state.DoS(100,
+                error("AcceptBlock(): FetchStakeNode - Failed to get Stake data"),
+                REJECT_INVALID, "bad-stake-data");
+        }
+    }
+
+    // Header is valid/has work, merkle tree and segwit merkle tree are good...RELAY NOW
+    // (but if it does not build on our best tip, let the SendMessages loop relay it)
+    if (!IsInitialBlockDownload() && (chainActive.Tip() == pindex->pprev || (chainActive.Tip()->pprev && chainActive.Tip()->pprev == pindex->pprev)) )
+        GetMainSignals().NewPoWValidBlock(pindex, pblock);
 
     return true;
 }
@@ -4121,7 +4162,8 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
 bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase)
 {
     AssertLockHeld(cs_main);
-    assert(pindexPrev && pindexPrev == chainActive.Tip());
+    // we expect building on top of the current tip, also on the previous in case current tip has insufficient votes, also on a side chain with same height as current tip
+    assert(pindexPrev && (pindexPrev == chainActive.Tip() || pindexPrev == chainActive.Tip()->pprev || pindexPrev->nHeight == chainActive.Height()));
     CCoinsViewCache viewNew(pcoinsTip);
     CBlockIndex indexDummy(block);
     indexDummy.pprev = pindexPrev;
@@ -5544,7 +5586,7 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
     return pindex->pstakeNode;
 }
 
-std::set<const CBlockIndex*, CompareBlocksByHeight> GetChainTips()
+std::set<CBlockIndex*, CompareBlocksByHeight> GetChainTips()
 {
     /*
      * Idea:  the set of chain tips is chainActive.tip, plus orphan blocks which do not have another orphan building off of them.
@@ -5553,8 +5595,8 @@ std::set<const CBlockIndex*, CompareBlocksByHeight> GetChainTips()
      *  - Iterate through the orphan blocks. If the block isn't pointed to by another orphan, it is a chain tip.
      *  - add chainActive.Tip()
      */
-    std::set<const CBlockIndex*, CompareBlocksByHeight> setTips;
-    std::set<const CBlockIndex*> setOrphans;
+    std::set<CBlockIndex*, CompareBlocksByHeight> setTips;
+    std::set<CBlockIndex*> setOrphans;
     std::set<const CBlockIndex*> setPrevs;
 
     for (const auto& item : mapBlockIndex)

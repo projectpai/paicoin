@@ -26,6 +26,7 @@ public:
     virtual ~CAutoVoter();
 
     virtual void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) override;
+    virtual void NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock>& block) override;
 
     CAutoVoterConfig& GetConfig() { return config; }
 
@@ -39,6 +40,7 @@ private:
     CWallet* pwallet;
 
     std::atomic<bool> configured;
+    void DoVote(const CBlockIndex *pindexNew);
 };
 
 #endif // PAICOIN_WALLET_AUTOVOTER_AUTOVOTER_H
