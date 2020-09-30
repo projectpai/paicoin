@@ -21,12 +21,23 @@ CAutoVoter::~CAutoVoter()
     stop();
 }
 
+void CAutoVoter::NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock>&)
+{
+    LogPrintf("CAutoVoter: received NewPoWValidBlock, height=%d, pstake=%p\n", pindex->nHeight, pindex->pstakeNode);
+    DoVote(pindex);
+}
+
 void CAutoVoter::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *, bool fInitialDownload)
 {
     // we have to wait until the entire blockchain is downloaded
     if (fInitialDownload)
         return;
 
+    DoVote(pindexNew);
+}
+
+void CAutoVoter::DoVote(const CBlockIndex *pindexNew)
+{
     if (pwallet == nullptr)
         return;
 

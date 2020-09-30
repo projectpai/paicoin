@@ -111,7 +111,7 @@ void BlockAssembler::resetBlock()
     nFees = 0;
 }
 
-std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx)
+std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx, CBlockIndex* pUsePrevIndex)
 {
     int64_t nTimeStart = GetTimeMicros();
 
@@ -129,7 +129,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->vTxSigOpsCost.push_back(-1); // updated at end
 
     LOCK2(cs_main, mempool.cs);
-    CBlockIndex* pindexPrev = chainActive.Tip();
+    CBlockIndex* pindexPrev = (pUsePrevIndex != nullptr) ? pUsePrevIndex : chainActive.Tip();
     assert(pindexPrev != nullptr);
     nHeight = pindexPrev->nHeight + 1;
 
@@ -198,6 +198,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             if (nNewTickets >= chainparams.GetConsensus().nMaxFreshStakePerBlock) //new ticket purchases not more than max allowed in block
                 break;
 
+
             // do not include ticket transactions that are expired
             if (IsExpiredTx(tickettxiter->GetTx(), nHeight))
                 continue;
@@ -237,6 +238,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             const auto& ticketHash = revocationtxiter->GetTx().vin[revocationStakeInputIndex].prevout.hash;
             if (std::find(missedTickets.begin(), missedTickets.end(), ticketHash) == missedTickets.end())
                 continue; // Skip all missed tickets that we've never heard of
+
             auto txiter = mempool.mapTx.project<0>(revocationtxiter);
             AddToBlock(txiter);
             ++nNewRevocations;
@@ -473,9 +475,9 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
     {
         // First try to find a new transaction in mapTx to evaluate.
         if (mi != mempool.mapTx.get<ancestor_score>().end() &&
-                (SkipMapTxEntry(mempool.mapTx.project<0>(mi), mapModifiedTx, failedTx) ||
-                mi->GetTxClass() != TX_Regular) //we only deal with non-stake tx in this loop
-                ) {
+            (SkipMapTxEntry(mempool.mapTx.project<0>(mi), mapModifiedTx, failedTx) ||
+                mi->GetTxClass() != TX_Regular)) //we only deal with non-stake tx in this loop
+        {
             ++mi;
             continue;
         }
