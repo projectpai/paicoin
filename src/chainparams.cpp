@@ -182,13 +182,7 @@ public:
         consensus.nCoinbaseWhitelistExpiration = 144; // two weeks
 
         // hybrid consensus fork parameters
-        consensus.nHybridConsensusHeight = -1; // Never
-        consensus.hybridConsensusPowLimit = MAINNET_HYBRID_CONSENSUS_POW_LIMIT;
-        consensus.nHybridConsensusInitialDifficulty = MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
-        consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
-
-        // hybrid consensus fork parameters
-        consensus.nHybridConsensusHeight = 154350; // must be above coinbase maturity (>100)
+        consensus.nHybridConsensusHeight = 154550; // must be above coinbase maturity (>100)
         consensus.hybridConsensusPowLimit = MAINNET_HYBRID_CONSENSUS_POW_LIMIT;
         consensus.nHybridConsensusInitialDifficulty = MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
@@ -208,8 +202,8 @@ public:
         consensus.nStakeDiffWindows                 = 20;
         consensus.nStakeVersionInterval             = 144 * 2 * 7; // ~2 weeks
         consensus.nMaxFreshStakePerBlock            = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight               = 154862;         //Hybrid fork height + (consensus.nTicketMaturity * 2)
-        consensus.nStakeValidationHeight            = 155374;        // Stake enabled height + (consensus.nTicketMaturity * 2)
+        consensus.nStakeEnabledHeight               = 155062;         //Hybrid fork height + (consensus.nTicketMaturity * 2)
+        consensus.nStakeValidationHeight            = 155574;        // Stake enabled height + (consensus.nTicketMaturity * 2)
         consensus.stakeBaseSigScript                = CScript() << 0x00 << 0x00;
         consensus.nStakeMajorityMultiplier          = 3;
         consensus.nStakeMajorityDivisor             = 4;
@@ -271,10 +265,20 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
         // Note that of those with the service bits flag, most only support a subset of possible options
-        vSeeds.emplace_back("34.215.125.66", false);
-        vSeeds.emplace_back("13.58.110.183", false);
-        vSeeds.emplace_back("13.124.177.237", false);
-        vSeeds.emplace_back("193.112.7.193", false);
+        vSeeds.emplace_back("seed.projectpai.com", false);  //Project PAI Foundation - Fallback DNS
+        vSeeds.emplace_back("us-west-seed.projectpai.com", false);  //Project PAI Foundation
+        vSeeds.emplace_back("us-east-seed.projectpai.com", false); //Project PAI Foundation
+        vSeeds.emplace_back("seoul-seed.projectpai.com", false); //Project PAI Foundation
+        vSeeds.emplace_back("sing-seed.projectpai.com", false); //Project PAI Foundation
+        vSeeds.emplace_back("china-seed.projectpai.com", false); //Project PAI Foundation
+        vSeeds.emplace_back("painode.lanier.ai", false); //Lanier AI Labs
+        vSeeds.emplace_back("painode.everchain.site", false); //J1149
+        vSeeds.emplace_back("relay.j1149.com", false); //Ever Chain
+        vSeeds.emplace_back("pai-seed-ohio-1.paico.in", false); //MJH Technologies
+        vSeeds.emplace_back("pai-seed-china-1.paico.in", false); //MJH Technologies
+        vSeeds.emplace_back("paiseed.upandrunningsoftware.com", false); //Up and Running Software
+        vSeeds.emplace_back("paiseed.oben.me", false); //ObEN
+
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
@@ -455,7 +459,7 @@ public:
         vSeeds.emplace_back("52.78.224.215", false);
         vSeeds.emplace_back("13.251.4.241", false);
 
-        // vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
+        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 
         // same as for the CRegTestParams
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
