@@ -1,7 +1,11 @@
+//
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "policy/fees.h"
 #include "policy/policy.h"
@@ -180,6 +184,7 @@ TxConfirmStats::TxConfirmStats(const std::vector<double>& defaultBuckets,
     : buckets(defaultBuckets), bucketMap(defaultBucketMap)
 {
     decay = _decay;
+    assert(_scale != 0 && "_scale must be non-zero");
     scale = _scale;
     confAvg.resize(maxPeriods);
     for (unsigned int i = 0; i < maxPeriods; i++) {
@@ -418,6 +423,9 @@ void TxConfirmStats::Read(CAutoFile& filein, int nFileVersion, size_t numBuckets
             throw std::runtime_error("Corrupt estimates file. Decay must be between 0 and 1 (non-inclusive)");
         }
         filein >> scale;
+        if (scale == 0) {
+            throw std::runtime_error("Corrupt estimates file. Scale must be non-zero");
+        }
     }
 
     filein >> avg;
@@ -503,6 +511,7 @@ void TxConfirmStats::removeTx(unsigned int entryHeight, unsigned int nBestSeenHe
         }
     }
     if (!inBlock && (unsigned int)blocksAgo >= scale) { // Only counts as a failure if not confirmed for entire period
+        assert(scale != 0);
         unsigned int periodsAgo = blocksAgo / scale;
         for (size_t i = 0; i < periodsAgo && i < failAvg.size(); i++) {
             failAvg[i][bucketindex]++;

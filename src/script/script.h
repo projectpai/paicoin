@@ -1,7 +1,10 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_SCRIPT_SCRIPT_H
 #define PAICOIN_SCRIPT_SCRIPT_H
@@ -181,6 +184,8 @@ enum opcodetype
     OP_NOP9 = 0xb8,
     OP_NOP10 = 0xb9,
 
+    // a designator for the structured OP_RETURN format in which OP_RETURN is followed by OP_STRUCT rather than a push opcode
+    OP_STRUCT = 0xc0,
 
     // template matching params
     OP_SMALLINTEGER = 0xfa,
@@ -220,6 +225,13 @@ public:
     }
 
     static const size_t nDefaultMaxNumSize = 4;
+
+    // 64 bit integers may require upto 8 bytes for storage. To allow this, use
+    // nMaxNumSizeForInt64 in the CScriptNum constructor.
+    // Amounts are also represented as int64_t and even though they should be upper
+    // bounded by MAX_MONEY, values can easily get to more than 4 bytes in size.
+    // Therefore, this const is useful for amounts as well.
+    static const size_t nMaxNumSizeForInt64 = 8;
 
     explicit CScriptNum(const std::vector<unsigned char>& vch, bool fRequireMinimal,
                         const size_t nMaxNumSize = nDefaultMaxNumSize)
@@ -315,6 +327,11 @@ public:
             return std::numeric_limits<int>::max();
         else if (m_value < std::numeric_limits<int>::min())
             return std::numeric_limits<int>::min();
+        return m_value;
+    }
+
+    int64_t getint64() const
+    {
         return m_value;
     }
 

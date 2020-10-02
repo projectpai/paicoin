@@ -1,6 +1,10 @@
+//
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "key.h"
 
@@ -180,7 +184,7 @@ bool CKey::VerifyPubKey(const CPubKey& pubkey) const {
     std::string str = "PAIcoin key verification\n";
     GetRandBytes(rnd, sizeof(rnd));
     uint256 hash;
-    CHash256().Write((unsigned char*)str.data(), str.size()).Write(rnd, sizeof(rnd)).Finalize(hash.begin());
+    CSha256D().Write((unsigned char*)str.data(), str.size()).Write(rnd, sizeof(rnd)).Finalize(hash.begin());
     std::vector<unsigned char> vchSig;
     Sign(hash, vchSig);
     return pubkey.Verify(hash, vchSig);

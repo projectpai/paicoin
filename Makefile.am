@@ -1,3 +1,4 @@
+# Copyright (c) 2018-2020 The Project PAI Foundation
 # Copyright (c) 2013-2016 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -11,11 +12,6 @@ endif
 
 GZIP_ENV="-9n"
 export PYTHONPATH
-
-if BUILD_PAICOIN_LIBS
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libpaicoinconsensus.pc
-endif
 
 PAICOIND_BIN=$(top_builddir)/src/$(PAICOIN_DAEMON_NAME)$(EXEEXT)
 PAICOIN_QT_BIN=$(top_builddir)/src/qt/$(PAICOIN_GUI_NAME)$(EXEEXT)

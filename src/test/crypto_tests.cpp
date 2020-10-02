@@ -1,6 +1,10 @@
-// Copyright (c) 2014-2016 The Bitcoin Core developers
+//
+// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "crypto/aes.h"
 #include "crypto/chacha20.h"
@@ -11,6 +15,7 @@
 #include "crypto/hmac_sha256.h"
 #include "crypto/hmac_sha512.h"
 #include "random.h"
+#include "hash.h"
 #include "utilstrencodings.h"
 #include "test/test_paicoin.h"
 
@@ -55,6 +60,7 @@ void TestSHA1(const std::string &in, const std::string &hexout) { TestVector(CSH
 void TestSHA256(const std::string &in, const std::string &hexout) { TestVector(CSHA256(), in, ParseHex(hexout));}
 void TestSHA512(const std::string &in, const std::string &hexout) { TestVector(CSHA512(), in, ParseHex(hexout));}
 void TestRIPEMD160(const std::string &in, const std::string &hexout) { TestVector(CRIPEMD160(), in, ParseHex(hexout));}
+void TestSHAKE256(const std::string &in, const std::string &hexout) { TestVector(CShake256(), in, ParseHex(hexout));}
 
 void TestHMACSHA256(const std::string &hexkey, const std::string &hexin, const std::string &hexout) {
     std::vector<unsigned char> key = ParseHex(hexkey);
@@ -305,6 +311,10 @@ BOOST_AUTO_TEST_CASE(sha512_testvectors) {
                "37de8c3ef5459d76a52cedc02dc499a3c9ed9dedbfb3281afd9653b8a112fafc");
 }
 
+BOOST_AUTO_TEST_CASE(shake256_testvectors) {
+    TestSHAKE256("", "AB0BAE316339894304E35877B0C28A9B1FD166C796B9CC258A064A8F57E27F2A");
+}
+
 BOOST_AUTO_TEST_CASE(hmac_sha256_testvectors) {
     // test cases 1, 2, 3, 4, 6 and 7 of RFC 4231
     TestHMACSHA256("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
@@ -503,6 +513,31 @@ BOOST_AUTO_TEST_CASE(countbits_tests)
             }
         }
     }
+}
+
+// test SHAKE256 block header hashing
+BOOST_AUTO_TEST_CASE(shake256_blockheader_hashing_test)
+{
+    uint8_t input[] = {0x00, 0x00, 0x00, 0xa0, 0x8d, 0xe0, 0x9d, 0xe1, 0x71, 0xc8, 0xb0, 0xb3, 0x80, 0x8a, 0x21, 0x44,
+                       0xf6, 0x19, 0x65, 0x1f, 0x21, 0x0a, 0xdc, 0x8f, 0x77, 0x11, 0x00, 0x03, 0x4d, 0xc8, 0x2f, 0xad,
+                       0x56, 0x19, 0xbb, 0x79, 0x8c, 0xd4, 0xcb, 0x6c, 0x2a, 0x16, 0x93, 0x96, 0x2e, 0xc1, 0xe9, 0x06,
+                       0x4c, 0x4a, 0x04, 0xaa, 0x91, 0xfa, 0x37, 0x44, 0xbe, 0xa7, 0xa1, 0xb5, 0x46, 0x84, 0x35, 0xde,
+                       0x10, 0x6b, 0x6f, 0xb7, 0x86, 0x00, 0x14, 0x5f, 0xff, 0xff, 0x7f, 0x20, 0x27, 0x01, 0x00, 0x00,
+                       0x00, 0x00, 0xd5, 0x2a, 0xe3, 0x11, 0xea, 0x02, 0x34, 0x12, 0x78, 0x56, 0x34, 0x12, 0x12, 0x34,
+                       0x56, 0x78, 0x90, 0xab, 0x34, 0x12, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
+                       0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
+                       0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x78, 0x56, 0x34, 0x12};
+
+    uint256 expectedOutput({0xe6, 0x5f, 0x1b, 0x5b, 0xe2, 0x83, 0x16, 0x8b, 0x98, 0x1e, 0xa5, 0x4e, 0xb3, 0xe2, 0x66, 0xf3,
+                           0x42, 0x54, 0x28, 0xb0, 0x62, 0x9a, 0x2a, 0xfe, 0xa8, 0x0c, 0x5f, 0x82, 0x97, 0x4f, 0x5d, 0x55});
+
+    uint256 md;
+
+    CShake256 shake256;
+    shake256.Write(input, sizeof(input));
+    shake256.Finalize(md.begin());
+
+    BOOST_CHECK(md == expectedOutput);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

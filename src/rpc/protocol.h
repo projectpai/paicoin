@@ -1,7 +1,10 @@
-// Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_RPCPROTOCOL_H
 #define PAICOIN_RPCPROTOCOL_H
@@ -39,6 +42,7 @@ enum class RPCErrorCode
     VERIFY_REJECTED             = -26, //!< Transaction or block was rejected by network rules
     VERIFY_ALREADY_IN_CHAIN     = -27, //!< Transaction already in chain
     IN_WARMUP                   = -28, //!< Client still warming up
+    METHOD_DEPRECATED           = -32, //!< RPC method is deprecated
 
     //! Aliases for backward compatibility
     TRANSACTION_ERROR           = VERIFY_ERROR,

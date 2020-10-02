@@ -1,6 +1,10 @@
+//
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #if defined(HAVE_CONFIG_H)
 #include "config/paicoin-config.h"
@@ -67,6 +71,7 @@ static int AppInitRawTx(int argc, char* argv[])
         strUsage += HelpMessageOpt("-create", _("Create new, empty TX."));
         strUsage += HelpMessageOpt("-json", _("Select JSON output"));
         strUsage += HelpMessageOpt("-txid", _("Output only the hex-encoded transaction id of the resultant transaction."));
+        strUsage += HelpMessageOpt("-stake", _("Output stake information"));
         AppendParamsHelpMessages(strUsage);
 
         fprintf(stdout, "%s", strUsage.c_str());
@@ -682,10 +687,10 @@ static void MutateTx(CMutableTransaction& tx, const std::string& command,
     else if (command == "outaddr")
         MutateTxAddOutAddr(tx, commandVal);
     else if (command == "outpubkey") {
-        if (!ecc) { ecc.reset(new Secp256k1Init()); }
+        ecc.reset(new Secp256k1Init());
         MutateTxAddOutPubKey(tx, commandVal);
     } else if (command == "outmultisig") {
-        if (!ecc) { ecc.reset(new Secp256k1Init()); }
+        ecc.reset(new Secp256k1Init());
         MutateTxAddOutMultiSig(tx, commandVal);
     } else if (command == "outscript")
         MutateTxAddOutScript(tx, commandVal);
@@ -693,7 +698,7 @@ static void MutateTx(CMutableTransaction& tx, const std::string& command,
         MutateTxAddOutData(tx, commandVal);
 
     else if (command == "sign") {
-        if (!ecc) { ecc.reset(new Secp256k1Init()); }
+        ecc.reset(new Secp256k1Init());
         MutateTxSign(tx, commandVal);
     }
 
@@ -707,10 +712,10 @@ static void MutateTx(CMutableTransaction& tx, const std::string& command,
         throw std::runtime_error("unknown command");
 }
 
-static void OutputTxJSON(const CTransaction& tx)
+static void OutputTxJSON(const CTransaction& tx, bool includeStake)
 {
     UniValue entry(UniValue::VOBJ);
-    TxToUniv(tx, uint256(), entry);
+    TxToUniv(tx, uint256(), entry, includeStake);
 
     std::string jsonOutput = entry.write(4);
     fprintf(stdout, "%s\n", jsonOutput.c_str());
@@ -733,7 +738,7 @@ static void OutputTxHex(const CTransaction& tx)
 static void OutputTx(const CTransaction& tx)
 {
     if (gArgs.GetBoolArg("-json", false))
-        OutputTxJSON(tx);
+        OutputTxJSON(tx, gArgs.GetBoolArg("-stake", false));
     else if (gArgs.GetBoolArg("-txid", false))
         OutputTxHash(tx);
     else

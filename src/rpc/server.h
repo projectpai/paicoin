@@ -1,7 +1,10 @@
-// Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_RPCSERVER_H
 #define PAICOIN_RPCSERVER_H
@@ -171,6 +174,8 @@ public:
     bool appendCommand(const std::string& name, const CRPCCommand* pcmd);
 };
 
+bool IsDeprecatedRPCEnabled(const std::string& method);
+
 extern CRPCTable tableRPC;
 
 /**
@@ -189,7 +194,7 @@ extern std::string HelpExampleRpc(const std::string& methodname, const std::stri
 bool StartRPC();
 void InterruptRPC();
 void StopRPC();
-std::string JSONRPCExecBatch(const UniValue& vReq);
+std::string JSONRPCExecBatch(const JSONRPCRequest& jreq, const UniValue& vReq);
 
 // Retrieves any serialization flags requested in command line argument
 int RPCSerializationFlags();

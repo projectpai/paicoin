@@ -1,6 +1,10 @@
+//
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #if defined(HAVE_CONFIG_H)
 #include "config/paicoin-config.h"
@@ -19,6 +23,7 @@
 #include "undo.h"
 #include "version.h"
 #include "pubkey.h"
+#include "blockencodings.h"
 
 #include <stdint.h>
 #include <unistd.h>
@@ -45,6 +50,8 @@ enum TEST_ID {
     CBLOOMFILTER_DESERIALIZE,
     CDISKBLOCKINDEX_DESERIALIZE,
     CTXOUTCOMPRESSOR_DESERIALIZE,
+    BLOCKTRANSACTIONS_DESERIALIZE,
+    BLOCKTRANSACTIONSREQUEST_DESERIALIZE,
     TEST_ID_END
 };
 
@@ -241,6 +248,26 @@ int test_one_input(std::vector<uint8_t> buffer) {
             try
             {
                 ds >> toc;
+            } catch (const std::ios_base::failure& e) {return 0;}
+
+            break;
+        }
+        case BLOCKTRANSACTIONS_DESERIALIZE:
+        {
+            try
+            {
+                BlockTransactions bt;
+                ds >> bt;
+            } catch (const std::ios_base::failure& e) {return 0;}
+
+            break;
+        }
+        case BLOCKTRANSACTIONSREQUEST_DESERIALIZE:
+        {
+            try
+            {
+                BlockTransactionsRequest btr;
+                ds >> btr;
             } catch (const std::ios_base::failure& e) {return 0;}
 
             break;

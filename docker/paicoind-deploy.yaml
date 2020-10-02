@@ -1,0 +1,376 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: paicoin-service1
+spec:
+  ports:
+  - port: 18566
+    name: rpc
+  - port: 18567
+    name: connect
+  selector:
+    app: paicoin-node1
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: paicoin-service2
+spec:
+  ports:
+  - port: 18566
+    name: rpc
+  - port: 18567
+    name: connect
+  selector:
+    app: paicoin-node2
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: miningcore-service
+spec:
+  ports:
+  - port: 3052
+    name: stratum
+  selector:
+    app: miningcore-live
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: explorer-service
+spec:
+  type: NodePort
+  ports:
+  - targetPort: 8079
+    port: 8079
+  selector:
+    app: explorer-live
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paicoin-config-map
+data:
+  paicoin.conf: |-
+    server=1
+    bantime=1
+    daemon=0
+    rpcuser=paicoin
+    rpcpassword=PAI
+    # rpcport=4002 # use default 18566
+    rpcallowip=0.0.0.0/0
+    rpcbind=0.0.0.0
+    testnet=1
+    reindex=1
+    # txindex=1
+    onlynet=ipv4
+    listenonion=0
+    listen=1
+    printtoconsole=1
+    datadir=/root/data
+    # dnsseed=0
+    # connect=0
+    autostake=1
+    tblimit=5
+    # checklevel=4
+    maxtipage = 8640000 # this is default = 100 days in seconds
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: paicoin-node1
+spec:
+  selector:
+    matchLabels:
+      app: paicoin-node1
+  serviceName: paicoin-service1
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: paicoin-node1
+    spec:
+      volumes:
+      - name: paicoin-datadir
+        # emptyDir: {}
+        hostPath:
+          path: /datadir/paicoin-node1
+      - name: paicoin-config
+        configMap:
+          name: paicoin-config-map
+          items:
+            - key: paicoin.conf
+              path: paicoin.conf
+      containers:
+      - name: paicoin-node
+        image: feature/hybrid-consensus/kubernetes:0.16.1
+        # lifecycle:
+        #   preStop:
+        #     exec:
+        #       command: ["/bin/sh", "-c", "paicoin-cli stop"]
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 18566
+          name: rpc
+        - containerPort: 18567
+          name: connect
+        command: ["/bin/bash", "-c"]
+        args:
+        - paicoind -connect=$PAICOIN_SERVICE2_SERVICE_HOST
+        # args:
+        # - sleep 2;
+        #   CONNECTS=$(busybox nslookup paicoin-service | grep $(hostname -d) | grep -v $(hostname) | awk '{print $3}' | while read line || [[ -n $line ]]; do echo -n ' -connect='$line; done);
+        #   echo $CONNECTS;
+        #   paicoind $CONNECTS;
+        volumeMounts:
+          - mountPath: /root/data
+            name: paicoin-datadir
+          - mountPath: /root/.paicoin
+            name: paicoin-config
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: paicoin-node2
+spec:
+  selector:
+    matchLabels:
+      app: paicoin-node2
+  serviceName: paicoin-service2
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: paicoin-node2
+    spec:
+      volumes:
+      - name: paicoin-datadir
+        # emptyDir: {}
+        hostPath:
+          path: /datadir/paicoin-node2
+      - name: paicoin-config
+        configMap:
+          name: paicoin-config-map
+          items:
+            - key: paicoin.conf
+              path: paicoin.conf
+      containers:
+      - name: paicoin-node
+        image: feature/hybrid-consensus/kubernetes:0.16.1
+        # lifecycle:
+          # postStart:
+            # exec:
+              # command: ["/bin/sh", "-c", "while [ $(paicoin-cli importprivkey aTHcf6yqGwRE4ntF8Hvy2vgCnzDKnBnHFiRCHEniQYUYfWNPx9XZ) != \"\"]; do sleep 5; done"]
+          # preStop:
+          #   exec:
+          #     command: ["/bin/sh", "-c", "paicoin-cli stop"]
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 18566
+          name: rpc
+        - containerPort: 18567
+          name: connect
+        command: ["/bin/bash", "-c"]
+        args:
+        - paicoind -connect=$PAICOIN_SERVICE1_SERVICE_HOST -blocknotify='busybox wget http://$EXPLORER_SERVICE_SERVICE_HOST:$EXPLORER_SERVICE_SERVICE_PORT/update/%s'
+        volumeMounts:
+          - mountPath: /root/data
+            name: paicoin-datadir
+          - mountPath: /root/.paicoin
+            name: paicoin-config
+      initContainers:
+      - name: init-paicoin-service
+        image: busybox:1.28
+        command: ['sh', '-c', "until nslookup paicoin-service1; do echo waiting for paicoin-service1; sleep 2; done"]
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: miningcore
+spec:
+  selector:
+    matchLabels:
+      app: miningcore-live
+  serviceName: miningcore-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: miningcore-live
+    spec:
+      containers:
+      - name: postgres
+        image: postgres-miningcore:latest
+        imagePullPolicy: Never
+        ports:
+          - containerPort: 5432
+      - name: miningcore
+        image: pai-miningcore:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3052
+          name: stratum
+        env:
+        - name: POSTGRES_HOST
+          value: localhost
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_USER
+          value: miningcore
+        - name: POSTGRES_PASSWORD
+          value: miningcore1234
+        - name: POSTGRES_DATABASE
+          value: miningcore
+        - name: PHONE_NUMBER_UNIQUE
+          value: "000"
+        - name: PAICOIND_HOST
+          value: "$(PAICOIN_SERVICE2_SERVICE_HOST)"
+        - name: PAICOIND_PORT
+          value: "$(PAICOIN_SERVICE2_SERVICE_PORT_RPC)"
+        - name: PAICOIND_USER
+          value: paicoin
+        - name: PAICOIND_PASSWORD
+          value: PAI
+        - name: PAYMENT_SCHEME
+          value: PPLNS
+        - name: POOL_ADDRESS
+          value: MpT49fdZpetioCyWXU3BiCNHVnMFL27XbK
+      initContainers:
+      - name: init-paicoin-service
+        image: busybox:1.28
+        command: ['sh', '-c', "until nslookup paicoin-service2; do echo waiting for paicoin-service2; sleep 2; done"]
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cpuminer
+spec:
+  selector:
+    matchLabels:
+      app: cpuminer-live
+  serviceName: cpuminer-service
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: cpuminer-live
+    spec:
+      containers:
+      - name: cpuminer
+        # image: cpuminer:latest
+        image: cpuminer-upd:latest
+        imagePullPolicy: Never
+        command: ["/bin/bash", "-c"]
+        args:
+        - echo "on stratum+tcp://$MININGCORE_SERVICE_SERVICE_HOST:$MININGCORE_SERVICE_SERVICE_PORT_STRATUM/";
+          ./minerd -o stratum+tcp://$MININGCORE_SERVICE_SERVICE_HOST:$MININGCORE_SERVICE_SERVICE_PORT_STRATUM/ -u paicoin -p PAI -a paicoin
+          # echo "on http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC/";
+          # ./minerd -o http://$PAICOIN_SERVICE2_SERVICE_HOST:$PAICOIN_SERVICE2_SERVICE_PORT_RPC/ -u paicoin -p PAI -a paicoin --no-longpoll --no-getwork --no-stratum --coinbase-addr=MpT49fdZpetioCyWXU3BiCNHVnMFL27XbK
+      initContainers:
+      - name: init-paicoin-service
+        image: busybox:1.28
+        command: ['sh', '-c', "until nslookup miningcore-service; do echo waiting for miningcore-service; sleep 2; done"]
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: explorer
+spec:
+  selector:
+    matchLabels:
+      app: explorer-live
+  serviceName: explorer-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: explorer-live
+    spec:
+      containers:
+      - name: mongo
+        image: mongo:latest
+        env:
+         - name: MONGO_INITDB_ROOT_USERNAME
+           value: paiexplorer
+         - name: MONGO_INITDB_ROOT_PASSWORD
+           value: paiexplorer1234
+        # command: ["mongod", "--auth"]
+        ports:
+          - containerPort: 27017
+        imagePullPolicy: Never
+      - name: redis
+        image: redis:latest
+        ports:
+          - containerPort: 6379
+        imagePullPolicy: Never
+      - name: explorer
+        image: dreg-or.oben.me/projectpai/block-explorer:latest
+        imagePullPolicy: Never
+        ports:
+          - containerPort: 8079
+        env:
+          - name: SERVER_PORT
+            value: "8079"
+          - name: REDIS_HOST
+            value: localhost
+          - name: REDIS_PORT
+            value: "6379"
+          - name: COIN
+            value: paicoin
+          - name: COIN_NETWORK
+            value: paitestnet
+          - name: GENESIS_TX
+            value: 017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19
+          - name: GENESIS_BLOCK
+            value: 000007becd450bd8af0085d8a81da851a91c4cd1913bbb2d085ad560793b5001
+          - name: JSON_RPC_USERNAME
+            value: paicoin
+          - name: JSON_RPC_PASSWORD
+            value: PAI
+          - name: MONGODB_HOST
+            value: localhost
+          - name: MONGODB_USERNAME
+            value: paiexplorer
+          - name: MONGODB_PASSWORD
+            value: paiexplorer1234
+          - name: SPRING_PROFILES_ACTIVE
+            value: local
+          - name: DEPLOYMENT_MODE
+            value: READ_WRITE
+        command: ["/bin/sh", "-c"]
+        args:
+        - java -jar /block-explorer.jar
+          --server.port=$SERVER_PORT
+          --redis.host=$REDIS_HOST --redis.port=$REDIS_PORT
+          --coin=$COIN --coin.network=$COIN_NETWORK --genesis.tx=$GENESIS_TX --genesis.block=$GENESIS_BLOCK
+          --json.rpc.username=$JSON_RPC_USERNAME --json.rpc.password=$JSON_RPC_PASSWORD 
+          --json.rpc.endpoint=http://$PAICOIN_SERVICE1_SERVICE_HOST:$PAICOIN_SERVICE1_SERVICE_PORT_RPC
+          --spring.data.mongodb.host=$MONGODB_HOST 
+          --spring.data.mongodb.username=$MONGODB_USERNAME
+          --spring.data.mongodb.password=$MONGODB_PASSWORD
+          # --MONGO_USERNAME=$MONGODB_USERNAME --MONGO_PASSWORD=$MONGODB_PASSWORD
+          # --SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE
+          # --DEPLOYMENT_MODE=$DEPLOYMENT_MODE -debug
+      initContainers:
+      - name: init-paicoin-service
+        image: busybox:1.28
+        command: ['sh', '-c', "until nslookup paicoin-service1; do echo waiting for paicoin-service1; sleep 2; done"]

@@ -1,7 +1,11 @@
+//
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "keystore.h"
 
@@ -62,6 +66,20 @@ bool CBasicKeyStore::GetCScript(const CScriptID &hash, CScript& redeemScriptOut)
         return true;
     }
     return false;
+}
+
+std::vector<std::pair<CScriptID, CScript>> CBasicKeyStore::GetAllCScripts() const
+{
+    LOCK(cs_KeyStore);
+
+    std::vector<std::pair<CScriptID, CScript>> allScripts;
+    allScripts.reserve(mapScripts.size());
+
+    for (auto const& scriptIDToScript : mapScripts) {
+        allScripts.push_back(scriptIDToScript);
+    }
+
+    return allScripts;
 }
 
 static bool ExtractPubKey(const CScript &dest, CPubKey& pubKeyOut)

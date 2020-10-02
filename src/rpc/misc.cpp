@@ -1,7 +1,11 @@
-// Copyright (c) 2010 Satoshi Nakamoto
+//
+// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include <chain.h>
 #include <clientversion.h>
@@ -10,6 +14,7 @@
 #include <key_io.h>
 #include <validation.h>
 #include <httpserver.h>
+#include <txmempool.h>
 #include <net.h>
 #include <netbase.h>
 #include <rpc/blockchain.h>
@@ -27,6 +32,8 @@
 #include <stdint.h>
 #include <iterator>
 #include <string>
+#include <bitset>
+#include <boost/dynamic_bitset.hpp>
 #ifdef HAVE_MALLOC_INFO
 #include <malloc.h>
 #endif
@@ -77,6 +84,113 @@ public:
     }
 };
 #endif
+
+UniValue existsaddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "existsaddress \"address\"\n"
+            "\nTest for the existence of the provided address.\n"
+            "\nArguments:\n"
+            "1. \"address\"     (string, required) The paicoin address to check\n"
+            "\nResult:\n"
+            "   Bool showing if address exists or not"
+            "\nExamples:\n"
+            + HelpExampleCli("existsaddress", "\"1PSSGeFHDnKNxiEyFrD1wcEaHr9hrQDDWc\"")
+            + HelpExampleRpc("existsaddress", "\"1PSSGeFHDnKNxiEyFrD1wcEaHr9hrQDDWc\"")
+        };
+
+    auto addrStr = request.params[0].get_str();
+    auto addrExists = AddressExistsInIndex(addrStr);
+
+    UniValue ret{UniValue::VBOOL};
+    ret.setBool(addrExists);
+
+    return ret;
+}
+
+std::string BitsetToHexStr(const boost::dynamic_bitset<uint8_t>& bitset)
+{
+    std::vector<uint8_t> bitsetVec;
+    boost::to_block_range(bitset, std::back_inserter(bitsetVec));
+
+    return HexStr(bitsetVec.data(), bitsetVec.data() + bitsetVec.size());
+}
+
+UniValue existsaddresses(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "existsaddresses \"addresses\"\n"
+            "\nTest for the existence of the provided addresses in the blockchain or memory pool.\n"
+            "\nArguments:\n"
+            "1. \"addresses\"     (array, required) The paicoin addresses to check\n"
+            "\nResult:\n"
+            "   Bitset of bools showing if addresses exist or not"
+            "\nExamples:\n"
+            + HelpExampleCli("existsaddresses", "'[{ \"address\": \"<my address>\" },"
+                                                  "{ \"address\": \"<my 2nd address>\" }]'")
+            + HelpExampleRpc("existsaddresses", "'[{ \"address\": \"<my address>\" },"
+                                                  "{ \"address\": \"<my 2nd address>\" }]'")
+        };
+
+    auto addresses = request.params[0].get_array();
+    auto const& addrValues = addresses.getValues();
+    auto numValues = addrValues.size();
+    boost::dynamic_bitset<uint8_t> existsAddresses(addresses.size());
+
+    for (auto addrIndex = 0u; addrIndex < numValues; ++addrIndex) {
+        auto const& addrKV = addrValues[addrIndex];
+        auto const& addr = addrKV.getValues()[0].get_str();
+
+        bool addrExists = AddressExistsInIndex(addr);
+        existsAddresses[addrIndex] = addrExists ? 1 : 0;
+    }
+
+    auto bitsetAsStr = BitsetToHexStr(existsAddresses);
+
+    UniValue ret{UniValue::VSTR, bitsetAsStr};
+    return ret;
+}
+
+UniValue existsmempooltxs(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "existsmempooltxs \"txhashes\"\n"
+            "\nTest for the existence of the provided txs in the mempool.\n"
+            "\nArguments:\n"
+            "1. \"txhashes\"    (array, required)   Array of hashes to check\n"
+            "\nResult:\n"
+            "   Bool blob showing if txs exist in the mempool or not"
+            "\nExamples:\n"
+            + HelpExampleCli("existsmempooltxs", "[\"txhash1\", \"txhash2\"]")
+            + HelpExampleRpc("existsmempooltxs", "[\"txhash1\", \"txhash2\"]")
+        };
+
+    // TODO read the array containing tx hashes, txhashblob is obsolete in Decred
+    std::string txHashBlob = request.params[0].get_str();
+    if ((txHashBlob.size() % 64) != 0) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid txhashblob");
+    }
+
+    auto numTxs = txHashBlob.size() / 64;
+    boost::dynamic_bitset<uint8_t> existsMemPoolTxs(numTxs);
+    auto hashIt = txHashBlob.data();
+
+    for (auto txIdx = 0u; txIdx < numTxs; ++txIdx, hashIt += 64) {
+        std::string txhash(hashIt, hashIt + 64);
+        const auto& txHash = uint256S(txhash);
+
+        auto txExists = mempool.exists(txHash);
+        existsMemPoolTxs[txIdx] = txExists ? 1 : 0;
+    }
+
+    auto bitsetAsStr = BitsetToHexStr(existsMemPoolTxs);
+
+    UniValue ret{UniValue::VSTR, bitsetAsStr};
+    return ret;
+}
 
 UniValue validateaddress(const JSONRPCRequest& request)
 {
@@ -564,6 +678,9 @@ static const CRPCCommand commands[] =
   //  --------------------- ------------------------  -----------------------  ----------
     { "control",            "getmemoryinfo",          &getmemoryinfo,          {"mode"} },
     { "util",               "validateaddress",        &validateaddress,        {"address"} }, /* uses wallet if enabled */
+    { "util",               "existsaddress",          &existsaddress,          {"address"} },
+    { "util",               "existsaddresses",        &existsaddresses,        {"addresses"} },
+    { "util",               "existsmempooltxs",       &existsmempooltxs,       {"txhashes"} },
     { "util",               "createmultisig",         &createmultisig,         {"nrequired","keys"} },
     { "util",               "verifymessage",          &verifymessage,          {"address","signature","message"} },
     { "util",               "signmessagewithprivkey", &signmessagewithprivkey, {"privkey","message"} },

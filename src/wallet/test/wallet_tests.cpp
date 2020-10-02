@@ -1,6 +1,10 @@
-// Copyright (c) 2012-2016 The Bitcoin Core developers
+//
+// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "wallet/wallet.h"
 
@@ -386,7 +390,7 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
     {
         CWallet wallet;
         AddKey(wallet, coinbaseKey);
-        BOOST_CHECK_EQUAL(nullBlock, wallet.ScanForWalletTransactions(oldTip));
+        BOOST_CHECK(nullBlock == wallet.ScanForWalletTransactions(oldTip, nullptr));
         // PAICOIN Note: If the initial block subsidy has been changed,
         // update this sum with the correct value
         BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 3000 * COIN);
@@ -401,7 +405,7 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
     {
         CWallet wallet;
         AddKey(wallet, coinbaseKey);
-        BOOST_CHECK_EQUAL(oldTip, wallet.ScanForWalletTransactions(oldTip));
+        BOOST_CHECK(oldTip == wallet.ScanForWalletTransactions(oldTip, nullptr));
         // PAICOIN Note: If the initial block subsidy has been changed,
         // update the subsidy with the correct value
         BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 1500 * COIN);
@@ -611,7 +615,7 @@ public:
         bool firstRun;
         wallet->LoadWallet(firstRun);
         AddKey(*wallet, coinbaseKey);
-        wallet->ScanForWalletTransactions(chainActive.Genesis());
+        wallet->ScanForWalletTransactions(chainActive.Genesis(), nullptr);
     }
 
     ~ListCoinsTestingSetup()

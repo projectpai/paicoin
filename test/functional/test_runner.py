@@ -56,17 +56,20 @@ BASE_SCRIPTS= [
     # Longest test should go first, to favor running tests in parallel
     'wallet-hd.py',
     'walletbackup.py',
+    'multinode_stake_sync.py',
     # vv Tests less than 5m vv
     'p2p-fullblocktest.py',
     'fundrawtransaction.py',
     'p2p-compactblocks.py',
     'segwit.py',
+    'rpc_ticket_operations.py',
     # vv Tests less than 2m vv
     'wallet.py',
     'wallet-accounts.py',
     'p2p-segwit.py',
     'wallet-dump.py',
     'listtransactions.py',
+    'multinode_tickets_before_hybrid_fork.py',
     # vv Tests less than 60s vv
     'sendheaders.py',
     'zapwallettxes.py',
@@ -78,6 +81,7 @@ BASE_SCRIPTS= [
     'bip68-112-113-p2p.py',
     'rawtransactions.py',
     'reindex.py',
+    'searchrawtransactions.py',
     # vv Tests less than 30s vv
     'keypool-topup.py',
     'zmq_test.py',
@@ -98,6 +102,7 @@ BASE_SCRIPTS= [
     'disconnect_ban.py',
     'decodescript.py',
     'blockchain.py',
+    'deprecated_rpc.py',
     'disablewallet.py',
     'net.py',
     'keypool.py',
@@ -123,6 +128,15 @@ BASE_SCRIPTS= [
     'resendwallettransactions.py',
     'minchainwork.py',
     'rpc_help.py',
+    'p2p-acceptblock.py',
+    'p2p-fingerprint.py',
+    'wallet_balance.py',
+    'wallet_stake_api.py',
+    'wallet_multisig_api.py',
+    'wallet_ticket_api.py',
+    'rpc_search_operations.py',
+    'rpc_node_operations.py',
+    'multinode_hybrid_fork.py',
 ]
 
 EXTENDED_SCRIPTS = [
@@ -148,10 +162,12 @@ EXTENDED_SCRIPTS = [
     'example_test.py',
     'txn_doublespend.py',
     'txn_clone.py --mineblock',
-    'forknotify.py',
+    'notifications.py',
     'invalidateblock.py',
-    'p2p-acceptblock.py',
     'replace-by-fee.py',
+    'stake_api.py',
+    'infoop.py',
+    'searchapi.py',
 ]
 
 # Place EXTENDED_SCRIPTS first since it has the 3 longest running tests

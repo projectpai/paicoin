@@ -1,14 +1,20 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+//
+// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "policy/policy.h"
 #include "txmempool.h"
 #include "util.h"
+#include "stake/extendedvotebits.h"
 
 #include "test/test_paicoin.h"
 
 #include <boost/test/unit_test.hpp>
+#include <boost/range/iterator_range.hpp>
 #include <list>
 #include <vector>
 
@@ -114,6 +120,173 @@ void CheckSort(CTxMemPool &pool, std::vector<std::string> &sortedOrder)
     for (; it != pool.mapTx.get<name>().end(); ++it, ++count) {
         BOOST_CHECK_EQUAL(it->GetTx().GetHash().ToString(), sortedOrder[count]);
     }
+}
+
+//TODO move these in a common place, now a verbatim copy from transaction_tests.cpp
+CMutableTransaction CreateDummyBuyTicket(const CAmount& contribution)
+{
+    CMutableTransaction mtx;
+
+    // create a dummy input to fund the transaction
+    mtx.vin.push_back(CTxIn());
+
+    // create a structured OP_RETURN output containing tx declaration
+    BuyTicketData buyTicketData = { 1 };    // version
+    CScript declScript = GetScriptForBuyTicketDecl(buyTicketData);
+    mtx.vout.push_back(CTxOut(0, declScript));
+
+    // create an output that pays dummy ticket stake
+    auto stakeKey = CKey();
+    stakeKey.MakeNewKey(false);
+    auto stakeAddr = stakeKey.GetPubKey().GetID();
+    CScript stakeScript = GetScriptForDestination(stakeAddr);
+    CAmount dummyStakeAmount = 50;
+    mtx.vout.push_back(CTxOut(dummyStakeAmount, stakeScript));
+
+    // create an OP_RETURN push containing a dummy address to send rewards to, and the amount contributed to stake
+    auto rewardKey = CKey();
+    rewardKey.MakeNewKey(false);
+    auto rewardAddr = rewardKey.GetPubKey().GetID();
+    const auto& ticketContribData = TicketContribData{ 1, rewardAddr, contribution, 0, TicketContribData::DefaultFeeLimit };
+    CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
+    mtx.vout.push_back(CTxOut(0, contributorInfoScript));
+
+    // create an output which pays back dummy change
+    auto changeKey = CKey();
+    changeKey.MakeNewKey(false);
+    auto changeAddr = changeKey.GetPubKey().GetID();
+    CScript changeScript = GetScriptForDestination(changeAddr);
+    CAmount dummyChange = 30;
+    mtx.vout.push_back(CTxOut(dummyChange, changeScript));
+
+    return mtx;
+}
+
+CMutableTransaction CreateDummyVote(const uint256& blockHashToVoteOn)
+{
+    CMutableTransaction mtx;
+
+    // create a reward generation input
+    mtx.vin.push_back(CTxIn(COutPoint()));
+
+    // create an input from a dummy BuyTicket stake
+    uint256 dummyBuyTicketTxHash = uint256();
+    mtx.vin.push_back(CTxIn(COutPoint(dummyBuyTicketTxHash, ticketStakeOutputIndex)));
+
+    // create a structured OP_RETURN output containing tx declaration and dummy voting data
+    uint32_t dummyBlockHeight = 55;
+    VoteBits dummyVoteBits = VoteBits::rttAccepted;
+    ExtendedVoteBits dummyExtendedVoteBits;
+    VoteData voteData = { 1, blockHashToVoteOn, dummyBlockHeight, dummyVoteBits, defaultVoterStakeVersion, dummyExtendedVoteBits };
+    CScript declScript = GetScriptForVoteDecl(voteData);
+    mtx.vout.push_back(CTxOut(0, declScript));
+
+    // Create an output which pays back a dummy reward
+    auto changeKey = CKey();
+    changeKey.MakeNewKey(false);
+    auto rewardAddr = changeKey.GetPubKey().GetID();
+    CScript rewardScript = GetScriptForDestination(rewardAddr);
+    CAmount dummyReward = 60;
+    mtx.vout.push_back(CTxOut(dummyReward, rewardScript));
+
+    return mtx;
+}
+
+CMutableTransaction CreateDummyRevokeTicket()
+{
+    CMutableTransaction mtx;
+
+    // create an input from a dummy BuyTicket stake
+    uint256 dummyBuyTicketTxHash = uint256();
+    mtx.vin.push_back(CTxIn(COutPoint(dummyBuyTicketTxHash, ticketStakeOutputIndex)));
+
+    // create a structured OP_RETURN output containing tx declaration
+    RevokeTicketData revokeTicketData = { 1 };
+    CScript declScript = GetScriptForRevokeTicketDecl(revokeTicketData);
+    mtx.vout.push_back(CTxOut(0, declScript));
+
+    // Create an output which pays back a dummy refund
+    auto changeKey = CKey();
+    changeKey.MakeNewKey(false);
+    auto rewardAddr = changeKey.GetPubKey().GetID();
+    CScript rewardScript = GetScriptForDestination(rewardAddr);
+    CAmount dummyRefund = 60;
+    mtx.vout.push_back(CTxOut(dummyRefund, rewardScript));
+
+    return mtx;
+}
+
+BOOST_AUTO_TEST_CASE(MempoolIndexingWithStakeTest)
+{
+    CTxMemPool pool;
+    TestMemPoolEntryHelper entry;
+
+    CMutableTransaction tx1 = CMutableTransaction();
+    tx1.vout.resize(1);
+    tx1.vout[0].scriptPubKey = CScript() << OP_11 << OP_EQUAL;
+    tx1.vout[0].nValue = 10 * COIN;
+    pool.addUnchecked(tx1.GetHash(), entry.Fee(10000LL).FromTx(tx1));
+
+    CMutableTransaction txBuyTicket1 = CreateDummyBuyTicket(10LL);    // small contrib, big fee
+    pool.addUnchecked(txBuyTicket1.GetHash(), entry.Fee(10000LL).FromTx(txBuyTicket1));
+
+    CMutableTransaction txBuyTicket2 = CreateDummyBuyTicket(10000LL); // big contrib, small fee
+    pool.addUnchecked(txBuyTicket2.GetHash(), entry.Fee(10LL).FromTx(txBuyTicket2));
+
+    const auto& blockHashToVoteOn1 = uint256S(std::string("0xabcdef"));
+    // first vote on block1
+    CMutableTransaction txVote1 = CreateDummyVote(blockHashToVoteOn1);
+    pool.addUnchecked(txVote1.GetHash(), entry.Fee(30000LL).FromTx(txVote1));
+
+    // second vote on block1
+    CMutableTransaction txVote2 = CreateDummyVote(blockHashToVoteOn1);
+    pool.addUnchecked(txVote2.GetHash(), entry.Fee(20000LL).FromTx(txVote2));
+
+    const auto& blockHashToVoteOn2 = uint256S(std::string("0xfedcba"));
+    // third vote on block2
+    CMutableTransaction txVote3 = CreateDummyVote(blockHashToVoteOn2);
+    pool.addUnchecked(txVote3.GetHash(), entry.Fee(10000LL).FromTx(txVote3));
+
+    CMutableTransaction txRevokeTicket = CreateDummyRevokeTicket();
+    pool.addUnchecked(txRevokeTicket.GetHash(), entry.Fee(10000LL).FromTx(txRevokeTicket));
+
+    CMutableTransaction tx2 = CMutableTransaction();
+    tx2.vout.resize(1);
+    tx2.vout[0].scriptPubKey = CScript() << OP_11 << OP_EQUAL;
+    tx2.vout[0].nValue = 2 * COIN;
+    pool.addUnchecked(tx2.GetHash(), entry.Fee(20000LL).FromTx(tx2));
+
+    BOOST_CHECK_EQUAL(pool.size(), 8);
+
+    auto& voted_hash_index = pool.mapTx.get<voted_block_hash>();
+
+    auto votesForBlockHash = voted_hash_index.equal_range(blockHashToVoteOn1);
+    for (const auto& tx :boost::make_iterator_range(votesForBlockHash)) {
+        BOOST_CHECK_EQUAL(tx.GetTxClass(), ETxClass::TX_Vote);
+    }
+
+    BOOST_CHECK_EQUAL(2 ,voted_hash_index.count(blockHashToVoteOn1));
+    BOOST_CHECK_EQUAL(1 ,voted_hash_index.count(blockHashToVoteOn2));
+
+    auto& tx_class_index = pool.mapTx.get<tx_class>();
+    BOOST_CHECK_EQUAL(3 ,tx_class_index.count(TX_Vote));
+    BOOST_CHECK_EQUAL(2 ,tx_class_index.count(TX_BuyTicket));
+    BOOST_CHECK_EQUAL(1 ,tx_class_index.count(TX_RevokeTicket));
+    BOOST_CHECK_EQUAL(2 ,tx_class_index.count(TX_Regular));
+
+    std::vector<std::string> sortedOrder;
+    sortedOrder.resize(8);
+    // regular sorted by ancestor score
+    sortedOrder[0] = tx2.GetHash().ToString(); // 20000
+    sortedOrder[1] = tx1.GetHash().ToString(); // 15000
+    // purchases sorted by contribution, not fee
+    sortedOrder[2] = txBuyTicket2.GetHash().ToString();    // 10
+    sortedOrder[3] = txBuyTicket1.GetHash().ToString();    // 10000
+    sortedOrder[4] = txVote1.GetHash().ToString();        // 30000
+    sortedOrder[5] = txVote2.GetHash().ToString();        // 20000
+    sortedOrder[6] = txVote3.GetHash().ToString();        // 10000
+    sortedOrder[7] = txRevokeTicket.GetHash().ToString(); // 10000
+    CheckSort<tx_class>(pool, sortedOrder);
 }
 
 BOOST_AUTO_TEST_CASE(MempoolIndexingTest)

@@ -1,6 +1,10 @@
-// Copyright (c) 2015-2016 The Bitcoin Core developers
+//
+// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include <httprpc.h>
 
@@ -192,7 +196,7 @@ static bool HTTPReq_JSONRPC(HTTPRequest* req, const std::string &)
 
         // array of requests
         } else if (valRequest.isArray())
-            strReply = JSONRPCExecBatch(valRequest.get_array());
+            strReply = JSONRPCExecBatch(jreq, valRequest.get_array());
         else
             throw JSONRPCError(RPCErrorCode::PARSE_ERROR, "Top-level object parse error");
 

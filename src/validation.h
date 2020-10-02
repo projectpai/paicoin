@@ -1,7 +1,10 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
+
 
 #ifndef PAICOIN_VALIDATION_H
 #define PAICOIN_VALIDATION_H
@@ -16,7 +19,9 @@
 #include "protocol.h" // For CMessageHeader::MessageStartChars
 #include "policy/feerate.h"
 #include "script/script_error.h"
+#include "script/standard.h"
 #include "sync.h"
+#include "txdb.h"
 #include "versionbits.h"
 
 #include <algorithm>
@@ -75,6 +80,8 @@ static const unsigned int MAX_BLOCKFILE_SIZE = 0x8000000; // 128 MiB
 static const unsigned int BLOCKFILE_CHUNK_SIZE = 0x1000000; // 16 MiB
 /** The pre-allocation chunk size for rev?????.dat files (since 0.8) */
 static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
+/** The pre-allocation chunk size for stk?????.dat files (since 1.0.5) */
+static const unsigned int STAKEFILE_CHUNK_SIZE = 0x100000; // 1 MiB
 
 /** Maximum number of script-checking threads allowed */
 static const int MAX_SCRIPTCHECK_THREADS = 16;
@@ -130,6 +137,7 @@ static const int64_t MAX_FEE_ESTIMATION_TIP_AGE = 3 * 60 * 60;
 static const bool DEFAULT_PERMIT_BAREMULTISIG = true;
 static const bool DEFAULT_CHECKPOINTS_ENABLED = true;
 static const bool DEFAULT_TXINDEX = false;
+static const bool DEFAULT_ADDRINDEX = false;
 static const unsigned int DEFAULT_BANSCORE_THRESHOLD = 100;
 /** Default for -persistmempool */
 static const bool DEFAULT_PERSIST_MEMPOOL = true;
@@ -137,6 +145,8 @@ static const bool DEFAULT_PERSIST_MEMPOOL = true;
 static const bool DEFAULT_ENABLE_REPLACEMENT = true;
 /** Default for using fee filter */
 static const bool DEFAULT_FEEFILTER = true;
+/** Default for discarding expired mempool votes */
+static const bool DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES = true;
 
 /** Maximum number of headers to announce when relaying blocks with headers message.*/
 static const unsigned int MAX_BLOCKS_TO_ANNOUNCE = 8;
@@ -169,6 +179,7 @@ extern std::atomic_bool fImporting;
 extern std::atomic_bool fReindex;
 extern int nScriptCheckThreads;
 extern bool fTxIndex;
+extern bool fAddrIndex;
 extern bool fIsBareMultisigStd;
 extern bool fRequireStandard;
 extern bool fCheckBlockIndex;
@@ -181,6 +192,7 @@ extern CAmount maxTxFee;
 /** If the tip is older than this (in seconds), the node is considered to be in initial block download. */
 extern int64_t nMaxTipAge;
 extern bool fEnableReplacement;
+extern bool fDiscardExpiredMempoolVotes;
 
 /** Block hash whose ancestors we will assume to have valid scripts without checking them. */
 extern uint256 hashAssumeValid;
@@ -272,13 +284,32 @@ void ThreadScriptCheck();
 /** Check whether we are doing an initial block download (synchronizing from disk or network) */
 bool IsInitialBlockDownload();
 /** Retrieve a transaction (from memory pool, or from disk, if possible) */
-bool GetTransaction(const uint256 &hash, CTransactionRef &tx, const Consensus::Params& params, uint256 &hashBlock, bool fAllowSlow = false);
+bool GetTransaction(const uint256 &hash, CTransactionRef &tx, const Consensus::Params& params, uint256 &hashBlock, bool fAllowSlow = false, bool fAllowMempool = true);
+/** Retrieve a ticket transaction */
+CTransactionRef GetTicket(const uint256 &ticketTxHash);
 /** Find the best known block, and make it the tip of the block chain */
 bool ActivateBestChain(CValidationState& state, const CChainParams& chainparams, std::shared_ptr<const CBlock> pblock = std::shared_ptr<const CBlock>());
-CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams);
+
+// An indicator of the desired fee distribution policy
+// This influences the way that the vote or revoke fees are distributed among the contributors.
+enum class FeeDistributionPolicy {
+    FirstContributor,   // only the first contributor will pay the fee, in its entirety
+    EqualFee,           // each contributor will pay the same fee, regardless of his/her contribution
+                        // the first contributor will also pay any rounding errors
+    ProportionalFee     // each contributor will pay a fee proportional to his/her contribution
+                        // as with equal fee, the first contributor will also pay any rounding errors
+};
+
+CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams);
+CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams);
+CAmount CalculateGrossRemuneration(CAmount contributedAmount, CAmount totalStake, CAmount subsidy, CAmount contributionSum);
+std::vector<CAmount> CalculateNetRemunerations(const std::vector<TicketContribData>& contributions, const CAmount& stake, const CAmount& subsidy, const CAmount& fee = 0, const FeeDistributionPolicy feePolicy = FeeDistributionPolicy::FirstContributor);
 
 /** Guess verification progress (as a fraction between 0.0=genesis and 1.0=current tip). */
 double GuessVerificationProgress(const ChainTxData& data, CBlockIndex* pindex);
+
+/** Calculate the amount of disk space the block & undo files currently use */
+uint64_t CalculateCurrentUsage();
 
 /**
  *  Mark one block file as pruned.
@@ -392,6 +423,8 @@ void InitScriptExecutionCache();
 /** Functions for disk access for blocks */
 bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams);
 bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus::Params& consensusParams);
+bool ReadTransaction(CTransactionRef& tx, const CDiskTxPos &pos, uint256 &hashBlock);
+bool FindTransactionsByDestination(const CTxDestination &dest, std::set<CExtDiskTxPos> &setpos);
 
 /** Functions for validating blocks and updating the block tree */
 
@@ -403,6 +436,10 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
 
 /** Check whether witness commitments are required for block. */
 bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
+
+/** Check whether hardfork rules are applicable to a block. */
+bool IsHybridConsensusForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
+bool IsHybridConsensusForkEnabled(const int height, const Consensus::Params& params);
 
 /** When there are blocks in the active chain with missing data, rewind the chainstate and remove them from the block index */
 bool RewindBlockIndex(const CChainParams& params);
@@ -478,5 +515,13 @@ bool DumpMempool();
 
 /** Load the mempool from disk. */
 bool LoadMempool();
+
+/* Get the Stake Node */
+void MaybeFetchTicketInfo(CBlockIndex* pindex, const Consensus::Params& params);
+void MaybeFetchNewTickets(CBlockIndex* pindex, const Consensus::Params& params);
+std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::Params& params);
+
+/** Check existence of address in the address index */
+bool AddressExistsInIndex(const std::string& address);
 
 #endif // PAICOIN_VALIDATION_H

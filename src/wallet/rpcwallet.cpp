@@ -1,7 +1,11 @@
-// Copyright (c) 2010 Satoshi Nakamoto
+//
+// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "amount.h"
 #include <key_io.h>
@@ -26,6 +30,8 @@
 #include "wallet/feebumper.h"
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
+#include "wallet/fees.h"
+#include "pow.h"
 
 #include <init.h>  // For StartShutdown
 
@@ -81,6 +87,45 @@ void EnsureWalletIsUnlocked(const CWallet * const pwallet)
     }
 }
 
+static void LockWallet(CWallet* pWallet);
+
+SecureString ValidatedPasswordFromOptionalValue(CWallet* pwallet, const UniValue& value)
+{
+    // Passphrase
+    SecureString passphrase;
+    if (!value.isNull()) {
+        if (!value.isStr())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid passphrase.");
+
+        passphrase.clear();
+        passphrase.reserve(100);
+        passphrase = value.get_str().c_str();
+
+        // make sure that any empty representation is correctly handled
+        if (passphrase == "\"\"")
+            passphrase.clear();
+    }
+
+    // verify the validity of the passphrase
+    if (pwallet->IsCrypted()) {
+        if (passphrase.length() > 0) {
+            if (pwallet->IsLocked()) {
+                if (pwallet->Unlock(passphrase))
+                    LockWallet(pwallet);
+                else
+                    throw JSONRPCError(RPCErrorCode::WALLET_PASSPHRASE_INCORRECT, "The wallet passphrase entered is incorrect.");
+            } else {
+                if (!pwallet->VerifyWalletPassphrase(passphrase))
+                    throw JSONRPCError(RPCErrorCode::WALLET_PASSPHRASE_INCORRECT, "The wallet passphrase entered is incorrect.");
+            }
+        } else
+            throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Running with an encrypted wallet, but no passphrase is specified.");
+    } else if (passphrase.length() > 0)
+        throw JSONRPCError(RPCErrorCode::WALLET_WRONG_ENC_STATE, "Running with an unencrypted wallet, but passphrase is specified.");
+
+    return passphrase;
+}
+
 static void WalletTxToJSON(const CWalletTx& wtx, UniValue& entry)
 {
     const auto confirms = wtx.GetDepthInMainChain();
@@ -129,6 +174,38 @@ std::string AccountFromValue(const UniValue& value)
     return strAccount;
 }
 
+UniValue JSONRPCErrorFromWalletError(const CWalletError& werror)
+{
+    RPCErrorCode code{RPCErrorCode::INTERNAL_ERROR};
+    switch (werror.code) {
+    case CWalletError::TYPE_ERROR: code = RPCErrorCode::TYPE_ERROR;
+        break;
+    case CWalletError::INVALID_ADDRESS_OR_KEY: code = RPCErrorCode::INVALID_ADDRESS_OR_KEY;
+        break;
+    case CWalletError::INVALID_PARAMETER: code = RPCErrorCode::INVALID_PARAMETER;
+        break;
+    case CWalletError::VERIFY_ERROR: code = RPCErrorCode::VERIFY_ERROR;
+        break;
+    case CWalletError::CLIENT_P2P_DISABLED: code = RPCErrorCode::CLIENT_P2P_DISABLED;
+        break;
+    case CWalletError::WALLET_ERROR: code = RPCErrorCode::WALLET_ERROR;
+        break;
+    case CWalletError::WALLET_INSUFFICIENT_FUNDS: code = RPCErrorCode::WALLET_INSUFFICIENT_FUNDS;
+        break;
+    case CWalletError::WALLET_KEYPOOL_RAN_OUT: code = RPCErrorCode::WALLET_KEYPOOL_RAN_OUT;
+        break;
+    case CWalletError::WALLET_UNLOCK_NEEDED: code = RPCErrorCode::WALLET_UNLOCK_NEEDED;
+        break;
+    default:
+        break;
+    }
+
+    UniValue error{UniValue::VOBJ};
+    error.push_back(Pair("code", ToUnderlying(code)));
+    error.push_back(Pair("message", werror.message));
+    return error;
+}
+
 UniValue getnewaddress(const JSONRPCRequest& request)
 {
     const auto pwallet = GetWalletForJSONRPCRequest(request);
@@ -172,6 +249,63 @@ UniValue getnewaddress(const JSONRPCRequest& request)
     pwallet->SetAddressBook(keyID, strAccount, "receive");
 
     return EncodeDestination(keyID);
+}
+
+UniValue createnewaccount(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error{
+            "createnewaccount ( \"account\" )\n"
+            "\nCreates a new account.\n"
+            "The wallet must be unlocked for this request to succeed.\n"
+            "\nArguments:\n"
+            "1. \"account\"        (string) The account name for the address to be linked to.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("createnewaccount", "A")
+            + HelpExampleRpc("createnewaccount", "A")
+        };
+
+    if (request.params[0].isNull()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The account name must be provided");
+    }
+    getnewaddress(request);
+
+    return NullUniValue;
+}
+
+UniValue renameaccount(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 2)
+        throw std::runtime_error{
+            "renameaccount ( \"oldAccountName newAccountName\" )\n"
+            "\nRenames an account.\n"
+            "The wallet must be unlocked for this request to succeed.\n"
+            "\nArguments:\n"
+            "1. \"oldAccountName\"        (string) The existing account name to be renamed.\n"
+            "2. \"newAccountName\"        (string) The account new name.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("renamenewaccount", "spending savings")
+            + HelpExampleRpc("createnewaccount", "spending savings")
+        };
+
+    if (request.params[0].isNull()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The existing account name must be provided");
+    }
+    if (request.params[1].isNull()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The new account name must be provided");
+    }
+
+    auto oldAccountName = request.params[0].get_str();
+    auto newAccountName = request.params[1].get_str();
+
+    LOCK2(cs_main, pwallet->cs_wallet);
+    pwallet->RenameAddressBook(oldAccountName, newAccountName);
+    return NullUniValue;
 }
 
 CTxDestination GetAccountAddress(CWallet* const pwallet, std::string strAccount, bool bForceNew=false)
@@ -675,6 +809,166 @@ UniValue getreceivedbyaddress(const JSONRPCRequest& request)
     return ValueFromAmount(nAmount);
 }
 
+UniValue getticketfee(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error{
+            "getticketfee\n"
+            "\nGet the current fee per kB of the serialized tx size used for an authored stake transaction.\n"
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "n.nnn (numeric)    The current fee\n"
+            + HelpExampleCli("getticketfee", "")
+            + HelpExampleRpc("getticketfee", "")
+        };
+
+    // auto ret = UniValue{0.0};
+    // return ret;
+    return pwallet->GetTicketFeeRate().ToString();
+}
+
+UniValue gettickets(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+        throw std::runtime_error{
+            "gettickets includeimmature ( verbose )\n"
+            "\nReturning the hashes of the tickets currently owned by wallet.\n"
+            "\nArguments:\n"
+            "1. includeimmature     (boolean, required)                     If true include immature tickets in the results.\n"
+            "2. verbose             (boolean, optional, default=false)      Set true for additional information about tickets\n"
+            "\nResult:\n"
+            "{\n"
+            "   \"hashes\": [\"value\",...],    (array of string)       Hashes of the tickets owned by the wallet encoded as strings\n"
+            "}\n"
+            + HelpExampleCli("gettickets", "true")
+            + HelpExampleRpc("gettickets", "false")
+        };
+
+    const auto& bIncludeImmature = request.params[0].get_bool();
+    auto fVerbose = false;
+    if (!request.params[1].isNull())
+        fVerbose = request.params[1].get_bool();
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    const auto& txOrdered = pwallet->wtxOrdered;
+
+    auto tx_arr = UniValue{UniValue::VARR};
+    for (const auto& it : txOrdered) {
+        const auto* const pwtx = it.second.first;
+
+        if (pwtx != nullptr) {
+            std::string reason;
+            const CTransaction& current_tx = *(pwtx->tx);
+            if (ParseTxClass(current_tx) != TX_BuyTicket)
+                continue;
+
+            const auto& confirmations = pwtx->GetDepthInMainChain();
+            if (confirmations < 0)
+                continue;
+
+            if (pwtx->isAbandoned())
+                continue;
+
+            const auto& bImmature = confirmations <= Params().GetConsensus().nTicketMaturity;
+            if (!bIncludeImmature && bImmature)
+                continue;
+
+            if (fVerbose) {
+                CBlockIndex* pblockindex = chainActive.Tip();
+                auto info = UniValue{UniValue::VOBJ};
+                info.pushKV("txid", pwtx->GetHash().GetHex());
+                info.pushKV("confirmations", confirmations);
+                StakingToUniv(*pwtx->tx, info, false);
+
+                if (bImmature) {
+                    info.pushKV("status", "immature");
+                } else if (pblockindex->pstakeNode->ExistsRevokedTicket(pwtx->GetHash())) {
+                    info.pushKV("status", "revoked");
+                } else if (pblockindex->pstakeNode->ExistsMissedTicket(pwtx->GetHash())) {
+                    if (pblockindex->pstakeNode->ExistsExpiredTicket(pwtx->GetHash())) {
+                        info.pushKV("status", "expired");
+                    } else {
+                        info.pushKV("status", "missed_vote");
+                    }
+                } else if (pblockindex->pstakeNode->ExistsLiveTicket(pwtx->GetHash())) {
+                    info.pushKV("status", "live");
+                } else {
+                    info.pushKV("status", "voted");
+                }
+
+                auto spendingWtx = CWalletTx{};
+                if (pwallet->IsSpent(pwtx->GetHash(), ticketStakeOutputIndex, &spendingWtx)) {
+                    auto spentinfo = UniValue{UniValue::VOBJ};
+                    spentinfo.pushKV("confirmations", spendingWtx.GetDepthInMainChain());
+                    const auto& spendingTx = *spendingWtx.tx;
+                    const auto& txClass = ParseTxClass(spendingTx);
+                    switch (txClass) {
+                    case ETxClass::TX_Vote:
+                        spentinfo.pushKV("vote_txid", spendingTx.GetHash().GetHex());
+                        break;
+                    case ETxClass::TX_RevokeTicket:
+                        spentinfo.pushKV("revocation_txid", spendingTx.GetHash().GetHex());
+                        break;
+                    default:
+                        assert(!"Ticket spent by transaction that is neither vote nor revocation!");
+                    }
+                    info.pushKV("spent", spentinfo);
+                }
+
+                tx_arr.push_back(info);
+            } else {
+                tx_arr.push_back(pwtx->GetHash().GetHex());
+            }
+        }
+    }
+
+    auto ret = UniValue{UniValue::VOBJ};
+    ret.pushKV("hashes",tx_arr);
+    return ret;
+}
+
+UniValue setticketfee(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketfee fee\n"
+            "\nModify the fee per kB of the serialized tx size used each time more fee is required for an authored stake transaction.\n"
+            "\nArguments:\n"
+            "1. fee     (numeric, required) The new fee per kB of the serialized tx size valued in PAI\n"
+            "\nResult:\n"
+            "true|false (boolean)           The boolean return status\n"
+            + HelpExampleCli("setticketfee", "0.02")
+            + HelpExampleRpc("setticketfee", "0.02")
+        };
+
+    const auto& nFee = request.params[0].get_real();
+
+    if (nFee < 0)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "negative fee");
+
+    const auto& newTicketFeeRate = CFeeRate(AmountFromValue(nFee), 1000);
+    pwallet->SetTicketFeeRate(newTicketFeeRate);
+
+    return true;
+}
 
 UniValue getreceivedbyaccount(const JSONRPCRequest& request)
 {
@@ -1854,19 +2148,20 @@ UniValue listsinceblock(const JSONRPCRequest& request)
     int target_confirms{1};
     isminefilter filter{ISMINE_SPENDABLE};
 
-    if (!request.params[0].isNull()) {
+    if (!request.params[0].isNull() && !request.params[0].get_str().empty()) {
         uint256 blockId;
 
         blockId.SetHex(request.params[0].get_str());
-        auto it = mapBlockIndex.find(blockId);
-        if (it != mapBlockIndex.end()) {
-            paltindex = pindex = it->second;
-            if (chainActive[pindex->nHeight] != pindex) {
-                // the block being asked for is a part of a deactivated chain;
-                // we don't want to depend on its perceived height in the block
-                // chain, we want to instead use the last common ancestor
-                pindex = chainActive.FindFork(pindex);
-            }
+        const auto& it = mapBlockIndex.find(blockId);
+        if (it == mapBlockIndex.end()) {
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Block not found");
+        }
+        paltindex = pindex = it->second;
+        if (chainActive[pindex->nHeight] != pindex) {
+            // the block being asked for is a part of a deactivated chain;
+            // we don't want to depend on its perceived height in the block
+            // chain, we want to instead use the last common ancestor
+            pindex = chainActive.FindFork(pindex);
         }
     }
 
@@ -2136,7 +2431,7 @@ UniValue walletpassphrase(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (pwallet->IsCrypted() && (request.fHelp || request.params.size() != 2)) {
+    if (request.fHelp || request.params.size() != 2) {
         throw std::runtime_error{
             "walletpassphrase \"passphrase\" timeout\n"
             "\nStores the wallet decryption key in memory for 'timeout' seconds.\n"
@@ -2199,7 +2494,7 @@ UniValue walletpassphrasechange(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (pwallet->IsCrypted() && (request.fHelp || request.params.size() != 2)) {
+    if (request.fHelp || request.params.size() != 2) {
         throw std::runtime_error{
             "walletpassphrasechange \"oldpassphrase\" \"newpassphrase\"\n"
             "\nChanges the wallet passphrase from 'oldpassphrase' to 'newpassphrase'.\n"
@@ -2249,7 +2544,7 @@ UniValue walletlock(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (pwallet->IsCrypted() && (request.fHelp || request.params.size() != 0)) {
+    if (request.fHelp || request.params.size() != 0) {
         throw std::runtime_error{
             "walletlock\n"
             "\nRemoves the wallet encryption key from memory, locking the wallet.\n"
@@ -2289,7 +2584,7 @@ UniValue encryptwallet(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (!pwallet->IsCrypted() && (request.fHelp || request.params.size() != 1)) {
+    if (request.fHelp || request.params.size() != 1) {
         throw std::runtime_error{
             "encryptwallet \"passphrase\"\n"
             "\nEncrypts the wallet with 'passphrase'. This is for first time encryption.\n"
@@ -2570,6 +2865,227 @@ UniValue getwalletinfo(const JSONRPCRequest& request)
     return obj;
 }
 
+static bool ticketMatured(const Consensus::Params& params, int txHeight, int currentHeight) {
+    return txHeight >= 0 && currentHeight-txHeight > params.nTicketMaturity;
+}
+
+static bool ticketExpired(const Consensus::Params& params, int txHeight, int currentHeight) {
+    return txHeight >= 0 && currentHeight-txHeight > static_cast<int>(params.nTicketMaturity + params.nTicketExpiry);
+}
+
+
+UniValue getstakeinfo(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error{
+            "getstakeinfo\n"
+            "Returns statistics about staking from the wallet.\n"
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "{\n"
+            "    \"blockheight\": n,          (numeric) Current block height for stake info.\n"
+            "    \"difficulty\": n.nnn,       (numeric) Current stake difficulty.\n"
+            "    \"totalsubsidy\": n.nnn,     (numeric) Total amount of coins earned by proof-of-stake voting\n"
+            "    \"ownmempooltix\": n,        (numeric) Number of tickets submitted by this wallet currently in mempool\n"
+            "    \"immature\": n,             (numeric) Number of tickets from this wallet that are in the blockchain but which are not yet mature\n"
+            "    \"unspent\": n,              (numeric) Number of unspent tickets\n"
+            "    \"voted\": n,                (numeric) Number of votes cast by this wallet\n"
+            "    \"revoked\": n,              (numeric) Number of missed tickets that were missed and then revoked\n"
+            "    \"unspentexpired\": n,       (numeric) Number of unspent tickets which are past expiry\n"
+            "    \"poolsize\": n,             (numeric) Number of live tickets in the ticket pool.\n"
+            "    \"allmempooltix\": n,        (numeric) Number of tickets currently in the mempool\n"
+            "    \"live\": n,                 (numeric) Number of mature, active tickets owned by this wallet\n"
+            "    \"proportionlive\": n.nnn,   (numeric) (Live / PoolSize)\n"
+            "    \"missed\": n,               (numeric) Number of missed tickets (failure to vote, not including expired)\n"
+            "    \"proportionmissed\": n.nnn, (numeric) (Missed / (Missed + Voted))\n"
+            "    \"expired\": n,              (numeric) Number of tickets that have expired\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getstakeinfo", "")
+            + HelpExampleRpc("getstakeinfo", "")
+        };
+
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    auto allmempooltix = uint64_t{0};
+    auto ownMempoolTix = uint64_t{0};
+    {
+        LOCK(mempool.cs);
+        auto unminedTicketCount = 0ul;
+        for (const CTxMemPoolEntry& e : mempool.mapTx) {
+            const auto& tx = e.GetTx();
+            if (ETxClass::TX_BuyTicket ==  ParseTxClass(tx)) {
+                ++unminedTicketCount;
+                if (pwallet->IsMine(tx))
+                    ++ownMempoolTix;
+            }
+        }
+        allmempooltix = unminedTicketCount;
+    }
+
+    auto immature = uint64_t{0};
+    auto unspent = uint64_t{0};
+    auto unspentExpired = uint64_t{0};
+    auto voted = uint64_t{0};
+    auto revoked = uint64_t{0};
+    auto totalSubsidy = CAmount{};
+
+    std::vector<uint256> liveOrExpireOrMissed;
+    const auto& txOrdered = pwallet->wtxOrdered;
+    for (const auto& it : txOrdered) {
+        const auto* const pwtx = it.second.first;
+
+        if (pwtx == nullptr)
+            continue;
+
+        const auto& tx = *pwtx->tx;
+
+        if (pwtx->IsCoinBase() || !CheckFinalTx(tx))
+            continue;
+        
+        if (ETxClass::TX_BuyTicket ==  ParseTxClass(tx)) {
+            const auto& depth = pwtx->GetDepthInMainChain();
+            if (depth == 0) {
+                // in mempool
+                continue;
+            }
+            else if (depth >= 1) {
+                // in main chain
+                const auto& txHeight = chainActive.Height() - depth; 
+                if (!ticketMatured(Params().GetConsensus(), txHeight, chainActive.Height())) {
+                    ++immature;
+                }
+
+                auto spendingWtx = CWalletTx{};
+                if (pwallet->IsSpent(tx.GetHash(), ticketStakeOutputIndex, &spendingWtx)) {
+
+                    const auto& spendingTx = *spendingWtx.tx;
+                    const auto& txClass = ParseTxClass(spendingTx);
+                    switch(txClass){
+                        case ETxClass::TX_Vote:
+                            {
+                                ++voted;
+                                // Add the subsidy.
+                                //
+                                // This is not the actual subsidy that was earned by this
+                                // wallet, but rather the stakebase sum.  If a user uses a
+                                // stakepool for voting, this value will include the total
+                                // subsidy earned by both the user and the pool together.
+                                // Similarly, for stakepool wallets, this includes the
+                                // customer's subsidy rather than being just the subsidy
+                                // earned by fees.
+                                totalSubsidy += tx.vout[ticketStakeOutputIndex].nValue;
+                            }
+                            break;
+                        case ETxClass::TX_RevokeTicket:
+                            {
+                                ++revoked;
+                                // The ticket was revoked because it was either expired or
+                                // missed.  Append it to the liveOrExpiredOrMissed slice to
+                                // check this later.
+                                liveOrExpireOrMissed.push_back(tx.GetHash());
+                            }
+                            break;
+                        default:
+                            assert(!"Ticket spent by transaction that is neither vote nor revocation!");
+                    }
+                    continue;
+                }
+
+                // Ticket is matured but unspent.  Possible states are that the
+                // ticket is live, expired, or missed.
+                ++unspent;
+                if (ticketExpired(Params().GetConsensus(), txHeight, chainActive.Height())) {
+                    ++unspentExpired;
+                }
+                liveOrExpireOrMissed.push_back(tx.GetHash());
+            }
+        }
+    }
+
+    auto live = uint64_t{0};
+    auto expired = uint64_t{0};
+    auto missed = uint64_t{0};
+
+    // As the wallet is unaware of when a ticket was selected or missed, this
+    // info must be queried from the consensus server.  If the ticket is neither
+    // live nor expired, it is assumed missed.
+    CBlockIndex* pblockindex = chainActive.Tip();
+    for ( const auto& ticket : liveOrExpireOrMissed) {
+        if (pblockindex->pstakeNode->ExistsLiveTicket(ticket))
+            ++live;
+        else if (pblockindex->pstakeNode->ExistsMissedTicket(ticket))
+            ++missed;
+        else if (pblockindex->pstakeNode->ExistsExpiredTicket(ticket))
+            ++expired;
+    }
+
+    const auto& poolSize = pblockindex->pstakeNode->PoolSize();
+    const auto& proportionLive = (poolSize > 0) ? (double)live / (double)poolSize
+                                                : 0.0;
+    const auto& proportionMissed = (missed > 0) ? (double)missed / (double)(voted + missed)
+                                                : 0.0;
+
+    const auto& stakeDiff = CalculateNextRequiredStakeDifficulty(pblockindex, Params().GetConsensus());
+
+    UniValue obj{UniValue::VOBJ};
+    obj.push_back(Pair("blockheight",      chainActive.Height()));
+    obj.push_back(Pair("difficulty",       ValueFromAmount(stakeDiff)));
+    obj.push_back(Pair("totalsubsidy",     ValueFromAmount(totalSubsidy)));
+    obj.push_back(Pair("ownmempooltix",    ownMempoolTix));
+    obj.push_back(Pair("immature",         immature));
+    obj.push_back(Pair("unspent",          unspent));
+    obj.push_back(Pair("voted",            voted));
+    obj.push_back(Pair("revoked",          revoked));
+    obj.push_back(Pair("unspentexpired",   unspentExpired));
+    obj.push_back(Pair("poolsize",         poolSize));
+    obj.push_back(Pair("allmempooltix",    allmempooltix));
+    obj.push_back(Pair("live",             live));
+    obj.push_back(Pair("proportionlive",   proportionLive));
+    obj.push_back(Pair("missed",           missed));
+    obj.push_back(Pair("proportionmissed", proportionMissed));
+    obj.push_back(Pair("expired",          expired));
+
+    return obj;
+}
+
+UniValue stakepooluserinfo(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "stakepooluserinfo \"user\"\n"
+            "Get user info for stakepool.\n"
+            "\nArguments:\n"
+            "1. user                       (string, required)   The id of the user to be looked up\n"
+            "\nResult:\n"
+            "{\n"
+            "    \"tickets\": [{             (array of object)    A list of valid tickets that the user has added\n"
+            "       \"status\": \"value\",     (string)             The current status of the added ticket\n"
+            "       \"ticket\": \"value\",     (string)             The hash of the added ticket\n"
+            "       \"ticketheight\": n,     (numeric)            The height in which the ticket was added\n"
+            "       \"spentby\": \"value\",    (string)             The vote in which the ticket was spent\n"
+            "       \"spentbyheight\": n,    (numeric)            The height in which the ticket was spent\n"
+            "     },...],\n"
+            "    \"invalid\": [\"value\",...], (array of string)    A list of invalid tickets that the user has added\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("stakepooluserinfo", "\"user\"")
+            + HelpExampleRpc("stakepooluserinfo", "\"user\"")
+        };
+
+    // const auto& user = request.params[0].get_str();
+
+    UniValue obj{UniValue::VOBJ};
+
+    return obj;
+}
+
 UniValue listwallets(const JSONRPCRequest& request)
 {
     if (request.fHelp || !request.params.empty())
@@ -2797,6 +3313,1089 @@ UniValue listunspent(const JSONRPCRequest& request)
     }
 
     return results;
+}
+
+UniValue purchaseticket(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 10)
+        throw std::runtime_error{
+            "purchaseticket \"fromaccount\" spendlimit (minconf=1 \"ticketaddress\" \"rewardaddress\" numtickets \"pooladdress\" poolfees expiry \"comment\" ticketfee)\n"
+            "\nPurchase ticket using available funds.\n"
+            + HelpRequiringPassphrase(pwallet) +
+            "\nArguments:\n"
+            "1.  \"fromaccount\"     (string, required)             The account to use for purchase (default=\"default\")\n"
+            "2.  spendlimit         (numeric, required)            Limit on the amount to spend on ticket\n"
+            "3.  minconf            (numeric, optional, default=1) Minimum number of block confirmations required\n"
+            "4.  \"ticketaddress\"   (string, optional)             Override the ticket address to which voting rights are given\n"
+            "5.  \"rewardaddress\"   (string, optional)             The address where the reward is paid\n"
+            "6.  numtickets         (numeric, optional)            The number of tickets to purchase\n"
+            "7.  \"pooladdress\"     (string, optional)             The address to pay stake pool fees to\n"
+            "8.  poolfees           (numeric, optional)            The amount of fees to pay to the stake pool\n"
+            "9.  expiry             (numeric, optional)            Height at which the purchase tickets expire\n"
+            "10.  \"comment\"         (string, optional)             Unused\n"
+            "11. ticketfee          (numeric, optional)            The transaction fee rate (PAI/kB) to use (overrides fees set by the wallet config or settxfee RPC)\n"
+
+            "\nResult:\n"
+            "\"value\"              (string) Hashes of resulting ticket transactions\n"
+
+            "\nExamples:\n"
+            "\nUse PAI from your default account to purchase a ticket if the current ticket price was a max of 50 PAI\n"
+            + HelpExampleCli("purchaseticket", "\"default\" 50")
+            + HelpExampleRpc("purchaseticket", "\"default\" 50") +
+            "\nPurchase 5 tickets, as the 5th argument (numtickets) is set to 5\n"
+            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" \"\" 5")
+            + HelpExampleRpc("purchaseticket", "\"default\" 50 1 \"\" \"\" 5") +
+            "\nPurchase 5 tickets that would expire from the mempool if not mined by block 100,000, as the 8th argument (expiry) is set to 100000\n"
+            + HelpExampleCli("purchaseticket", "\"default\" 50 1 \"\" \"\" 5 \"\" 0 100000")
+            + HelpExampleRpc("purchaseticket", "\"default\" 50 1 \"\" \"\" 5 \"\" 0 100000")
+        };
+
+    ObserveSafeMode();
+
+    // Account
+    const auto strAccount = AccountFromValue(request.params[0]);
+
+    // Spend limit
+    const auto nSpendLimit = AmountFromValue(request.params[1]);
+
+    // Minimum confirmations
+    int nMinDepth{1};
+    if (!request.params[2].isNull())
+        nMinDepth = request.params[2].get_int();
+
+    // Ticket address
+    std::string ticketAddr;
+    if (!request.params[3].isNull())
+        ticketAddr = request.params[3].get_str();
+    CTxDestination ticketAddress{CNoDestination()};
+    if (!ticketAddr.empty()) {
+        ticketAddress = DecodeDestination(ticketAddr);
+        if (!IsValidDestination(ticketAddress))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid ticket address.");
+    }
+
+    // Reward address
+    std::string rewardAddr;
+    if (!request.params[4].isNull())
+        rewardAddr = request.params[4].get_str();
+    CTxDestination rewardAddress{CNoDestination()};
+    if (!rewardAddr.empty()) {
+        rewardAddress = DecodeDestination(rewardAddr);
+        if (!IsValidDestination(rewardAddress))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid reward address.");
+    }
+
+    // Number of tickets
+    int numTickets{1};
+    if (!request.params[5].isNull())
+        numTickets = request.params[5].get_int();
+    if (numTickets < 0)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid number of tickets.");
+
+    // Pool address
+    std::string poolAddr;
+    if (!request.params[6].isNull())
+        poolAddr = request.params[6].get_str();
+    CTxDestination poolAddress{CNoDestination()};
+    if (!poolAddr.empty()) {
+        poolAddress = DecodeDestination(poolAddr);
+        if (!IsValidDestination(poolAddress))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool address.");
+    }
+
+    double dfPoolFee{0.0};
+    if (!request.params[7].isNull())
+        dfPoolFee = request.params[6].get_real();
+
+    // Expiry
+    int nExpiry{0};
+    if (!request.params[8].isNull())
+        nExpiry = request.params[7].get_int();
+
+    // Ticket Fee
+    CAmount ticketFeeIncrement{0};
+    if (!request.params[10].isNull())
+        ticketFeeIncrement = AmountFromValue(request.params[10]);
+
+    const auto&& r = pwallet->PurchaseTicket(strAccount, nSpendLimit, nMinDepth, ticketAddress, rewardAddress, static_cast<unsigned int>(numTickets), poolAddress, dfPoolFee, nExpiry, ticketFeeIncrement);
+
+    UniValue results{UniValue::VARR};
+    for (auto&& txid: r.first)
+        results.push_back(txid);
+
+    if (r.second.code != CWalletError::SUCCESSFUL) {
+        UniValue error = JSONRPCErrorFromWalletError(r.second);
+        if (r.first.size() > 0)
+            error.push_back(Pair("txids", results));
+        throw error;
+    }
+
+    return results;
+}
+
+UniValue startticketbuyer(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 8)
+        throw std::runtime_error{
+            "startticketbuyer \"fromaccount\" maintain (\"passphrase\" \"votingaccount\" \"votingaddress\" \"poolfeeaddress\" poolfees limit)\n"
+            "\nStart the automatic ticket buyer with the specified settings.\n"
+            "\nArguments:\n"
+            "1.  \"fromaccount\"      (string, required)   The account to use for purchase (default=\"default\")\n"
+            "2.  maintain             (numeric, required)  Minimum amount to maintain in purchasing account\n"
+            "3.  \"passphrase\"       (string, optional)   The passphrase to use for unlocking the wallet\n"
+            "4.  \"votingaccount\"    (string, optional)   Account to derive voting addresses from; overridden by votingaddress\n"
+            "5.  \"votingaddress\"    (string, optional)   Address to assign voting rights; overrides votingaccount\n"
+            "6.  \"rewardaddress\"    (string, optional)   Address where to send the reward\n"
+            "7.  \"poolfeeaddress\"   (string, optional)   The address to pay stake pool fees to\n"
+            "8.  poolfees             (numeric, optional)  The amount of fees to pay to the stake pool\n"
+            "9.  limit                (numeric, optional)  Limit maximum number of purchased tickets per block\n"
+            "\nExamples:\n"
+            "\nStart the ticket buyer from your default account to purchase tickets and leaving at least 50 PAI\n"
+            + HelpExampleCli("startticketbuyer", "\"default\" 50")
+            + HelpExampleRpc("startticketbuyer", "\"default\" 50") +
+            "\nStart the ticket buyer from your default account to purchase at most 5 tickets in a block\n"
+            + HelpExampleCli("startticketbuyer", "\"default\" 50 \"\" \"\" \"\" \"\" 0 5")
+            + HelpExampleRpc("startticketbuyer", "\"default\" 50 \"\" \"\" \"\" \"\" 0 5") +
+            "\nStart the ticket buyer from your default account to purchase tickets for a specified voting address\n"
+            + HelpExampleCli("startticketbuyer", "\"default\" 50 \"\" \"\" \"my_voting_address\" \"\" 0 5")
+            + HelpExampleRpc("startticketbuyer", "\"default\" 50 \"\" \"\" \"my_voting_address\" \"\" 0 5")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    // From account
+    const auto&& account = AccountFromValue(request.params[0]);
+
+    // Maintain
+    const auto&& maintain = AmountFromValue(request.params[1]);
+
+    // Passphrase
+    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
+
+    // Voting account
+    std::string votingAccount;
+    if (!request.params[3].isNull())
+        votingAccount = AccountFromValue(request.params[3]);
+
+    // Voting address
+    std::string votingAddr;
+    if (!request.params[4].isNull())
+        votingAddr = request.params[4].get_str();
+    CTxDestination votingAddress{CNoDestination()};
+    if (!votingAddr.empty()) {
+        votingAddress = DecodeDestination(votingAddr);
+        if (!IsValidDestination(votingAddress))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid voting address.");
+    }
+
+    // Reward address
+    std::string rewardAddr;
+    if (!request.params[5].isNull())
+        rewardAddr = request.params[5].get_str();
+    CTxDestination rewardAddress{CNoDestination()};
+    if (!rewardAddr.empty()) {
+        rewardAddress = DecodeDestination(rewardAddr);
+        if (!IsValidDestination(rewardAddress))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid reward address.");
+    }
+
+    // Pool fee address
+    std::string poolFeeAddr;
+    if (!request.params[6].isNull())
+        poolFeeAddr = request.params[6].get_str();
+    CTxDestination poolFeeAddress{CNoDestination()};
+    if (!poolFeeAddr.empty()) {
+        poolFeeAddress = DecodeDestination(poolFeeAddr);
+        if (!IsValidDestination(poolFeeAddress))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool fee address.");
+    }
+
+    // Pool fees
+    double poolFees{0.0};
+    if (!request.params[7].isNull()) {
+        if (!request.params[7].isNum())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool fee.");
+
+        poolFees = request.params[7].get_real();
+        if (poolFees < 0.0)
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The pool fee cannot be negative.");
+    }
+
+    // Limit
+    int limit{1};
+    if (!request.params[8].isNull()) {
+        if (!request.params[8].isNum())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid limit.");
+
+        limit = request.params[8].get_int();
+        if (limit < 1)
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The number of tickets must be at least 1.");
+    }
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+    cfg.account = account;
+    cfg.maintain = maintain;
+    cfg.passphrase = passphrase;
+    cfg.votingAccount = votingAccount;
+    cfg.votingAddress = votingAddress;
+    cfg.rewardAddress = rewardAddress;
+    cfg.poolFeeAddress = poolFeeAddress;
+    cfg.poolFees = poolFees;
+    cfg.limit = limit;
+
+    tb->start();
+
+    return NullUniValue;
+}
+
+UniValue stopticketbuyer(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error{
+            "stopticketbuyer\n"
+            "\nStop the automatic ticket buyer. Applies after current purchase iteration.\n"
+            "\nExample:\n"
+            + HelpExampleCli("stopticketbuyer", "")
+            + HelpExampleRpc("stopticketbuyer", "")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    tb->stop();
+
+    return NullUniValue;
+}
+
+UniValue ticketbuyerconfig(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error{
+            "ticketbuyerconfig\n"
+            "\nReturns the automatic ticket buyer settings.\n"
+            "\nResult\n"
+            "{\n"
+            "  \"buytickets\" : true|false,              (boolean) true if the ticket buyer is running \n"
+            "  \"fromaccount\" : \"fromaccount\",        (string)  the account to use for purchase (default=\"default\")\n"
+            "  \"maintain\" : n,                         (numeric) minimum amount to maintain in purchasing account\n"
+            "  \"votingaccount\" : \"votingaccount\",    (string)  account to derive voting addresses from; overridden by votingaddress\n"
+            "  \"votingaddress\" : \"votingaddress\",    (string)  address to assign voting rights; overrides votingaccount\n"
+            "  \"rewardaddress\" : \"rewardaddress\",    (string)  address where to send the reward\n"
+            "  \"poolfeeaddress\" : \"poolfeeaddress\",  (string)  address to pay stake pool fees to\n"
+            "  \"poolfees\" : x.xxx,                     (numeric) amount of fees to pay to the stake pool\n"
+            "  \"limit\" : n,                            (numeric) maximum number of purchased tickets per block\n"
+            "  \"minConf\" : n,                          (numeric) minimum number of block confirmations required\n"
+            "  }\n"
+            "\nExample:\n"
+            + HelpExampleCli("ticketbuyerconfig", "")
+            + HelpExampleRpc("ticketbuyerconfig", "")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
+    UniValue result{UniValue::VOBJ};
+    result.push_back(Pair("buytickets", cfg.buyTickets));
+    result.push_back(Pair("account", cfg.account));
+    result.push_back(Pair("maintain", cfg.maintain));
+    result.push_back(Pair("votingAccount", cfg.votingAccount));
+    result.push_back(Pair("votingAddress", EncodeDestination(cfg.votingAddress)));
+    result.push_back(Pair("rewardAddress", EncodeDestination(cfg.rewardAddress)));
+    result.push_back(Pair("poolFeeAddress", EncodeDestination(cfg.poolFeeAddress)));
+    result.push_back(Pair("poolFees", cfg.poolFees));
+    result.push_back(Pair("limit", cfg.limit));
+    result.push_back(Pair("minConf", cfg.minConf));
+
+    return result;
+}
+
+UniValue setticketbuyeraccount(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketbuyeraccount \"fromaccount\"\n"
+            "\nConfigure the account to use for automatically purchasing tickets.\n"
+            "\nArguments:\n"
+            "1.  \"fromaccount\"  (string, required)  The account to use for purchase (default=\"default\")\n"
+            "\nExample:\n"
+            + HelpExampleCli("setticketbuyeraccount", "\"default\"")
+            + HelpExampleRpc("setticketbuyeraccount", "\"default\"")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
+    cfg.account = AccountFromValue(request.params[0]);
+
+    return NullUniValue;
+}
+
+UniValue setticketbuyerbalancetomaintain(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketbuyerbalancetomaintain maintain\n"
+            "\nConfigure the minimum amount to maintain in purchasing account when automatically purchasing tickets.\n"
+            "\nArguments:\n"
+            "1.  maintain  (numeric, required)  The minimum amount to maintain in purchasing account\n"
+            "\nExample:\n"
+            + HelpExampleCli("setticketbuyerbalancetomaintain", "50")
+            + HelpExampleRpc("setticketbuyerbalancetomaintain", "50")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
+    cfg.maintain = AmountFromValue(request.params[0]);
+
+    return NullUniValue;
+}
+
+UniValue setticketbuyervotingaddress(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketbuyervotingaddress \"votingaddress\"\n"
+            "\nConfigure the address to assign voting rights when automatically purchasing tickets; overrides votingaccount.\n"
+            "\nArguments:\n"
+            "1.  \"votingaddress\"  (string, required)  The address where to assign voting rights\n"
+            "\nExample:\n"
+            + HelpExampleCli("setticketbuyervotingaddress", "your_address")
+            + HelpExampleRpc("setticketbuyervotingaddress", "your_address")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    if (!request.params[0].isStr())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid voting address.");
+
+    std::string votingAddr = request.params[0].get_str();
+
+    CTxDestination votingAddress{CNoDestination()};
+    if (!votingAddr.empty())
+        votingAddress = DecodeDestination(votingAddr);
+    if (!IsValidDestination(votingAddress))
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid voting address.");
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
+    cfg.votingAddress = votingAddress;
+
+    return NullUniValue;
+}
+
+UniValue setticketbuyerrewardaddress(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketbuyerrewardaddress \"rewardaddress\"\n"
+            "\nConfigure the address where to send the reward or refund when automatically purchasing tickets.\n"
+            "\nArguments:\n"
+            "1.  \"rewardaddress\"  (string, required)  The address where to send the reward\n"
+            "\nExample:\n"
+            + HelpExampleCli("setticketbuyerrewardaddress", "your_address")
+            + HelpExampleRpc("setticketbuyerrewardaddress", "your_address")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    if (!request.params[0].isStr())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid reward address.");
+
+    std::string rewardAddr = request.params[0].get_str();
+
+    CTxDestination rewardAddress{CNoDestination()};
+    if (!rewardAddr.empty())
+        rewardAddress = DecodeDestination(rewardAddr);
+    if (!IsValidDestination(rewardAddress))
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid reward address.");
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
+    cfg.rewardAddress = rewardAddress;
+
+    return NullUniValue;
+}
+
+UniValue setticketbuyerpooladdress(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketbuyerpooladdress \"pooladdress\"\n"
+            "\nConfigure the address to pay stake pool fees to when automatically purchasing tickets.\n"
+            "\nArguments:\n"
+            "1.  \"pooladdress\"  (string, required)  The address to pay stake pool fees to\n"
+            "\nExample:\n"
+            + HelpExampleCli("setticketbuyerpooladdress", "address_of_the_pool")
+            + HelpExampleRpc("setticketbuyerpooladdress", "address_of_the_pool")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    if (!request.params[0].isStr())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool address.");
+
+    std::string poolAddr = request.params[0].get_str();
+
+    CTxDestination poolAddress{CNoDestination()};
+    if (!poolAddr.empty())
+        poolAddress = DecodeDestination(poolAddr);
+    if (!IsValidDestination(poolAddress))
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool address.");
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
+    cfg.poolFeeAddress = poolAddress;
+
+    return NullUniValue;
+}
+
+UniValue setticketbuyerpoolfees(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketbuyerpoolfees poolfees\n"
+            "\nConfigure the amount of fees to pay to the stake pool when automatically purchasing tickets.\n"
+            "\nArguments:\n"
+            "1.  poolfees  (numeric, required)  The amount of fees to pay to the stake pool\n"
+            "\nExample:\n"
+            + HelpExampleCli("setticketbuyerpoolfees", "1.23")
+            + HelpExampleRpc("setticketbuyerpoolfees", "1.23")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    double value = request.params[0].get_real();
+    if (value < 0.0)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The pool fee cannot be negative.");
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
+    cfg.poolFees = value;
+
+    return NullUniValue;
+}
+
+UniValue setticketbuyermaxperblock(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketbuyermaxperblock limit\n"
+            "\nConfigure the maximum number of purchased tickets per block when automatically purchasing tickets.\n"
+            "\nArguments:\n"
+            "1.  limit  (numeric, required)  The maximum number of purchased tickets per block\n"
+            "\nExample:\n"
+            + HelpExampleCli("setticketbuyermaxperblock", "1")
+            + HelpExampleRpc("setticketbuyermaxperblock", "1")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    int value = request.params[0].get_int();
+    if (value < 1)
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The maximum number of purchased tickets per block cannot be zero or negative.");
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
+    cfg.limit = value;
+
+    return NullUniValue;
+}
+
+UniValue generatevote(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 4)
+        throw std::runtime_error{
+            "generatevote \"blockhash\" height \"tickethash\" votebits \"votebitsext\"\n"
+            "\nReturns the hash of the vote transaction\n"
+            + HelpRequiringPassphrase(pwallet) +
+            "\nArguments:\n"
+            "1.  blockhash    (string, required)  Hash of the block containing the corresponding ticket\n"
+            "2.  height       (numeric, required) Height of the block containing the corresponding ticket\n"
+            "3.  tickethash   (string, required)  Hash of the corresponding ticket\n"
+            "4.  votebits     (numeric, required) Decimal representation of the 16 bits with the vote intention\n"
+            "5.  votebitsext  (string, optional)  The extended vote options in hexadecimal representation. If not specified, the default value will be used (0x00).\n"
+            
+            "\nResult:\n"
+            "{\n"
+            " \"hex\": \"value\", (string) Hash of resulting vote transaction\n"
+            "}\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("generatevote", "\"blockhash\" 50 \"tickethash\" 1 \"ext\"")
+            + HelpExampleRpc("generatevote", "\"blockhash\" 50 \"tickethash\" 1 \"ext\"")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    // block hash
+    if (!request.params[0].isStr())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid block hash.");
+
+    uint256 blockHash = uint256S(request.params[0].get_str());
+
+    // block height
+    if (!request.params[1].isNum())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid block height.");
+
+    int blockHeight = request.params[1].get_int();
+
+    // ticket hash
+    if (!request.params[2].isStr())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid ticket hash.");
+
+    uint256 ticketHash = uint256S(request.params[2].get_str());
+
+    // vote bits
+    if (!request.params[3].isNum())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid vote bits.");
+
+    int bits = request.params[3].get_int();
+    if (bits < 0 || bits > std::numeric_limits<uint16_t>().max())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid vote bits.");
+
+    VoteBits voteBits(static_cast<uint16_t>(bits));
+
+    // extended vote bits
+    ExtendedVoteBits extendedVoteBits;
+
+    if (!request.params[4].isNull() && request.params[4].isStr()) {
+        std::string voteBitsStr = request.params[4].get_str();
+        if (voteBitsStr.length() > 0) {
+            if (!ExtendedVoteBits::containsValidExtendedVoteBits(voteBitsStr))
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid extended vote bits.");
+
+            extendedVoteBits = ExtendedVoteBits(voteBitsStr);
+        }
+    }
+
+    const auto&& r = pwallet->Vote(ticketHash, blockHash, blockHeight, voteBits, extendedVoteBits);
+    if (r.first.size() == 0 || r.second.code != CWalletError::SUCCESSFUL)
+        throw JSONRPCErrorFromWalletError(r.second);
+    
+    UniValue result{UniValue::VOBJ};
+    result.push_back(Pair("hex", r.first));
+
+    return result;
+}
+
+UniValue startautovoter(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
+        throw std::runtime_error{
+            "startautovoter votebits (votebitsext \"passphrase\")\n"
+            "\nStart the automatic voter with the specified settings.\n"
+            "\nArguments:\n"
+            "1.  votebits         (numeric, required)  Decimal representation of the 16 bits with the vote intention\n"
+            "2.  votebitsext      (string, optional)   Extra bits with vote options. If not specified, the default value will be used (0x00).\n"
+            "3.  \"passphrase\"   (string, optional)   Passphrase to use for unlocking the wallet\n"
+            "\nExamples:\n"
+            "\nStart the automatic voter with the intention to accept the previous block's regular transaction tree\n"
+            + HelpExampleCli("startautovoter", "1")
+            + HelpExampleRpc("startautovoter", "1") +
+            "\nStart the automatic voter with the intention to reject the previous block's regular transaction tree\n"
+            + HelpExampleCli("startautovoter", "0")
+            + HelpExampleRpc("startautovoter", "0") +
+            "\nStart the automatic voter on an encrypted wallet with the intention to accept the previous block's regular transaction tree, no extended vote options\n"
+            + HelpExampleCli("startautovoter", "1 \"\" \"some-password\"")
+            + HelpExampleRpc("startautovoter", "1 \"\" \"some-password\"")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    // Vote bits
+    if (!request.params[0].isNum())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid vote bits.");
+
+    int bits = request.params[0].get_int();
+    if (bits < 0 || bits > std::numeric_limits<uint16_t>().max())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid vote bits.");
+
+    VoteBits voteBits(static_cast<uint16_t>(bits));
+
+    // Extended vote bits
+    ExtendedVoteBits extendedVoteBits;
+
+    if (!request.params[1].isNull() && request.params[1].isStr()) {
+        std::string voteBitsStr = request.params[1].get_str();
+        if (voteBitsStr.length() > 0) {
+            if (!ExtendedVoteBits::containsValidExtendedVoteBits(voteBitsStr))
+                throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid extended vote bits.");
+
+            extendedVoteBits = ExtendedVoteBits(voteBitsStr);
+        }
+    }
+
+    // Passphrase
+    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
+
+    CAutoVoter *av = pwallet->GetAutoVoter();
+    if (av == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic voter not found.");
+
+    CAutoVoterConfig& cfg = av->GetConfig();
+    cfg.voteBits = voteBits;
+    cfg.extendedVoteBits = extendedVoteBits;
+    cfg.passphrase = passphrase;
+
+    av->start();
+
+    return NullUniValue;
+}
+
+UniValue stopautovoter(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error{
+            "stopautovoter\n"
+            "\nStop the automatic voter. Applies after current vote iteration.\n"
+            "\nExample:\n"
+            + HelpExampleCli("stopautovoter", "")
+            + HelpExampleRpc("stopautovoter", "")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CAutoVoter *av = pwallet->GetAutoVoter();
+    if (av == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic voter not found.");
+
+    av->stop();
+
+    return NullUniValue;
+}
+
+UniValue autovoterconfig(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error{
+            "autovoterconfig\n"
+            "\nReturns the automatic voter settings.\n"
+            "\nResult\n"
+            "{\n"
+            "  \"autovote\" : true|false,           (boolean)  true if the automatic voter is running\n"
+            "  \"votebits\" : n,                    (numeric)  16 bits integer with the vote intention\n"
+            "  \"votebitsext\" : \"votebitsext\",   (string)   Extra bits with vote options\n"
+            "  }\n"
+            "\nExample:\n"
+            + HelpExampleCli("autovoterconfig", "")
+            + HelpExampleRpc("autovoterconfig", "")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CAutoVoter *av = pwallet->GetAutoVoter();
+    if (av == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic voter not found.");
+
+    CAutoVoterConfig& cfg = av->GetConfig();
+
+    UniValue result{UniValue::VOBJ};
+    result.push_back(Pair("autovote", cfg.autoVote));
+    result.push_back(Pair("votebits", cfg.voteBits.getBits()));
+    result.push_back(Pair("votebitsext", cfg.extendedVoteBits.getHex()));
+
+    return result;
+}
+
+UniValue setautovotervotebits(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setautovotervotebits votebits\n"
+            "\nConfigure the vote bits to use for automatic voting.\n"
+            "\nArguments:\n"
+            "1.  votebits           (numeric, required)  Decimal representation of the 16 bits with the vote intention\n"
+            "\nExample:\n"
+            + HelpExampleCli("setautovotervotebits", "1")
+            + HelpExampleRpc("setautovotervotebits", "1")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    if (!request.params[0].isNum())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid vote bits.");
+
+    int bits = request.params[0].get_int();
+    if (bits < 0 || bits > std::numeric_limits<uint16_t>().max())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid vote bits.");
+
+    VoteBits voteBits(static_cast<uint16_t>(bits));
+
+    CAutoVoter *av = pwallet->GetAutoVoter();
+    if (av == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic voter not found.");
+
+    CAutoVoterConfig& cfg = av->GetConfig();
+
+    cfg.voteBits = voteBits;
+
+    return NullUniValue;
+}
+
+UniValue setautovotervotebitsext(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setautovotervotebitsext votebitsext\n"
+            "\nConfigure the extended vote bits to use for automatic voting.\n"
+            "\nArguments:\n"
+            "1.  votebitsext           (numeric, required)  Extra bits with vote options\n"
+            "\nExample:\n"
+            + HelpExampleCli("setautovotervotebitsext", "\"extra vote bits\"")
+            + HelpExampleRpc("setautovotervotebitsext", "\"extra vote bits\"")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    if (!request.params[0].isStr())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid extended vote bits.");
+
+    std::string voteBitsStr = request.params[0].get_str();
+
+    if (!ExtendedVoteBits::containsValidExtendedVoteBits(voteBitsStr))
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid extended vote bits.");
+
+    ExtendedVoteBits extendedVoteBits(voteBitsStr);
+
+    CAutoVoter *av = pwallet->GetAutoVoter();
+    if (av == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic voter not found.");
+
+    CAutoVoterConfig& cfg = av->GetConfig();
+
+    cfg.extendedVoteBits = extendedVoteBits;
+
+    return NullUniValue;
+}
+
+UniValue revoketicket(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "revoketicket \"tickethash\"\n"
+            "\nCreates and published a revocation transaction and returns its hash.\n"
+            + HelpRequiringPassphrase(pwallet) +
+            "\nArguments:\n"
+            "1.  tickethash   (string, required)  Hash of the corresponding ticket\n"
+
+            "\nResult:\n"
+            "{\n"
+            " \"hex\": \"value\", (string) Hash of resulting revocation transaction\n"
+            "}\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("revoketicket", "\"tickethash\"")
+            + HelpExampleRpc("revoketicket", "\"tickethash\"")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    // ticket hash
+    if (!request.params[0].isStr())
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid ticket hash.");
+
+    uint256 ticketHash = uint256S(request.params[0].get_str());
+
+    const auto&& r = pwallet->Revoke(ticketHash);
+    if (r.first.size() == 0 || r.second.code != CWalletError::SUCCESSFUL)
+        throw JSONRPCErrorFromWalletError(r.second);
+
+    UniValue result{UniValue::VOBJ};
+    result.push_back(Pair("hex", r.first));
+
+    return result;
+}
+
+UniValue revoketickets(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error{
+            "revoketickets\n"
+            "\nCreates and publishes revocation transactions for all the wallet's missed tickets and returns their hashes.\n"
+            + HelpRequiringPassphrase(pwallet) +
+            "\nArguments:\n"
+            "None\n"
+            "\nResult:\n"
+            "\"value\"              (string) Hashes of resulting ticket transactions\n"
+            + HelpExampleCli("revoketickets", "")
+            + HelpExampleRpc("revoketickets", "")
+    };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    const auto&& r = pwallet->RevokeAll();
+
+    UniValue results{UniValue::VARR};
+    for (auto&& txid: r.first)
+        results.push_back(txid);
+
+    if (r.second.code != CWalletError::SUCCESSFUL) {
+        UniValue error = JSONRPCErrorFromWalletError(r.second);
+        if (r.first.size() > 0)
+            error.push_back(Pair("txids", results));
+        throw error;
+    }
+
+    return results;
+}
+
+UniValue startautorevoker(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error{
+            "startautorevoker (\"passphrase\")\n"
+            "\nStart the automatic revoker.\n"
+            "\nArguments:\n"
+            "1.  \"passphrase\"   (string, optional)   Passphrase to use for unlocking the wallet\n"
+            "\nExamples:\n"
+            "\nStart the automatic revoker on a non-encrypted wallet\n"
+            + HelpExampleCli("startautorevoker", "")
+            + HelpExampleRpc("startautorevoker", "") +
+            "\nStart the automatic revoker on an encrypted wallet\n"
+            + HelpExampleCli("startautorevoker", "\"some-password\"")
+            + HelpExampleRpc("startautorevoker", "\"some-password\"")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    // Passphrase
+    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[0]);
+
+    CAutoRevoker *ar = pwallet->GetAutoRevoker();
+    if (ar == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic revoker not found.");
+
+    CAutoRevokerConfig& cfg = ar->GetConfig();
+    cfg.passphrase = passphrase;
+
+    ar->start();
+
+    return NullUniValue;
+}
+
+UniValue stopautorevoker(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error{
+            "stopautorevoker\n"
+            "\nStop the automatic revoker. Applies after current revoke iteration.\n"
+            "\nExample:\n"
+            + HelpExampleCli("stopautorevoker", "")
+            + HelpExampleRpc("stopautorevoker", "")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CAutoRevoker *ar = pwallet->GetAutoRevoker();
+    if (ar == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic revoker not found.");
+
+    ar->stop();
+
+    return NullUniValue;
+}
+
+UniValue autorevokerconfig(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error{
+            "autorevokerconfig\n"
+            "\nReturns the automatic revoker settings.\n"
+            "\nResult\n"
+            "{\n"
+            "  \"autorevoke\" : true|false,         (boolean)  true if the automatic revoker is running\n"
+            "  }\n"
+            "\nExample:\n"
+            + HelpExampleCli("autorevokerconfig", "")
+            + HelpExampleRpc("autorevokerconfig", "")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CAutoRevoker *ar = pwallet->GetAutoRevoker();
+    if (ar == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic revoker not found.");
+
+    CAutoRevokerConfig& cfg = ar->GetConfig();
+
+    UniValue result{UniValue::VOBJ};
+    result.push_back(Pair("autorevoke", cfg.autoRevoke));
+
+    return result;
 }
 
 UniValue fundrawtransaction(const JSONRPCRequest& request)
@@ -3165,6 +4764,614 @@ UniValue generate(const JSONRPCRequest& request)
     return generateBlocks(coinbase_script, num_generate, max_tries, true);
 }
 
+UniValue rescanblockchain(const JSONRPCRequest& request)
+{
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 2) {
+        throw std::runtime_error(
+            "rescanblockchain (\"start_height\") (\"stop_height\")\n"
+            "\nRescan the local blockchain for wallet related transactions.\n"
+            "\nArguments:\n"
+            "1. \"start_height\"    (numeric, optional) block height where the rescan should start\n"
+            "2. \"stop_height\"     (numeric, optional) the last block height that should be scanned\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"start_height\"     (numeric) The block height where the rescan has started. If omitted, rescan started from the genesis block.\n"
+            "  \"stop_height\"      (numeric) The height of the last rescanned block. If omitted, rescan stopped at the chain tip.\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("rescanblockchain", "100000 120000")
+            + HelpExampleRpc("rescanblockchain", "100000 120000")
+            );
+    }
+
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CBlockIndex *pindexStart = chainActive.Genesis();
+    CBlockIndex *pindexStop = nullptr;
+    if (!request.params[0].isNull()) {
+        pindexStart = chainActive[request.params[0].get_int()];
+        if (!pindexStart) {
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid start_height");
+        }
+    }
+
+    if (!request.params[1].isNull()) {
+        pindexStop = chainActive[request.params[1].get_int()];
+        if (!pindexStop) {
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid stop_height");
+        }
+        else if (pindexStop->nHeight < pindexStart->nHeight) {
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "stop_height must be greater then start_height");
+        }
+    }
+
+    // We can't rescan beyond non-pruned blocks, stop and throw an error
+    if (fPruneMode) {
+        CBlockIndex *block = pindexStop ? pindexStop : chainActive.Tip();
+        while (block && block->nHeight >= pindexStart->nHeight) {
+            if (!(block->nStatus & BLOCK_HAVE_DATA)) {
+                throw JSONRPCError(RPCErrorCode::MISC_ERROR, "Can't rescan beyond pruned data. Use RPC call getblockchaininfo to determine your pruned height.");
+            }
+            block = block->pprev;
+        }
+    }
+
+    CBlockIndex *stopBlock = pwallet->ScanForWalletTransactions(pindexStart, pindexStop, true);
+    if (!stopBlock) {
+        if (pwallet->IsAbortingRescan()) {
+            throw JSONRPCError(RPCErrorCode::MISC_ERROR, "Rescan aborted.");
+        }
+        // if we got a nullptr returned, ScanForWalletTransactions did rescan up to the requested stopindex
+        stopBlock = pindexStop ? pindexStop : chainActive.Tip();
+    }
+    else {
+        throw JSONRPCError(RPCErrorCode::MISC_ERROR, "Rescan failed. Potentially corrupted data files.");
+    }
+
+    UniValue response(UniValue::VOBJ);
+    response.pushKV("start_height", pindexStart->nHeight);
+    response.pushKV("stop_height", stopBlock->nHeight);
+    return response;
+}
+
+UniValue getmultisigoutinfo(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() !=2)
+    {
+        throw std::runtime_error{
+            "getmultisigoutinfo \"hash\" index\n"
+            "\nReturns information about a multisignature output.\n"
+            "\nArguments:\n"
+            "1. hash             (string, required)  Input hash to check.\n"
+            "2. index            (numeric, required) Index of input.\n"
+            "\nResult:\n"
+            "{\n"
+            "\"address\": \"value\",       (string)          Script address.\n"
+            "\"redeemscript\": \"value\",  (string)          Hex of the redeeming script.\n"
+            "\"m\": n,                   (numeric)         m (in m-of-n)\n"
+            "\"n\": n,                   (numeric)         n (in m-of-n)\n"
+            "\"pubkeys\": [\"value\",...], (array of string) Associated pubkeys.\n"
+            "\"txhash\": \"value\",        (string)          txhash\n"
+            "\"blockheight\": n,         (numeric)         Height of the containing block.\n"
+            "\"blockhash\": \"value\",     (string)          Hash of the containing block.\n"
+            "\"spent\": true|false,      (boolean)         If it has been spent.\n"
+            "\"spentby\": \"value\",       (string)          Hash of spending tx.\n"
+            "\"spentbyindex\": n,        (numeric)         Index of spending tx.\n"
+            "\"amount\": n.nnn,          (numeric)         Amount of coins contained.\n"
+            "}\n"
+            "\nExamples:\n"
+            //TODO update examples
+            + HelpExampleCli("getmultisigoutinfo", "\"hash\" 2")
+            + HelpExampleRpc("getmultisigoutinfo", "\"hash\" 2")
+        };
+    }
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    uint256 hash;
+    hash.SetHex(request.params[0].get_str());
+
+    const auto& nIndex = request.params[1].get_int();
+
+    auto it = pwallet->mapWallet.find(hash);
+    if (it == pwallet->mapWallet.end()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
+    }
+
+    const auto& wtx = it->second;
+    const auto& txOut = wtx.tx->vout[nIndex];
+
+    const auto& scriptPubKey = txOut.scriptPubKey;
+
+    auto result = UniValue{UniValue::VOBJ};
+
+    CTxDestination address;
+    const auto fValidAddress = ExtractDestination(scriptPubKey, address);
+
+    if (fValidAddress) {
+        result.push_back(Pair("address", EncodeDestination(address)));
+
+        if (txOut.scriptPubKey.IsPayToScriptHash()){
+            const auto& hash = boost::get<CScriptID>(address);
+            CScript redeemScript;
+            if (pwallet->GetCScript(hash, redeemScript)) {
+                result.push_back(Pair("redeemScript", HexStr(redeemScript.begin(), redeemScript.end())));
+
+                txnouttype type;
+                std::vector<CTxDestination> addresses;
+                int nRequired;
+                if (ExtractDestinations(redeemScript, type, addresses, nRequired)) {
+                    result.push_back(Pair("m", nRequired));
+                    result.push_back(Pair("n", static_cast<uint64_t>(addresses.size())));
+                    auto pubkeys = UniValue{UniValue::VARR};
+                    for (const auto& addr: addresses){
+                        CPubKey pubkey;
+                        if (pwallet->GetPubKey(boost::get<CKeyID>(addr),pubkey))
+                            pubkeys.push_back(HexStr(pubkey));
+                    }
+                    result.push_back(Pair("pubkeys",pubkeys));
+                }
+            }
+
+            result.push_back(Pair("txhash",wtx.GetHash().GetHex()));
+            result.push_back(Pair("blockheight", mapBlockIndex[wtx.hashBlock]->nHeight));
+            result.push_back(Pair("blockhash",wtx.hashBlock.GetHex()));
+
+            auto spendingWtx = CWalletTx{};
+            if (pwallet->IsSpent(wtx.GetHash(), nIndex, &spendingWtx)) {
+                result.push_back(Pair("spent",true));
+                result.push_back(Pair("spentby", spendingWtx.GetHash().GetHex()));
+
+                // find the index in vin of spending transaction that comes from our hash
+                size_t idx = 0;
+                while (idx < spendingWtx.tx->vin.size() && spendingWtx.tx->vin[idx].prevout.hash != wtx.GetHash()) ++idx;
+                assert( idx < spendingWtx.tx->vin.size());
+
+                result.push_back(Pair("spentbyindex", static_cast<uint64_t>(idx)));
+            } else {
+                result.push_back(Pair("spent",false));
+            }
+
+        }
+    }
+
+    result.push_back(Pair("amount", ValueFromAmount(txOut.nValue)));
+
+    return result;
+}
+
+// Defined in rpc/rawtransaction.cpp
+extern void TxInErrorToJSON(const CTxIn& txin, UniValue& vErrorsRet, const std::string& strMessage);
+
+static void RedeemMultisigOut(CWallet *const pwallet, const uint256& hash, int index, const CTxDestination& dest, UniValue& result)
+{
+
+    auto it = pwallet->mapWallet.find(hash);
+    if (it == pwallet->mapWallet.end()) {
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
+    }
+
+    const auto& wtx = it->second;
+    const auto& txOut = wtx.tx->vout[index];
+
+    const auto& rawtxIn = CTxIn{COutPoint(hash, index),CScript()};
+    const auto& rawtxOut= CTxOut(txOut.nValue,GetScriptForDestination(dest));
+
+    CMutableTransaction mtx;
+    mtx.vin.push_back(rawtxIn);
+    mtx.vout.push_back(rawtxOut);
+
+    // Fetch previous transactions (inputs):
+    CCoinsView viewDummy;
+    CCoinsViewCache view(&viewDummy);
+    {
+        LOCK(mempool.cs);
+        CCoinsViewCache &viewChain = *pcoinsTip;
+        CCoinsViewMemPool viewMempool(&viewChain, mempool);
+        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
+
+        for (const CTxIn& txin : mtx.vin) {
+            view.AccessCoin(txin.prevout); // Load entries from viewChain into view; can fail.
+        }
+
+        view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
+    }
+
+    // Script verification errors
+    UniValue vErrors(UniValue::VARR);
+
+    CTxIn& txin = mtx.vin[0];
+    // deduct the fee
+    if (!pwallet->DummySignTx(mtx, std::set<CInputCoin>{CInputCoin(&wtx, txin.prevout.n)})) {
+        TxInErrorToJSON(txin, vErrors, "Failed to dummy sign the transction!");
+    }
+
+    const auto& nBytes = GetVirtualTransactionSize(mtx);
+    const auto& nFeeNeeded = GetRequiredFee(nBytes);
+    auto& currentValue = mtx.vout[0].nValue;
+    if (currentValue < nFeeNeeded) {
+        TxInErrorToJSON(txin, vErrors, "The transaction amount is too small to pay the fee");
+    }
+    currentValue -= nFeeNeeded;
+
+    const Coin& coin = view.AccessCoin(txin.prevout);
+    if (coin.IsSpent()) {
+        TxInErrorToJSON(txin, vErrors, "Input not found or already spent");
+    }
+    const CScript& prevPubKey = coin.out.scriptPubKey;
+    const CAmount& amount = coin.out.nValue;
+
+    SignatureData sigdata;
+    const CTransaction txConst(mtx);
+    const CKeyStore& keystore = *pwallet;
+    ProduceSignature(MutableTransactionSignatureCreator(&keystore, &mtx, 0, amount, SIGHASH_ALL), prevPubKey, sigdata);
+    sigdata = CombineSignatures(prevPubKey, TransactionSignatureChecker(&txConst, 0, amount), sigdata, DataFromTransaction(mtx, 0));
+
+    UpdateTransaction(mtx, 0, sigdata);
+
+    ScriptError serror = SCRIPT_ERR_OK;
+    if (!VerifyScript(txin.scriptSig, prevPubKey, &txin.scriptWitness, STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&txConst, 0, amount), &serror)) {
+        TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
+    }
+
+    bool fComplete = vErrors.empty();
+
+    result.push_back(Pair("hex", EncodeHexTx(mtx)));
+    result.push_back(Pair("complete", fComplete));
+    if (!vErrors.empty()) {
+        result.push_back(Pair("errors", vErrors));
+    }
+}
+
+CTxDestination GetOrGenerateAddress(const JSONRPCRequest& request, int paramIndex, CWallet *const pwallet)
+{
+    CTxDestination dest;
+    if (!request.params[paramIndex].isNull()) {
+        dest = DecodeDestination(request.params[paramIndex].get_str());
+        if (!IsValidDestination(dest)) {
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAIcoin address");
+        }
+    }
+    else{
+        // Generate a new key that is added to wallet
+        CPubKey newKey;
+        if (!pwallet->GetKeyFromPool(newKey)) {
+            throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+        }
+        dest = newKey.GetID();
+    }
+    return dest;
+}
+
+UniValue redeemmultisigout(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 4)
+    {
+        throw std::runtime_error{
+            "redeemmultisigout \"hash\" index tree (\"address\")\n"
+            "\nTakes the input and constructs a P2PKH paying to the specified address.\n"
+            "\nArguments:\n"
+            "1. hash    (string, required)  Hash of the input transaction\n"
+            "2. index   (numeric, required) Idx of the input transaction\n"
+            "3. tree    (numeric, required) Tree the transaction is on.\n"
+            "4. address (string, optional)  Address to pay to.\n"
+            "\nResult:\n"
+            "{\n"
+            " \"hex\": \"value\",         (string)          Resulting hash.\n"
+            " \"complete\": true|false, (boolean)         Shows if opperation was completed.\n"
+            " \"errors\": [{            (array of object) Any errors generated.\n"
+            "  \"txid\": \"value\",       (string)          The transaction hash of the referenced previous output\n"
+            "  \"vout\": n,             (numeric)         The output index of the referenced previous output\n"
+            "  \"scriptSig\": \"value\",  (string)          The hex-encoded signature script\n"
+            "  \"sequence\": n,         (numeric)         Script sequence number\n"
+            "  \"error\": \"value\",      (string)          Verification or signing error related to the input\n"
+            " },...],\n"
+            "}\n"
+            "\nExamples:\n"
+            //TODO update examples
+            + HelpExampleCli("redeemmultisigout", "\"hash\" 2 220")
+            + HelpExampleRpc("redeemmultisigout", "\"hash\" 2 220")
+        };
+    }
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    uint256 hash;
+    hash.SetHex(request.params[0].get_str());
+
+    const auto& nIndex = request.params[1].get_int();
+    const auto& nTree = request.params[2].get_int();
+
+    EnsureWalletIsUnlocked(pwallet);
+    const auto& dest = GetOrGenerateAddress(request,3,pwallet);
+
+    UniValue result(UniValue::VOBJ);
+    RedeemMultisigOut(pwallet, hash, nIndex, dest, result);
+
+    return result;
+}
+
+UniValue redeemmultisigouts(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
+    {
+        throw std::runtime_error{
+            "redeemmultisigouts \"fromscraddress\" (\"toaddress\" number)\n"
+            "\nTakes a hash, looks up all unspent outpoints and generates list of signed transactions spending to either an address specified or internal addresses\n"
+            "\nArguments:\n"
+            "1. fromscraddress (string, required)  Input script hash address.\n"
+            "2. toaddress      (string, optional)  Address to look for (if not internal addresses).\n"
+            "3. number         (numeric, optional) Number of outpoints found.\n"
+            "\nResult:\n"
+            "{\n"
+            " \"hex\": \"value\",         (string)          Resulting hash.\n"
+            " \"complete\": true|false, (boolean)         Shows if opperation was completed.\n"
+            " \"errors\": [{            (array of object) Any errors generated.\n"
+            "  \"txid\": \"value\",       (string)          The transaction hash of the referenced previous output\n"
+            "  \"vout\": n,             (numeric)         The output index of the referenced previous output\n"
+            "  \"scriptSig\": \"value\",  (string)          The hex-encoded signature script\n"
+            "  \"sequence\": n,         (numeric)         Script sequence number\n"
+            "  \"error\": \"value\",      (string)          Verification or signing error related to the input\n"
+            " },...],\n"
+            "}\n"
+            "\nExamples:\n"
+            //TODO update examples
+            + HelpExampleCli("redeemmultisigouts", "\"fromaddress\"")
+            + HelpExampleRpc("redeemmultisigouts", "\"fromaddress\"")
+        };
+    }
+
+    ObserveSafeMode();
+
+    const auto& scrAddress = DecodeDestination(request.params[0].get_str());
+    if (scrAddress.which() != 2/*CScriptID template pos*/) {
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "fromscraddress must be a script hash address");
+    }
+
+    auto nMaxOutputs = std::numeric_limits<int>::max();
+    if (!request.params[2].isNull())
+        nMaxOutputs = request.params[2].get_int();
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    const auto& sToAddress = GetOrGenerateAddress(request,1,pwallet);
+
+    UniValue results{UniValue::VARR};
+
+    auto nCount = 1;
+    std::vector<COutput> vecOutputs;
+    pwallet->AvailableCoins(vecOutputs);
+    for (const auto& out : vecOutputs) {
+        const auto& scriptPubKey = out.tx->tx->vout[out.i].scriptPubKey;
+        if (scriptPubKey.IsPayToScriptHash()) {
+            CTxDestination address;
+            const auto fValidAddress = ExtractDestination(scriptPubKey, address);
+
+            if (!fValidAddress || address != scrAddress) {
+                continue;
+            }
+
+            if (nCount > nMaxOutputs) {
+                break;
+            }
+
+            UniValue entry{UniValue::VOBJ};
+            RedeemMultisigOut(pwallet, out.tx->GetHash(), out.i, sToAddress, entry);
+            results.push_back(entry);
+            ++nCount;
+        }
+    }
+
+    return results;
+}
+
+UniValue sendtomultisig(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 6)
+    {
+        throw std::runtime_error{
+            "sendtomultisig \"fromaccount\" amount [\"pubkey\",...] (nrequired=1 minconf=1 \"comment\")\n"
+            "\nAuthors, signs, and sends a transaction that outputs some amount to a multisig address.\n"
+            "Unlike sendfrom, outputs are always chosen from the default account.\n"
+            "A change output is automatically included to send extra output value back to the original account.\n"
+            "\nArguments:\n"
+            "1. fromaccount (string, required)             Unused\n"
+            "2. amount      (numeric, required)            Amount to send to the payment address valued in PAI coin\n"
+            "3. pubkeys     (array of string, required)    Pubkey to send to.\n"
+            "4. nrequired   (numeric, optional, default=1) The number of signatures required to redeem outputs paid to this address\n"
+            "5. minconf     (numeric, optional, default=1) Minimum number of block confirmations required\n"
+            "6. comment     (string, optional)             Unused\n"
+            "\nResult:\n"
+            "\"value\"    (string)      The transaction hash of the sent transaction\n"
+            "\nExamples:\n"
+            //TODO update examples
+            + HelpExampleCli("sendtomultisig", "\"fromaccount\" 2 \"[\\\"16sSauSf5pF2UkUwvKGq4qjNRzBZYqgEL5\\\",\\\"171sgjn4YtPu27adkKGrdDwzRTxnRkBfKV\\\"]\"")
+            + HelpExampleRpc("sendtomultisig", "\"fromaccount\" 2 \"[\\\"16sSauSf5pF2UkUwvKGq4qjNRzBZYqgEL5\\\",\\\"171sgjn4YtPu27adkKGrdDwzRTxnRkBfKV\\\"]\"")
+        };
+    }
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    const auto& sFromAccount = request.params[0].get_str();
+    // Amount
+    const auto nAmount = AmountFromValue(request.params[1]);
+    if (nAmount <= 0)
+        throw JSONRPCError(RPCErrorCode::TYPE_ERROR, "Invalid amount for send");
+
+    auto nRequired = 1;
+    if (!request.params[3].isNull())
+        nRequired = request.params[3].get_int();
+    if (nRequired < 1)
+        throw std::runtime_error("a multisignature address must require at least one key to redeem");
+
+    RPCTypeCheckArgument(request.params[2], UniValue::VARR);
+    const auto& keys = request.params[2].get_array();
+    if (static_cast<int>(keys.size()) < nRequired)
+        throw std::runtime_error(
+            strprintf("not enough keys supplied "
+                      "(got %u keys, but need at least %d to redeem)", keys.size(), nRequired));
+    if (keys.size() > 16)
+        throw std::runtime_error("Number of addresses involved in the multisignature address creation > 16\nReduce the number");
+    std::vector<CPubKey> pubkeys;
+    pubkeys.resize(keys.size());
+    for (size_t i{0}; i < keys.size(); ++i)
+    {
+        const auto& ks = keys[i].get_str();
+        if (IsHex(ks))
+        {
+            CPubKey vchPubKey{ParseHex(ks)};
+            if (!vchPubKey.IsFullyValid())
+                throw std::runtime_error(" Invalid public key: "+ks);
+            pubkeys[i] = vchPubKey;
+        }
+        else
+        {
+            throw std::runtime_error(" Invalid public key: "+ks);
+        }
+    }
+
+    auto nMinConf = 1;
+    if (!request.params[4].isNull())
+        nMinConf = request.params[4].get_int();
+
+    auto sComment = std::string{};
+    if (!request.params[5].isNull())
+        sComment = request.params[5].get_str();
+
+    const auto inner = GetScriptForMultisig(nRequired, pubkeys);
+    if (inner.size() > MAX_SCRIPT_ELEMENT_SIZE)
+        throw std::runtime_error(
+                strprintf("redeemScript exceeds size limit: %d > %d", inner.size(), MAX_SCRIPT_ELEMENT_SIZE));
+    CScriptID innerID{inner};
+
+    EnsureWalletIsUnlocked(pwallet);
+    pwallet->AddCScript(inner);
+
+    const auto& dest = CTxDestination{innerID}; 
+
+    // Wallet comments
+    CWalletTx wtx;
+    SendMoney(pwallet, dest, nAmount, false /*fSubtractFeeFromAmount*/, wtx, CCoinControl{});
+    return wtx.GetHash().GetHex();
+}
+
+UniValue getmasterpubkey(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 1)
+    {
+        throw std::runtime_error{
+            "getmasterpubkey (\"account\")\n"
+            "\nRequests the master pubkey from the wallet.\n"
+            "\nArguments:\n"
+            "1. account (string, optional) The account to get the master pubkey for\n"
+            "\nResult:\n"
+            "\"value\" (string) The master pubkey for the wallet\n"
+            "\nExamples:\n"
+            //TODO update examples
+            + HelpExampleCli("getmasterpubkey", "\"account\"")
+            + HelpExampleRpc("getmasterpubkey", "")
+        };
+    }
+
+    auto sAccount = std::string{};
+    if (!request.params[0].isNull())
+        sAccount = request.params[0].get_str();
+
+    CPubKey pubkey;
+    if (!pwallet->GetAccountPubkey(pubkey, sAccount)) {
+        throw JSONRPCError(RPCErrorCode::WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+    }
+
+    return HexStr(pubkey);
+}
+
+UniValue listscripts(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || !request.params.empty())
+    {
+        throw std::runtime_error{
+            "listscripts\n"
+            "\nList all scripts that have been added to wallet.\n"
+            "\nResult:\n"
+            "\"scripts\"            (array) A list of the imported scripts\n"
+            "[\n"
+            "  {\n"
+            "    \"hash160\"        (string) The script hash\n"
+            "    \"address\"        (string) The script address\n"
+            "    \"redeemscript\"   (string) The redeem script\n"
+            "  },\n"
+            "  ...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("listscripts", "")
+            + HelpExampleRpc("listscripts", "")
+        };
+    }
+
+    std::vector<std::pair<CScriptID, CScript>> allScripts;
+    {
+        // Lock for the least amount of time
+        LOCK(pwallet->cs_wallet);
+        allScripts = pwallet->GetAllCScripts();
+    }
+    if (allScripts.empty()) {
+        return NullUniValue;
+    }
+
+    UniValue result{UniValue::VARR};
+    for (auto const& scriptPair : allScripts) {
+        auto const& scriptID = scriptPair.first;
+        auto const& script = scriptPair.second;
+
+        UniValue uniScript{UniValue::VOBJ};
+        uniScript.push_back(std::make_pair("hash160", HexStr(scriptID)));
+        uniScript.push_back(std::make_pair("address", EncodeDestination(scriptID)));
+        uniScript.push_back(std::make_pair("redeemscript", HexStr(script)));
+
+        result.push_back(uniScript);
+    }
+
+    return result;
+}
+
 extern UniValue abortrescan(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue dumpprivkey(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue importprivkey(const JSONRPCRequest& request);
@@ -3175,60 +5382,99 @@ extern UniValue importwallet(const JSONRPCRequest& request);
 extern UniValue importprunedfunds(const JSONRPCRequest& request);
 extern UniValue removeprunedfunds(const JSONRPCRequest& request);
 extern UniValue importmulti(const JSONRPCRequest& request);
+extern UniValue importscript(const JSONRPCRequest& request);
+extern UniValue rescanblockchain(const JSONRPCRequest& request);
 
 static const CRPCCommand commands[] =
 { //  category              name                        actor (function)           argNames
     //  --------------------- ------------------------    -----------------------  ----------
-    { "rawtransactions",    "fundrawtransaction",       &fundrawtransaction,       {"hexstring","options"} },
-    { "hidden",             "resendwallettransactions", &resendwallettransactions, {} },
-    { "wallet",             "abandontransaction",       &abandontransaction,       {"txid"} },
-    { "wallet",             "abortrescan",              &abortrescan,              {} },
-    { "wallet",             "addmultisigaddress",       &addmultisigaddress,       {"nrequired","keys","account"} },
-    { "wallet",             "addwitnessaddress",        &addwitnessaddress,        {"address"} },
-    { "wallet",             "backupwallet",             &backupwallet,             {"destination"} },
-    { "wallet",             "bumpfee",                  &bumpfee,                  {"txid", "options"} },
-    { "wallet",             "dumpprivkey",              &dumpprivkey,              {"address"}  },
-    { "wallet",             "dumpwallet",               &dumpwallet,               {"filename"} },
-    { "wallet",             "encryptwallet",            &encryptwallet,            {"passphrase"} },
-    { "wallet",             "getaccountaddress",        &getaccountaddress,        {"account"} },
-    { "wallet",             "getaccount",               &getaccount,               {"address"} },
-    { "wallet",             "getaddressesbyaccount",    &getaddressesbyaccount,    {"account"} },
-    { "wallet",             "getbalance",               &getbalance,               {"account","minconf","include_watchonly"} },
-    { "wallet",             "getnewaddress",            &getnewaddress,            {"account"} },
-    { "wallet",             "getrawchangeaddress",      &getrawchangeaddress,      {} },
-    { "wallet",             "getreceivedbyaccount",     &getreceivedbyaccount,     {"account","minconf"} },
-    { "wallet",             "getreceivedbyaddress",     &getreceivedbyaddress,     {"address","minconf"} },
-    { "wallet",             "gettransaction",           &gettransaction,           {"txid","include_watchonly"} },
-    { "wallet",             "getunconfirmedbalance",    &getunconfirmedbalance,    {} },
-    { "wallet",             "getwalletinfo",            &getwalletinfo,            {} },
-    { "wallet",             "importmulti",              &importmulti,              {"requests","options"} },
-    { "wallet",             "importprivkey",            &importprivkey,            {"privkey","label","rescan"} },
-    { "wallet",             "importwallet",             &importwallet,             {"filename"} },
-    { "wallet",             "importaddress",            &importaddress,            {"address","label","rescan","p2sh"} },
-    { "wallet",             "importprunedfunds",        &importprunedfunds,        {"rawtransaction","txoutproof"} },
-    { "wallet",             "importpubkey",             &importpubkey,             {"pubkey","label","rescan"} },
-    { "wallet",             "keypoolrefill",            &keypoolrefill,            {"newsize"} },
-    { "wallet",             "listaccounts",             &listaccounts,             {"minconf","include_watchonly"} },
-    { "wallet",             "listaddressgroupings",     &listaddressgroupings,     {} },
-    { "wallet",             "listlockunspent",          &listlockunspent,          {} },
-    { "wallet",             "listreceivedbyaccount",    &listreceivedbyaccount,    {"minconf","include_empty","include_watchonly"} },
-    { "wallet",             "listreceivedbyaddress",    &listreceivedbyaddress,    {"minconf","include_empty","include_watchonly"} },
-    { "wallet",             "listsinceblock",           &listsinceblock,           {"blockhash","target_confirmations","include_watchonly","include_removed"} },
-    { "wallet",             "listtransactions",         &listtransactions,         {"account","count","skip","include_watchonly"} },
-    { "wallet",             "listunspent",              &listunspent,              {"minconf","maxconf","addresses","include_unsafe","query_options"} },
-    { "wallet",             "listwallets",              &listwallets,              {} },
-    { "wallet",             "lockunspent",              &lockunspent,              {"unlock","transactions"} },
-    { "wallet",             "move",                     &movecmd,                  {"fromaccount","toaccount","amount","minconf","comment"} },
-    { "wallet",             "sendfrom",                 &sendfrom,                 {"fromaccount","toaddress","amount","minconf","comment","comment_to"} },
-    { "wallet",             "sendmany",                 &sendmany,                 {"fromaccount","amounts","minconf","comment","subtractfeefrom","replaceable","conf_target","estimate_mode"} },
-    { "wallet",             "sendtoaddress",            &sendtoaddress,            {"address","amount","comment","comment_to","subtractfeefromamount","replaceable","conf_target","estimate_mode"} },
-    { "wallet",             "setaccount",               &setaccount,               {"address","account"} },
-    { "wallet",             "settxfee",                 &settxfee,                 {"amount"} },
-    { "wallet",             "signmessage",              &signmessage,              {"address","message"} },
-    { "wallet",             "walletlock",               &walletlock,               {} },
-    { "wallet",             "walletpassphrasechange",   &walletpassphrasechange,   {"oldpassphrase","newpassphrase"} },
-    { "wallet",             "walletpassphrase",         &walletpassphrase,         {"passphrase","timeout"} },
-    { "wallet",             "removeprunedfunds",        &removeprunedfunds,        {"txid"} },
+    { "rawtransactions",    "fundrawtransaction",               &fundrawtransaction,                {"hexstring","options"} },
+    { "hidden",             "resendwallettransactions",         &resendwallettransactions,          {} },
+    { "wallet",             "abandontransaction",               &abandontransaction,                {"txid"} },
+    { "wallet",             "abortrescan",                      &abortrescan,                       {} },
+    { "wallet",             "addmultisigaddress",               &addmultisigaddress,                {"nrequired","keys","account"} },
+    { "wallet",             "addwitnessaddress",                &addwitnessaddress,                 {"address"} },
+    { "wallet",             "backupwallet",                     &backupwallet,                      {"destination"} },
+    { "wallet",             "bumpfee",                          &bumpfee,                           {"txid", "options"} },
+    { "wallet",             "dumpprivkey",                      &dumpprivkey,                       {"address"}  },
+    { "wallet",             "dumpwallet",                       &dumpwallet,                        {"filename"} },
+    { "wallet",             "encryptwallet",                    &encryptwallet,                     {"passphrase"} },
+    { "wallet",             "getaccountaddress",                &getaccountaddress,                 {"account"} },
+    { "wallet",             "getaccount",                       &getaccount,                        {"address"} },
+    { "wallet",             "getaddressesbyaccount",            &getaddressesbyaccount,             {"account"} },
+    { "wallet",             "getbalance",                       &getbalance,                        {"account","minconf","include_watchonly"} },
+    { "wallet",             "getnewaddress",                    &getnewaddress,                     {"account"} },
+    { "wallet",             "createnewaccount",                 &createnewaccount,                  {"account"} },
+    { "wallet",             "renameaccount",                    &renameaccount,                     {"oldAccount", "newAccount"} },
+    { "wallet",             "getrawchangeaddress",              &getrawchangeaddress,               {} },
+    { "wallet",             "getreceivedbyaccount",             &getreceivedbyaccount,              {"account","minconf"} },
+    { "wallet",             "getreceivedbyaddress",             &getreceivedbyaddress,              {"address","minconf"} },
+    { "wallet",             "getticketfee",                     &getticketfee,                      {} },
+    { "wallet",             "gettickets",                       &gettickets,                        {"includeimmature","verbose"} },
+    { "wallet",             "setticketfee",                     &setticketfee,                      {"fee"} },
+    { "wallet",             "gettransaction",                   &gettransaction,                    {"txid","include_watchonly"} },
+    { "wallet",             "getunconfirmedbalance",            &getunconfirmedbalance,             {} },
+    { "wallet",             "getwalletinfo",                    &getwalletinfo,                     {} },
+    { "wallet",             "getstakeinfo",                     &getstakeinfo,                      {} },
+    { "wallet",             "stakepooluserinfo",                &stakepooluserinfo,                 {"user"} },
+    { "wallet",             "importmulti",                      &importmulti,                       {"requests","options"} },
+    { "wallet",             "importprivkey",                    &importprivkey,                     {"privkey","label","rescan"} },
+    { "wallet",             "importwallet",                     &importwallet,                      {"filename"} },
+    { "wallet",             "importaddress",                    &importaddress,                     {"address","label","rescan","p2sh"} },
+    { "wallet",             "importscript",                     &importscript,                      {"script","rescan","scanfrom"} },
+    { "wallet",             "importprunedfunds",                &importprunedfunds,                 {"rawtransaction","txoutproof"} },
+    { "wallet",             "importpubkey",                     &importpubkey,                      {"pubkey","label","rescan"} },
+    { "wallet",             "keypoolrefill",                    &keypoolrefill,                     {"newsize"} },
+    { "wallet",             "listaccounts",                     &listaccounts,                      {"minconf","include_watchonly"} },
+    { "wallet",             "listaddressgroupings",             &listaddressgroupings,              {} },
+    { "wallet",             "listlockunspent",                  &listlockunspent,                   {} },
+    { "wallet",             "listreceivedbyaccount",            &listreceivedbyaccount,             {"minconf","include_empty","include_watchonly"} },
+    { "wallet",             "listreceivedbyaddress",            &listreceivedbyaddress,             {"minconf","include_empty","include_watchonly"} },
+    { "wallet",             "listsinceblock",                   &listsinceblock,                    {"blockhash","target_confirmations","include_watchonly","include_removed"} },
+    { "wallet",             "listtransactions",                 &listtransactions,                  {"account","count","skip","include_watchonly"} },
+    { "wallet",             "listunspent",                      &listunspent,                       {"minconf","maxconf","addresses","include_unsafe","query_options"} },
+    { "wallet",             "purchaseticket",                   &purchaseticket,                    {"fromaccount","spendlimit","minconf","ticketaddress","rewardaddress","numtickets","pooladdress","poolfees","expiry","comment","ticketfee"} },
+    { "wallet",             "startticketbuyer",                 &startticketbuyer,                  {"fromaccount","maintain","passphrase","votingaccount","votingaddress","poolfeeaddress","poolfees","limit"} },
+    { "wallet",             "stopticketbuyer",                  &stopticketbuyer,                   {} },
+    { "wallet",             "ticketbuyerconfig",                &ticketbuyerconfig,                 {} },
+    { "wallet",             "setticketbuyeraccount",            &setticketbuyeraccount,             {"fromaccount"} },
+    { "wallet",             "setticketbuyerbalancetomaintain",  &setticketbuyerbalancetomaintain,   {"maintain"} },
+    { "wallet",             "setticketbuyervotingaddress",      &setticketbuyervotingaddress,       {"votingaddress"} },
+    { "wallet",             "setticketbuyerrewardaddress",      &setticketbuyerrewardaddress,       {"rewardaddress"} },
+    { "wallet",             "setticketbuyerpooladdress",        &setticketbuyerpooladdress,         {"pooladdress"} },
+    { "wallet",             "setticketbuyerpoolfees",           &setticketbuyerpoolfees,            {"poolfees"} },
+    { "wallet",             "setticketbuyermaxperblock",        &setticketbuyermaxperblock,         {"limit"} },
+    { "wallet",             "generatevote",                     &generatevote,                      {"blockhash","height","tickethash","votebits","votebitsext"} },
+    { "wallet",             "startautovoter",                   &startautovoter,                    {"votebits","votebitsext","passphrase"} },
+    { "wallet",             "stopautovoter",                    &stopautovoter,                     {} },
+    { "wallet",             "autovoterconfig",                  &autovoterconfig,                   {} },
+    { "wallet",             "setautovotervotebits",             &setautovotervotebits,              {"votebits"} },
+    { "wallet",             "setautovotervotebitsext",          &setautovotervotebitsext,           {"votebitsext"} },
+    { "wallet",             "revoketicket",                     &revoketicket,                      {"tickethash"} },
+    { "wallet",             "revoketickets",                    &revoketickets,                     {} },
+    { "wallet",             "startautorevoker",                 &startautorevoker,                  {"passphrase"} },
+    { "wallet",             "stopautorevoker",                  &stopautorevoker,                   {} },
+    { "wallet",             "autorevokerconfig",                &autorevokerconfig,                 {} },
+    { "wallet",             "listwallets",                      &listwallets,                       {} },
+    { "wallet",             "listscripts",                      &listscripts,                       {} },
+    { "wallet",             "lockunspent",                      &lockunspent,                       {"unlock","transactions"} },
+    { "wallet",             "move",                             &movecmd,                           {"fromaccount","toaccount","amount","minconf","comment"} },
+    { "wallet",             "sendfrom",                         &sendfrom,                          {"fromaccount","toaddress","amount","minconf","comment","comment_to"} },
+    { "wallet",             "sendmany",                         &sendmany,                          {"fromaccount","amounts","minconf","comment","subtractfeefrom","replaceable","conf_target","estimate_mode"} },
+    { "wallet",             "sendtoaddress",                    &sendtoaddress,                     {"address","amount","comment","comment_to","subtractfeefromamount","replaceable","conf_target","estimate_mode"} },
+    { "wallet",             "setaccount",                       &setaccount,                        {"address","account"} },
+    { "wallet",             "settxfee",                         &settxfee,                          {"amount"} },
+    { "wallet",             "signmessage",                      &signmessage,                       {"address","message"} },
+    { "wallet",             "walletlock",                       &walletlock,                        {} },
+    { "wallet",             "walletpassphrasechange",           &walletpassphrasechange,            {"oldpassphrase","newpassphrase"} },
+    { "wallet",             "walletpassphrase",                 &walletpassphrase,                  {"passphrase","timeout"} },
+    { "wallet",             "removeprunedfunds",                &removeprunedfunds,                 {"txid"} },
+    { "wallet",             "rescanblockchain",                 &rescanblockchain,                  {"start_height", "stop_height"} },
+    { "wallet",             "getmultisigoutinfo",               &getmultisigoutinfo,                {"hash", "index"} },
+    { "wallet",             "redeemmultisigout",                &redeemmultisigout,                 {"hash", "index", "tree", "address"} },
+    { "wallet",             "redeemmultisigouts",               &redeemmultisigouts,                {"fromscraddress", "toaddress", "number"} },
+    { "wallet",             "sendtomultisig",                   &sendtomultisig,                    {"fromaccount", "amount", "pubkeys", "nrequired", "minconf", "comment"} },
+    { "wallet",             "getmasterpubkey",                  &getmasterpubkey,                   {"account"} },
 
     { "generating",         "generate",                 &generate,                 {"nblocks","maxtries"} },
 };

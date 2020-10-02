@@ -1,3 +1,9 @@
+//
+// Copyright (c) 2017-2020 Project PAI Foundation
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 #include <qt/test/wallettests.h>
 
 #include <qt/paicoinamountfield.h>
@@ -165,7 +171,7 @@ void TestGUI()
         wallet.SetAddressBook(test.coinbaseKey.GetPubKey().GetID(), "", "receive");
         wallet.AddKeyPubKey(test.coinbaseKey, test.coinbaseKey.GetPubKey());
     }
-    wallet.ScanForWalletTransactions(chainActive.Genesis(), true);
+    wallet.ScanForWalletTransactions(chainActive.Genesis(), nullptr, true);
     wallet.SetBroadcastTransactions(true);
 
     // Create widgets for sending coins and listing transactions.

@@ -1,7 +1,10 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/* * Copyright (c) 2009-2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2016 The Bitcoin Core developers
+ * Copyright (c) 2017-2020 Project PAI Foundation
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
+
 
 #ifndef PAICOIN_PRIMITIVES_BLOCK_H
 #define PAICOIN_PRIMITIVES_BLOCK_H
@@ -9,7 +12,11 @@
 #include "primitives/transaction.h"
 #include "serialize.h"
 #include "uint256.h"
+#include "stake/votebits.h"
 
+#include <array>
+
+static const int HARDFORK_VERSION_BIT = 0x80000000;
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
  * requirements.  When they solve the proof-of-work, they broadcast the block
@@ -21,12 +28,21 @@ class CBlockHeader
 {
 public:
     // header
-    int32_t nVersion;
-    uint256 hashPrevBlock;
-    uint256 hashMerkleRoot;
-    uint32_t nTime;
-    uint32_t nBits;
-    uint32_t nNonce;
+    int32_t    nVersion;
+    uint256    hashPrevBlock;
+    uint256    hashMerkleRoot;
+    uint32_t   nTime;
+    uint32_t   nBits;
+    uint32_t   nNonce;
+    int64_t    nStakeDifficulty;
+    VoteBits   nVoteBits;
+    uint32_t   nTicketPoolSize;
+    uint48     ticketLotteryState;
+    uint16_t   nVoters;
+    uint8_t    nFreshStake;
+    uint8_t    nRevocations;
+    uint256    extraData;
+    uint32_t   nStakeVersion;
 
     CBlockHeader()
     {
@@ -43,7 +59,25 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+        // serialization of stake fields activates when Hybrid PoW/PoS deploys
+        if (this->nVersion & HARDFORK_VERSION_BIT) {
+            READWRITE(nStakeDifficulty);
+            READWRITE(nVoteBits);
+            READWRITE(nTicketPoolSize);
+            READWRITE(ticketLotteryState);
+            READWRITE(nVoters);
+            READWRITE(nFreshStake);
+            READWRITE(nRevocations);
+            READWRITE(extraData);
+            READWRITE(nStakeVersion);
+        }
+        else if (ser_action.ForRead())
+        {
+           SetReadStakeDefaultBeforeFork(); 
+        }
     }
+
+    void SetReadStakeDefaultBeforeFork();
 
     void SetNull()
     {
@@ -53,6 +87,15 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        nStakeDifficulty = 0;
+        nVoteBits = VoteBits::rttAccepted;
+        nTicketPoolSize = 0;
+        ticketLotteryState.SetNull();
+        nVoters = 0;
+        nFreshStake = 0;
+        nRevocations = 0;
+        extraData.SetNull();
+        nStakeVersion = 0;
     }
 
     bool IsNull() const
@@ -113,6 +156,15 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.nVoteBits      = nVoteBits;
+        block.nStakeDifficulty = nStakeDifficulty;
+        block.nTicketPoolSize = nTicketPoolSize;
+        block.ticketLotteryState = ticketLotteryState;
+        block.nVoters        = nVoters;
+        block.nFreshStake    = nFreshStake;
+        block.nRevocations   = nRevocations;
+        block.extraData      = extraData;
+        block.nStakeVersion  = nStakeVersion;
         return block;
     }
 

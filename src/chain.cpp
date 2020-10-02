@@ -1,7 +1,11 @@
+//
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "chain.h"
 
@@ -112,10 +116,25 @@ CBlockIndex* CBlockIndex::GetAncestor(int height)
     return const_cast<CBlockIndex*>(static_cast<const CBlockIndex*>(this)->GetAncestor(height));
 }
 
+const CBlockIndex* CBlockIndex::GetRelativeAncestor(int distance) const
+{
+    return GetAncestor(nHeight - distance);
+}
+
 void CBlockIndex::BuildSkip()
 {
     if (pprev)
         pskip = pprev->GetAncestor(GetSkipHeight(nHeight));
+}
+
+void CBlockIndex::PopulateTicketInfo(const SpentTicketsInBlock& spentTicketsInBlock)
+{
+    std::tie(ticketsVoted,ticketsRevoked,votes) = spentTicketsInBlock;
+}
+
+uint256 CBlockIndex::LotteryIV() const
+{
+    return GetBlockHeader().GetHash();
 }
 
 arith_uint256 GetBlockProof(const CBlockIndex& block)
@@ -129,7 +148,7 @@ arith_uint256 GetBlockProof(const CBlockIndex& block)
     // We need to compute 2**256 / (bnTarget+1), but we can't represent 2**256
     // as it's too large for an arith_uint256. However, as 2**256 is at least as large
     // as bnTarget+1, it is equal to ((2**256 - bnTarget - 1) / (bnTarget+1)) + 1,
-    // or ~bnTarget / (nTarget+1) + 1.
+    // or ~bnTarget / (bnTarget+1) + 1.
     return (~bnTarget / (bnTarget + 1)) + 1;
 }
 

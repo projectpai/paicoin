@@ -1,11 +1,11 @@
 dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
-define(_CLIENT_VERSION_MAJOR, 0)
-define(_CLIENT_VERSION_MINOR, 16)
-define(_CLIENT_VERSION_REVISION, 01)
+define(_CLIENT_VERSION_MAJOR, 2)
+define(_CLIENT_VERSION_MINOR, 0)
+define(_CLIENT_VERSION_REVISION, 1)
 define(_CLIENT_VERSION_BUILD, 0)
 define(_CLIENT_VERSION_IS_RELEASE, true)
-define(_COPYRIGHT_YEAR, 2017)
+define(_COPYRIGHT_YEAR, 2020)
 define(_COPYRIGHT_HOLDERS,[The %s developers])
 define(_COPYRIGHT_HOLDERS_SUBSTITUTION,[[PAI Coin Core]])
 AC_INIT([PAI Coin Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[https://github.com/projectpai/paicoin/issues],[paicoin],[https://www.projectpai.com])
@@ -296,12 +296,6 @@ AC_ARG_WITH([utils],
   [build_paicoin_utils=$withval],
   [build_paicoin_utils=yes])
 
-AC_ARG_WITH([libs],
-  [AS_HELP_STRING([--with-libs],
-  [build libraries (default=yes)])],
-  [build_paicoin_libs=$withval],
-  [build_paicoin_libs=yes])
-
 AC_ARG_WITH([daemon],
   [AS_HELP_STRING([--with-daemon],
   [build paicoind daemon (default=yes)])],
@@ -435,7 +429,7 @@ case $host in
      fi
 
      AX_CHECK_LINK_FLAG([[-Wl,-headerpad_max_install_names]], [LDFLAGS="$LDFLAGS -Wl,-headerpad_max_install_names"])
-     CPPFLAGS="$CPPFLAGS -DMAC_OSX"
+     CPPFLAGS="$CPPFLAGS -DMAC_OSX -DOBJC_OLD_DISPATCH_PROTOTYPES=0"
      OBJCXXFLAGS="$CXXFLAGS"
      ;;
    *linux*)
@@ -1039,14 +1033,6 @@ AC_MSG_CHECKING([whether to build utils (paicoin-cli paicoin-block-generator pai
 AM_CONDITIONAL([BUILD_PAICOIN_UTILS], [test x$build_paicoin_utils = xyes])
 AC_MSG_RESULT($build_paicoin_utils)
 
-AC_MSG_CHECKING([whether to build libraries])
-AM_CONDITIONAL([BUILD_PAICOIN_LIBS], [test x$build_paicoin_libs = xyes])
-if test x$build_paicoin_libs = xyes; then
-  AC_DEFINE(HAVE_CONSENSUS_LIB, 1, [Define this symbol if the consensus lib has been built])
-  AC_CONFIG_FILES([libpaicoinconsensus.pc:libpaicoinconsensus.pc.in])
-fi
-AC_MSG_RESULT($build_paicoin_libs)
-
 AC_LANG_POP
 
 if test "x$use_ccache" != "xno"; then
@@ -1163,8 +1149,8 @@ else
   AC_MSG_RESULT([no])
 fi
 
-if test x$build_paicoin_utils$build_paicoin_libs$build_paicoind$paicoin_enable_qt$use_bench$use_tests = xnononononono; then
-  AC_MSG_ERROR([No targets! Please specify at least one of: --with-utils --with-libs --with-daemon --with-gui --enable-bench or --enable-tests])
+if test x$build_paicoin_utils$build_paicoind$paicoin_enable_qt$use_bench$use_tests = xnononononono; then
+  AC_MSG_ERROR([No targets! Please specify at least one of: --with-utils --with-daemon --with-gui --enable-bench or --enable-tests])
 fi
 
 AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])

@@ -63,6 +63,9 @@ removing transactions from their block template directly.
 
 Low-level RPC changes
 ----------------------
+- `listsinceblock` will now throw an error if an unknown `blockhash` argument
+  value is passed, instead of returning a list of all wallet transactions since
+  the genesis block.
 - The "currentblocksize" value in getmininginfo has been removed.
 - `dumpwallet` no longer allows overwriting files. This is a security measure
   as well as prevents dangerous user mistakes.

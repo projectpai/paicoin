@@ -1,6 +1,10 @@
+//
 // Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2020 Project PAI Foundation
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
+
 
 #include "crypter.h"
 
@@ -201,6 +205,18 @@ bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
         fDecryptionThoroughlyChecked = true;
     }
     NotifyStatusChanged(this);
+    return true;
+}
+
+bool CCryptoKeyStore::VerifyMasterKey(const CKeyingMaterial& vMasterKeyIn)
+{
+    {
+        LOCK(cs_KeyStore);
+
+        if (vMasterKeyIn != vMasterKey)
+            return false;
+    }
+
     return true;
 }
 
