@@ -1259,6 +1259,14 @@ BOOST_FIXTURE_TEST_CASE( FakeChainGenerator_stake_REGTEST, Generator)
 
     BOOST_CHECK_EQUAL(Tip()->nHeight, COINBASE_MATURITY);
 
+    for (int i = COINBASE_MATURITY; i < ConsensusParams().nStakeEnabledHeight - ConsensusParams().nTicketMaturity; ++i) {
+        const auto& b = NextBlock("bcm",nullptr,{});
+        SaveCoinbaseOut(b);
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+    }
+
+    BOOST_CHECK_EQUAL(Tip()->nHeight, ConsensusParams().nStakeEnabledHeight - ConsensusParams().nTicketMaturity );
+
     // we will use mempool to add stake transaction into the block
     LOCK(cs_main);
     LOCK(::mempool.cs);
@@ -1390,6 +1398,7 @@ BOOST_FIXTURE_TEST_CASE( FakeChainGenerator_stake_REGTEST, Generator)
         BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners]), TX_Vote);
         b.vtx.erase(b.vtx.begin() + majority + 1, b.vtx.begin() + numberOfWinners + 1); //leave only the coinbase and a majority of votes
         BOOST_CHECK_GE(b.vtx.size(), initialSize - (numberOfWinners - majority) );
+        b.nVoters = majority;
     };
 
     // build a block where only the majority of votes are kept
@@ -1435,6 +1444,14 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
     }
 
     BOOST_CHECK_EQUAL(Tip()->nHeight, COINBASE_MATURITY);
+
+    for (int i = COINBASE_MATURITY; i < ConsensusParams().nStakeEnabledHeight - ConsensusParams().nTicketMaturity; ++i) {
+        const auto& b = NextBlock("bcm",nullptr,{});
+        SaveCoinbaseOut(b);
+        BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash());
+    }
+
+    BOOST_CHECK_EQUAL(Tip()->nHeight, ConsensusParams().nStakeEnabledHeight - ConsensusParams().nTicketMaturity );
 
     // we will use mempool to add stake transaction into the block
     LOCK(cs_main);
@@ -1544,6 +1561,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners]), TX_Vote);
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners+1]), TX_Vote);
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[numberOfWinners+2]), TX_BuyTicket);
+                b.nVoters = numberOfWinners + 1;
             }
         );
         BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
@@ -1568,6 +1586,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
                 b.vtx.erase(b.vtx.begin() + 1, b.vtx.begin() + majority + 1);
                 BOOST_CHECK_GE(b.vtx.size(), initialSize - majority);
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[majority]), TX_BuyTicket);
+                b.nVoters = majority - 1;
             }
         );
         BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
@@ -1721,6 +1740,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
                 b.vtx.erase(b.vtx.begin()+5);
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_BuyTicket);
+                b.nVoters = 4;
             }
         );
         BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
@@ -1746,6 +1766,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
                 b.vtx.erase(b.vtx.begin()+4,b.vtx.begin()+6);
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_BuyTicket);
+                b.nVoters = 3;
             }
         );
         BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
@@ -1769,6 +1790,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
                 b.vtx.erase(b.vtx.begin()+4,b.vtx.begin()+6);
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[4]), TX_BuyTicket);
+                b.nVoters = 3;
             }
         );
         BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
@@ -1861,6 +1883,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_Vote);
                 b.vtx.erase(b.vtx.begin()+5);
                 BOOST_CHECK_EQUAL(ParseTxClass(*b.vtx[5]), TX_BuyTicket);
+                b.nVoters = 4;
             }
         );
         BOOST_CHECK(Tip()->GetBlockHash() == b.GetHash()); // accepted
@@ -1880,6 +1903,7 @@ BOOST_FIXTURE_TEST_CASE( StakeVoteTests_REGTEST, Generator)
                 // create a new revocation for the voted ticket
                 const auto& revocationTx = CreateRevocationTx(ticketHashOfFirstVote);
                 b.vtx.push_back(MakeTransactionRef(revocationTx));
+                b.nRevocations += 1;
             }
         );
         BOOST_CHECK(Tip()->GetBlockHash() != b.GetHash()); // rejected
