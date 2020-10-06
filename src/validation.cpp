@@ -2633,15 +2633,15 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
         // Save transactions to re-add to mempool at end of reorg
         // Use regularTxs to allow reordering so that in:
         // UpdateMempoolForReorg funding regular txs end up in front of ticket purchase txs
-        auto regulatTxs = std::vector<CTransactionRef>{};
+        auto regularTxs = std::vector<CTransactionRef>{};
         for (auto it = block.vtx.rbegin(); it != block.vtx.rend(); ++it) {
             if (!IsStakeTx(**it)) {
-                regulatTxs.push_back(*it);
+                regularTxs.push_back(*it);
                 continue;
             }
             disconnectpool->addTransaction(*it);
         }
-        for (const auto& tx : regulatTxs){
+        for (const auto& tx : regularTxs){
             disconnectpool->addTransaction(tx);
         }
 

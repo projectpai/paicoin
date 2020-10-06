@@ -508,7 +508,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     // don't).
     const auto fSupportsSegwit = setClientRules.find(segwit_info.name) != setClientRules.end();
 
-    const auto nBlockVotesWaitTime = gArgs.GetArg("-blockvoteswaittime", DEFAULT_BLOCK_VOTES_WAIT_TIME);
+    const auto nBlockEnoughVotesWaitTime = gArgs.GetArg("-blockenoughvoteswaittime", DEFAULT_BLOCK_ENOUGH_VOTES_WAIT_TIME);
+    const auto nBlockAllVotesWaitTime = gArgs.GetArg("-blockallvoteswaittime", DEFAULT_BLOCK_ALL_VOTES_WAIT_TIME);
 
     // Update block
     static CBlockIndex* pindexPrev;
@@ -547,26 +548,32 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         }
 
         if (bTooFewVotes) {
-            if (nTimeElapsed < nBlockVotesWaitTime)
-                throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not enough votes, waiting <blockvoteswaittime>");
+            // the next block does not have enough to be mined, we buy some time by returning an error to the miners
+            // for the specified wait time
+            if (nTimeElapsed < nBlockEnoughVotesWaitTime)
+                throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not enough votes, waiting <blockenoughvoteswaittime>");
 
+            // we still do not have enough votes after the wait tine, in this case we invalidate the tip
+            // so that we can continue mining on the previous block to allow for additional winners on a new fork
             CValidationState state;
             InvalidateBlock(state, Params(),chainActive.Tip());
             if (!state.IsValid()) {
                 throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
             }
-            pindexPrevNew = chainActive.Tip();//invalidate change to previous tip
+            pindexPrevNew = chainActive.Tip();  // invalidate change to previous tip
+            nStart = GetTime();                 // reinitialize Start
             pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
         }
 
         if (!pblocktemplate)
             throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Out of memory");
 
+        // we have enough votes, but some vote transactions may still be in transit,
+        // return error while waiting for more votes in the specified time
         if (  pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight 
            && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock 
-           && nTimeElapsed < nBlockVotesWaitTime) {
-            //not enough votes yet, wait no more than nBlockVotesWaitTime seconds
-            throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not reached maximum votes");
+           && nTimeElapsed < nBlockAllVotesWaitTime) {
+            throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Some vote transactions are not yet available, waiting <blockallvoteswaittime>");
         }
 
         // Need to update only after we know CreateNewBlock succeeded

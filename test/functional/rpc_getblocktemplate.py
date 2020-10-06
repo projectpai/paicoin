@@ -17,8 +17,8 @@ import io
 class TestGetBlockTemplate(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
-        self.num_nodes = 1
-        self.extra_args = [['-autobuy','-tblimit=1','-blockvoteswaittime=0']] 
+        self.num_nodes = 2 # we need at least 2 nodes to have non zerp connections for getblocktemplate to work
+        self.extra_args = [['-autobuy','-tblimit=1','-blockenoughvoteswaittime=0','-blockallvoteswaittime=0'],[]] 
 
     def get_best_block(self, checkHeight):
         chainInfo = self.nodes[0].getbestblock()
@@ -143,7 +143,7 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
             assert(set(mempooltx_after_invalid) == set(gbt_txids_invalid))
             # we have no votes for the invalid tip but we can progress from previous tip, 
             self.nodes[0].generate(1)
-            self.sync_all()
+            # self.sync_all() unable to sync after node 0 invalidates its tip
             block_txids = self.get_best_block(idx)
             assert(all(tx in block_txids for tx in gbt_txids_invalid))
 
