@@ -70,7 +70,8 @@ uint256 Hash256PRNG::StateHash()
 
 prevector<64, uint32_t> Hash256PRNG::FindTicketIdxs(uint32_t size, uint32_t n)
 {
-    assert(size >= n);
+    if (size < n)
+        throw std::runtime_error("Precondition error (size >= n)");
 
     prevector<64, uint32_t> list;
     while (list.size() < n)
