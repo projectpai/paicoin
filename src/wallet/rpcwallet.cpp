@@ -3445,9 +3445,9 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (request.fHelp || request.params.size() < 2 || request.params.size() > 8)
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 9)
         throw std::runtime_error{
-            "startticketbuyer \"fromaccount\" maintain (\"passphrase\" \"votingaccount\" \"votingaddress\" \"poolfeeaddress\" poolfees limit)\n"
+            "startticketbuyer \"fromaccount\" maintain (\"passphrase\" \"votingaccount\" \"votingaddress\" \"rewardaddress\" \"poolfeeaddress\" poolfees limit)\n"
             "\nStart the automatic ticket buyer with the specified settings.\n"
             "\nArguments:\n"
             "1.  \"fromaccount\"      (string, required)   The account to use for purchase (default=\"default\")\n"
