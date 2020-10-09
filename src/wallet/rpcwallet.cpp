@@ -3322,7 +3322,7 @@ UniValue purchaseticket(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (request.fHelp || request.params.size() < 2 || request.params.size() > 10)
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 11)
         throw std::runtime_error{
             "purchaseticket \"fromaccount\" spendlimit (minconf=1 \"ticketaddress\" \"rewardaddress\" numtickets \"pooladdress\" poolfees expiry \"comment\" ticketfee)\n"
             "\nPurchase ticket using available funds.\n"
@@ -3410,12 +3410,12 @@ UniValue purchaseticket(const JSONRPCRequest& request)
 
     double dfPoolFee{0.0};
     if (!request.params[7].isNull())
-        dfPoolFee = request.params[6].get_real();
+        dfPoolFee = request.params[7].get_real();
 
     // Expiry
     int nExpiry{0};
     if (!request.params[8].isNull())
-        nExpiry = request.params[7].get_int();
+        nExpiry = request.params[8].get_int();
 
     // Ticket Fee
     CAmount ticketFeeIncrement{0};
@@ -5067,20 +5067,20 @@ UniValue redeemmultisigout(const JSONRPCRequest& request)
             "redeemmultisigout \"hash\" index tree (\"address\")\n"
             "\nTakes the input and constructs a P2PKH paying to the specified address.\n"
             "\nArguments:\n"
-            "1. hash    (string, required)  Hash of the input transaction\n"
-            "2. index   (numeric, required) Idx of the input transaction\n"
-            "3. tree    (numeric, required) Tree the transaction is on.\n"
+            "1. hash    (string, required)  Hash of the input transaction.\n"
+            "2. index   (numeric, required) Idx of the input transaction.\n"
+            "3. tree    (numeric, required) Unused (Tree the transaction is on).\n"
             "4. address (string, optional)  Address to pay to.\n"
             "\nResult:\n"
             "{\n"
             " \"hex\": \"value\",         (string)          Resulting hash.\n"
             " \"complete\": true|false, (boolean)         Shows if opperation was completed.\n"
             " \"errors\": [{            (array of object) Any errors generated.\n"
-            "  \"txid\": \"value\",       (string)          The transaction hash of the referenced previous output\n"
-            "  \"vout\": n,             (numeric)         The output index of the referenced previous output\n"
-            "  \"scriptSig\": \"value\",  (string)          The hex-encoded signature script\n"
-            "  \"sequence\": n,         (numeric)         Script sequence number\n"
-            "  \"error\": \"value\",      (string)          Verification or signing error related to the input\n"
+            "  \"txid\": \"value\",       (string)          The transaction hash of the referenced previous output.\n"
+            "  \"vout\": n,             (numeric)         The output index of the referenced previous output.\n"
+            "  \"scriptSig\": \"value\",  (string)          The hex-encoded signature script.\n"
+            "  \"sequence\": n,         (numeric)         Script sequence number.\n"
+            "  \"error\": \"value\",      (string)          Verification or signing error related to the input.\n"
             " },...],\n"
             "}\n"
             "\nExamples:\n"
@@ -5097,7 +5097,7 @@ UniValue redeemmultisigout(const JSONRPCRequest& request)
     hash.SetHex(request.params[0].get_str());
 
     const auto& nIndex = request.params[1].get_int();
-    const auto& nTree = request.params[2].get_int();
+    // const auto& nTree = request.params[2].get_int();
 
     EnsureWalletIsUnlocked(pwallet);
     const auto& dest = GetOrGenerateAddress(request,3,pwallet);
@@ -5220,7 +5220,7 @@ UniValue sendtomultisig(const JSONRPCRequest& request)
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
-    const auto& sFromAccount = request.params[0].get_str();
+    // const auto& sFromAccount = request.params[0].get_str();
     // Amount
     const auto nAmount = AmountFromValue(request.params[1]);
     if (nAmount <= 0)

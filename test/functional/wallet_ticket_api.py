@@ -113,6 +113,8 @@ class WalletTicketOperations(PAIcoinTestFramework):
         total_purchased_tickets.extend(txids)
 
         ticketaddr = self.nodes[0].getnewaddress()
+        rewardaddr = ""
+
         assert(len(txids) == 1)
         txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr)
         self.validatePurchaseTicketTx(txids, 0, estimate["min"], ticketaddr)
@@ -124,20 +126,20 @@ class WalletTicketOperations(PAIcoinTestFramework):
         total_purchased_tickets.extend(txids)
 
         tickets_to_buy = 2
-        txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr, tickets_to_buy) # buy multiple tickets
+        txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr, rewardaddr, tickets_to_buy) # buy multiple tickets
         assert(len(txids) == 2)
         self.validatePurchaseTicketTx(txids, 0, estimate["min"], ticketaddr)
         total_purchased_tickets.extend(txids)
 
         expiry = 500
         tickets_to_buy = 1
-        txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr, tickets_to_buy, "", 0.0, expiry)
+        txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr, rewardaddr, tickets_to_buy, "", 0.0, expiry)
         assert(len(txids) == 1)
         self.validatePurchaseTicketTx(txids, 0, estimate["min"], ticketaddr)
         total_purchased_tickets.extend(txids)
 
-        ticketFeeRate = 0.5 # TODO this is unused at the moment, update this value to a valid one
-        txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr, tickets_to_buy, "", 0.0, expiry, "unused", ticketFeeRate)
+        ticketFeeRate = 0.5
+        txids = self.nodes[0].purchaseticket("default", 2.3, 1, ticketaddr, rewardaddr, tickets_to_buy, "", 0.0, expiry, "unused", ticketFeeRate)
         assert(len(txids) == 1)
         self.validatePurchaseTicketTx(txids, 0, estimate["min"], ticketaddr)
         total_purchased_tickets.extend(txids)
@@ -149,16 +151,16 @@ class WalletTicketOperations(PAIcoinTestFramework):
         assert_raises_rpc_error(-3, None, self.nodes[0].purchaseticket, "param1", "param2")
         assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1", 1, "param2")
         assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "param1", 1, 1 , "param2")
-        assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, "param2")
-        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, 1, "param2")
+        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, "param2")
+        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, rewardaddr, 1, "param2")
 
         pooladdr = self.nodes[0].getnewaddress()
-        assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, 1, pooladdr, "param2")
-        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "default", 2.3, 1, ticketaddr, 2, pooladdr, 0.0) # when a pool address is given poolFee cannot be zero
-        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "default", 2.3, 1, ticketaddr, 2, pooladdr, 0.1) # using pool address is not yet implemented
-        assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, 1, pooladdr, 1, "param2")
-        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "default", 2.3, 1, ticketaddr, 1, "", 0.0, 10) # expiry height must be above next block height
-        assert_raises_rpc_error(-3, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, 1, pooladdr, 1, 1, "", "param2")
+        assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, rewardaddr, 1, pooladdr, "param2")
+        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "default", 2.3, 1, ticketaddr, rewardaddr,2, pooladdr, 0.0) # when a pool address is given poolFee cannot be zero
+        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "default", 2.3, 1, ticketaddr, rewardaddr, 2, pooladdr, 0.1) # using pool address is not yet implemented
+        assert_raises_rpc_error(-1, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, rewardaddr, 1, pooladdr, 1, "param2")
+        assert_raises_rpc_error(-8, None, self.nodes[0].purchaseticket, "default", 2.3, 1, ticketaddr, rewardaddr, 1, "", 0.0, 10) # expiry height must be above next block height
+        assert_raises_rpc_error(-3, None, self.nodes[0].purchaseticket, "param1", 1, 1 , ticketaddr, rewardaddr, 1, pooladdr, 1, 1, "", "param2")
 
         # gettickets tests:
         # 1. valid parameters
@@ -174,8 +176,7 @@ class WalletTicketOperations(PAIcoinTestFramework):
 
         nTicketMaturity = 8 # as in chainparams
         self.nodes[0].generate(7)
-        # TODO cannot sync the nodes since the FreshStake CBlockHeader member is not yet serialized and the block would fail checks w/o it
-        # self.sync_all()
+        self.sync_all()
 
         # not yet matured need to have 16 confirmations
         include_immature = False
@@ -192,8 +193,7 @@ class WalletTicketOperations(PAIcoinTestFramework):
         assert(txids[0] in tickets["hashes"])
 
         self.nodes[0].generate(1)
-        # TODO cannot sync the nodes since the FreshStake CBlockHeader member is not yet serialized and the block would fail checks w/o it
-        # self.sync_all()
+        self.sync_all()
 
         # TODO reenable this piece one the  nStakeEnabledHeight gets a lower value, now is 2000
         # all must tickets have matured (15 + 1 confirmations), except the last purchased one
@@ -202,7 +202,6 @@ class WalletTicketOperations(PAIcoinTestFramework):
         # assert_equal(len(tickets["hashes"]), len(total_purchased_tickets)) 
         # assert(set(tickets["hashes"]) == set(total_purchased_tickets))
 
-        # TODO make this test have valid input and output once the command is implemented
         # 2. invalid parameters
         assert_raises_rpc_error(-1, None, self.nodes[0].gettickets)
         assert_raises_rpc_error(-1, None, self.nodes[0].gettickets, "param1")
@@ -227,15 +226,6 @@ class WalletTicketOperations(PAIcoinTestFramework):
         assert_raises_rpc_error(-8, None, self.nodes[0].setticketfee, -0.002)
         assert_raises_rpc_error(-1, None, self.nodes[0].setticketfee, "param1")
         assert_raises_rpc_error(-1, None, self.nodes[0].setticketfee, "param1", "param2")
-
-        # listtickets tests:
-        # 1. valid parameters
-        x = self.nodes[0].listtickets()
-        assert(x == [])
-        # TODO make this test have valid input and output once the command is implemented
-        # 2. invalid parameters
-        assert_raises_rpc_error(-1, None, self.nodes[0].listtickets, "param1")
-        assert_raises_rpc_error(-1, None, self.nodes[0].listtickets, "param1", "param2")
 
 if __name__ == '__main__':
     WalletTicketOperations().main()
