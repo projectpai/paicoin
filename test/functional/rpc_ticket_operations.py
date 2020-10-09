@@ -59,20 +59,22 @@ class TicketOperations(PAIcoinTestFramework):
         nMaxFreshStakePerBlock = 20
         nTicketsPerBlock       = 5
         nTicketPoolSize        = 64
-        nTicketExpiry          = 5 * nTicketPoolSize
+        nTicketExpiry          = 3 * nTicketPoolSize
         nStakeDiffWindowSize   = 8
 
         nPurchaseMaxHeight     = 2067
 
         self.nodes[0].generate(nStakeEnabledHeight - nTicketMaturity - 1)
         self.sync_all()
+
         txaddress = self.nodes[0].getnewaddress()
         print(txaddress)
+        rewardaddress = self.nodes[0].getnewaddress()
 
         txs = []
         for blkidx in range(nStakeEnabledHeight - nTicketMaturity , nStakeEnabledHeight+1):
             print("purchase", nMaxFreshStakePerBlock, "at", blkidx)
-            txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, nMaxFreshStakePerBlock))
+            txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, rewardaddress, nMaxFreshStakePerBlock))
             assert(len(txs[-1])==nMaxFreshStakePerBlock)
             
             stakeinfo = self.nodes[0].getstakeinfo()
@@ -289,7 +291,7 @@ class TicketOperations(PAIcoinTestFramework):
                 # ticketPrice = self.nodes[0].getstakedifficulty()
                 # print("ticketPrice", ticketPrice)
                 print("purchase", nMaxFreshStakePerBlock, "at", blkidx)
-                txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, nMaxFreshStakePerBlock))
+                txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, rewardaddress,nMaxFreshStakePerBlock))
                 assert(len(txs[-1])==nMaxFreshStakePerBlock)
 
                 x = self.nodes[0].ticketfeeinfo() # we should see the fee info for mempool before calling generate
@@ -338,6 +340,7 @@ class TicketOperations(PAIcoinTestFramework):
             stakeinfo = self.nodes[0].getstakeinfo()
             assert(stakeinfo['missed'] == len(missed['tickets']))
 
+            print(blkidx)
             self.nodes[0].generate(1)
             self.sync_all()
             chainInfo = self.nodes[0].getblockchaininfo()
@@ -353,6 +356,7 @@ class TicketOperations(PAIcoinTestFramework):
             assert(stakeinfo['live'] + stakeinfo['missed'] + stakeinfo['expired'] == allPurchasedTickets)
 
             live = self.nodes[0].livetickets()
+            print("len live",stakeinfo['live'])
             assert(stakeinfo['live'] == len(live['tickets']))
 
         
@@ -361,6 +365,7 @@ class TicketOperations(PAIcoinTestFramework):
         # getstakeversioninfo
         numintervals = 2
         stakeversioninfo = self.nodes[0].getstakeversioninfo(numintervals)
+        print(stakeversioninfo)
         assert(stakeversioninfo['currentheight'] == blkidx)
         assert(stakeversioninfo['hash'] == chainInfo['bestblockhash'])
         assert(len(stakeversioninfo['intervals']) == numintervals)
