@@ -365,7 +365,6 @@ class TicketOperations(PAIcoinTestFramework):
         # getstakeversioninfo
         numintervals = 2
         stakeversioninfo = self.nodes[0].getstakeversioninfo(numintervals)
-        print(stakeversioninfo)
         assert(stakeversioninfo['currentheight'] == blkidx)
         assert(stakeversioninfo['hash'] == chainInfo['bestblockhash'])
         assert(len(stakeversioninfo['intervals']) == numintervals)
@@ -375,11 +374,14 @@ class TicketOperations(PAIcoinTestFramework):
             posver_total = 0
             for posver in interval['posversions']:
                 posver_total += posver['count']
-            votever_total = 0
-            for votever in interval['voteversions']:
-                votever_total += votever['count']
             assert(difference == posver_total)
-            assert(votever_total == posver_total*nTicketsPerBlock)
+            if interval['startheight'] > nStakeValidationHeight:
+                votever_total = 0
+                for votever in interval['voteversions']:
+                    votever_total += votever['count']
+                assert(votever_total == posver_total*nTicketsPerBlock)
+            else:
+                assert(len(interval['voteversions']) == 0)
             adjust = 0
 
         # getstakeversions
