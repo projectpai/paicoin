@@ -85,7 +85,7 @@ class TxnMallTest(PAIcoinTestFramework):
         # Node0's balance should be starting balance, plus 1500PAI for another
         # matured block, minus tx1 and tx2 amounts, and minus transaction fees:
         expected = starting_balance + fund_foo_tx["fee"] + fund_bar_tx["fee"]
-        if self.options.mine_block: expected += 1550
+        if self.options.mine_block: expected += 1500
         expected += tx1["amount"] + tx1["fee"]
         expected += tx2["amount"] + tx2["fee"]
         assert_equal(self.nodes[0].getbalance(), expected)
