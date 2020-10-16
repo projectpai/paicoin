@@ -197,6 +197,17 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         for (auto tickettxiter = existingTickets.first; tickettxiter != existingTickets.second; ++tickettxiter) {
             if (nNewTickets >= chainparams.GetConsensus().nMaxFreshStakePerBlock) //new ticket purchases not more than max allowed in block
                 break;
+
+            auto stakedAmount = tickettxiter->GetSharedTx()->vout[ticketStakeOutputIndex].nValue;
+
+            // do not allow tickets with staked amounts lower than the block's stake difficulty
+            if (stakedAmount < pblock->nStakeDifficulty)
+                continue;
+
+            // do not allow tickets with staked amounts lower than the minimum stake difficulty
+            if (stakedAmount < chainparams.GetConsensus().nMinimumStakeDiff)
+                continue;
+
             // tx must be included in the block
             auto txiter = mempool.mapTx.project<0>(tickettxiter);
             AddToBlock(txiter);
