@@ -3417,26 +3417,6 @@ bool CheckProofOfStake(const CBlock& block, int64_t posLimit)
     return true;
 }
 
-// checkProofOfStake ensures that all ticket purchases in the block pay at least
-// the amount required by the block header stake difficulty which indicate the target ticket price.
-bool CheckProofOfStake(const CBlock& block, int64_t posLimit)
-{
-    for (const auto& tx : StakeSlice(block.vtx, TX_BuyTicket))
-    {
-        auto stakedAmount = tx->vout[ticketStakeOutputIndex].nValue;
-
-        // Check against block stake difficulty.
-        if (stakedAmount < block.nStakeDifficulty)
-            return false;
-
-        // Check if it's above the PoS limit.
-        if (stakedAmount < posLimit)
-            return false;
-    }
-
-    return true;
-}
-
 static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true)
 {
     // Check proof of work matches claimed amount
