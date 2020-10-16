@@ -3417,26 +3417,6 @@ bool CheckProofOfStake(const CBlock& block, int64_t posLimit)
     return true;
 }
 
-static unsigned CountStakeTransactions(const CBlock& block, int& numTickets, int& numVotes, int& numRevocations)
-{
-    numTickets = numVotes = numRevocations = 0;
-
-    auto vtx = StakeSlice(block.vtx);
-    for (const auto& tx : vtx)
-    {
-        ETxClass txClass = ParseTxClass(*tx);
-
-        if (txClass == TX_BuyTicket)
-            ++numTickets;
-        else if (txClass == TX_Vote)
-            ++numVotes;
-        else if (txClass == TX_RevokeTicket)
-            ++numRevocations;
-    }
-
-    return vtx.size();  // this can differ from (numTickets + numVotes + numRevocations) only in case an unrecognized transaction is present
-}
-
 // checkProofOfStake ensures that all ticket purchases in the block pay at least
 // the amount required by the block header stake difficulty which indicate the target ticket price.
 bool CheckProofOfStake(const CBlock& block, int64_t posLimit)
