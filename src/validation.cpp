@@ -527,7 +527,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     std::set<uint256> setConflicts;
     {
     LOCK(pool.cs); // protect pool.mapNextTx
-    for (size_t in = 0; in < tx.vin.size(); ++in) 
+    for (size_t in = 0; in < tx.vin.size(); ++in)
     {
         if (ParseTxClass(tx) == TX_Vote && in == voteSubsidyInputIndex)
             continue; //skip the stakebase as coin doesn't exist
@@ -2627,9 +2627,20 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
 
     if (disconnectpool) {
         // Save transactions to re-add to mempool at end of reorg
+        // Use regularTxs to allow reordering so that in:
+        // UpdateMempoolForReorg funding regular txs end up in front of ticket purchase txs
+        auto regularTxs = std::vector<CTransactionRef>{};
         for (auto it = block.vtx.rbegin(); it != block.vtx.rend(); ++it) {
+            if (!IsStakeTx(**it)) {
+                regularTxs.push_back(*it);
+                continue;
+            }
             disconnectpool->addTransaction(*it);
         }
+        for (const auto& tx : regularTxs){
+            disconnectpool->addTransaction(tx);
+        }
+
         while (disconnectpool->DynamicMemoryUsage() > MAX_DISCONNECTED_TX_POOL_SIZE * 1000) {
             // Drop the earliest entry, and remove its children from the mempool.
             auto it = disconnectpool->queuedTx.get<insertion_order>().begin();
@@ -3361,6 +3372,46 @@ static bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, 
         }
         else
             return state.Error("out of disk space");
+    }
+
+    return true;
+}
+
+static unsigned CountStakeTransactions(const CBlock& block, int& numTickets, int& numVotes, int& numRevocations)
+{
+    numTickets = numVotes = numRevocations = 0;
+
+    auto vtx = StakeSlice(block.vtx);
+    for (const auto& tx : vtx)
+    {
+        ETxClass txClass = ParseTxClass(*tx);
+
+        if (txClass == TX_BuyTicket)
+            ++numTickets;
+        else if (txClass == TX_Vote)
+            ++numVotes;
+        else if (txClass == TX_RevokeTicket)
+            ++numRevocations;
+    }
+
+    return vtx.size();  // this can differ from (numTickets + numVotes + numRevocations) only in case an unrecognized transaction is present
+}
+
+// checkProofOfStake ensures that all ticket purchases in the block pay at least
+// the amount required by the block header stake difficulty which indicate the target ticket price.
+bool CheckProofOfStake(const CBlock& block, int64_t posLimit)
+{
+    for (const auto& tx : StakeSlice(block.vtx, TX_BuyTicket))
+    {
+        auto stakedAmount = tx->vout[ticketStakeOutputIndex].nValue;
+
+        // Check against block stake difficulty.
+        if (stakedAmount < block.nStakeDifficulty)
+            return false;
+
+        // Check if it's above the PoS limit.
+        if (stakedAmount < posLimit)
+            return false;
     }
 
     return true;

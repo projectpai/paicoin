@@ -508,7 +508,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     // don't).
     const auto fSupportsSegwit = setClientRules.find(segwit_info.name) != setClientRules.end();
 
-    const auto nBlockVotesWaitTime = gArgs.GetArg("-blockvoteswaittime", DEFAULT_BLOCK_VOTES_WAIT_TIME);
+    const auto nBlockEnoughVotesWaitTime = gArgs.GetArg("-blockenoughvoteswaittime", DEFAULT_BLOCK_ENOUGH_VOTES_WAIT_TIME);
+    const auto nBlockAllVotesWaitTime = gArgs.GetArg("-blockallvoteswaittime", DEFAULT_BLOCK_ALL_VOTES_WAIT_TIME);
 
     // Update block
     static CBlockIndex* pindexPrev;
@@ -518,6 +519,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     // a segwit-block to a non-segwit caller.
     static bool fLastTemplateSupportsSegwit = true;
     const auto nTimeElapsed = GetTime() - nStart;
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+
     if (pindexPrev != chainActive.Tip() ||
         (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && nTimeElapsed > 5) ||
         fLastTemplateSupportsSegwit != fSupportsSegwit)
@@ -527,29 +530,56 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         // Store the pindexBest used before CreateNewBlock, to avoid races
         nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
-        auto* const pindexPrevNew = chainActive.Tip();
+        auto* pindexPrevNew = chainActive.Tip();
         nStart = GetTime();
         fLastTemplateSupportsSegwit = fSupportsSegwit;
 
         // Create new block
         CScript scriptDummy = CScript() << OP_TRUE;
-        pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
+        bool bTooFewVotes = false;
+        try {
+            pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
+        } catch (const std::runtime_error& error) {
+            if (strstr(error.what(), "too-few-votes") != nullptr) {
+                bTooFewVotes = true;
+            }
+        } catch (...) {
+            throw;
+        }
+
+        if (bTooFewVotes) {
+            // the next block does not have enough to be mined, we buy some time by returning an error to the miners
+            // for the specified wait time
+            if (nTimeElapsed < nBlockEnoughVotesWaitTime)
+                throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not enough votes, waiting <blockenoughvoteswaittime>");
+
+            // we still do not have enough votes after the wait tine, in this case we invalidate the tip
+            // so that we can continue mining on the previous block to allow for additional winners on a new fork
+            CValidationState state;
+            InvalidateBlock(state, Params(),chainActive.Tip());
+            if (!state.IsValid()) {
+                throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
+            }
+            pindexPrevNew = chainActive.Tip();  // invalidate change to previous tip
+            nStart = GetTime();                 // reinitialize Start
+            pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
+        }
+
         if (!pblocktemplate)
             throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Out of memory");
 
-        if ( pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight
+        // we have enough votes, but some vote transactions may still be in transit,
+        // return error while waiting for more votes in the specified time
+        if (  pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight
            && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock
-           && nTimeElapsed > nBlockVotesWaitTime)
-        {
-            //not enough votes yet, wait no more than nBlockVotesWaitTime seconds
-            throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not reached maximum votes");
+           && nTimeElapsed < nBlockAllVotesWaitTime) {
+            throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Some vote transactions are not yet available, waiting <blockallvoteswaittime>");
         }
 
         // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
     }
     auto pblock = &pblocktemplate->block; // pointer for convenience
-    const Consensus::Params& consensusParams = Params().GetConsensus();
 
     // Update nTime
     UpdateTime(pblock, consensusParams, pindexPrev);
@@ -808,7 +838,7 @@ UniValue submitblock(const JSONRPCRequest& request)
 
 UniValue existsexpiredtickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
             "existsexpiredtickets \"txhashes\"\n"
             "\nTest for the existence of the provided tickets in the expired ticket map.\n"
@@ -849,7 +879,7 @@ UniValue existsexpiredtickets(const JSONRPCRequest& request)
 
 UniValue existsliveticket(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
             "existsliveticket \"txhash\"\n"
             "\nTest for the existence of the provided ticket.\n"
@@ -872,7 +902,7 @@ UniValue existsliveticket(const JSONRPCRequest& request)
 
 UniValue existslivetickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
             "existslivetickets \"txhashes\"\n"
             "\nTest for the existence of the provided tickets in the live ticket map.\n"
@@ -913,7 +943,7 @@ UniValue existslivetickets(const JSONRPCRequest& request)
 
 UniValue existsmissedtickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
             "existsmissedtickets \"txhashes\"\n"
             "\nTest for the existence of the provided tickets in the missed ticket map.\n"
@@ -954,7 +984,7 @@ UniValue existsmissedtickets(const JSONRPCRequest& request)
 
 UniValue getticketpoolvalue(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 0) 
+    if (request.fHelp || request.params.size() != 0)
         throw std::runtime_error{
             "getticketpoolvalue\n"
             "\nReturn the current value of all locked funds in the ticket pool.\n"
@@ -996,7 +1026,7 @@ static int getTicketPurchaseHeight(const uint256& hashBlock)
 
 UniValue livetickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 2) 
+    if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error{
             "livetickets ( verbose blockheight )\n"
             "\nReturns live ticket hashes from the ticket database\n"
@@ -1006,7 +1036,7 @@ UniValue livetickets(const JSONRPCRequest& request)
             "\nResult:\n"
             "{\n"
             "   \"tickets\": [\"value\",...], (array of string) List of live tickets\n"
-            "}\n" 
+            "}\n"
             "\nExamples:\n"
             + HelpExampleCli("livetickets", "")
             + HelpExampleRpc("livetickets", "")
@@ -1053,7 +1083,7 @@ UniValue livetickets(const JSONRPCRequest& request)
 
 UniValue winningtickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 1) 
+    if (request.fHelp || request.params.size() > 1)
         throw std::runtime_error{
             "winningtickets ( blockheight )\n"
             "\nReturns winning ticket hashes from the chain tip's ticket database\n"
@@ -1062,7 +1092,7 @@ UniValue winningtickets(const JSONRPCRequest& request)
             "\nResult:\n"
             "{\n"
             "   \"tickets\": [\"value\",...], (array of string) List of winning tickets\n"
-            "}\n" 
+            "}\n"
             "\nExamples:\n"
             + HelpExampleCli("winningtickets", "")
             + HelpExampleRpc("winningtickets", "")
@@ -1089,7 +1119,7 @@ UniValue winningtickets(const JSONRPCRequest& request)
 
 UniValue missedtickets(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 2) 
+    if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error{
             "missedtickets ( verbose blockheight )\n"
             "\nReturns missed ticket hashes from the ticket database\n"
@@ -1099,7 +1129,7 @@ UniValue missedtickets(const JSONRPCRequest& request)
             "\nResult:\n"
             "{\n"
             "   \"tickets\": [\"value\",...], (array of string) List of missed tickets\n"
-            "}\n" 
+            "}\n"
             "\nExamples:\n"
             + HelpExampleCli("missedtickets", "")
             + HelpExampleRpc("missedtickets", "")
@@ -1139,7 +1169,7 @@ UniValue missedtickets(const JSONRPCRequest& request)
             info.push_back(Pair("cause", bExpired ? "expiration" : "missed_vote"));
             if (!bExpired) {
                 auto missedHeight = nHeight - 1;
-                for (; missedHeight > purchaseHeight + Params().GetConsensus().nTicketMaturity 
+                for (; missedHeight > purchaseHeight + Params().GetConsensus().nTicketMaturity
                        && chainActive[missedHeight]->pstakeNode->ExistsMissedTicket(txhash); --missedHeight);
                 info.push_back(Pair("missed_height", missedHeight + 1));
             } else {
@@ -1157,7 +1187,7 @@ UniValue missedtickets(const JSONRPCRequest& request)
 
 UniValue ticketfeeinfo(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 2) 
+    if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error{
             "ticketfeeinfo (blocks windows)\n"
             "\nGet various information about ticket fees from the mempool, blocks, and difficulty windows (units: PAI/kB)\n"
@@ -1193,7 +1223,7 @@ UniValue ticketfeeinfo(const JSONRPCRequest& request)
             "   \"median\": n.nnn,      (numeric)         Median of transaction fees in the window\n"
             "   \"stddev\": n.nnn,      (numeric)         Standard deviation of transaction fees in the window\n"
             "   },...],\n"
-            "}\n"  
+            "}\n"
             "\nExamples:\n"
             + HelpExampleCli("ticketfeeinfo", "5 3")
             + HelpExampleRpc("ticketfeeinfo", "5 3")
@@ -1290,7 +1320,7 @@ UniValue ticketfeeinfo(const JSONRPCRequest& request)
 
 UniValue ticketsforaddress(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error{
             "ticketsforaddress \"address\"\n"
             "\nRequest all the tickets for an address.\n"
@@ -1299,7 +1329,7 @@ UniValue ticketsforaddress(const JSONRPCRequest& request)
             "\nResult:\n"
             "{\n"
             "   \"tickets\": [\"value\",...], (array of string) Tickets owned by the specified address.\n"
-            "}\n" 
+            "}\n"
             "\nExamples:\n"
             + HelpExampleCli("ticketsforaddress", "\"address\"")
             + HelpExampleRpc("ticketsforaddress", "\"address\"")
@@ -1336,7 +1366,7 @@ UniValue ticketsforaddress(const JSONRPCRequest& request)
 
 UniValue ticketvwap(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 2) 
+    if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error{
             "ticketvwap (start end)\n"
             "\nCalculate the volume weighted average price of tickets for a range of blocks (default: full PoS difficulty adjustment depth)\n"

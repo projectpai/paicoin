@@ -499,7 +499,8 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-blockmintxfee=<amt>", strprintf(_("Set lowest fee rate (in %s/kB) for transactions to be included in block creation. (default: %s)"), CURRENCY_UNIT, FormatMoney(DEFAULT_BLOCK_MIN_TX_FEE)));
     if (showDebug)
         strUsage += HelpMessageOpt("-blockversion=<n>", "Override block version to test forking scenarios");
-    strUsage += HelpMessageOpt("-blockvoteswaittime=<n>", strprintf(_("Set time (in seconds) to wait for stake vote transactions, that might be in transit, when creating a block. (default: %d)"), DEFAULT_BLOCK_VOTES_WAIT_TIME));
+    strUsage += HelpMessageOpt("-blockenoughvoteswaittime=<n>", strprintf(_("Set time (in seconds) to wait for enough stake vote transactions, that might be in transit, when creating a block. If there are not enough votes after this interval will continue mining on previous block. (default: %d)"), DEFAULT_BLOCK_ENOUGH_VOTES_WAIT_TIME));
+    strUsage += HelpMessageOpt("-blockallvoteswaittime=<n>", strprintf(_("Set time (in seconds) to wait for all winning vote transactions, that might be in transit, when creating a block. (default: %d)"), DEFAULT_BLOCK_ALL_VOTES_WAIT_TIME));
 
     strUsage += HelpMessageGroup(_("RPC server options:"));
     strUsage += HelpMessageOpt("-server", _("Accept command line and JSON-RPC commands"));
