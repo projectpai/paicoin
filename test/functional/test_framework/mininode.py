@@ -576,7 +576,7 @@ class CBlockHeader(object):
             self.nNonce = header.nNonce
             self.sha256 = header.sha256
             self.hash = header.hash
-            self.nStakeDifficulty = header.nStake
+            self.nStakeDifficulty = header.nStakeDifficulty
             self.nVoteBits = header.nVoteBits
             self.nTicketPoolSize = header.nTicketPoolSize
             self.ticketLotteryState = header.ticketLotteryState
