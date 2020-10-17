@@ -471,8 +471,12 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
 
         modtxscoreiter modit = mapModifiedTx.get<ancestor_score>().begin();
         if (mi == mempool.mapTx.get<ancestor_score>().end()) {
-            // We're out of entries in mapTx; use the entry from mapModifiedTx
-            // However, we only deal with non-stake tx in this loop
+            // We're out of entries in mapTx; use the entry from mapModifiedTx,
+            // if exists. If not then there is nothing else to do.
+            if (modit == mapModifiedTx.get<ancestor_score>().end())
+                break;
+
+            // We only deal with non-stake tx in this loop.
             if (modit->iter->GetTxClass() != TX_Regular) {
                 mapModifiedTx.get<ancestor_score>().erase(modit);
                 continue;
@@ -481,12 +485,19 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
             iter = modit->iter;
             fUsingModified = true;
         } else {
-            // Try to compare the mapTx entry to the mapModifiedTx entry
+            // Try to compare the mapTx entry to the mapModifiedTx entry,
+            // if it's not a stake.
             iter = mempool.mapTx.project<0>(mi);
             if (modit != mapModifiedTx.get<ancestor_score>().end() &&
                     CompareModifiedEntry()(*modit, CTxMemPoolModifiedEntry(iter))) {
                 // The best entry in mapModifiedTx has higher score
                 // than the one from mapTx.
+                // We only deal with non-stake tx in this loop.
+                if (modit->iter->GetTxClass() != TX_Regular) {
+                    mapModifiedTx.get<ancestor_score>().erase(modit);
+                    continue;
+                }
+
                 // Switch which transaction (package) to consider
                 iter = modit->iter;
                 fUsingModified = true;
