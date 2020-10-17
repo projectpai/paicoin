@@ -78,9 +78,9 @@ static const bool DEFAULT_WALLET_RBF = false;
 //! -autobuy default
 static const bool DEFAULT_AUTO_BUY = false;
 //! -autovote default
-static const bool DEFAULT_AUTO_VOTE = false;
+static const bool DEFAULT_AUTO_VOTE = true;
 //! -autorevoke default
-static const bool DEFAULT_AUTO_REVOKE = false;
+static const bool DEFAULT_AUTO_REVOKE = true;
 static const bool DEFAULT_WALLETBROADCAST = true;
 static const bool DEFAULT_DISABLE_WALLET = false;
 //! if set, all keys will be derived by using BIP32

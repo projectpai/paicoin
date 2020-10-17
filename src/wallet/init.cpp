@@ -182,9 +182,9 @@ bool WalletParameterInteraction()
     bSpendZeroConfChange = gArgs.GetBoolArg("-spendzeroconfchange", DEFAULT_SPEND_ZEROCONF_CHANGE);
     fWalletRbf = gArgs.GetBoolArg("-walletrbf", DEFAULT_WALLET_RBF);
 
-    fAutoBuy = gArgs.GetBoolArg("-autobuy", false) || (!gArgs.IsArgSet("-autobuy") && gArgs.GetBoolArg("-autostake", false));
-    fAutoVote = gArgs.GetBoolArg("-autovote", false) || (!gArgs.IsArgSet("-autovote") && gArgs.GetBoolArg("-autostake", false));
-    fAutoRevoke = gArgs.GetBoolArg("-autorevoke", false) || (!gArgs.IsArgSet("-autorevoke") && gArgs.GetBoolArg("-autostake", false));
+    fAutoBuy = gArgs.IsArgSet("-autobuy") ? gArgs.GetBoolArg("-autobuy", false) : (gArgs.IsArgSet("-autostake") ? gArgs.GetBoolArg("-autostake", false) : DEFAULT_AUTO_BUY);
+    fAutoVote = gArgs.IsArgSet("-autovote") ? gArgs.GetBoolArg("-autovote", false) : (gArgs.IsArgSet("-autostake") ? gArgs.GetBoolArg("-autostake", false) : DEFAULT_AUTO_VOTE);
+    fAutoRevoke = gArgs.IsArgSet("-autorevoke") ? gArgs.GetBoolArg("-autorevoke", false) : (gArgs.IsArgSet("-autostake") ? gArgs.GetBoolArg("-autostake", false) : DEFAULT_AUTO_REVOKE);
 
     return true;
 }
