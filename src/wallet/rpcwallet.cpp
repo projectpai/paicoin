@@ -3410,12 +3410,12 @@ UniValue purchaseticket(const JSONRPCRequest& request)
 
     double dfPoolFee{0.0};
     if (!request.params[7].isNull())
-        dfPoolFee = request.params[6].get_real();
+        dfPoolFee = request.params[7].get_real();
 
     // Expiry
     int nExpiry{0};
     if (!request.params[8].isNull())
-        nExpiry = request.params[7].get_int();
+        nExpiry = request.params[8].get_int();
 
     // Ticket Fee
     CAmount ticketFeeIncrement{0};

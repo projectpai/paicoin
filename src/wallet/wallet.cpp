@@ -1912,6 +1912,8 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
 
         CMutableTransaction mTicketTx;
 
+        mTicketTx.nExpiry = expiry;
+
         // inputs
 
         if (useVsp) {
