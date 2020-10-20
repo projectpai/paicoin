@@ -42,7 +42,7 @@ typedef std::set<CInputCoin> CoinSet;
 
 BOOST_FIXTURE_TEST_SUITE(wallet_tests, WalletTestingSetup)
 
-static const CWallet testWallet;
+static const CWallet testWallet{false, false};
 static std::vector<COutput> vCoins;
 
 static void add_coin(const CAmount& nValue, int nAge = 6*24, bool fIsFromMe = false, int nInput=0)
