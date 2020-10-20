@@ -25,6 +25,12 @@ def create_block(hashprev, coinbase, nTime=None):
 # From BIP141
 WITNESS_COMMITMENT_HEADER = b"\xaa\x21\xa9\xed"
 
+# REGTEST params from chainparams.cpp 
+STAKE_VALIDATION_HEIGHT = 2100
+WORK_SUBSIDY_PROPORTION = 4
+STAKE_SUBSIDY_PROPORTION = 6
+TOTAL_SUBSIDY_PROPORTIONS = WORK_SUBSIDY_PROPORTION + STAKE_SUBSIDY_PROPORTION
+
 
 def get_witness_script(witness_root, witness_nonce):
     witness_commitment = uint256_from_str(hash256(ser_uint256(witness_root)+ser_uint256(witness_nonce)))
@@ -76,6 +82,8 @@ def create_coinbase(height, pubkey = None):
     coinbaseoutput.nValue = 1500 * COIN
     halvings = int(height/150) # regtest
     coinbaseoutput.nValue >>= halvings
+    if height >= STAKE_VALIDATION_HEIGHT:
+        coinbaseoutput.nValue = int((coinbaseoutput.nValue * WORK_SUBSIDY_PROPORTION) / TOTAL_SUBSIDY_PROPORTIONS)
     if (pubkey != None):
         coinbaseoutput.scriptPubKey = CScript([pubkey, OP_CHECKSIG])
     else:

@@ -82,6 +82,7 @@ BASE_SCRIPTS= [
     'rawtransactions.py',
     'reindex.py',
     'searchrawtransactions.py',
+    'hybrid_consensus_test_framework.py',
     # vv Tests less than 30s vv
     'rpc_getblocktemplate.py',
     'keypool-topup.py',
