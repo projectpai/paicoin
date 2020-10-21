@@ -1316,6 +1316,9 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK_THROW(CallRpc("setticketbuyermaxperblock"), std::runtime_error);
     BOOST_CHECK_NO_THROW(CallRpc("setticketbuyermaxperblock 5"));
 
+    BOOST_CHECK_THROW(CallRpc("setticketbuyerexpiry"), std::runtime_error);
+    BOOST_CHECK_NO_THROW(CallRpc("setticketbuyerexpiry 100"));
+
     BOOST_CHECK_EQUAL(cfg.buyTickets, false);
     BOOST_CHECK_EQUAL(cfg.account, "abc");
     BOOST_CHECK_EQUAL(cfg.maintain, 12300000000);
@@ -1324,6 +1327,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 5.0);
     BOOST_CHECK_EQUAL(cfg.limit, 5);
+    BOOST_CHECK_EQUAL(cfg.txExpiry, 100);
 
     // Settings (read)
 
@@ -1339,6 +1343,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "poolFees").get_real(), 5.0);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "limit").get_int(), 5);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "minConf").get_int(), 1);
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "expiry").get_int(), 100);
 
     // Start (with minimal settings)
 
@@ -1354,6 +1359,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK(cfg.poolFeeAddress.which() == 0);
     BOOST_CHECK_EQUAL(cfg.poolFees, 0.0);
     BOOST_CHECK_EQUAL(cfg.limit, 1);
+    BOOST_CHECK_EQUAL(cfg.limit, 100);
 
     // Start (with full settings)
 
@@ -1361,7 +1367,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, false);
 
-    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 \"\" votingaccount ") + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8"));
+    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 \"\" votingaccount ") + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8 120"));
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, true);
     BOOST_CHECK_EQUAL(cfg.account, "fromaccount");
@@ -1371,6 +1377,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 10.0);
     BOOST_CHECK_EQUAL(cfg.limit, 8);
+    BOOST_CHECK_EQUAL(cfg.txExpiry, 120);
 
     // Stop
 
@@ -1389,9 +1396,9 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
 
     BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124"), std::runtime_error);
     BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124 wrongP4ssword!"), std::runtime_error);
-    BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124 wrongP4ssword votingaccount " + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8"), std::runtime_error);
+    BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124 wrongP4ssword votingaccount " + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8 120"), std::runtime_error);
 
-    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 ") + std::string(passphrase.c_str()) + " votingaccount " + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8"));
+    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 ") + std::string(passphrase.c_str()) + " votingaccount " + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8 120"));
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, true);
     BOOST_CHECK_EQUAL(cfg.account, "fromaccount");
@@ -1401,6 +1408,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 10.0);
     BOOST_CHECK_EQUAL(cfg.limit, 8);
+    BOOST_CHECK_EQUAL(cfg.txExpiry, 120);
     BOOST_CHECK_EQUAL(cfg.passphrase, passphrase);
 
     tb->stop();
