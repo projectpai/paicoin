@@ -850,7 +850,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
     const double vspFeePercent{5.0};
 
     // validate a single ticket, with or without VSP fee
-    auto checkTicket = [&](uint256 txHash, bool useVsp) {
+    auto checkTicket = [&](uint256 txHash, bool useVsp, uint32_t expiry) {
         // Transaction
 
         BOOST_CHECK(txHash != emptyData.hash);
@@ -860,6 +860,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         BOOST_CHECK(wtx->tx != nullptr);
         const CTransaction& tx = *(wtx->tx);
+
+        BOOST_CHECK(tx.nExpiry == expiry);
 
         // Inputs
 
@@ -947,7 +949,21 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         uint256 txHash = uint256S(txHashes[0]);
 
-        checkTicket(txHash, false);
+        checkTicket(txHash, false, 0);
+    }
+
+    // Single purchase, no VSP, expiry
+    {
+        txHashes.clear();
+
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 1, CNoDestination(), 0.0, chainActive.Height() + 100, feeRate);
+        BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
+
+        BOOST_CHECK_EQUAL(txHashes.size(), 1U);
+
+        uint256 txHash = uint256S(txHashes[0]);
+
+        checkTicket(txHash, false, static_cast<uint32_t>(chainActive.Height() + 100));
     }
 
     // Single purchase, with VSP
@@ -961,7 +977,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         uint256 txHash = uint256S(txHashes[0]);
 
-        checkTicket(txHash, true);
+        checkTicket(txHash, true, 0);
     }
 
     // Multiple purchase, no VSP
@@ -977,7 +993,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         for (unsigned int i = 0; i < numTickets; ++i) {
             uint256 txHash = uint256S(txHashes[i]);
-            checkTicket(txHash, false);
+            checkTicket(txHash, false, 0);
         }
     }
 
@@ -994,7 +1010,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         for (unsigned int i = 0; i < numTickets; ++i) {
             uint256 txHash = uint256S(txHashes[i]);
-            checkTicket(txHash, true);
+            checkTicket(txHash, true, 0);
         }
     }
 }
