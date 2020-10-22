@@ -28,11 +28,15 @@ public:
 
     // Stake transactions
 
-    uint256 AddTicketTx(bool useVsp = false, bool foreign = false);
+    uint256 AddTicketTx(bool useVsp = false, bool foreign = false, const CAmount stakeDifficulty = -1);
 
     uint256 AddVoteTx(const uint256& ticketHash, bool foreignSignature = false);
 
     uint256 AddRevokeTx(const uint256& ticketHash, bool foreignSignature = false);
+
+    CMutableTransaction CreateTicketTx(const CAmount stakeDifficulty);
+
+    bool AddToMempoolUnchecked(const CMutableTransaction& mtx);
 
     // Memory pool verifications
 
