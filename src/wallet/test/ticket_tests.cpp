@@ -1013,6 +1013,127 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
             checkTicket(txHash, true, 0);
         }
     }
+
+    // Expiry verifications
+    {
+        txHashes.clear();
+
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 1, CNoDestination(), 0.0, chainActive.Height() + 0, feeRate);
+        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
+        BOOST_CHECK_EQUAL(txHashes.size(), 0);
+
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 1, CNoDestination(), 0.0, chainActive.Height() + 1, feeRate);
+        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
+        BOOST_CHECK_EQUAL(txHashes.size(), 0);
+
+        {
+            std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 1, CNoDestination(), 0.0, chainActive.Height() + 2, feeRate);
+            BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
+
+            BOOST_CHECK_EQUAL(txHashes.size(), 1U);
+
+            uint256 txHash = uint256S(txHashes[0]);
+
+            checkTicket(txHash, false, static_cast<uint32_t>(chainActive.Height() + 2));
+
+            ExtendChain(1);
+
+            BOOST_CHECK(std::find_if(txsInMempoolBeforeLastBlock.begin(), txsInMempoolBeforeLastBlock.end(), [&txHash](const CTransactionRef entry) {
+                return entry->GetHash() == txHash;
+            }) != txsInMempoolBeforeLastBlock.end());
+        }
+
+        {
+            std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 100, CNoDestination(), 0.0, chainActive.Height() + 3, feeRate);
+            BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
+
+            BOOST_CHECK_EQUAL(txHashes.size(), 100U);
+
+            {
+                // tickets should be in the mempool
+
+                auto& tx_class_index = mempool.mapTx.get<tx_class>();
+                auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+
+                bool found = false;
+                for (auto tickettxiter = existingTickets.first; !found && (tickettxiter != existingTickets.second); ++tickettxiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), tickettxiter->GetSharedTx()->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(found);
+            }
+
+            ExtendChain(1);
+
+            {
+                // some tickets should still be in the mempool
+
+                auto& tx_class_index = mempool.mapTx.get<tx_class>();
+                auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+
+                bool found = false;
+                for (auto tickettxiter = existingTickets.first; !found && (tickettxiter != existingTickets.second); ++tickettxiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), tickettxiter->GetSharedTx()->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(found);
+            }
+
+            {
+                // block should contain some of the generated tickets
+
+                CBlock block;
+                BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
+
+                bool found = false;
+                for (auto ticketiter = block.vtx.begin(); !found && (ticketiter != block.vtx.end()); ++ticketiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), (*ticketiter)->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(found);
+            }
+
+            ExtendChain(1);
+
+            {
+                // tickets should not be in the mempool
+
+                auto& tx_class_index = mempool.mapTx.get<tx_class>();
+                auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+
+                bool found = false;
+                for (auto tickettxiter = existingTickets.first; !found && (tickettxiter != existingTickets.second); ++tickettxiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), tickettxiter->GetSharedTx()->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(!found);
+            }
+
+            {
+                // block should contain some of the generated tickets
+
+                CBlock block;
+                BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
+
+                bool found = false;
+                for (auto ticketiter = block.vtx.begin(); !found && (ticketiter != block.vtx.end()); ++ticketiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), (*ticketiter)->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(found);
+            }
+
+            ExtendChain(1);
+
+            {
+                // block tickets should not be from the generated ones
+
+                CBlock block;
+                BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
+
+                bool found = false;
+                for (auto ticketiter = block.vtx.begin(); !found && (ticketiter != block.vtx.end()); ++ticketiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), (*ticketiter)->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(!found);
+            }
+        }
+    }
 }
 
 // test the ticket buyer
@@ -1052,6 +1173,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, WalletStakeTestingSetup)
     cfg.poolFees = 0.0;
     cfg.limit = 1;
     cfg.passphrase = "";
+    cfg.txExpiry = 3;
 
     // Coin availability
 
@@ -1089,6 +1211,10 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, WalletStakeTestingSetup)
 
     // TODO: Add amount validation
     CheckTicket(*txsInMempoolBeforeLastBlock[1].get(), {TicketContribData(1, ticketKeyId, 0, 0, TicketContribData::DefaultFeeLimit)});
+
+    BOOST_CHECK(txsInMempoolBeforeLastBlock[1].get()->nExpiry == (chainActive.Tip()->nHeight - 2 + cfg.txExpiry));
+
+    cfg.txExpiry = DEFAULT_TICKET_BUYER_TX_EXPIRY;
 
     // Single ticket, VSP
 

@@ -15,7 +15,8 @@ CTicketBuyerConfig::CTicketBuyerConfig() :
     rewardAddress(CNoDestination()),
     poolFeeAddress(CNoDestination()),
     poolFees(0.0),
-    limit(1)
+    limit(1),
+    txExpiry(DEFAULT_TICKET_BUYER_TX_EXPIRY)
 {
 }
 

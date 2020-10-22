@@ -612,7 +612,7 @@ void CTxMemPool::removeExpiredTickets(const int currentHeight, const Consensus::
 
     CTxMemPool::setEntries txToRemove;
     for (auto tickettxiter = tickets.first; tickettxiter != tickets.second; ++tickettxiter) {
-        if (IsExpiredTx(tickettxiter->GetTx(), currentHeight)) {
+        if (IsExpiredTx(tickettxiter->GetTx(), currentHeight + 1)) {
             auto txiter = mapTx.project<0>(tickettxiter);
 
             txToRemove.insert(txiter);

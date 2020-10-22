@@ -53,7 +53,7 @@ public:
     SecureString passphrase;
 
     // Ticket expiry
-    int txExpiry = DEFAULT_TICKET_BUYER_TX_EXPIRY;
+    int txExpiry;
 
     CTicketBuyerConfig();
 
