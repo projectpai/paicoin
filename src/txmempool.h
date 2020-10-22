@@ -332,15 +332,14 @@ public:
 
     CAmount GetContributedAmount(const CTxMemPoolEntry& a) const
     {
-        auto contribAmount = CAmount(0);
-        TicketContribData contribData;
-        if (!ParseTicketContrib(a.GetTx(), ticketContribOutputIndex, contribData))
-        {
-            assert(!"not a vote transaction");
-        }
-        contribAmount = contribData.contributedAmount;
+        std::vector<TicketContribData> contributions;
+        CAmount totalContribution{0}, totalVoteFeeLimit{0}, totalRevocationFeeLimit{0};
 
-        return contribAmount;
+        if (!ParseTicketContribs(a.GetTx(), contributions, totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit)) {
+            assert(!"not a ticket transaction");
+        }
+
+        return totalContribution;
     }
 };
 
