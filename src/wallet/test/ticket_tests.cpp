@@ -1262,7 +1262,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, WalletStakeTestingSetup)
 
     BOOST_CHECK(txsInMempoolBeforeLastBlock[1].get()->nExpiry == (chainActive.Tip()->nHeight - 2 + cfg.txExpiry));
 
-    cfg.txExpiry = DEFAULT_TICKET_BUYER_TX_EXPIRY;
+    cfg.txExpiry = defaultTicketTxExpiry;
 
     // Single ticket, VSP
 

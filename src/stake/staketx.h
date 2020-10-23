@@ -41,6 +41,10 @@ struct BuyTicketData {
     int nVersion;
 };
 
+const int defaultTicketTxExpiry = 144;
+const int ticketTxExpiryMin = 10;
+const int ticketTxExpiryMax = 1000;
+
 struct TicketContribData {
 
     static const CAmount DefaultFeeLimit;

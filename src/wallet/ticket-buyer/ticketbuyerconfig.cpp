@@ -7,6 +7,7 @@
 
 #include "ticketbuyerconfig.h"
 #include "util.h"
+#include "stake/staketx.h"
 
 CTicketBuyerConfig::CTicketBuyerConfig() :
     buyTickets(false),
@@ -16,7 +17,7 @@ CTicketBuyerConfig::CTicketBuyerConfig() :
     poolFeeAddress(CNoDestination()),
     poolFees(0.0),
     limit(1),
-    txExpiry(DEFAULT_TICKET_BUYER_TX_EXPIRY)
+    txExpiry(defaultTicketTxExpiry)
 {
 }
 
@@ -43,10 +44,10 @@ void CTicketBuyerConfig::ParseCommandline()
 
     if (gArgs.IsArgSet("-tbtxexpiry")) {
         auto expiry = gArgs.GetArg("-tbtxexpiry", txExpiry);
-        if (expiry < DEFAULT_TICKET_BUYER_TX_EXPIRY_MIN)
-            txExpiry = DEFAULT_TICKET_BUYER_TX_EXPIRY_MIN;
-        else if (expiry > DEFAULT_TICKET_BUYER_TX_EXPIRY_MAX)
-            txExpiry = DEFAULT_TICKET_BUYER_TX_EXPIRY_MAX;
+        if (expiry < ticketTxExpiryMin)
+            txExpiry = ticketTxExpiryMin;
+        else if (expiry > ticketTxExpiryMax)
+            txExpiry = ticketTxExpiryMax;
         else
             txExpiry = static_cast<int>(expiry);
     }

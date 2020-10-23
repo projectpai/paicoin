@@ -11,10 +11,6 @@
 #include "support/allocators/secure.h"
 #include "key_io.h"
 
-#define DEFAULT_TICKET_BUYER_TX_EXPIRY 144
-#define DEFAULT_TICKET_BUYER_TX_EXPIRY_MIN 10
-#define DEFAULT_TICKET_BUYER_TX_EXPIRY_MAX 1000
-
 // The ticket buyer (TB) configuration
 class CTicketBuyerConfig {
 

@@ -3413,9 +3413,12 @@ UniValue purchaseticket(const JSONRPCRequest& request)
         dfPoolFee = request.params[7].get_real();
 
     // Expiry
-    int nExpiry{0};
-    if (!request.params[8].isNull())
+    int nExpiry{defaultTicketTxExpiry};
+    if (!request.params[8].isNull()) {
         nExpiry = request.params[8].get_int();
+        if ((nExpiry < ticketTxExpiryMin) || (nExpiry > ticketTxExpiryMax))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The expiration interval must be within the limits.");
+    }
 
     // Ticket Fee
     CAmount ticketFeeIncrement{0};
@@ -3561,7 +3564,7 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid expiry.");
 
         int expiry = request.params[9].get_int();
-        if ((expiry < DEFAULT_TICKET_BUYER_TX_EXPIRY_MIN) || (expiry > DEFAULT_TICKET_BUYER_TX_EXPIRY_MAX))
+        if ((expiry < ticketTxExpiryMin) || (expiry > ticketTxExpiryMax))
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The expiration interval must be within the limits.");
       
         cfg.txExpiry = expiry;
@@ -3942,7 +3945,7 @@ UniValue setticketbuyerexpiry(const JSONRPCRequest& request)
     LOCK2(cs_main, pwallet->cs_wallet);
 
     int value = request.params[0].get_int();
-    if ((value < DEFAULT_TICKET_BUYER_TX_EXPIRY_MIN) || (value > DEFAULT_TICKET_BUYER_TX_EXPIRY_MAX))
+    if ((value < ticketTxExpiryMin) || (value > ticketTxExpiryMax))
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The expiration interval must be within the limits.");
 
     CTicketBuyer *tb = pwallet->GetTicketBuyer();
