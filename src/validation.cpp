@@ -605,7 +605,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     // If the transaction is a ticket, ensure that it meets the next stake difficulty.
     if (txClass == TX_BuyTicket) {
         CBlock dummyBlock;
-        CAmount expectedStakeDifficulty =  CalculateNextRequiredStakeDifficulty(chainActive.Tip(),chainparams.GetConsensus());
+        CAmount expectedStakeDifficulty = CalculateNextRequiredStakeDifficulty(chainActive.Tip(),chainparams.GetConsensus());
         if (tx.vout[ticketStakeOutputIndex].nValue < expectedStakeDifficulty)
             return state.DoS(100, false, REJECT_INVALID, "insufficient-stake");
     }
