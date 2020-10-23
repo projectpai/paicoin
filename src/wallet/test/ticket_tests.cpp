@@ -999,6 +999,54 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
     }
 }
 
+// test the block template for low stake difficulty tickets filtration
+BOOST_FIXTURE_TEST_CASE(stake_difficulty_filtration, WalletStakeTestingSetup)
+{
+    std::vector<std::string> txHashes;
+    CWalletError we;
+
+    LOCK2(cs_main, wallet->cs_wallet);
+
+    ExtendChain(consensus.nStakeEnabledHeight + 1 - chainActive.Height());
+
+    // create invalid tickets
+
+    std::vector<CMutableTransaction> tickets;
+
+    tickets.push_back(CreateTicketTx(10));
+    tickets.push_back(CreateTicketTx(100));
+    tickets.push_back(CreateTicketTx(10000));
+    tickets.push_back(CreateTicketTx(consensus.nMinimumStakeDiff - 1));
+
+    // add the tickets to the mempool
+
+    for (const auto& mtx: tickets)
+        AddToMempoolUnchecked(mtx);
+
+    auto& tx_class_index = mempool.mapTx.get<tx_class>();
+    auto mempoolTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+    for (auto tickettxiter = mempoolTickets.first; tickettxiter != mempoolTickets.second; ++tickettxiter) {
+        const uint256 ticketHash = tickettxiter->GetSharedTx()->GetHash();
+        BOOST_CHECK(std::find_if(tickets.begin(), tickets.end(), [&ticketHash] (const CMutableTransaction entry) {
+            return entry.GetHash() == ticketHash;
+        }) != tickets.end());
+    }
+
+    // generate the block
+
+    std::unique_ptr<CBlockTemplate> pblocktemplate = BlockAssembler(params).CreateNewBlock(coinbaseScriptPubKey);
+    const CBlock& block = pblocktemplate->block;
+
+    // verify the tickets presence
+
+    for (const auto& mtx: tickets) {
+        const uint256 mtxHash = mtx.GetHash();
+        BOOST_CHECK(std::find_if(block.vtx.begin(), block.vtx.end(), [&mtxHash] (const CTransactionRef entry) {
+            return entry->GetHash() == mtxHash;
+        }) == block.vtx.end());
+    }
+}
+
 // test the ticket buyer
 BOOST_FIXTURE_TEST_CASE(ticket_buyer, WalletStakeTestingSetup)
 {
