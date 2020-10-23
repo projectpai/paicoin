@@ -30,7 +30,7 @@ WalletStakeTestingSetup::WalletStakeTestingSetup()
 
     ::bitdb.MakeMock();
 
-    wallet.reset(new CWallet(std::unique_ptr<CWalletDBWrapper>(new CWalletDBWrapper(&bitdb, "wallet_stake_test.dat"))));
+    wallet.reset(new CWallet(std::unique_ptr<CWalletDBWrapper>(new CWalletDBWrapper(&bitdb, "wallet_stake_test.dat")), false, false));
 
     bool firstRun;
     wallet->LoadWallet(firstRun);

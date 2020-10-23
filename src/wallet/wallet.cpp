@@ -2063,20 +2063,8 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
 
     LOCK2(cs_main, cs_wallet);
 
-    const CBlockIndex* chainTip = chainActive.Tip();
-
     if (IsLocked()) {
         error.Load(CWalletError::WALLET_UNLOCK_NEEDED, "Please enter the wallet passphrase with walletpassphrase first");
-        return std::make_pair(voteHash, error);
-    }
-
-    if (blockHash != chainTip->GetBlockHash()) {
-        error.Load(CWalletError::INVALID_PARAMETER, "Invalid block hash (different than the hash of the previous block)");
-        return std::make_pair(voteHash, error);
-    }
-
-    if (blockHeight != chainTip->nHeight) {
-        error.Load(CWalletError::INVALID_PARAMETER, "Invalid block height (different than the height of the previous block)");
         return std::make_pair(voteHash, error);
     }
 
@@ -2114,8 +2102,19 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
         return std::make_pair(voteHash, error);
     }
 
-    if (std::find(chainTip->pstakeNode->Winners().begin(), chainTip->pstakeNode->Winners().end(), ticket->GetHash()) == chainTip->pstakeNode->Winners().end()) {
-        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is not selected to vote in this block");
+    // verify the voted block and it's winners
+    if (mapBlockIndex.count(blockHash) == 0) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Block not found");
+        return std::make_pair(voteHash, error);
+    }
+    const CBlockIndex* const blockIndex = mapBlockIndex[blockHash];
+    if (blockHeight != blockIndex->nHeight) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Invalid block height (different than the actual height of the specified block)");
+        return std::make_pair(voteHash, error);
+    }
+    if (blockIndex->pstakeNode != nullptr
+            && std::find(blockIndex->pstakeNode->Winners().begin(), blockIndex->pstakeNode->Winners().end(), ticket->GetHash()) == blockIndex->pstakeNode->Winners().end()) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Ticket is not selected to vote in this block");
         return std::make_pair(voteHash, error);
     }
 
@@ -2133,7 +2132,7 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
     // funds
 
     const CAmount& ticketPrice = ticket->vout[ticketStakeOutputIndex].nValue;
-    const CAmount& voteSubsidy = GetVoterSubsidy(chainTip->nHeight + 1, consensus);
+    const CAmount& voteSubsidy = GetVoterSubsidy(blockHeight + 1, consensus);
 
     // rewards
 
