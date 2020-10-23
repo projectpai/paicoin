@@ -1501,6 +1501,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 5.0);
     BOOST_CHECK_EQUAL(cfg.limit, 5);
+    BOOST_CHECK_EQUAL(cfg.minConf, 1);
     BOOST_CHECK_EQUAL(cfg.txExpiry, 100);
 
     // Settings (read)
@@ -1529,11 +1530,12 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK_EQUAL(cfg.account, "def");
     BOOST_CHECK_EQUAL(cfg.maintain, 12400000000);
     BOOST_CHECK_EQUAL(cfg.votingAccount, "");
-    BOOST_CHECK(cfg.votingAddress.which() == 0);
-    BOOST_CHECK(cfg.poolFeeAddress.which() == 0);
-    BOOST_CHECK_EQUAL(cfg.poolFees, 0.0);
-    BOOST_CHECK_EQUAL(cfg.limit, 1);
-    BOOST_CHECK_EQUAL(cfg.limit, 100);
+    BOOST_CHECK(cfg.votingAddress == ticketKeyId);
+    BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
+    BOOST_CHECK_EQUAL(cfg.poolFees, 5.0);
+    BOOST_CHECK_EQUAL(cfg.limit, 5);
+    BOOST_CHECK_EQUAL(cfg.minConf, 1);
+    BOOST_CHECK_EQUAL(cfg.txExpiry, 100);
 
     // Start (with full settings)
 
@@ -1551,6 +1553,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 10.0);
     BOOST_CHECK_EQUAL(cfg.limit, 8);
+    BOOST_CHECK_EQUAL(cfg.minConf, 1);
     BOOST_CHECK_EQUAL(cfg.txExpiry, 120);
 
     // Stop
@@ -1582,6 +1585,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 10.0);
     BOOST_CHECK_EQUAL(cfg.limit, 8);
+    BOOST_CHECK_EQUAL(cfg.minConf, 1);
     BOOST_CHECK_EQUAL(cfg.txExpiry, 120);
     BOOST_CHECK_EQUAL(cfg.passphrase, passphrase);
 

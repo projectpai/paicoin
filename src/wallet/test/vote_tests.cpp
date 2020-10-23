@@ -1158,7 +1158,7 @@ BOOST_FIXTURE_TEST_CASE(auto_voter_rpc, WalletStakeTestingSetup)
 
     BOOST_CHECK_EQUAL(cfg.autoVote, true);
     BOOST_CHECK(cfg.voteBits == VoteBits(65535U));
-    BOOST_CHECK(cfg.extendedVoteBits == extendedVoteBitsData.empty);
+    BOOST_CHECK(cfg.extendedVoteBits == ExtendedVoteBits("12345678900abcdef0"));
     BOOST_CHECK_EQUAL(cfg.passphrase, "");
 
     // Start (with full settings)
@@ -1203,7 +1203,7 @@ BOOST_FIXTURE_TEST_CASE(auto_voter_rpc, WalletStakeTestingSetup)
 
     BOOST_CHECK_EQUAL(cfg.autoVote, true);
     BOOST_CHECK(cfg.voteBits == VoteBits(1U));
-    BOOST_CHECK(cfg.extendedVoteBits == extendedVoteBitsData.empty);
+    BOOST_CHECK(cfg.extendedVoteBits == ExtendedVoteBits("123456789abcdef0"));
     BOOST_CHECK_EQUAL(cfg.passphrase, passphrase);
 
     av->stop();
