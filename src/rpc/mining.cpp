@@ -448,6 +448,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     if(!g_connman)
         throw JSONRPCError(RPCErrorCode::CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
 
+    // TODO uncomment this
     // if (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0)
     //     throw JSONRPCError(RPCErrorCode::CLIENT_NOT_CONNECTED, "PAI Coin is not connected!");
 
@@ -508,7 +509,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     // don't).
     const auto fSupportsSegwit = setClientRules.find(segwit_info.name) != setClientRules.end();
 
-    const auto nBlockEnoughVotesWaitTime = gArgs.GetArg("-blockenoughvoteswaittime", DEFAULT_BLOCK_ENOUGH_VOTES_WAIT_TIME);
+    // const auto nBlockEnoughVotesWaitTime = gArgs.GetArg("-blockenoughvoteswaittime", DEFAULT_BLOCK_ENOUGH_VOTES_WAIT_TIME);
     const auto nBlockAllVotesWaitTime = gArgs.GetArg("-blockallvoteswaittime", DEFAULT_BLOCK_ALL_VOTES_WAIT_TIME);
 
     // Update block
@@ -530,43 +531,60 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         // Store the pindexBest used before CreateNewBlock, to avoid races
         nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
-        auto* pindexPrevNew = chainActive.Tip();
-        nStart = GetTime();
+        CBlockIndex* pindexPrevNew = nullptr;
         fLastTemplateSupportsSegwit = fSupportsSegwit;
 
-        // Create new block
-        CScript scriptDummy = CScript() << OP_TRUE;
-        bool bTooFewVotes = false;
-        try {
-            pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
-        } catch (const std::runtime_error& error) {
-            if (strstr(error.what(), "too-few-votes") != nullptr) {
-                bTooFewVotes = true;
+        const int& tipHeight = chainActive.Tip()->nHeight;
+        auto maxVotes = 0;
+        if (tipHeight >= Params().GetConsensus().nStakeValidationHeight - 1) {
+            CBlockIndex* selectedIndex = nullptr;
+            const auto& setTips = GetChainTips();
+            for (auto pBlockIndex : setTips) {
+                if (pBlockIndex->nHeight < tipHeight)
+                    continue;
+
+                const uint256& blockHash = pBlockIndex->GetBlockHash();
+                if (blockHash == uint256())
+                    continue;
+
+                auto& voted_hash_index = mempool.mapTx.get<voted_block_hash>();
+                auto votesForBlockHash = voted_hash_index.equal_range(pBlockIndex->GetBlockHash());
+
+                assert(pBlockIndex->pstakeNode != nullptr);
+                auto winningHashes = pBlockIndex->pstakeNode->Winners();
+
+                int nNewVotes = 0;
+                for (auto votetxiter = votesForBlockHash.first; votetxiter != votesForBlockHash.second; ++votetxiter) {
+                    const auto& spentTicketHash = votetxiter->GetTx().vin[voteStakeInputIndex].prevout.hash;
+                    if (std::find(winningHashes.begin(), winningHashes.end(), spentTicketHash) == winningHashes.end())
+                        continue; //not a winner
+
+                    ++nNewVotes;
+                }
+
+                if (nNewVotes > maxVotes) {
+                    selectedIndex = pBlockIndex;
+                    maxVotes = nNewVotes;
+                }
             }
-        } catch (...) {
-            throw;
+            const auto& majority = (consensusParams.nTicketsPerBlock / 2) + 1;
+            if (maxVotes >= majority) {
+                // Create new block based on selected tip
+                pindexPrevNew = selectedIndex;
+            } else {
+                // too-few-votes: none of the tips have enough to be mined, we will remined on top of previous
+                // Create new block based on previous index
+                pindexPrevNew = chainActive.Tip()->pprev;
+                UpdateTip(pindexPrevNew, Params());
+            }
+        } else {
+            pindexPrevNew = chainActive.Tip();
         }
 
-        if (bTooFewVotes) {
-            // the next block does not have enough to be mined, we buy some time by returning an error to the miners
-            // for the specified wait time
-            if (nTimeElapsed < nBlockEnoughVotesWaitTime)
-                throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not enough votes, waiting <blockenoughvoteswaittime>");
-
-            // we still do not have enough votes after the wait tine, in this case we invalidate the tip
-            // so that we can continue mining on the previous block to allow for additional winners on a new fork
-            // CValidationState state;
-            // InvalidateBlock(state, Params(),chainActive.Tip());
-            // if (!state.IsValid()) {
-            //     throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
-            // }
-            // pindexPrevNew = chainActive.Tip();  // invalidate change to previous tip
-
-            pindexPrevNew = chainActive.Tip()->pprev;
-            nStart = GetTime();                 // reinitialize Start
-            pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit, true /*bUsePrevIndex*/);
-        }
-
+        assert(pindexPrevNew != nullptr && (pindexPrevNew->nHeight == tipHeight || pindexPrevNew->nHeight == tipHeight - 1));
+        nStart = GetTime(); // reinitialize Start
+        CScript scriptDummy = CScript() << OP_TRUE;
+        pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit, pindexPrevNew);
         if (!pblocktemplate)
             throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Out of memory");
 

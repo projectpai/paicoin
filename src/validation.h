@@ -540,6 +540,9 @@ struct CompareBlocksByHeight
 };
 
 /** Get the set of chain tips */
-std::set<const CBlockIndex*, CompareBlocksByHeight> GetChainTips();
+std::set<CBlockIndex*, CompareBlocksByHeight> GetChainTips();
+
+
+void UpdateTip(CBlockIndex *pindexNew, const CChainParams& chainParams);
 
 #endif // PAICOIN_VALIDATION_H

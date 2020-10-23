@@ -18,7 +18,7 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2 # we need at least 2 nodes to have non zerp connections for getblocktemplate to work
-        self.extra_args = [['-autobuy','-tblimit=1','-blockenoughvoteswaittime=0','-blockallvoteswaittime=0'],[]] 
+        self.extra_args = [['-autobuy','-tblimit=1','-autovote=0','-blockenoughvoteswaittime=0','-blockallvoteswaittime=0'],[]] 
 
     def get_best_block(self, checkHeight):
         chainInfo = self.nodes[0].getbestblock()
