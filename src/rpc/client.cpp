@@ -180,6 +180,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "setticketbuyerbalancetomaintain", 0, "maintain" },
     { "setticketbuyerpoolfees", 0, "poolfees" },
     { "setticketbuyermaxperblock", 0, "limit" },
+    { "setticketbuyerexpiry", 0, "expiry" },
     { "generatevote", 1, "height" },
     { "generatevote", 3, "votebits" },
     { "startautovoter", 0, "votebits" },

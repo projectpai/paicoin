@@ -78,9 +78,9 @@ static const bool DEFAULT_WALLET_RBF = false;
 //! -autobuy default
 static const bool DEFAULT_AUTO_BUY = false;
 //! -autovote default
-static const bool DEFAULT_AUTO_VOTE = false;
+static const bool DEFAULT_AUTO_VOTE = true;
 //! -autorevoke default
-static const bool DEFAULT_AUTO_REVOKE = false;
+static const bool DEFAULT_AUTO_REVOKE = true;
 static const bool DEFAULT_WALLETBROADCAST = true;
 static const bool DEFAULT_DISABLE_WALLET = false;
 //! if set, all keys will be derived by using BIP32
@@ -812,28 +812,28 @@ public:
     unsigned int nMasterKeyMaxID;
 
     // Create wallet with dummy database handle
-    CWallet() :
+    CWallet(bool autoVote = fAutoVote, bool autoRevoke = fAutoRevoke) :
         dbw(new CWalletDBWrapper()),
         ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
         autoVoter = MakeUnique<CAutoVoter>(this);
-        if (fAutoVote) autoVoter->start();
+        if (autoVote) autoVoter->start();
         autoRevoker = MakeUnique<CAutoRevoker>(this);
-        if (fAutoRevoke) autoRevoker->start();
+        if (autoRevoke) autoRevoker->start();
         ticketBuyer = MakeUnique<CTicketBuyer>(this);
         ticketBuyer->GetConfig().buyTickets = fAutoBuy;
         SetNull();
     }
 
     // Create wallet with passed-in database handle
-    explicit CWallet(std::unique_ptr<CWalletDBWrapper> dbw_in) :
+    explicit CWallet(std::unique_ptr<CWalletDBWrapper> dbw_in, bool autoVote = fAutoVote, bool autoRevoke = fAutoRevoke) :
         dbw(std::move(dbw_in)),
         ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
         autoVoter = MakeUnique<CAutoVoter>(this);
-        if (fAutoVote) autoVoter->start();
+        if (autoVote) autoVoter->start();
         autoRevoker = MakeUnique<CAutoRevoker>(this);
-        if (fAutoRevoke) autoRevoker->start();
+        if (autoRevoke) autoRevoker->start();
         ticketBuyer = MakeUnique<CTicketBuyer>(this);
         ticketBuyer->GetConfig().buyTickets = fAutoBuy;
         SetNull();

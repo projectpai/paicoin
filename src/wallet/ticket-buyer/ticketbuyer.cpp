@@ -141,7 +141,7 @@ void CTicketBuyer::mainLoop()
             }
 
             // Set expiry to prevent tickets from being mined in the next
-            // sdiff interval.  When the next block begins the new interval,
+            // sdiff interval. When the next block begins the new interval,
             // the ticket is being purchased for the next interval; therefore
             // increment expiry by a full sdiff window size to prevent it
             // being mined in the interval after the next.
@@ -149,6 +149,11 @@ void CTicketBuyer::mainLoop()
             if (height + 1 == nextIntervalStart) {
                 expiry += intervalSize;
             }
+
+            // Make sure to use the specified value if that is within the limits
+            // of the stake difficulty window.
+            if (height + config.txExpiry < expiry)
+                expiry = height + config.txExpiry;
         }
 
         // TODO check rescan point

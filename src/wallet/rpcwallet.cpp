@@ -3410,12 +3410,12 @@ UniValue purchaseticket(const JSONRPCRequest& request)
 
     double dfPoolFee{0.0};
     if (!request.params[7].isNull())
-        dfPoolFee = request.params[6].get_real();
+        dfPoolFee = request.params[7].get_real();
 
     // Expiry
     int nExpiry{0};
     if (!request.params[8].isNull())
-        nExpiry = request.params[7].get_int();
+        nExpiry = request.params[8].get_int();
 
     // Ticket Fee
     CAmount ticketFeeIncrement{0};
@@ -3459,6 +3459,7 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
             "7.  \"poolfeeaddress\"   (string, optional)   The address to pay stake pool fees to\n"
             "8.  poolfees             (numeric, optional)  The amount of fees to pay to the stake pool\n"
             "9.  limit                (numeric, optional)  Limit maximum number of purchased tickets per block\n"
+            "10. expiry               (numeric, optional)  The number of blocks after which the ticket transaction will be removed from mempool\n"
             "\nExamples:\n"
             "\nStart the ticket buyer from your default account to purchase tickets and leaving at least 50 PAI\n"
             + HelpExampleCli("startticketbuyer", "\"default\" 50")
@@ -3474,19 +3475,25 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
     // From account
-    const auto&& account = AccountFromValue(request.params[0]);
+    cfg.account = AccountFromValue(request.params[0]);
 
     // Maintain
-    const auto&& maintain = AmountFromValue(request.params[1]);
+    cfg.maintain = AmountFromValue(request.params[1]);
 
     // Passphrase
-    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
+    if (!request.params[2].isNull())
+        cfg.passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
 
     // Voting account
-    std::string votingAccount;
     if (!request.params[3].isNull())
-        votingAccount = AccountFromValue(request.params[3]);
+        cfg.votingAccount = AccountFromValue(request.params[3]);
 
     // Voting address
     std::string votingAddr;
@@ -3497,6 +3504,7 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
         votingAddress = DecodeDestination(votingAddr);
         if (!IsValidDestination(votingAddress))
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid voting address.");
+        cfg.votingAddress = votingAddress;
     }
 
     // Reward address
@@ -3508,6 +3516,7 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
         rewardAddress = DecodeDestination(rewardAddr);
         if (!IsValidDestination(rewardAddress))
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid reward address.");
+        cfg.rewardAddress = rewardAddress;
     }
 
     // Pool fee address
@@ -3519,44 +3528,44 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
         poolFeeAddress = DecodeDestination(poolFeeAddr);
         if (!IsValidDestination(poolFeeAddress))
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool fee address.");
+        cfg.poolFeeAddress = poolFeeAddress;
     }
 
     // Pool fees
-    double poolFees{0.0};
     if (!request.params[7].isNull()) {
         if (!request.params[7].isNum())
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid pool fee.");
 
-        poolFees = request.params[7].get_real();
+        double poolFees = request.params[7].get_real();
         if (poolFees < 0.0)
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The pool fee cannot be negative.");
+
+        cfg.poolFees = poolFees;
     }
 
     // Limit
-    int limit{1};
     if (!request.params[8].isNull()) {
         if (!request.params[8].isNum())
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid limit.");
 
-        limit = request.params[8].get_int();
+        int limit = request.params[8].get_int();
         if (limit < 1)
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The number of tickets must be at least 1.");
+      
+        cfg.limit = limit;
     }
 
-    CTicketBuyer *tb = pwallet->GetTicketBuyer();
-    if (tb == nullptr)
-        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+    // Expiry
+    if (!request.params[9].isNull()) {
+        if (!request.params[9].isNum())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid expiry.");
 
-    CTicketBuyerConfig& cfg = tb->GetConfig();
-    cfg.account = account;
-    cfg.maintain = maintain;
-    cfg.passphrase = passphrase;
-    cfg.votingAccount = votingAccount;
-    cfg.votingAddress = votingAddress;
-    cfg.rewardAddress = rewardAddress;
-    cfg.poolFeeAddress = poolFeeAddress;
-    cfg.poolFees = poolFees;
-    cfg.limit = limit;
+        int expiry = request.params[9].get_int();
+        if ((expiry < DEFAULT_TICKET_BUYER_TX_EXPIRY_MIN) || (expiry > DEFAULT_TICKET_BUYER_TX_EXPIRY_MAX))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The expiration interval must be within the limits.");
+      
+        cfg.txExpiry = expiry;
+    }
 
     tb->start();
 
@@ -3614,6 +3623,7 @@ UniValue ticketbuyerconfig(const JSONRPCRequest& request)
             "  \"poolfees\" : x.xxx,                     (numeric) amount of fees to pay to the stake pool\n"
             "  \"limit\" : n,                            (numeric) maximum number of purchased tickets per block\n"
             "  \"minConf\" : n,                          (numeric) minimum number of block confirmations required\n"
+            "  \"expiry\" : n,                           (numeric) number of blocks after which the ticket transaction will be removed from mempool\n"
             "  }\n"
             "\nExample:\n"
             + HelpExampleCli("ticketbuyerconfig", "")
@@ -3640,6 +3650,7 @@ UniValue ticketbuyerconfig(const JSONRPCRequest& request)
     result.push_back(Pair("poolFees", cfg.poolFees));
     result.push_back(Pair("limit", cfg.limit));
     result.push_back(Pair("minConf", cfg.minConf));
+    result.push_back(Pair("expiry", cfg.txExpiry));
 
     return result;
 }
@@ -3909,6 +3920,42 @@ UniValue setticketbuyermaxperblock(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
+UniValue setticketbuyerexpiry(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketbuyerexpiry expiry\n"
+            "\nConfigure the number of blocks after which the ticket transaction will be removed from mempool.\n"
+            "\nArguments:\n"
+            "1.  expiry  (numeric, required)  The number of blocks after which the ticket transaction will be removed from mempool\n"
+            "\nExample:\n"
+            + HelpExampleCli("setticketbuyerexpiry", "100")
+            + HelpExampleRpc("setticketbuyerexpiry", "144")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    int value = request.params[0].get_int();
+    if ((value < DEFAULT_TICKET_BUYER_TX_EXPIRY_MIN) || (value > DEFAULT_TICKET_BUYER_TX_EXPIRY_MAX))
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The expiration interval must be within the limits.");
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
+    cfg.txExpiry = value;
+
+    return NullUniValue;
+}
+
 UniValue generatevote(const JSONRPCRequest& request)
 {
     const auto pwallet = GetWalletForJSONRPCRequest(request);
@@ -4022,6 +4069,12 @@ UniValue startautovoter(const JSONRPCRequest& request)
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
+    CAutoVoter *av = pwallet->GetAutoVoter();
+    if (av == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic voter not found.");
+
+    CAutoVoterConfig& cfg = av->GetConfig();
+
     // Vote bits
     if (!request.params[0].isNum())
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid vote bits.");
@@ -4030,32 +4083,22 @@ UniValue startautovoter(const JSONRPCRequest& request)
     if (bits < 0 || bits > std::numeric_limits<uint16_t>().max())
         throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid vote bits.");
 
-    VoteBits voteBits(static_cast<uint16_t>(bits));
+    cfg.voteBits = VoteBits(static_cast<uint16_t>(bits));
 
     // Extended vote bits
-    ExtendedVoteBits extendedVoteBits;
-
     if (!request.params[1].isNull() && request.params[1].isStr()) {
         std::string voteBitsStr = request.params[1].get_str();
         if (voteBitsStr.length() > 0) {
             if (!ExtendedVoteBits::containsValidExtendedVoteBits(voteBitsStr))
                 throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid extended vote bits.");
 
-            extendedVoteBits = ExtendedVoteBits(voteBitsStr);
+            cfg.extendedVoteBits = ExtendedVoteBits(voteBitsStr);
         }
     }
 
     // Passphrase
-    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
-
-    CAutoVoter *av = pwallet->GetAutoVoter();
-    if (av == nullptr)
-        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic voter not found.");
-
-    CAutoVoterConfig& cfg = av->GetConfig();
-    cfg.voteBits = voteBits;
-    cfg.extendedVoteBits = extendedVoteBits;
-    cfg.passphrase = passphrase;
+    if (!request.params[2].isNull())
+        cfg.passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
 
     av->start();
 
@@ -4320,15 +4363,15 @@ UniValue startautorevoker(const JSONRPCRequest& request)
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
-    // Passphrase
-    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[0]);
-
     CAutoRevoker *ar = pwallet->GetAutoRevoker();
     if (ar == nullptr)
         throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Automatic revoker not found.");
 
     CAutoRevokerConfig& cfg = ar->GetConfig();
-    cfg.passphrase = passphrase;
+
+    // Passphrase
+    if (!request.params[0].isNull())
+        cfg.passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[0]);
 
     ar->start();
 
@@ -5444,6 +5487,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "setticketbuyerpooladdress",        &setticketbuyerpooladdress,         {"pooladdress"} },
     { "wallet",             "setticketbuyerpoolfees",           &setticketbuyerpoolfees,            {"poolfees"} },
     { "wallet",             "setticketbuyermaxperblock",        &setticketbuyermaxperblock,         {"limit"} },
+    { "wallet",             "setticketbuyerexpiry",             &setticketbuyerexpiry,              {"expiry"} },
     { "wallet",             "generatevote",                     &generatevote,                      {"blockhash","height","tickethash","votebits","votebitsext"} },
     { "wallet",             "startautovoter",                   &startautovoter,                    {"votebits","votebitsext","passphrase"} },
     { "wallet",             "stopautovoter",                    &stopautovoter,                     {} },

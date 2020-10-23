@@ -15,7 +15,8 @@ CTicketBuyerConfig::CTicketBuyerConfig() :
     rewardAddress(CNoDestination()),
     poolFeeAddress(CNoDestination()),
     poolFees(0.0),
-    limit(1)
+    limit(1),
+    txExpiry(DEFAULT_TICKET_BUYER_TX_EXPIRY)
 {
 }
 
@@ -39,4 +40,14 @@ void CTicketBuyerConfig::ParseCommandline()
 
     if (gArgs.IsArgSet("-tbvotingaccount"))
         votingAccount = gArgs.GetArg("-tbvotingaccount", "");
+
+    if (gArgs.IsArgSet("-tbtxexpiry")) {
+        auto expiry = gArgs.GetArg("-tbtxexpiry", txExpiry);
+        if (expiry < DEFAULT_TICKET_BUYER_TX_EXPIRY_MIN)
+            txExpiry = DEFAULT_TICKET_BUYER_TX_EXPIRY_MIN;
+        else if (expiry > DEFAULT_TICKET_BUYER_TX_EXPIRY_MAX)
+            txExpiry = DEFAULT_TICKET_BUYER_TX_EXPIRY_MAX;
+        else
+            txExpiry = static_cast<int>(expiry);
+    }
 }

@@ -524,4 +524,22 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
 /** Check existence of address in the address index */
 bool AddressExistsInIndex(const std::string& address);
 
+/** Comparison function for sorting the getchaintips heads.  */
+struct CompareBlocksByHeight
+{
+    bool operator()(const CBlockIndex* a, const CBlockIndex* b) const
+    {
+        /* Make sure that unequal blocks with the same height do not compare
+           equal. Use the pointers themselves to make a distinction. */
+
+        if (a->nHeight != b->nHeight)
+          return (a->nHeight > b->nHeight);
+
+        return a < b;
+    }
+};
+
+/** Get the set of chain tips */
+std::set<const CBlockIndex*, CompareBlocksByHeight> GetChainTips();
+
 #endif // PAICOIN_VALIDATION_H

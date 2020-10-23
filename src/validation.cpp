@@ -578,6 +578,10 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     int nextBlockHeight = chainActive.Height() + 1;
     int stakeValidationHeight = chainparams.GetConsensus().nStakeValidationHeight;
 
+    // Reject ticket transactions that are expired.
+    if (txClass == TX_BuyTicket && IsExpiredTx(tx, nextBlockHeight))
+        return state.DoS(100, false, REJECT_INVALID, "bad-txns-expired");
+
     // Reject votes before stake validation height.
     if (txClass == TX_Vote && nextBlockHeight < stakeValidationHeight)
         return state.DoS(100, false, REJECT_INVALID, "vote-too-early");
@@ -601,7 +605,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     // If the transaction is a ticket, ensure that it meets the next stake difficulty.
     if (txClass == TX_BuyTicket) {
         CBlock dummyBlock;
-        CAmount expectedStakeDifficulty =  CalculateNextRequiredStakeDifficulty(chainActive.Tip(),chainparams.GetConsensus());
+        CAmount expectedStakeDifficulty = CalculateNextRequiredStakeDifficulty(chainActive.Tip(),chainparams.GetConsensus());
         if (tx.vout[ticketStakeOutputIndex].nValue < expectedStakeDifficulty)
             return state.DoS(100, false, REJECT_INVALID, "insufficient-stake");
     }
@@ -3046,16 +3050,18 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
     } while (pindexNewTip != pindexMostWork);
     CheckBlockIndex(chainparams.GetConsensus());
 
-    // remove expired mempool votes
-    if (fDiscardExpiredMempoolVotes) {
-        const auto& height = []()
-        {
-            LOCK(cs_main);
-            return chainActive.Height();
-        }();
+    const auto& height = []()
+    {
+        LOCK(cs_main);
+        return chainActive.Height();
+    }();
 
+    // remove expired ticket transactions
+    mempool.removeExpiredTickets(height, chainparams.GetConsensus());
+
+    // remove expired mempool votes
+    if (fDiscardExpiredMempoolVotes)
         mempool.removeExpiredVotes(height, chainparams.GetConsensus());
-    }
 
     // Write changes periodically to disk, after relay.
     if (!FlushStateToDisk(chainparams, state, FLUSH_STATE_PERIODIC)) {
@@ -5541,4 +5547,38 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
     }
 
     return pindex->pstakeNode;
+}
+
+std::set<const CBlockIndex*, CompareBlocksByHeight> GetChainTips()
+{
+    /*
+     * Idea:  the set of chain tips is chainActive.tip, plus orphan blocks which do not have another orphan building off of them.
+     * Algorithm:
+     *  - Make one pass through mapBlockIndex, picking out the orphan blocks, and also storing a set of the orphan block's pprev pointers.
+     *  - Iterate through the orphan blocks. If the block isn't pointed to by another orphan, it is a chain tip.
+     *  - add chainActive.Tip()
+     */
+    std::set<const CBlockIndex*, CompareBlocksByHeight> setTips;
+    std::set<const CBlockIndex*> setOrphans;
+    std::set<const CBlockIndex*> setPrevs;
+
+    for (const auto& item : mapBlockIndex)
+    {
+        if (!chainActive.Contains(item.second)) {
+            setOrphans.insert(item.second);
+            setPrevs.insert(item.second->pprev);
+        }
+    }
+
+    for (auto it = setOrphans.begin(); it != setOrphans.end(); ++it)
+    {
+        if (setPrevs.erase(*it) == 0) {
+            setTips.insert(*it);
+        }
+    }
+
+    // Always report the currently active tip.
+    setTips.insert(chainActive.Tip());
+
+    return setTips;
 }

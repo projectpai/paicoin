@@ -393,6 +393,10 @@ Wallet options:
 
   -tbvotingaccount
        Specify the account to be used for voting.
+       
+  -tbtxexpiry
+       Specifies the height after which the ticket transaction still in the mempool
+       is expired and can be removed from the mempool.
 
   -autovote
        Enable the automatic voter. This is going to send the votes for the tickets

@@ -49,6 +49,7 @@ std::string GetWalletHelpString(bool showDebug)
     strUsage += HelpMessageOpt("-tbrewardaddress", strprintf(_("Specify the address to be used when sending the reward. The voter or revoker will send the reward or refund to this address.")));
     strUsage += HelpMessageOpt("-tblimit", strprintf(_("The maximum number of tickets to purchase in one batch.")));
     strUsage += HelpMessageOpt("-tbvotingaccount", strprintf(_("Specify the account to be used for voting.")));
+    strUsage += HelpMessageOpt("-tbtxexpiry", strprintf(_("Specifies the height after which the ticket transaction still in the mempool is expired and can be removed from the mempool.")));
     strUsage += HelpMessageOpt("-autovote", strprintf(_("Enable the automatic voter. This is going to send the votes for the tickets belonging to the wallet as soon as they are selected as winners. (default: %u)"), DEFAULT_AUTO_VOTE));
     strUsage += HelpMessageOpt("-autorevoke", strprintf(_("Enable the automatic revoker. As soon as a ticket becomes expired or missed, the automatic revoker creates and publishes a transaction that is unlocking the staked funds. (default: %u)"), DEFAULT_AUTO_REVOKE));
 
@@ -182,9 +183,9 @@ bool WalletParameterInteraction()
     bSpendZeroConfChange = gArgs.GetBoolArg("-spendzeroconfchange", DEFAULT_SPEND_ZEROCONF_CHANGE);
     fWalletRbf = gArgs.GetBoolArg("-walletrbf", DEFAULT_WALLET_RBF);
 
-    fAutoBuy = gArgs.GetBoolArg("-autobuy", false) || (!gArgs.IsArgSet("-autobuy") && gArgs.GetBoolArg("-autostake", false));
-    fAutoVote = gArgs.GetBoolArg("-autovote", false) || (!gArgs.IsArgSet("-autovote") && gArgs.GetBoolArg("-autostake", false));
-    fAutoRevoke = gArgs.GetBoolArg("-autorevoke", false) || (!gArgs.IsArgSet("-autorevoke") && gArgs.GetBoolArg("-autostake", false));
+    fAutoBuy = gArgs.IsArgSet("-autobuy") ? gArgs.GetBoolArg("-autobuy", false) : (gArgs.IsArgSet("-autostake") ? gArgs.GetBoolArg("-autostake", false) : DEFAULT_AUTO_BUY);
+    fAutoVote = gArgs.IsArgSet("-autovote") ? gArgs.GetBoolArg("-autovote", false) : (gArgs.IsArgSet("-autostake") ? gArgs.GetBoolArg("-autostake", false) : DEFAULT_AUTO_VOTE);
+    fAutoRevoke = gArgs.IsArgSet("-autorevoke") ? gArgs.GetBoolArg("-autorevoke", false) : (gArgs.IsArgSet("-autostake") ? gArgs.GetBoolArg("-autostake", false) : DEFAULT_AUTO_REVOKE);
 
     return true;
 }
