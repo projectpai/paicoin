@@ -8,11 +8,11 @@
     https://docs.decred.org/faq/proof-of-stake/general/#10-what-happens-if-less-than-3-of-the-selected-tickets-vote-on-a-block
 """
 
+from test_framework.test_framework import PAIcoinTestFramework
 from test_framework.blocktools import create_coinbase, create_block, add_witness_commitment
 from test_framework.mininode import CBlock, CTransaction, ToHex
-from test_framework.test_framework import PAIcoinTestFramework
 from test_framework.util import *
-import io
+from io import BytesIO
 
 class TestGetBlockTemplate(PAIcoinTestFramework):
     def set_test_params(self):
@@ -55,6 +55,44 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
             txids.append(k)
         return txids
 
+    def mine_using_template(self):
+        tmpl = self.nodes[0].getblocktemplate()
+        assert 'proposal' in tmpl['capabilities']
+        assert 'coinbasetxn' not in tmpl
+        coinbase_tx = create_coinbase(height=int(tmpl["height"]))
+        block = CBlock()
+        block.nVersion = int(tmpl["version"])
+        block.hashPrevBlock = int(tmpl["previousblockhash"], 16)
+        block.nTime = tmpl["curtime"]
+        block.nBits = int(tmpl["bits"], 16)
+        block.nNonce = 0
+
+        # extended block
+        block.nStakeDifficulty =    int(tmpl["stakedifficulty"], 16)
+        block.nVoteBits =           tmpl["votebits"]
+        block.nTicketPoolSize =     tmpl["ticketpoolsize"]
+        block.ticketLotteryState =  tmpl["ticketlotterystate"]
+        block.nVoters =             tmpl["voters"]
+        block.nFreshStake =         tmpl["freshstake"]
+        block.nRevocations =        tmpl["revocations"]
+        block.extraData =           tmpl["extradata"]
+        block.nStakeVersion =       tmpl["stakeversion"]
+
+        block.vtx = [coinbase_tx]
+        for tx in tmpl["transactions"]:
+            ctx = CTransaction()
+            ctx.deserialize(BytesIO(hex_str_to_bytes(tx['data'])))
+            ctx.rehash()
+            block.vtx.append(ctx)
+        block.hashMerkleRoot = block.calc_merkle_root()
+        add_witness_commitment(block)
+        block.solve()
+        print('solved hash', block.hash)
+        # print("submit for height", idx)
+        submit_result = self.nodes[0].submitblock(ToHex(block))
+        print(submit_result)
+        assert(submit_result in [None,"inconclusive"])
+
     def run_test(self):
         # these are the same values as in chainparams.cpp for REGTEST, update them if they change
         nStakeEnabledHeight    = 2000
@@ -67,38 +105,14 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         nStakeDiffWindowSize   = 8
 
         self.nodes[0].generate(nStakeValidationHeight - 4)
-        self.sync_all()
+        # self.sync_all()
         self.get_best_block(nStakeValidationHeight - 4)
 
         for idx in range(nStakeValidationHeight-3, nStakeValidationHeight):
             gbt_txids = self.get_block_template()
-            # assert 'proposal' in tmpl['capabilities']
-            # assert 'coinbasetxn' not in tmpl
-            # coinbase_tx = create_coinbase(height=int(tmpl["height"]))
-            # block = create_block(int("0x"+tmpl["previousblockhash"],0), coinbase_tx, int(tmpl["curtime"]))
-            # # sequence numbers must not be max for nLockTime to have effect
-            # # coinbase_tx.vin[0].nSequence = 2 ** 32 - 2
-            # # coinbase_tx.rehash()
-            # # block = CBlock()
-            # block.nVersion = int(tmpl["version"])
-            # # block.hashPrevBlock = int(tmpl["previousblockhash"], 16)
-            # # block.nTime = tmpl["curtime"]
-            # block.nBits = int(tmpl["bits"], 16)
-            # # block.nNonce = 0
-            # # block.vtx = [coinbase_tx]# + tmpl["transactions"]
-            # # for tx in tmpl["transactions"]:
-            # #     ctx = CTransaction()
-            # #     ctx.deserialize(io.BytesIO(hex_str_to_bytes(tx['data'])))
-            # #     ctx.rehash()
-            # #     block.vtx.append(ctx)
-            # # block.hashMerkleRoot = block.calc_merkle_root()
-            # add_witness_commitment(block)
-            # block.rehash()
-            # block.solve()
-            # # self.nodes[0].submitblock(ToHex(block))
-            # self.nodes[0].submitblock(bytes_to_hex_str(block.serialize(True)))
-            self.nodes[0].generate(1)
-            self.sync_all()
+            self.mine_using_template()
+            # self.nodes[0].generate(1)
+            # self.sync_all()
             block_txids = self.get_best_block(idx)
             assert(all(tx in block_txids for tx in gbt_txids))
 
@@ -123,29 +137,39 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
             gbt_txids = self.get_block_template()
 
             # we have votes so we can progress the chain
+            self.mine_using_template()
+            # self.nodes[0].generate(1)
+            # self.sync_all()
             idx = idx+1
-            self.nodes[0].generate(1)
-            self.sync_all()
             block_txids = self.get_best_block(idx)
             assert(all(tx in block_txids for tx in gbt_txids))
 
-            mempooltx_before_invalid = self.get_raw_mempool()
-            winners_before_invalid = self.nodes[0].winningtickets()
-            gbt_txids_invalid = self.get_block_template()
+            # mempooltx_before_invalid = self.get_raw_mempool()
+            # winners_before_invalid = self.nodes[0].winningtickets()
+            # gbt_txids_invalid = self.get_block_template()
+
             # getblocktemplate invalidates the tip because there are no votes that vote for it, so the previous winners are used again
-            latest_winners = self.nodes[0].winningtickets()
-            assert(latest_winners != winners_before_invalid)
-            assert(latest_winners == winners)
+            # latest_winners = self.nodes[0].winningtickets()
+            # print(latest_winners)
+            # assert(latest_winners != winners_before_invalid)
+            # assert(latest_winners == winners)
 
-            assert(set(gbt_txids + mempooltx_before_invalid) == set(gbt_txids_invalid))
+            # assert(set(gbt_txids + mempooltx_before_invalid) == set(gbt_txids_invalid))
 
-            mempooltx_after_invalid = self.get_raw_mempool()
-            assert(set(mempooltx_after_invalid) == set(gbt_txids_invalid))
-            # we have no votes for the invalid tip but we can progress from previous tip, 
-            self.nodes[0].generate(1)
-            # self.sync_all() unable to sync after node 0 invalidates its tip
+            # mempooltx_after_invalid = self.get_raw_mempool()
+            # assert(set(mempooltx_after_invalid) == set(gbt_txids_invalid))
+
+            # we have no votes for the current tip but we can progress from previous tip,
+            print("progress from previous tip")
+            gbt_txids_previous = self.get_block_template()
+            self.mine_using_template()
+
+            chaintips = self.nodes[0].getchaintips()
+            print(chaintips)
+            # self.nodes[0].generate(1)
+            # self.sync_all() #unable to sync after node 0 invalidates its tip
             block_txids = self.get_best_block(idx)
-            assert(all(tx in block_txids for tx in gbt_txids_invalid))
+            # assert(all(tx in block_txids for tx in gbt_txids_invalid))
 
 if __name__ == "__main__":
     TestGetBlockTemplate().main()
