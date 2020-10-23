@@ -3410,12 +3410,12 @@ UniValue purchaseticket(const JSONRPCRequest& request)
 
     double dfPoolFee{0.0};
     if (!request.params[7].isNull())
-        dfPoolFee = request.params[6].get_real();
+        dfPoolFee = request.params[7].get_real();
 
     // Expiry
     int nExpiry{0};
     if (!request.params[8].isNull())
-        nExpiry = request.params[7].get_int();
+        nExpiry = request.params[8].get_int();
 
     // Ticket Fee
     CAmount ticketFeeIncrement{0};
@@ -3459,6 +3459,7 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
             "7.  \"poolfeeaddress\"   (string, optional)   The address to pay stake pool fees to\n"
             "8.  poolfees             (numeric, optional)  The amount of fees to pay to the stake pool\n"
             "9.  limit                (numeric, optional)  Limit maximum number of purchased tickets per block\n"
+            "10. expiry               (numeric, optional)  The number of blocks after which the ticket transaction will be removed from mempool\n"
             "\nExamples:\n"
             "\nStart the ticket buyer from your default account to purchase tickets and leaving at least 50 PAI\n"
             + HelpExampleCli("startticketbuyer", "\"default\" 50")
@@ -3550,8 +3551,20 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
         int limit = request.params[8].get_int();
         if (limit < 1)
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The number of tickets must be at least 1.");
-
+      
         cfg.limit = limit;
+    }
+
+    // Expiry
+    if (!request.params[9].isNull()) {
+        if (!request.params[9].isNum())
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Invalid expiry.");
+
+        int expiry = request.params[9].get_int();
+        if ((expiry < DEFAULT_TICKET_BUYER_TX_EXPIRY_MIN) || (expiry > DEFAULT_TICKET_BUYER_TX_EXPIRY_MAX))
+            throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The expiration interval must be within the limits.");
+      
+        cfg.txExpiry = expiry;
     }
 
     tb->start();
@@ -3610,6 +3623,7 @@ UniValue ticketbuyerconfig(const JSONRPCRequest& request)
             "  \"poolfees\" : x.xxx,                     (numeric) amount of fees to pay to the stake pool\n"
             "  \"limit\" : n,                            (numeric) maximum number of purchased tickets per block\n"
             "  \"minConf\" : n,                          (numeric) minimum number of block confirmations required\n"
+            "  \"expiry\" : n,                           (numeric) number of blocks after which the ticket transaction will be removed from mempool\n"
             "  }\n"
             "\nExample:\n"
             + HelpExampleCli("ticketbuyerconfig", "")
@@ -3636,6 +3650,7 @@ UniValue ticketbuyerconfig(const JSONRPCRequest& request)
     result.push_back(Pair("poolFees", cfg.poolFees));
     result.push_back(Pair("limit", cfg.limit));
     result.push_back(Pair("minConf", cfg.minConf));
+    result.push_back(Pair("expiry", cfg.txExpiry));
 
     return result;
 }
@@ -3901,6 +3916,42 @@ UniValue setticketbuyermaxperblock(const JSONRPCRequest& request)
     CTicketBuyerConfig& cfg = tb->GetConfig();
 
     cfg.limit = value;
+
+    return NullUniValue;
+}
+
+UniValue setticketbuyerexpiry(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setticketbuyerexpiry expiry\n"
+            "\nConfigure the number of blocks after which the ticket transaction will be removed from mempool.\n"
+            "\nArguments:\n"
+            "1.  expiry  (numeric, required)  The number of blocks after which the ticket transaction will be removed from mempool\n"
+            "\nExample:\n"
+            + HelpExampleCli("setticketbuyerexpiry", "100")
+            + HelpExampleRpc("setticketbuyerexpiry", "144")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    int value = request.params[0].get_int();
+    if ((value < DEFAULT_TICKET_BUYER_TX_EXPIRY_MIN) || (value > DEFAULT_TICKET_BUYER_TX_EXPIRY_MAX))
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The expiration interval must be within the limits.");
+
+    CTicketBuyer *tb = pwallet->GetTicketBuyer();
+    if (tb == nullptr)
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Ticket buyer not found.");
+
+    CTicketBuyerConfig& cfg = tb->GetConfig();
+
+    cfg.txExpiry = value;
 
     return NullUniValue;
 }
@@ -5436,6 +5487,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "setticketbuyerpooladdress",        &setticketbuyerpooladdress,         {"pooladdress"} },
     { "wallet",             "setticketbuyerpoolfees",           &setticketbuyerpoolfees,            {"poolfees"} },
     { "wallet",             "setticketbuyermaxperblock",        &setticketbuyermaxperblock,         {"limit"} },
+    { "wallet",             "setticketbuyerexpiry",             &setticketbuyerexpiry,              {"expiry"} },
     { "wallet",             "generatevote",                     &generatevote,                      {"blockhash","height","tickethash","votebits","votebitsext"} },
     { "wallet",             "startautovoter",                   &startautovoter,                    {"votebits","votebitsext","passphrase"} },
     { "wallet",             "stopautovoter",                    &stopautovoter,                     {} },

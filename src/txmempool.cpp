@@ -597,7 +597,34 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
     blockSinceLastRollingFeeBump = true;
 }
 
-void CTxMemPool::removeExpiredVotes(const uint32_t currentHeight, const Consensus::Params& params)
+void CTxMemPool::removeExpiredTickets(const int currentHeight, const Consensus::Params& params)
+{
+    // When a ticket transaction is expired, it is remmoved from the mempool.
+
+    if (!IsHybridConsensusForkEnabled(currentHeight, params))
+        return;
+
+    LOCK(cs);
+
+    // get the tickets
+    auto& tx_class_index = mapTx.get<tx_class>();
+    auto tickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+
+    CTxMemPool::setEntries txToRemove;
+    for (auto tickettxiter = tickets.first; tickettxiter != tickets.second; ++tickettxiter) {
+        if (IsExpiredTx(tickettxiter->GetTx(), currentHeight + 1)) {
+            auto txiter = mapTx.project<0>(tickettxiter);
+
+            txToRemove.insert(txiter);
+
+            CalculateDescendants(txiter, txToRemove);
+        }
+    }
+
+    RemoveStaged(txToRemove, true, MemPoolRemovalReason::EXPIRY);
+}
+
+void CTxMemPool::removeExpiredVotes(const int currentHeight, const Consensus::Params& params)
 {
     // When a vote is lingering in the mempool for longer that the specified delay,
     // it is removed as it cannot be useful anymore. All its mempool descendants are
@@ -607,20 +634,21 @@ void CTxMemPool::removeExpiredVotes(const uint32_t currentHeight, const Consensu
         return;
 
     LOCK(cs);
+
     // get the votes
     auto& tx_class_index = mapTx.get<tx_class>();
     auto votes = tx_class_index.equal_range(ETxClass::TX_Vote);
 
     CTxMemPool::setEntries txToRemove;
     for (auto votetxiter = votes.first; votetxiter != votes.second; ++votetxiter) {
-        if (!IsHybridConsensusForkEnabled(votetxiter->GetHeight(), params))
+        if (!IsHybridConsensusForkEnabled(static_cast<int>(votetxiter->GetHeight()), params))
             continue;
 
         VoteData voteData;
         if (!ParseVote(votetxiter->GetTx(), voteData))
             continue;
 
-        if (voteData.blockHeight < currentHeight - params.nMempoolVoteExpiry) {
+        if (voteData.blockHeight < static_cast<unsigned int>(currentHeight) - params.nMempoolVoteExpiry) {
             auto txiter = mapTx.project<0>(votetxiter);
 
             txToRemove.insert(txiter);

@@ -624,7 +624,8 @@ public:
     void removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMemPoolHeight, int flags);
     void removeConflicts(const CTransaction &tx);
     void removeForBlock(const std::vector<CTransactionRef>& vtx, unsigned int nBlockHeight);
-    void removeExpiredVotes(const uint32_t currentHeight, const Consensus::Params& params);
+    void removeExpiredTickets(const int currentHeight, const Consensus::Params& params);
+    void removeExpiredVotes(const int currentHeight, const Consensus::Params& params);
 
     void clear();
     void _clear(); //lock free

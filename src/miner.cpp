@@ -198,6 +198,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             if (nNewTickets >= chainparams.GetConsensus().nMaxFreshStakePerBlock) //new ticket purchases not more than max allowed in block
                 break;
 
+            // do not include ticket transactions that are expired
+            if (IsExpiredTx(tickettxiter->GetTx(), nHeight))
+                continue;
+
             auto stakedAmount = tickettxiter->GetSharedTx()->vout[ticketStakeOutputIndex].nValue;
 
             // do not allow tickets with staked amounts lower than the block's stake difficulty

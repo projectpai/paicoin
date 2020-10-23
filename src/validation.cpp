@@ -578,6 +578,10 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     int nextBlockHeight = chainActive.Height() + 1;
     int stakeValidationHeight = chainparams.GetConsensus().nStakeValidationHeight;
 
+    // Reject ticket transactions that are expired.
+    if (txClass == TX_BuyTicket && IsExpiredTx(tx, nextBlockHeight))
+        return state.DoS(100, false, REJECT_INVALID, "bad-txns-expired");
+
     // Reject votes before stake validation height.
     if (txClass == TX_Vote && nextBlockHeight < stakeValidationHeight)
         return state.DoS(100, false, REJECT_INVALID, "vote-too-early");
@@ -3021,16 +3025,18 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
     } while (pindexNewTip != pindexMostWork);
     CheckBlockIndex(chainparams.GetConsensus());
 
-    // remove expired mempool votes
-    if (fDiscardExpiredMempoolVotes) {
-        const auto& height = []()
-        {
-            LOCK(cs_main);
-            return chainActive.Height();
-        }();
+    const auto& height = []()
+    {
+        LOCK(cs_main);
+        return chainActive.Height();
+    }();
 
+    // remove expired ticket transactions
+    mempool.removeExpiredTickets(height, chainparams.GetConsensus());
+
+    // remove expired mempool votes
+    if (fDiscardExpiredMempoolVotes)
         mempool.removeExpiredVotes(height, chainparams.GetConsensus());
-    }
 
     // Write changes periodically to disk, after relay.
     if (!FlushStateToDisk(chainparams, state, FLUSH_STATE_PERIODIC)) {
