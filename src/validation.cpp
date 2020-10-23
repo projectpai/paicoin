@@ -1491,12 +1491,17 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txund
 {
     // mark inputs spent
     if (!tx.IsCoinBase()) {
+        if (ParseTxClass(tx)!=TX_Vote) {  
+            // skip votes txs when marking spent inputs as we may need to include them in a block 
+            // builing on top of the one before the current tip
+            // in case there are not enough votes for the tip
         unsigned startInput = ParseTxClass(tx) == TX_Vote ? voteStakeInputIndex : 0;    // first input in a vote is subsidy generation; skip it
         txundo.vprevout.reserve(tx.vin.size() - startInput);
         for (unsigned int i = startInput; i < tx.vin.size(); ++i) {
             txundo.vprevout.emplace_back();
             bool is_spent = inputs.SpendCoin(tx.vin[i].prevout, &txundo.vprevout.back());
             assert(is_spent);
+        }
         }
     }
     // add outputs
@@ -2107,7 +2112,11 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 
     // verify that the view's current state corresponds to the previous block
     uint256 hashPrevBlock = pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash();
-    assert(hashPrevBlock == view.GetBestBlock());
+    uint256 hashPrevPrevBlock = uint256();
+    if (pindex->pprev && pindex->pprev->pprev) 
+        // when not enough votes are received for the current tip we will try connecting on previous block
+        hashPrevPrevBlock = pindex->pprev->pprev->GetBlockHash();
+    assert(hashPrevBlock == view.GetBestBlock() || hashPrevPrevBlock == view.GetBestBlock());
 
     // Special case for the genesis block, skipping connection of its transactions
     // (its coinbase is unspendable)
@@ -2177,6 +2186,11 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if (fEnforceBIP30) {
         for (const auto& tx : block.vtx) {
             for (size_t o = 0; o < tx->vout.size(); o++) {
+                if (ParseTxClass(*tx) == TX_Vote) 
+                    // skip votes txs when checking overwriting transactions as we may need to include them in a block 
+                    // builing on top of the one before the current tip
+                    // in case there are not enough votes for the tip
+                    continue;
                 if (view.HaveCoin(COutPoint(tx->GetHash(), o))) {
                     return state.DoS(100, error("ConnectBlock(): tried to overwrite transaction"),
                                      REJECT_INVALID, "bad-txns-BIP30");
@@ -4117,7 +4131,7 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
 bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase)
 {
     AssertLockHeld(cs_main);
-    assert(pindexPrev && pindexPrev == chainActive.Tip());
+    assert(pindexPrev && (pindexPrev == chainActive.Tip() || pindexPrev == chainActive.Tip()->pprev));
     CCoinsViewCache viewNew(pcoinsTip);
     CBlockIndex indexDummy(block);
     indexDummy.pprev = pindexPrev;

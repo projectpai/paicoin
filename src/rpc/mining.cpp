@@ -448,8 +448,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     if(!g_connman)
         throw JSONRPCError(RPCErrorCode::CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
 
-    if (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0)
-        throw JSONRPCError(RPCErrorCode::CLIENT_NOT_CONNECTED, "PAI Coin is not connected!");
+    // if (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0)
+    //     throw JSONRPCError(RPCErrorCode::CLIENT_NOT_CONNECTED, "PAI Coin is not connected!");
 
     if (IsInitialBlockDownload())
         throw JSONRPCError(RPCErrorCode::CLIENT_IN_INITIAL_DOWNLOAD, "PAI Coin is downloading blocks...");
@@ -555,14 +555,16 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
             // we still do not have enough votes after the wait tine, in this case we invalidate the tip
             // so that we can continue mining on the previous block to allow for additional winners on a new fork
-            CValidationState state;
-            InvalidateBlock(state, Params(),chainActive.Tip());
-            if (!state.IsValid()) {
-                throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
-            }
-            pindexPrevNew = chainActive.Tip();  // invalidate change to previous tip
+            // CValidationState state;
+            // InvalidateBlock(state, Params(),chainActive.Tip());
+            // if (!state.IsValid()) {
+            //     throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
+            // }
+            // pindexPrevNew = chainActive.Tip();  // invalidate change to previous tip
+
+            pindexPrevNew = chainActive.Tip()->pprev;
             nStart = GetTime();                 // reinitialize Start
-            pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
+            pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit, true /*bUsePrevIndex*/);
         }
 
         if (!pblocktemplate)

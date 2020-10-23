@@ -390,7 +390,9 @@ bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry,
 
     const CTransaction& tx = newit->GetTx();
     std::set<uint256> setParentTransactions;
-    for (unsigned int i = 0; i < tx.vin.size(); i++) {
+    const auto& txClass =  ParseTxClass(tx);
+    const auto& startIndex = (txClass == TX_Vote) ? voteStakeInputIndex : 0; // first input in a vote is subsidy generation; skip it
+    for (unsigned int i = startIndex; i < tx.vin.size(); i++) {
         mapNextTx.insert(std::make_pair(&tx.vin[i].prevout, &tx));
         setParentTransactions.insert(tx.vin[i].prevout.hash);
     }
@@ -577,6 +579,11 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
     std::vector<const CTxMemPoolEntry*> entries;
     for (const auto& tx : vtx)
     {
+        if (ParseTxClass(*tx) == TX_Vote) 
+            // skip votes as we need them in case we build on top of previous block
+            // they will be removed in removeExpiredVotes
+            continue;
+
         uint256 hash = tx->GetHash();
 
         indexed_transaction_set::iterator i = mapTx.find(hash);
@@ -587,6 +594,11 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
     if (minerPolicyEstimator) {minerPolicyEstimator->processBlock(nBlockHeight, entries);}
     for (const auto& tx : vtx)
     {
+        if (ParseTxClass(*tx) == TX_Vote) 
+            // skip votes as we need them in case we build on top of previous block
+            // they will be removed in removeExpiredVotes
+            continue;
+
         txiter it = mapTx.find(tx->GetHash());
         if (it != mapTx.end()) {
             setEntries stage;
