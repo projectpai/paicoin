@@ -388,6 +388,9 @@ struct TxMempoolInfo
     /** Time the transaction entered the mempool. */
     int64_t nTime;
 
+    /** Height the transaction entered the mempool. */
+    int64_t nHeight;
+
     /** Feerate of the transaction. */
     CFeeRate feeRate;
 
@@ -639,6 +642,13 @@ public:
      * the tx is not dependent on other mempool transactions to be included in a block.
      */
     bool HasNoInputsOf(const CTransaction& tx) const;
+
+    /**
+     * Check if transaction has stayed too long in the mempool, with respect to given block height.
+     * Should only be applied to tickets, for now.
+     */
+    bool DidResidenceExpire(uint32_t txExpiry, int txHeight, int blockHeight) const;
+    bool DidResidenceExpire(const CTxMemPoolEntry &tx, int blockHeight) const;
 
     /** Affect CreateNewBlock prioritisation of transactions */
     void PrioritiseTransaction(const uint256& hash, const CAmount& nFeeDelta);

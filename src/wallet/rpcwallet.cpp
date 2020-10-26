@@ -3413,11 +3413,15 @@ UniValue purchaseticket(const JSONRPCRequest& request)
         dfPoolFee = request.params[7].get_real();
 
     // Expiry
-    int nExpiry{defaultTicketTxExpiry};
+    int nExpiry{0};
     if (!request.params[8].isNull()) {
         nExpiry = request.params[8].get_int();
-        if ((nExpiry < ticketTxExpiryMin) || (nExpiry > ticketTxExpiryMax))
+        LOCK(cs_main);
+        if ((nExpiry < chainActive.Tip()->nHeight + ticketTxExpiryMin) || (nExpiry > chainActive.Tip()->nHeight + ticketTxExpiryMax))
             throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "The expiration interval must be within the limits.");
+    } else {
+        LOCK(cs_main);
+        nExpiry = chainActive.Tip()->nHeight + defaultTicketTxExpiry;
     }
 
     // Ticket Fee

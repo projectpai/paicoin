@@ -600,6 +600,9 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
 void CTxMemPool::removeExpiredTickets(const int currentHeight, const Consensus::Params& params)
 {
     // When a ticket transaction is expired, it is remmoved from the mempool.
+    // This is a two sides process:
+    // 1. Remove the tickets that are expired by the transaction's nExpiry value;
+    // 2. Remove the tickets that have nExpiry set to zero and lingered in the mempool longer than acceptable.
 
     if (!IsHybridConsensusForkEnabled(currentHeight, params))
         return;
@@ -612,7 +615,8 @@ void CTxMemPool::removeExpiredTickets(const int currentHeight, const Consensus::
 
     CTxMemPool::setEntries txToRemove;
     for (auto tickettxiter = tickets.first; tickettxiter != tickets.second; ++tickettxiter) {
-        if (IsExpiredTx(tickettxiter->GetTx(), currentHeight + 1)) {
+        const CTransaction& tx = tickettxiter->GetTx();
+        if (IsExpiredTx(tx, currentHeight + 1) || DidResidenceExpire(tx.nExpiry, static_cast<int>(tickettxiter->GetHeight()), currentHeight)) {
             auto txiter = mapTx.project<0>(tickettxiter);
 
             txToRemove.insert(txiter);
@@ -875,7 +879,7 @@ void CTxMemPool::queryHashes(std::vector<uint256>& vtxid)
 }
 
 static TxMempoolInfo GetInfo(CTxMemPool::indexed_transaction_set::const_iterator it) {
-    return TxMempoolInfo{it->GetSharedTx(), it->GetTime(), CFeeRate(it->GetFee(), it->GetTxSize()), it->GetModifiedFee() - it->GetFee()};
+    return TxMempoolInfo{it->GetSharedTx(), it->GetTime(), it->GetHeight(), CFeeRate(it->GetFee(), it->GetTxSize()), it->GetModifiedFee() - it->GetFee()};
 }
 
 std::vector<TxMempoolInfo> CTxMemPool::infoAll() const
@@ -962,6 +966,16 @@ bool CTxMemPool::HasNoInputsOf(const CTransaction &tx) const
         if (exists(tx.vin[i].prevout.hash))
             return false;
     return true;
+}
+
+bool CTxMemPool::DidResidenceExpire(uint32_t txExpiry, int txHeight, int blockHeight) const
+{
+    return txExpiry == 0 && nMempoolResidence >= 0 && blockHeight >= txHeight + nMempoolResidence;
+}
+
+bool CTxMemPool::DidResidenceExpire(const CTxMemPoolEntry &tx, int blockHeight) const
+{
+    return DidResidenceExpire(tx.GetSharedTx()->nExpiry, static_cast<int>(tx.GetHeight()), blockHeight);
 }
 
 CCoinsViewMemPool::CCoinsViewMemPool(CCoinsView* baseIn, const CTxMemPool& mempoolIn) : CCoinsViewBacked(baseIn), mempool(mempoolIn) { }

@@ -43,7 +43,7 @@ struct BuyTicketData {
 
 const int defaultTicketTxExpiry = 144;
 const int ticketTxExpiryMin = 10;
-const int ticketTxExpiryMax = 1000;
+const int ticketTxExpiryMax = 144;
 
 struct TicketContribData {
 

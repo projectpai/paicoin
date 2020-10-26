@@ -92,6 +92,7 @@ uint64_t nPruneTarget = 0;
 int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 bool fEnableReplacement = DEFAULT_ENABLE_REPLACEMENT;
 bool fDiscardExpiredMempoolVotes = DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES;
+int nMempoolResidence = DEFAULT_MEMPOOL_RESIDENCE;
 
 uint256 hashAssumeValid;
 arith_uint256 nMinimumChainWork;
@@ -485,7 +486,7 @@ static bool CheckInputsFromMempoolAndCache(const CTransaction& tx, CValidationSt
 }
 
 static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool& pool, CValidationState& state, const CTransactionRef& ptx,
-                              bool* pfMissingInputs, int64_t nAcceptTime, std::list<CTransactionRef>* plTxnReplaced,
+                              bool* pfMissingInputs, int64_t nAcceptTime, int64_t nAcceptHeight, std::list<CTransactionRef>* plTxnReplaced,
                               bool bypass_limits, const CAmount& nAbsurdFee, std::vector<COutPoint>& coins_to_uncache)
 {
     const CTransaction& tx = *ptx;
@@ -520,7 +521,17 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 
     // is it already in the memory pool?
     if (pool.exists(hash)) {
-        return state.Invalid(false, REJECT_DUPLICATE, "txn-already-in-mempool");
+        // A mempool transaction with the acceptange height invalid or higher, can be replaced by the new entry.
+        // This should only be the case for transactions that are loaded from the mempool file and have valid acceptance height.
+        // Here we just remove the existing mempool entry. The insertion will be done further in the code.
+        if (nAcceptHeight > 0 && nAcceptHeight <= chainActive.Height()) {
+            auto itExisting = pool.mapTx.find(hash);
+            if (itExisting != pool.mapTx.end() && (itExisting->GetHeight() <= 0 || itExisting->GetHeight() >= nAcceptHeight))
+                pool.removeRecursive(itExisting->GetTx(), MemPoolRemovalReason::REPLACED);
+            else
+                return state.Invalid(false, REJECT_DUPLICATE, "txn-already-in-mempool");
+        } else
+            return state.Invalid(false, REJECT_DUPLICATE, "txn-already-in-mempool");
     }
 
     // Check for conflicts with in-memory transactions
@@ -690,7 +701,11 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
             fSpendsStake |= IsStakeTx(coin.txClass);
         }
 
-        CTxMemPoolEntry entry(ptx, nFees, nAcceptTime, chainActive.Height(),
+        // Make sure that the transaction has a valid acceptance height
+        if (nAcceptHeight <= 0)
+            nAcceptHeight = chainActive.Height();
+
+        CTxMemPoolEntry entry(ptx, nFees, nAcceptTime, static_cast<unsigned int>(nAcceptHeight),
                               fSpendsCoinbase, fSpendsStake, nSigOpsCost, lp);
         unsigned int nSize = entry.GetTxSize();
 
@@ -964,13 +979,13 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     return true;
 }
 
-/** (try to) add transaction to memory pool with a specified acceptance time **/
-static bool AcceptToMemoryPoolWithTime(const CChainParams& chainparams, CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx,
-                        bool* pfMissingInputs, int64_t nAcceptTime, std::list<CTransactionRef>* plTxnReplaced,
+/** (try to) add transaction to memory pool with a specified acceptance time and height **/
+static bool AcceptToMemoryPoolWithTimeAndHeight(const CChainParams& chainparams, CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx,
+                        bool* pfMissingInputs, int64_t nAcceptTime, int64_t nAcceptHeight, std::list<CTransactionRef>* plTxnReplaced,
                         bool bypass_limits, const CAmount nAbsurdFee)
 {
     std::vector<COutPoint> coins_to_uncache;
-    bool res = AcceptToMemoryPoolWorker(chainparams, pool, state, tx, pfMissingInputs, nAcceptTime, plTxnReplaced, bypass_limits, nAbsurdFee, coins_to_uncache);
+    bool res = AcceptToMemoryPoolWorker(chainparams, pool, state, tx, pfMissingInputs, nAcceptTime, nAcceptHeight, plTxnReplaced, bypass_limits, nAbsurdFee, coins_to_uncache);
     if (!res) {
         for (const COutPoint& hashTx : coins_to_uncache)
             pcoinsTip->Uncache(hashTx);
@@ -986,7 +1001,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
                         bool bypass_limits, const CAmount nAbsurdFee)
 {
     const CChainParams& chainparams = Params();
-    return AcceptToMemoryPoolWithTime(chainparams, pool, state, tx, pfMissingInputs, GetTime(), plTxnReplaced, bypass_limits, nAbsurdFee);
+    return AcceptToMemoryPoolWithTimeAndHeight(chainparams, pool, state, tx, pfMissingInputs, GetTime(), 0, plTxnReplaced, bypass_limits, nAbsurdFee);
 }
 
 bool ReadTransaction(CTransactionRef& tx, const CDiskTxPos &pos, uint256 &hashBlock) {
@@ -5219,6 +5234,7 @@ int VersionBitsTipStateSinceHeight(const Consensus::Params& params, Consensus::D
 }
 
 static const uint64_t MEMPOOL_DUMP_VERSION = 1;
+static const uint64_t MEMPOOL_RESIDENCE_VERSION = 2;
 
 bool LoadMempool()
 {
@@ -5239,7 +5255,7 @@ bool LoadMempool()
     try {
         uint64_t version;
         file >> version;
-        if (version != MEMPOOL_DUMP_VERSION) {
+        if (version != MEMPOOL_DUMP_VERSION && version != MEMPOOL_RESIDENCE_VERSION) {
             return false;
         }
         uint64_t num;
@@ -5248,8 +5264,11 @@ bool LoadMempool()
             CTransactionRef tx;
             int64_t nTime;
             int64_t nFeeDelta;
+            int64_t nHeight = 0;
             file >> tx;
             file >> nTime;
+            if (version == MEMPOOL_RESIDENCE_VERSION)
+                file >> nHeight;
             file >> nFeeDelta;
 
             CAmount amountdelta = nFeeDelta;
@@ -5259,7 +5278,7 @@ bool LoadMempool()
             CValidationState state;
             if (nTime + nExpiryTimeout > nNow) {
                 LOCK(cs_main);
-                AcceptToMemoryPoolWithTime(chainparams, mempool, state, tx, nullptr /* pfMissingInputs */, nTime,
+                AcceptToMemoryPoolWithTimeAndHeight(chainparams, mempool, state, tx, nullptr /* pfMissingInputs */, nTime, nHeight,
                                            nullptr /* plTxnReplaced */, false /* bypass_limits */, 0 /* nAbsurdFee */);
                 if (state.IsValid()) {
                     ++count;
@@ -5312,13 +5331,14 @@ bool DumpMempool()
 
         CAutoFile file(filestr, SER_DISK, CLIENT_VERSION);
 
-        uint64_t version = MEMPOOL_DUMP_VERSION;
+        uint64_t version = MEMPOOL_RESIDENCE_VERSION;
         file << version;
 
         file << (uint64_t)vinfo.size();
         for (const auto& i : vinfo) {
             file << *(i.tx);
             file << (int64_t)i.nTime;
+            file << (int64_t)i.nHeight;
             file << (int64_t)i.nFeeDelta;
             mapDeltas.erase(i.tx->GetHash());
         }

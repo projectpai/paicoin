@@ -147,6 +147,8 @@ static const bool DEFAULT_ENABLE_REPLACEMENT = true;
 static const bool DEFAULT_FEEFILTER = true;
 /** Default for discarding expired mempool votes */
 static const bool DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES = true;
+/** Default for the transactions residence */
+static const unsigned int DEFAULT_MEMPOOL_RESIDENCE = 200;
 
 /** Maximum number of headers to announce when relaying blocks with headers message.*/
 static const unsigned int MAX_BLOCKS_TO_ANNOUNCE = 8;
@@ -193,6 +195,7 @@ extern CAmount maxTxFee;
 extern int64_t nMaxTipAge;
 extern bool fEnableReplacement;
 extern bool fDiscardExpiredMempoolVotes;
+extern int nMempoolResidence;
 
 /** Block hash whose ancestors we will assume to have valid scripts without checking them. */
 extern uint256 hashAssumeValid;
