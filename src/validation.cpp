@@ -123,6 +123,9 @@ namespace {
             if (pa->nSequenceId < pb->nSequenceId) return false;
             if (pa->nSequenceId > pb->nSequenceId) return true;
 
+            // // ... then by latest time received, ...
+            // if (pa->nSequenceId > pb->nSequenceId) return false;
+            // if (pa->nSequenceId < pb->nSequenceId) return true;
             // Use pointer address as tie breaker (should only happen with blocks
             // loaded from disk, as those all have id 0).
             if (pa < pb) return false;
@@ -2116,7 +2119,9 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if (pindex->pprev && pindex->pprev->pprev) 
         // when not enough votes are received for the current tip we will try connecting on previous block
         hashPrevPrevBlock = pindex->pprev->pprev->GetBlockHash();
-    assert(hashPrevBlock == view.GetBestBlock() || hashPrevPrevBlock == view.GetBestBlock());
+    LogPrint(BCLog::ALL, "    - Verify hash: view best: %s, prevblock %s, prevprevblock %s \n"
+    , view.GetBestBlock().GetHex(), hashPrevBlock.GetHex(), hashPrevPrevBlock.GetHex());
+    // assert(hashPrevBlock == view.GetBestBlock() || hashPrevPrevBlock == view.GetBestBlock());
 
     // Special case for the genesis block, skipping connection of its transactions
     // (its coinbase is unspendable)
@@ -2265,6 +2270,9 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
             if (!tx.IsCoinBase())
             {
                 CAmount txfee = 0;
+                auto txClass = ParseTxClass(tx);
+                LogPrint(BCLog::ALL, "    - CheckTxInputs: %s , %d , vin[0]: %s n: %d\n", tx.GetHash().GetHex().c_str(),
+                 txClass, tx.vin[0].prevout.hash.GetHex(), tx.vin[0].prevout.n);
                 if (!Consensus::CheckTxInputs(tx, state, view, pindex->nHeight, txfee, chainparams)) {
                     return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), FormatStateMessage(state));
                 }
@@ -2372,12 +2380,11 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if (pindex->nHeight == 0) {
         assert(pindex->pprev == nullptr);
         pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
-    }
-    else{
+    } else {
         assert(pindex->pprev != nullptr);
         assert(pindex->pprev->pstakeNode != nullptr);
 
-        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
+        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus());
         if (pindex->pstakeNode == nullptr)
             return state.DoS(100,
                 error("ConnectBlock(): FetchStakeNode - Failed to get Stake data"),
@@ -2919,6 +2926,7 @@ static bool ActivateBestChainStep(CValidationState& state, const CChainParams& c
         // Connect new blocks.
         for (CBlockIndex *pindexConnect : reverse_iterate(vpindexToConnect)) {
             if (!ConnectTip(state, chainparams, pindexConnect, pindexConnect == pindexMostWork ? pblock : std::shared_ptr<const CBlock>(), connectTrace, disconnectpool)) {
+            // if (!ConnectTip(state, chainparams, pindexConnect, pindexConnect == pindexMostWork || pindexConnect == pindexMostWork->pprev ? pblock : std::shared_ptr<const CBlock>(), connectTrace, disconnectpool)) {
                 if (state.IsInvalid()) {
                     // The block violates a consensus rule.
                     if (!state.CorruptionPossible())
@@ -3019,6 +3027,10 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
             bool fInvalidFound = false;
             std::shared_ptr<const CBlock> nullBlockPtr;
             if (!ActivateBestChainStep(state, chainparams, pindexMostWork, pblock && pblock->GetHash() == pindexMostWork->GetBlockHash() ? pblock : nullBlockPtr, fInvalidFound, connectTrace))
+
+            // if (!ActivateBestChainStep(state, chainparams, pindexMostWork
+            // , pblock && (pblock->GetHash() == pindexMostWork->GetBlockHash() || pblock->hashPrevBlock == pindexMostWork->pprev->GetBlockHash()) ? pblock : nullBlockPtr
+            // , fInvalidFound, connectTrace))
                 return false;
 
             if (fInvalidFound) {

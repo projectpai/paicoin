@@ -550,7 +550,19 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                 auto& voted_hash_index = mempool.mapTx.get<voted_block_hash>();
                 auto votesForBlockHash = voted_hash_index.equal_range(pBlockIndex->GetBlockHash());
 
-                assert(pBlockIndex->pstakeNode != nullptr);
+                if (pBlockIndex->pstakeNode == nullptr) {
+                    if (pBlockIndex->nHeight == 0) {
+                        assert(pBlockIndex->pprev == nullptr);
+                        pBlockIndex->pstakeNode = StakeNode::genesisNode(consensusParams);
+                    } else {
+                        assert(pBlockIndex->pprev != nullptr);
+                        assert(pBlockIndex->pprev->pstakeNode != nullptr);
+
+                        pBlockIndex->pstakeNode = FetchStakeNode(pBlockIndex, consensusParams);
+                        if (pBlockIndex->pstakeNode == nullptr)
+                            throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "FetchStakeNode - Failed to get Stake data");
+                    }
+                }
                 auto winningHashes = pBlockIndex->pstakeNode->Winners();
 
                 int nNewVotes = 0;
@@ -575,7 +587,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                 // too-few-votes: none of the tips have enough to be mined, we will remined on top of previous
                 // Create new block based on previous index
                 pindexPrevNew = chainActive.Tip()->pprev;
-                UpdateTip(pindexPrevNew, Params());
+                // chainActive.SetTip(pindexPrevNew);
+                // UpdateTip(pindexPrevNew, Params());
             }
         } else {
             pindexPrevNew = chainActive.Tip();
