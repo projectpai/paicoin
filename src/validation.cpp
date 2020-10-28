@@ -2563,7 +2563,7 @@ static void DoWarning(const std::string& strWarning)
 }
 
 /** Update chainActive and related internal data structures. */
-void UpdateTip(CBlockIndex *pindexNew, const CChainParams& chainParams) {
+void static UpdateTip(CBlockIndex *pindexNew, const CChainParams& chainParams) {
     chainActive.SetTip(pindexNew);
 
     // New best block
@@ -5132,7 +5132,7 @@ void static CheckBlockIndex(const Consensus::Params& consensusParams)
                 // setBlockIndexCandidates.  chainActive.Tip() must also be there
                 // even if some data has been pruned.
                 if (pindexFirstMissing == nullptr || pindex == chainActive.Tip()) {
-                    // assert(setBlockIndexCandidates.count(pindex));
+                    assert(setBlockIndexCandidates.count(pindex));
                 }
                 // If some parent is missing, then it could be that this block was in
                 // setBlockIndexCandidates but had to be removed because of the missing data.
