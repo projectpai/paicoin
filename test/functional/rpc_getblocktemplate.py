@@ -18,7 +18,7 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2 # we need at least 2 nodes to have non zerp connections for getblocktemplate to work
-        self.extra_args = [['-autobuy','-tblimit=1','-autovote=0','-blockenoughvoteswaittime=0','-blockallvoteswaittime=0'],[]] 
+        self.extra_args = [['-autobuy','-tblimit=1','-autovote=0','-autorevoke=0','-blockenoughvoteswaittime=0','-blockallvoteswaittime=0'],[]] 
 
     def get_best_block(self, checkHeight):
         chainInfo = self.nodes[0].getbestblock()
@@ -46,11 +46,11 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
             txids.append(decodedtx['txid'])
         return txids
     
-    def get_raw_mempool(self):
+    def get_raw_mempool(self, nodeidx = 0):
         print("-------------")
-        print("mempool")
+        print("mempool of node:",nodeidx)
         txids = []
-        for k,v in self.nodes[0].getrawmempool(True).items():
+        for k,v in self.nodes[nodeidx].getrawmempool(True).items():
             print(k,v['type'])
             txids.append(k)
         return txids
@@ -105,14 +105,14 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         nStakeDiffWindowSize   = 8
 
         self.nodes[0].generate(nStakeValidationHeight - 4)
-        # self.sync_all()
+        self.sync_all()
         self.get_best_block(nStakeValidationHeight - 4)
 
         for idx in range(nStakeValidationHeight-3, nStakeValidationHeight):
             gbt_txids = self.get_block_template()
             self.mine_using_template()
             # self.nodes[0].generate(1)
-            # self.sync_all()
+            self.sync_all()
             block_txids = self.get_best_block(idx)
             assert(all(tx in block_txids for tx in gbt_txids))
 
@@ -125,6 +125,8 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         majority = int(nTicketsPerBlock / 2 + 1)
 
         for _ in range(3):
+            self.get_raw_mempool()
+            self.get_raw_mempool(1)
             winners = self.nodes[0].winningtickets()
             assert(len(winners['tickets'])==nTicketsPerBlock)
             chainInfo = self.nodes[0].getbestblock()
@@ -133,12 +135,16 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
             for winneridx in range(0, majority):
                 votehash = self.nodes[0].generatevote(blockhash, blockheight, winners['tickets'][winneridx], dummyVoteBits, dummyVoteBitsExt)
 
+            # self.sync_all()
+
             print("after adding votes")
             gbt_txids = self.get_block_template()
 
             # we have votes so we can progress the chain
             self.mine_using_template()
             # self.nodes[0].generate(1)
+            self.get_raw_mempool()
+            self.get_raw_mempool(1)
             # self.sync_all()
             idx = idx+1
             block_txids = self.get_best_block(idx)
@@ -162,13 +168,26 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
             # we have no votes for the current tip but we can progress from previous tip,
             print("progress from previous tip")
             gbt_txids_previous = self.get_block_template()
+            chaintips = self.nodes[0].getchaintips()
+            print("chaintip on node:",0)
+            print(chaintips)
+            chaintips = self.nodes[1].getchaintips()
+            print("chaintip on node:",1)
+            print(chaintips)
             self.mine_using_template()
 
             chaintips = self.nodes[0].getchaintips()
+            print("chaintip on node:",0)
+            print(chaintips)
+            chaintips = self.nodes[1].getchaintips()
+            print("chaintip on node:",1)
             print(chaintips)
             # self.nodes[0].generate(1)
             # self.sync_all() #unable to sync after node 0 invalidates its tip
             block_txids = self.get_best_block(idx)
+            bestblock = self.nodes[1].getbestblock()
+            print("chaintip on node:",1)
+            print(bestblock)
             # assert(all(tx in block_txids for tx in gbt_txids_invalid))
 
 if __name__ == "__main__":
