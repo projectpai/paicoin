@@ -198,8 +198,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             if (nNewTickets >= chainparams.GetConsensus().nMaxFreshStakePerBlock) //new ticket purchases not more than max allowed in block
                 break;
 
-            // skip tickets that were bought on a higher height which received too-few-votes
-            if (nHeight <= tickettxiter->GetHeight())
+            // include only tickets bought at least 2 blocks behind
+            if (nHeight <= tickettxiter->GetHeight() + 1)
                 continue;
 
             // do not include ticket transactions that are expired
@@ -242,8 +242,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             if (std::find(missedTickets.begin(), missedTickets.end(), ticketHash) == missedTickets.end())
                 continue; // Skip all missed tickets that we've never heard of
 
-            // skip revocations that were added on a higher height which received too-few-votes
-            if (nHeight <= revocationtxiter->GetHeight())
+            // include only revocations added at least 2 blocks behind
+            if (nHeight <= revocationtxiter->GetHeight() + 1)
                 continue;
             auto txiter = mempool.mapTx.project<0>(revocationtxiter);
             AddToBlock(txiter);
@@ -487,7 +487,7 @@ void BlockAssembler::addPackageTxs(int nHeight, int &nPackagesSelected, int &nDe
         // First try to find a new transaction in mapTx to evaluate.
         if (mi != mempool.mapTx.get<ancestor_score>().end() &&
                 (SkipMapTxEntry(mempool.mapTx.project<0>(mi), mapModifiedTx, failedTx) ||
-                mi->GetTxClass() != TX_Regular || nHeight <= mi->GetHeight() ) //we only deal with non-stake tx in this loop
+                mi->GetTxClass() != TX_Regular || nHeight <= mi->GetHeight() + 1) //we only deal with non-stake tx in this loop, and include only txs added at least 2 blocks behind
                 ) {
             ++mi;
             continue;

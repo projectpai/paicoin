@@ -550,19 +550,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                 auto& voted_hash_index = mempool.mapTx.get<voted_block_hash>();
                 auto votesForBlockHash = voted_hash_index.equal_range(pBlockIndex->GetBlockHash());
 
-                if (pBlockIndex->pstakeNode == nullptr) {
-                    if (pBlockIndex->nHeight == 0) {
-                        assert(pBlockIndex->pprev == nullptr);
-                        pBlockIndex->pstakeNode = StakeNode::genesisNode(consensusParams);
-                    } else {
-                        assert(pBlockIndex->pprev != nullptr);
-                        assert(pBlockIndex->pprev->pstakeNode != nullptr);
 
-                        pBlockIndex->pstakeNode = FetchStakeNode(pBlockIndex, consensusParams);
-                        if (pBlockIndex->pstakeNode == nullptr)
-                            throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "FetchStakeNode - Failed to get Stake data");
-                    }
-                }
+                assert (pBlockIndex->pstakeNode != nullptr);
                 auto winningHashes = pBlockIndex->pstakeNode->Winners();
 
                 int nNewVotes = 0;
@@ -1139,14 +1128,33 @@ UniValue winningtickets(const JSONRPCRequest& request)
     }
 
     LOCK(cs_main);
-    CBlockIndex* pblockindex = chainActive[nHeight];
-    const auto& winningTickets = pblockindex->pstakeNode->Winners();
-    auto result = UniValue{UniValue::VOBJ};
-    auto array = UniValue{UniValue::VARR};
-    for (const auto& tx : winningTickets){
-        array.push_back(tx.GetHex());
+
+    const auto& setTips = GetChainTips();
+    auto result = UniValue{UniValue::VARR};
+    for (const auto& block : setTips) {
+        if (block->pstakeNode == nullptr)
+            continue;
+
+        const int& blockHeight = block->nHeight;
+
+        if (blockHeight < nHeight)
+            continue;
+
+        const uint256& blockHash = block->GetBlockHash();
+        if (blockHash == uint256())
+            continue;
+
+        auto tip = UniValue{UniValue::VOBJ};
+        tip.push_back(Pair("blockhash", blockHash.GetHex()));
+
+        auto array = UniValue{UniValue::VARR};
+        for (const uint256& ticketHash : block->pstakeNode->Winners()) {
+            array.push_back(ticketHash.GetHex());
+        }
+        tip.push_back(Pair("tickets",array));
+        result.push_back(tip);
     }
-    result.push_back(Pair("tickets",array));
+
     return result;
 }
 
