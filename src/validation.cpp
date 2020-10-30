@@ -123,6 +123,9 @@ namespace {
             if (pa->nSequenceId < pb->nSequenceId) return false;
             if (pa->nSequenceId > pb->nSequenceId) return true;
 
+            // // ... then by latest time received, ...
+            // if (pa->nSequenceId > pb->nSequenceId) return false;
+            // if (pa->nSequenceId < pb->nSequenceId) return true;
             // Use pointer address as tie breaker (should only happen with blocks
             // loaded from disk, as those all have id 0).
             if (pa < pb) return false;
@@ -1883,17 +1886,20 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
         // restore inputs
         if (reorderedIndexes[i] > 0) { // not coinbases
             CTxUndo &txundo = blockUndo.vtxundo[reorderedIndexes[i]-1];
-            // in case of Vote tx, skip first vin, it is stakebase, see UpdateCoins
-            const auto& startIndex = ParseTxClass(tx) == ETxClass::TX_Vote ? voteStakeInputIndex : 0;
-            if (txundo.vprevout.size() != tx.vin.size() - startIndex) {
-                error("DisconnectBlock(): transaction and undo data inconsistent");
-                return DISCONNECT_FAILED;
-            }
-            for (unsigned int j = tx.vin.size(); j-- > startIndex;) {
-                const COutPoint &out = tx.vin[j].prevout;
-                int res = ApplyTxInUndo(std::move(txundo.vprevout[j - startIndex]), view, out);
-                if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
-                fClean = fClean && res != DISCONNECT_UNCLEAN;
+            // in case of Vote tx, skip altogether see UpdateCoins
+            if (ParseTxClass(tx) != ETxClass::TX_Vote) {
+                // first vin, it is stakebase, see UpdateCoins
+                const auto& startIndex = ParseTxClass(tx) == ETxClass::TX_Vote ? voteStakeInputIndex : 0;
+                if (txundo.vprevout.size() != tx.vin.size() - startIndex) {
+                    error("DisconnectBlock(): transaction and undo data inconsistent");
+                    return DISCONNECT_FAILED;
+                }
+                for (unsigned int j = tx.vin.size(); j-- > startIndex;) {
+                    const COutPoint& out = tx.vin[j].prevout;
+                    int res = ApplyTxInUndo(std::move(txundo.vprevout[j - startIndex]), view, out);
+                    if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
+                    fClean = fClean && res != DISCONNECT_UNCLEAN;
+                }
             }
             // At this point, all of txundo.vprevout should have been moved out.
         }
@@ -2116,7 +2122,9 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if (pindex->pprev && pindex->pprev->pprev) 
         // when not enough votes are received for the current tip we will try connecting on previous block
         hashPrevPrevBlock = pindex->pprev->pprev->GetBlockHash();
-    assert(hashPrevBlock == view.GetBestBlock() || hashPrevPrevBlock == view.GetBestBlock());
+    LogPrint(BCLog::ALL, "    - Verify hash: view best: %s, prevblock %s, prevprevblock %s \n"
+    , view.GetBestBlock().GetHex(), hashPrevBlock.GetHex(), hashPrevPrevBlock.GetHex());
+    // assert(hashPrevBlock == view.GetBestBlock() || hashPrevPrevBlock == view.GetBestBlock());
 
     // Special case for the genesis block, skipping connection of its transactions
     // (its coinbase is unspendable)
@@ -2265,6 +2273,9 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
             if (!tx.IsCoinBase())
             {
                 CAmount txfee = 0;
+                auto txClass = ParseTxClass(tx);
+                LogPrint(BCLog::ALL, "    - CheckTxInputs: %s , %d , vin[0]: %s n: %d\n", tx.GetHash().GetHex().c_str(),
+                 txClass, tx.vin[0].prevout.hash.GetHex(), tx.vin[0].prevout.n);
                 if (!Consensus::CheckTxInputs(tx, state, view, pindex->nHeight, txfee, chainparams)) {
                     return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), FormatStateMessage(state));
                 }
@@ -2369,19 +2380,21 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         setDirtyBlockIndex.insert(pindex);
     }
 
-    if (pindex->nHeight == 0) {
-        assert(pindex->pprev == nullptr);
-        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
-    }
-    else{
-        assert(pindex->pprev != nullptr);
-        assert(pindex->pprev->pstakeNode != nullptr);
+    // build stake node information if not already built by AcceptBlock
+    if (pindex->pstakeNode == nullptr) {
+        if (pindex->nHeight == 0) {
+            assert(pindex->pprev == nullptr);
+            pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+        } else {
+            assert(pindex->pprev != nullptr);
+            assert(pindex->pprev->pstakeNode != nullptr);
 
-        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
-        if (pindex->pstakeNode == nullptr)
-            return state.DoS(100,
-                error("ConnectBlock(): FetchStakeNode - Failed to get Stake data"),
-                REJECT_INVALID, "bad-stake-data");
+            pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus());
+            if (pindex->pstakeNode == nullptr)
+                return state.DoS(100,
+                    error("ConnectBlock(): FetchStakeNode - Failed to get Stake data"),
+                    REJECT_INVALID, "bad-stake-data");
+        }
     }
 
     // if(pindex->GetStakePos().IsNull()){
@@ -2556,7 +2569,7 @@ static void DoWarning(const std::string& strWarning)
 }
 
 /** Update chainActive and related internal data structures. */
-void UpdateTip(CBlockIndex *pindexNew, const CChainParams& chainParams) {
+void static UpdateTip(CBlockIndex *pindexNew, const CChainParams& chainParams) {
     chainActive.SetTip(pindexNew);
 
     // New best block
@@ -2919,6 +2932,7 @@ static bool ActivateBestChainStep(CValidationState& state, const CChainParams& c
         // Connect new blocks.
         for (CBlockIndex *pindexConnect : reverse_iterate(vpindexToConnect)) {
             if (!ConnectTip(state, chainparams, pindexConnect, pindexConnect == pindexMostWork ? pblock : std::shared_ptr<const CBlock>(), connectTrace, disconnectpool)) {
+            // if (!ConnectTip(state, chainparams, pindexConnect, pindexConnect == pindexMostWork || pindexConnect == pindexMostWork->pprev ? pblock : std::shared_ptr<const CBlock>(), connectTrace, disconnectpool)) {
                 if (state.IsInvalid()) {
                     // The block violates a consensus rule.
                     if (!state.CorruptionPossible())
@@ -3018,7 +3032,10 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
 
             bool fInvalidFound = false;
             std::shared_ptr<const CBlock> nullBlockPtr;
-            if (!ActivateBestChainStep(state, chainparams, pindexMostWork, pblock && pblock->GetHash() == pindexMostWork->GetBlockHash() ? pblock : nullBlockPtr, fInvalidFound, connectTrace))
+            // try activating a new block on top of most work chain or on a side chain forking on previous block to the tip
+            if (!ActivateBestChainStep(state, chainparams, pindexMostWork
+            , pblock && (pblock->GetHash() == pindexMostWork->GetBlockHash() || pblock->hashPrevBlock == pindexMostWork->pprev->GetBlockHash()) ? pblock : nullBlockPtr
+            , fInvalidFound, connectTrace))
                 return false;
 
             if (fInvalidFound) {
@@ -4093,6 +4110,23 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     if (fCheckForPruning)
         FlushStateToDisk(chainparams, state, FLUSH_STATE_NONE); // we just allocated more disk space for block files
 
+    // build the stake node information when a block is accepted, as it is needed in case a side chain tip is checked for votes
+    // either in autovoter, either in getblocktemplate rpc implementation
+    if (pindex->nHeight == 0) {
+        assert(pindex->pprev == nullptr);
+        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+    } else {
+        assert(pindex->pprev != nullptr);
+        if (pindex->pprev->pstakeNode != nullptr) {
+
+        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus());
+        if (pindex->pstakeNode == nullptr)
+            return state.DoS(100,
+                error("AcceptBlock(): FetchStakeNode - Failed to get Stake data"),
+                REJECT_INVALID, "bad-stake-data");
+        }
+    }
+
     return true;
 }
 
@@ -4131,7 +4165,8 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
 bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase)
 {
     AssertLockHeld(cs_main);
-    assert(pindexPrev && (pindexPrev == chainActive.Tip() || pindexPrev == chainActive.Tip()->pprev));
+    // we expect building on top of the current tip, also on the previous in case current tip has insufficient votes, also on a side chain with same height as current tip
+    assert(pindexPrev && (pindexPrev == chainActive.Tip() || pindexPrev == chainActive.Tip()->pprev || pindexPrev->nHeight == chainActive.Height()));
     CCoinsViewCache viewNew(pcoinsTip);
     CBlockIndex indexDummy(block);
     indexDummy.pprev = pindexPrev;
@@ -5120,7 +5155,7 @@ void static CheckBlockIndex(const Consensus::Params& consensusParams)
                 // setBlockIndexCandidates.  chainActive.Tip() must also be there
                 // even if some data has been pruned.
                 if (pindexFirstMissing == nullptr || pindex == chainActive.Tip()) {
-                    // assert(setBlockIndexCandidates.count(pindex));
+                    assert(setBlockIndexCandidates.count(pindex));
                 }
                 // If some parent is missing, then it could be that this block was in
                 // setBlockIndexCandidates but had to be removed because of the missing data.
