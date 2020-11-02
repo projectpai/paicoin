@@ -85,6 +85,7 @@ BASE_SCRIPTS= [
     'hybrid_consensus_test_framework.py',
     # vv Tests less than 30s vv
     'rpc_getblocktemplate.py',
+    'rpc_getblocktemplate_autovoter.py',
     'keypool-topup.py',
     'zmq_test.py',
     'paicoin_cli.py',

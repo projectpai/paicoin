@@ -105,7 +105,7 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         nStakeDiffWindowSize   = 8
 
         self.nodes[0].generate(nStakeValidationHeight - 4)
-        self.sync_all()
+        # self.sync_all()
         self.get_best_block(nStakeValidationHeight - 4)
 
         for idx in range(nStakeValidationHeight-3, nStakeValidationHeight):
@@ -183,20 +183,29 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
             # we have no votes for the current tip but we can progress from previous tip,
             print("progress from previous tip")
             gbt_txids_previous = self.get_block_template()
+
+            print("-------------")
+            print("sleep 5s before mining")
+            time.sleep(5)
             chaintips = self.nodes[0].getchaintips()
             print("chaintip on node:",0)
             print(chaintips)
             chaintips = self.nodes[1].getchaintips()
             print("chaintip on node:",1)
             print(chaintips)
+
             self.mine_using_template()
 
+            print("-------------")
+            print("sleep 5s after mining")
+            time.sleep(5)
             chaintips = self.nodes[0].getchaintips()
             print("chaintip on node:",0)
             print(chaintips)
             chaintips = self.nodes[1].getchaintips()
             print("chaintip on node:",1)
             print(chaintips)
+
             # self.nodes[0].generate(1)
             # self.sync_all() #unable to sync after node 0 invalidates its tip
             block_txids = self.get_best_block(idx)
