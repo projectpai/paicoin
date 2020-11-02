@@ -8,6 +8,9 @@
 
 #include "policy/policy.h"
 #include "txmempool.h"
+#include "validation.h"
+#include "keystore.h"
+#include "script/sign.h"
 #include "util.h"
 #include "stake/extendedvotebits.h"
 
@@ -123,7 +126,7 @@ void CheckSort(CTxMemPool &pool, std::vector<std::string> &sortedOrder)
 }
 
 //TODO move these in a common place, now a verbatim copy from transaction_tests.cpp
-CMutableTransaction CreateDummyBuyTicket(const CAmount& contribution)
+CMutableTransaction CreateDummyBuyTicket(const CAmount& contribution, const CAmount& change = ::dustRelayFee.GetFee(GetEstimatedSizeOfBuyTicketTx(false)) + 10)
 {
     CMutableTransaction mtx;
 
@@ -140,7 +143,7 @@ CMutableTransaction CreateDummyBuyTicket(const CAmount& contribution)
     stakeKey.MakeNewKey(false);
     auto stakeAddr = stakeKey.GetPubKey().GetID();
     CScript stakeScript = GetScriptForDestination(stakeAddr);
-    CAmount dummyStakeAmount = 50;
+    CAmount dummyStakeAmount = contribution - change;
     mtx.vout.push_back(CTxOut(dummyStakeAmount, stakeScript));
 
     // create an OP_RETURN push containing a dummy address to send rewards to, and the amount contributed to stake
@@ -156,8 +159,7 @@ CMutableTransaction CreateDummyBuyTicket(const CAmount& contribution)
     changeKey.MakeNewKey(false);
     auto changeAddr = changeKey.GetPubKey().GetID();
     CScript changeScript = GetScriptForDestination(changeAddr);
-    CAmount dummyChange = 30;
-    mtx.vout.push_back(CTxOut(dummyChange, changeScript));
+    mtx.vout.push_back(CTxOut(change, changeScript));
 
     return mtx;
 }
@@ -752,6 +754,171 @@ BOOST_AUTO_TEST_CASE(MempoolSizeLimitTest)
     // ... unless it has gone all the way to 0 (after getting past 1000/2)
 
     SetMockTime(0);
+}
+
+BOOST_AUTO_TEST_CASE(MempoolPersistenceTest)
+{
+    auto signTicket = [](CMutableTransaction& mtx, CKey& key, const CAmount& contribution, const CAmount& change, const CScript& scriptPubKey) {
+        CBasicKeyStore keyStore;
+        keyStore.AddKey(key);
+
+        CTransaction tx(mtx);
+
+        SignatureData sigdata;
+        BOOST_CHECK(ProduceSignature(TransactionSignatureCreator(&keyStore, &tx, 0, contribution+change, SIGHASH_ALL), scriptPubKey, sigdata));
+        UpdateTransaction(mtx, 0, sigdata);
+    };
+
+    auto checkExpiry = [](const CTxMemPool& pool, const uint32_t expectedExpiryForOldtx, const uint32_t expectedExpiryForNewtx) {
+        auto& tx_class_index = pool.mapTx.get<tx_class>();
+        auto tickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+        for (auto tickettxiter = tickets.first; tickettxiter != tickets.second; ++tickettxiter) {
+            if (tickettxiter->GetSharedTx()->nVersion == 1)
+                BOOST_CHECK(tickettxiter->GetSharedTx()->nExpiry == expectedExpiryForOldtx);
+            if (tickettxiter->GetSharedTx()->nVersion == 3)
+                BOOST_CHECK(tickettxiter->GetSharedTx()->nExpiry == expectedExpiryForNewtx);
+        }
+    };
+
+    const CAmount contribution = 3*COIN;
+    const CAmount change = ::dustRelayFee.GetFee(GetEstimatedSizeOfBuyTicketTx(false)) + 10;
+
+    CKey key1;
+    key1.MakeNewKey(true);
+    CPubKey pubKey1 = key1.GetPubKey();
+    const CScript& scriptPubKey1 = GetScriptForDestination(pubKey1.GetID());
+
+    CKey key2;
+    key2.MakeNewKey(true);
+    CPubKey pubKey2 = key2.GetPubKey();
+    const CScript& scriptPubKey2 = GetScriptForDestination(pubKey2.GetID());
+
+    COutPoint out1(uint256S("1"), 0);
+    COutPoint out2(uint256S("2"), 0);
+
+    Coin coin1(CTxOut(contribution + change, scriptPubKey1), 0, false, TX_Regular);
+    Coin coin2(CTxOut(contribution + change, scriptPubKey2), 0, false, TX_Regular);
+
+    LOCK(cs_main);
+
+    pcoinsTip->AddCoin(out1, std::move(coin1), true);
+    BOOST_CHECK(pcoinsTip->HaveCoin(out1));
+
+    pcoinsTip->AddCoin(out2, std::move(coin2), true);
+    BOOST_CHECK(pcoinsTip->HaveCoin(out2));
+
+    CMutableTransaction tx1 = CreateDummyBuyTicket(contribution, change);
+    tx1.vin.clear();
+    tx1.vin.push_back(CTxIn(out1));
+    tx1.nVersion = 1;
+    tx1.nExpiry = 123;
+    signTicket(tx1, key1, contribution, change, scriptPubKey1);
+    CTransactionRef txr1 = MakeTransactionRef(tx1);
+
+    CMutableTransaction tx2 = CreateDummyBuyTicket(contribution, change);
+    tx2.vin.clear();
+    tx2.vin.push_back(CTxIn(out2));
+    tx2.nExpiry = 456;
+    signTicket(tx2, key2, contribution, change, scriptPubKey2);
+    CTransactionRef txr2 = MakeTransactionRef(tx2);
+
+    CValidationState state;
+    BOOST_CHECK(AcceptToMemoryPool(mempool, state, txr1, nullptr, nullptr, false, 0));
+    BOOST_CHECK(AcceptToMemoryPool(mempool, state, txr2, nullptr, nullptr, false, 0));
+
+    checkExpiry(mempool, 123, 456);
+
+    BOOST_CHECK(DumpMempool());
+
+    mempool.removeRecursive(tx1);
+    mempool.removeRecursive(tx2);
+
+    BOOST_CHECK(mempool.size() == 0);
+
+    BOOST_CHECK(LoadMempool());
+
+    checkExpiry(mempool, 0, 456);
+}
+
+BOOST_AUTO_TEST_CASE(MempoolMalleabilityTest)
+{
+    auto signTicket = [](CMutableTransaction& mtx, CKey& key, const CAmount& contribution, const CAmount& change, const CScript& scriptPubKey) {
+        CBasicKeyStore keyStore;
+        keyStore.AddKey(key);
+
+        CTransaction tx(mtx);
+
+        SignatureData sigdata;
+        BOOST_CHECK(ProduceSignature(TransactionSignatureCreator(&keyStore, &tx, 0, contribution+change, SIGHASH_ALL), scriptPubKey, sigdata));
+        UpdateTransaction(mtx, 0, sigdata);
+    };
+
+    auto checkExpiry = [](const CTxMemPool& pool, const uint32_t expectedExpiryForOldtx, const uint32_t expectedExpiryForNewtx) {
+        auto& tx_class_index = pool.mapTx.get<tx_class>();
+        auto tickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+        for (auto tickettxiter = tickets.first; tickettxiter != tickets.second; ++tickettxiter) {
+            if (tickettxiter->GetSharedTx()->nVersion == 1)
+                BOOST_CHECK(tickettxiter->GetSharedTx()->nExpiry == expectedExpiryForOldtx);
+            if (tickettxiter->GetSharedTx()->nVersion == 3)
+                BOOST_CHECK(tickettxiter->GetSharedTx()->nExpiry == expectedExpiryForNewtx);
+        }
+    };
+
+    const CAmount contribution = 3*COIN;
+    const CAmount change = ::dustRelayFee.GetFee(GetEstimatedSizeOfBuyTicketTx(false)) + 10;
+
+    CKey key;
+    key.MakeNewKey(true);
+    CPubKey pubKey = key.GetPubKey();
+    const CScript& scriptPubKey = GetScriptForDestination(pubKey.GetID());
+
+    COutPoint out(uint256S("1"), 0);
+
+    Coin coin1(CTxOut(contribution + change, scriptPubKey), 0, false, TX_Regular);
+
+    LOCK(cs_main);
+
+    pcoinsTip->AddCoin(out, std::move(coin1), true);
+    BOOST_CHECK(pcoinsTip->HaveCoin(out));
+
+    CMutableTransaction tx1 = CreateDummyBuyTicket(contribution, change);
+    tx1.vin.clear();
+    tx1.vin.push_back(CTxIn(out));
+    tx1.nVersion = 3;
+    tx1.nLockTime = 0;
+    tx1.nExpiry = 123;
+    signTicket(tx1, key, contribution, change, scriptPubKey);
+    CTransactionRef txr1 = MakeTransactionRef(tx1);
+
+    CValidationState state;
+
+    BOOST_CHECK(AcceptToMemoryPool(mempool, state, txr1, nullptr, nullptr, false, 0));
+
+    checkExpiry(mempool, 0, 123);
+
+    BOOST_CHECK(!AcceptToMemoryPool(mempool, state, txr1, nullptr, nullptr, false, 0) && state.GetRejectCode() == REJECT_DUPLICATE && state.GetRejectReason() == "txn-already-in-mempool");
+
+    checkExpiry(mempool, 0, 123);
+
+    CMutableTransaction tx2 = tx1;
+    CTransactionRef txr2 = MakeTransactionRef(tx2);
+
+    BOOST_CHECK(txr1->GetHash() == txr2->GetHash());
+
+    BOOST_CHECK(!AcceptToMemoryPool(mempool, state, txr2, nullptr, nullptr, false, 0) && state.GetRejectCode() == REJECT_DUPLICATE && state.GetRejectReason() == "txn-already-in-mempool");
+
+    checkExpiry(mempool, 0, 123);
+
+    tx2.nExpiry = 456;
+
+    signTicket(tx2, key, contribution, change, scriptPubKey);
+    CTransactionRef txr21 = MakeTransactionRef(tx2);
+
+    BOOST_CHECK(txr1->GetHash() != txr21->GetHash());
+
+    BOOST_CHECK(!AcceptToMemoryPool(mempool, state, txr21, nullptr, nullptr, false, 0) && state.GetRejectCode() == REJECT_DUPLICATE && state.GetRejectReason() == "txn-mempool-conflict");
+
+    checkExpiry(mempool, 0, 123);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
