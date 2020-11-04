@@ -21,6 +21,16 @@ CAutoVoter::~CAutoVoter()
     stop();
 }
 
+void CAutoVoter::BlockConnected(const std::shared_ptr<const CBlock> &block, const CBlockIndex *pindex, const std::vector<CTransactionRef> &txnConflicted)
+{
+    LogPrintf("CAutoVoter: received BlockConnected, height=%d, pstake=%p\n", pindex->nHeight, pindex->pstakeNode);
+}
+
+void CAutoVoter::NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock>& block)
+{
+    LogPrintf("CAutoVoter: received NewPoWValidBlock, height=%d, pstake=%p\n", pindex->nHeight, pindex->pstakeNode);
+}
+
 void CAutoVoter::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *, bool fInitialDownload)
 {
     // we have to wait until the entire blockchain is downloaded
