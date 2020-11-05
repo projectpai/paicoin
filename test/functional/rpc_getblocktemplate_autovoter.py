@@ -18,8 +18,8 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2 # we need at least 2 nodes to have non zerp connections for getblocktemplate to work
-        self.extra_args = [['-autobuy', '-tblimit=1', '-autovote=1', '-autorevoke=0', '-blockenoughvoteswaittime=0', '-blockallvoteswaittime=0'],
-                           ['-autobuy', '-tblimit=1', '-autovote=1', '-autorevoke=0', '-blockenoughvoteswaittime=0', '-blockallvoteswaittime=0']]
+        self.extra_args = [['-autobuy', '-tblimit=3', '-autovote=1', '-autorevoke=0', '-blockenoughvoteswaittime=0', '-blockallvoteswaittime=0']
+                           ,['-autobuy', '-tblimit=3', '-autovote=1', '-autorevoke=0', '-blockenoughvoteswaittime=0', '-blockallvoteswaittime=0']]
 
     def get_best_block(self, checkHeight = None):
         chainInfo = self.nodes[0].getbestblock()
@@ -42,21 +42,28 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         rawtxs = [x['data'] for x in tmpl['transactions']]
         decodedrawtxs = [self.nodes[nodeidx].decoderawtransaction(x) for x in rawtxs]
         txids = []
+        num_votes = 0
         for decodedtx in decodedrawtxs:
             print(decodedtx['txid'],decodedtx['type'])
+            if decodedtx['type'] == 'vote':
+                num_votes +=1
             txids.append(decodedtx['txid'])
-        return txids
+        return tmpl['height'], num_votes, txids
     
     def get_raw_mempool(self, nodeidx = 0):
         print("-------------")
         print("mempool of node:",nodeidx)
         txids = []
         for k,v in self.nodes[nodeidx].getrawmempool(True).items():
-            print(k,v['type'])
+            if v['type'] == 'vote':
+                print(k,v['type'],v['voting']['blockhash'],v['voting']['blockheight'],v['voting']['ticket'])
+            else:
+                print(k,v['type'])
+
             txids.append(k)
         return txids
 
-    def mine_using_template(self, nodeidx = 0):
+    def mine_using_template(self, nodeidx = 0, addTime = 0):
         tmpl = self.nodes[nodeidx].getblocktemplate()
         assert 'proposal' in tmpl['capabilities']
         assert 'coinbasetxn' not in tmpl
@@ -64,7 +71,7 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         block = CBlock()
         block.nVersion = int(tmpl["version"])
         block.hashPrevBlock = int(tmpl["previousblockhash"], 16)
-        block.nTime = tmpl["curtime"]
+        block.nTime = tmpl["curtime"] + addTime # to avoid finding the same solution when we have only same votes in gbt
         block.nBits = int(tmpl["bits"], 16)
         block.nNonce = 0
 
@@ -94,7 +101,7 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         # print("submit for height", idx)
         submit_result = self.nodes[nodeidx].submitblock(ToHex(block))
         print(submit_result)
-        assert(submit_result in [None,"inconclusive","duplicate-inconclusive"])
+        assert(submit_result in [None,"inconclusive"])
 
     def run_test(self):
         # these are the same values as in chainparams.cpp for REGTEST, update them if they change
@@ -124,21 +131,26 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         self.get_best_block(startAutoBuyerHeight)
 
         for idx in range(startAutoBuyerHeight+1, StakeValidationHeight + 1):
-            gbt_txids = self.get_block_template(idx % self.num_nodes)
+            _, _, gbt_txids = self.get_block_template(idx % self.num_nodes)
             self.mine_using_template(idx % self.num_nodes)# mine on each of the nodes, so also the seconds one has funds
             self.sync_all()
             block_txids = self.get_best_block(idx)
             assert(all(tx in block_txids for tx in gbt_txids))
 
         self.nodes[0].stopautovoter()
-        self.nodes[1].stopautovoter()
+        # self.nodes[1].stopautovoter()
 
-        for _ in range(3):
-            # self.get_raw_mempool(0)
-            # self.get_raw_mempool(1)
-            # gbt_txids = self.get_block_template(0)
-            self.mine_using_template(0)
-            # idx = idx+1
+        for i in range(100):
+            self.get_raw_mempool(0)
+            self.get_raw_mempool(1)
+            idx = idx+1
+            gbt_height, num_votes, gbt_txids = self.get_block_template(0)
+            if gbt_height < idx:
+                print("forked")
+                idx = gbt_height
+
+            self.mine_using_template(0, i+1)
+
             block_txids = self.get_best_block()
             chaintips = self.nodes[0].getchaintips()
             print("chaintip on node:",0)
@@ -147,36 +159,13 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
             print("chaintip on node:",1)
             print(chaintips)
 
-            latest_winners = self.nodes[0].winningtickets()
-            print("latest_winners on node:",0)
-            print(latest_winners)
+            # latest_winners = self.nodes[0].winningtickets()
+            # print("latest_winners on node:",0)
+            # print(latest_winners)
             latest_winners = self.nodes[1].winningtickets()
             print("latest_winners on node:",1)
             print(latest_winners)
 
-        self.nodes[0].startautovoter(voteBits)
-        self.nodes[1].startautovoter(voteBits)
-
-        for _ in range(3):
-            # self.get_raw_mempool(0)
-            # self.get_raw_mempool(1)
-            # gbt_txids = self.get_block_template(0)
-            self.mine_using_template(0)
-            # idx = idx+1
-            block_txids = self.get_best_block()
-            chaintips = self.nodes[0].getchaintips()
-            print("chaintip on node:",0)
-            print(chaintips)
-            chaintips = self.nodes[1].getchaintips()
-            print("chaintip on node:",1)
-            print(chaintips)
-
-            latest_winners = self.nodes[0].winningtickets()
-            print("latest_winners on node:",0)
-            print(latest_winners)
-            latest_winners = self.nodes[1].winningtickets()
-            print("latest_winners on node:",1)
-            print(latest_winners)
 
 
 if __name__ == "__main__":

@@ -41,6 +41,7 @@ private:
     CWallet* pwallet;
 
     std::atomic<bool> configured;
+    void DoVote(const CBlockIndex *pindexNew);
 };
 
 #endif // PAICOIN_WALLET_AUTOVOTER_AUTOVOTER_H

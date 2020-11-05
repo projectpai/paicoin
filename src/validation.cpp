@@ -4083,11 +4083,6 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
         return error("%s: %s", __func__, FormatStateMessage(state));
     }
 
-    // Header is valid/has work, merkle tree and segwit merkle tree are good...RELAY NOW
-    // (but if it does not build on our best tip, let the SendMessages loop relay it)
-    if (!IsInitialBlockDownload() && chainActive.Tip() == pindex->pprev || (chainActive.Tip()->pprev && chainActive.Tip()->pprev == pindex->pprev) )
-        GetMainSignals().NewPoWValidBlock(pindex, pblock);
-
     int nHeight = pindex->nHeight;
 
     // Write block to history file
@@ -4126,6 +4121,11 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
                 REJECT_INVALID, "bad-stake-data");
         }
     }
+
+    // Header is valid/has work, merkle tree and segwit merkle tree are good...RELAY NOW
+    // (but if it does not build on our best tip, let the SendMessages loop relay it)
+    if (!IsInitialBlockDownload() && (chainActive.Tip() == pindex->pprev || (chainActive.Tip()->pprev && chainActive.Tip()->pprev == pindex->pprev)) )
+        GetMainSignals().NewPoWValidBlock(pindex, pblock);
 
     return true;
 }

@@ -821,6 +821,7 @@ UniValue submitblock(const JSONRPCRequest& request)
     {
         LOCK(cs_main);
         auto mi = mapBlockIndex.find(hash);
+        LogPrintf("submitted block hash %s\n", hash.GetHex());
         if (mi != mapBlockIndex.end()) {
             const auto* const pindex = mi->second;
             if (pindex->IsValid(BLOCK_VALID_SCRIPTS)) {

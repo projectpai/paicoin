@@ -815,7 +815,9 @@ void PeerLogicValidation::NewPoWValidBlock(const CBlockIndex *pindex, const std:
     LOCK(cs_main);
 
     static int nHighestFastAnnounce = 0;
-    if (pindex->nHeight <= nHighestFastAnnounce)
+    // we still want to push messages for blocks at the same height as needed for sharing the forked blocks that were mined
+    // because the current tip was not having enough votes
+    if (pindex->nHeight < nHighestFastAnnounce)
         return;
     nHighestFastAnnounce = pindex->nHeight;
 
@@ -1040,7 +1042,9 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
                         CValidationState dummy;
                         ActivateBestChain(dummy, Params(), a_recent_block);
                     }
-                    if (chainActive.Contains(mi->second)) {
+                    // we still want to reply to requests involving blocks which have the previous in the chain
+                    // as needed for sharing the forked blocks that were mined because the current tip was not having enough votes
+                    if (chainActive.Contains(mi->second) || chainActive.Contains(mi->second->pprev)) {
                         send = true;
                     } else {
                         send = mi->second->IsValid(BLOCK_VALID_SCRIPTS) &&

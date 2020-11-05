@@ -26,9 +26,10 @@ void CAutoVoter::BlockConnected(const std::shared_ptr<const CBlock> &block, cons
     LogPrintf("CAutoVoter: received BlockConnected, height=%d, pstake=%p\n", pindex->nHeight, pindex->pstakeNode);
 }
 
-void CAutoVoter::NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock>& block)
+void CAutoVoter::NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock>&)
 {
     LogPrintf("CAutoVoter: received NewPoWValidBlock, height=%d, pstake=%p\n", pindex->nHeight, pindex->pstakeNode);
+    DoVote(pindex);
 }
 
 void CAutoVoter::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *, bool fInitialDownload)
@@ -37,6 +38,11 @@ void CAutoVoter::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex
     if (fInitialDownload)
         return;
 
+    DoVote(pindexNew);
+}
+
+void CAutoVoter::DoVote(const CBlockIndex *pindexNew)
+{
     if (pwallet == nullptr)
         return;
 
