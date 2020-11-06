@@ -521,7 +521,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 
     // is it already in the memory pool?
     if (pool.exists(hash)) {
-        // A mempool transaction with the acceptange height invalid or higher, can be replaced by the new entry.
+        // A mempool transaction with the acceptance height invalid or higher, can be replaced by the new entry.
         // This should only be the case for transactions that are loaded from the mempool file and have valid acceptance height.
         // Here we just remove the existing mempool entry. The insertion will be done further in the code.
         if (nAcceptHeight > 0 && nAcceptHeight <= chainActive.Height()) {
