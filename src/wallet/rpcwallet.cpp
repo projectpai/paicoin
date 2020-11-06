@@ -3448,7 +3448,7 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (request.fHelp || request.params.size() < 2 || request.params.size() > 8)
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 10)
         throw std::runtime_error{
             "startticketbuyer \"fromaccount\" maintain (\"passphrase\" \"votingaccount\" \"votingaddress\" \"poolfeeaddress\" poolfees limit)\n"
             "\nStart the automatic ticket buyer with the specified settings.\n"
@@ -3491,8 +3491,8 @@ UniValue startticketbuyer(const JSONRPCRequest& request)
     cfg.maintain = AmountFromValue(request.params[1]);
 
     // Passphrase
-    if (!request.params[2].isNull())
-        cfg.passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
+    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
+    cfg.passphrase = passphrase;
 
     // Voting account
     if (!request.params[3].isNull())
@@ -4100,8 +4100,8 @@ UniValue startautovoter(const JSONRPCRequest& request)
     }
 
     // Passphrase
-    if (!request.params[2].isNull())
-        cfg.passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
+    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[2]);
+    cfg.passphrase = passphrase;
 
     av->start();
 
@@ -4373,8 +4373,8 @@ UniValue startautorevoker(const JSONRPCRequest& request)
     CAutoRevokerConfig& cfg = ar->GetConfig();
 
     // Passphrase
-    if (!request.params[0].isNull())
-        cfg.passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[0]);
+    SecureString passphrase = ValidatedPasswordFromOptionalValue(pwallet, request.params[0]);
+    cfg.passphrase = passphrase;
 
     ar->start();
 
@@ -5480,7 +5480,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "listtransactions",                 &listtransactions,                  {"account","count","skip","include_watchonly"} },
     { "wallet",             "listunspent",                      &listunspent,                       {"minconf","maxconf","addresses","include_unsafe","query_options"} },
     { "wallet",             "purchaseticket",                   &purchaseticket,                    {"fromaccount","spendlimit","minconf","ticketaddress","rewardaddress","numtickets","pooladdress","poolfees","expiry","comment","ticketfee"} },
-    { "wallet",             "startticketbuyer",                 &startticketbuyer,                  {"fromaccount","maintain","passphrase","votingaccount","votingaddress","poolfeeaddress","poolfees","limit"} },
+    { "wallet",             "startticketbuyer",                 &startticketbuyer,                  {"fromaccount","maintain","passphrase","votingaccount","votingaddress","rewardaddress","poolfeeaddress","poolfees","limit","expiry"} },
     { "wallet",             "stopticketbuyer",                  &stopticketbuyer,                   {} },
     { "wallet",             "ticketbuyerconfig",                &ticketbuyerconfig,                 {} },
     { "wallet",             "setticketbuyeraccount",            &setticketbuyeraccount,             {"fromaccount"} },
