@@ -126,7 +126,7 @@ void CheckSort(CTxMemPool &pool, std::vector<std::string> &sortedOrder)
 }
 
 //TODO move these in a common place, now a verbatim copy from transaction_tests.cpp
-CMutableTransaction CreateDummyBuyTicket(const CAmount& contribution, const CAmount& change = ::dustRelayFee.GetFee(GetEstimatedSizeOfBuyTicketTx(false)) + 10)
+CMutableTransaction CreateDummyBuyTicket(const CAmount& contribution, const CAmount& change = ::dustRelayFee.GetFee(GetEstimatedSizeOfBuyTicketTx(false, true)) + 10)
 {
     CMutableTransaction mtx;
 
@@ -781,7 +781,8 @@ BOOST_AUTO_TEST_CASE(MempoolPersistenceTest)
     };
 
     const CAmount contribution = 3*COIN;
-    const CAmount change = ::dustRelayFee.GetFee(GetEstimatedSizeOfBuyTicketTx(false)) + 10;
+    const CAmount change1 = ::dustRelayFee.GetFee(GetEstimatedSizeOfBuyTicketTx(false, false)) + 10;
+    const CAmount change2 = ::dustRelayFee.GetFee(GetEstimatedSizeOfBuyTicketTx(false, true)) + 10;
 
     CKey key1;
     key1.MakeNewKey(true);
@@ -796,8 +797,8 @@ BOOST_AUTO_TEST_CASE(MempoolPersistenceTest)
     COutPoint out1(uint256S("1"), 0);
     COutPoint out2(uint256S("2"), 0);
 
-    Coin coin1(CTxOut(contribution + change, scriptPubKey1), 0, false, TX_Regular);
-    Coin coin2(CTxOut(contribution + change, scriptPubKey2), 0, false, TX_Regular);
+    Coin coin1(CTxOut(contribution + change1, scriptPubKey1), 0, false, TX_Regular);
+    Coin coin2(CTxOut(contribution + change2, scriptPubKey2), 0, false, TX_Regular);
 
     LOCK(cs_main);
 
@@ -807,19 +808,19 @@ BOOST_AUTO_TEST_CASE(MempoolPersistenceTest)
     pcoinsTip->AddCoin(out2, std::move(coin2), true);
     BOOST_CHECK(pcoinsTip->HaveCoin(out2));
 
-    CMutableTransaction tx1 = CreateDummyBuyTicket(contribution, change);
+    CMutableTransaction tx1 = CreateDummyBuyTicket(contribution, change1);
     tx1.vin.clear();
     tx1.vin.push_back(CTxIn(out1));
     tx1.nVersion = 1;
     tx1.nExpiry = 123;
-    signTicket(tx1, key1, contribution, change, scriptPubKey1);
+    signTicket(tx1, key1, contribution, change1, scriptPubKey1);
     CTransactionRef txr1 = MakeTransactionRef(tx1);
 
-    CMutableTransaction tx2 = CreateDummyBuyTicket(contribution, change);
+    CMutableTransaction tx2 = CreateDummyBuyTicket(contribution, change2);
     tx2.vin.clear();
     tx2.vin.push_back(CTxIn(out2));
     tx2.nExpiry = 456;
-    signTicket(tx2, key2, contribution, change, scriptPubKey2);
+    signTicket(tx2, key2, contribution, change2, scriptPubKey2);
     CTransactionRef txr2 = MakeTransactionRef(tx2);
 
     CValidationState state;
@@ -865,7 +866,7 @@ BOOST_AUTO_TEST_CASE(MempoolMalleabilityTest)
     };
 
     const CAmount contribution = 3*COIN;
-    const CAmount change = ::dustRelayFee.GetFee(GetEstimatedSizeOfBuyTicketTx(false)) + 10;
+    const CAmount change = ::dustRelayFee.GetFee(GetEstimatedSizeOfBuyTicketTx(false, true)) + 10;
 
     CKey key;
     key.MakeNewKey(true);
