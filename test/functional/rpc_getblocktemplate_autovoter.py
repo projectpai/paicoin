@@ -54,14 +54,17 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         print("-------------")
         print("mempool of node:",nodeidx)
         txids = []
+        tickets_spent = []
         for k,v in self.nodes[nodeidx].getrawmempool(True).items():
             if v['type'] == 'vote':
-                print(k,v['type'],v['voting']['blockhash'],v['voting']['blockheight'],v['voting']['ticket'])
-            else:
                 print(k,v['type'])
+                print(v['voting']['blockhash'],v['voting']['blockheight'],v['voting']['ticket'])
+                tickets_spent.append(v['voting']['ticket'])
+            # else:
+                # print(k,v['type'])
 
             txids.append(k)
-        return txids
+        return tickets_spent, txids
 
     def mine_using_template(self, nodeidx = 0, addTime = 0):
         tmpl = self.nodes[nodeidx].getblocktemplate()
@@ -102,6 +105,7 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         submit_result = self.nodes[nodeidx].submitblock(ToHex(block))
         print(submit_result)
         assert(submit_result in [None,"inconclusive"])
+        return block.hash
 
     def run_test(self):
         # these are the same values as in chainparams.cpp for REGTEST, update them if they change
@@ -116,11 +120,6 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         voteBits              = 1
 
         startAutoBuyerHeight = StakeEnabledHeight - TicketMaturity
-        # self.nodes[0].generate(int(startAutoBuyerHeight/2))
-        # self.sync_all()
-        # self.nodes[1].generate(int(startAutoBuyerHeight/2))
-        # self.sync_all()
-        # self.get_best_block(startAutoBuyerHeight)
 
         for idx in range(1, startAutoBuyerHeight+1):
             self.nodes[idx % self.num_nodes].generate(1) # mine on each of the nodes, so also the seconds one has funds
@@ -132,41 +131,53 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
 
         for idx in range(startAutoBuyerHeight+1, StakeValidationHeight + 1):
             _, _, gbt_txids = self.get_block_template(idx % self.num_nodes)
-            self.mine_using_template(idx % self.num_nodes)# mine on each of the nodes, so also the seconds one has funds
+            last_mined = self.mine_using_template(idx % self.num_nodes)# mine on each of the nodes, so also the seconds one has funds
             self.sync_all()
             block_txids = self.get_best_block(idx)
             assert(all(tx in block_txids for tx in gbt_txids))
 
+        # from now on only the second node is allowed to vote and the first node is the one we mine on
         self.nodes[0].stopautovoter()
         # self.nodes[1].stopautovoter()
 
-        for i in range(100):
-            self.get_raw_mempool(0)
-            self.get_raw_mempool(1)
-            idx = idx+1
+        for i in range(10):
+            idx += 1 # expected to increase
             gbt_height, num_votes, gbt_txids = self.get_block_template(0)
             if gbt_height < idx:
                 print("forked")
-                idx = gbt_height
+                idx -= 1 # in this case the best block stays the same
 
-            self.mine_using_template(0, i+1)
+            last_mined = self.mine_using_template(0, i+1)
+            self.sync_all()
 
-            block_txids = self.get_best_block()
-            chaintips = self.nodes[0].getchaintips()
-            print("chaintip on node:",0)
-            print(chaintips)
-            chaintips = self.nodes[1].getchaintips()
-            print("chaintip on node:",1)
-            print(chaintips)
+            block_txids = self.get_best_block(idx)
 
-            # latest_winners = self.nodes[0].winningtickets()
-            # print("latest_winners on node:",0)
-            # print(latest_winners)
-            latest_winners = self.nodes[1].winningtickets()
-            print("latest_winners on node:",1)
-            print(latest_winners)
+            # check chain tips
+            chaintips0 = self.nodes[0].getchaintips()
+            chaintips1 = self.nodes[1].getchaintips()
+            tip_hashes0 = [tips['hash'] for tips in chaintips0]
+            tip_hashes1 = [tips['hash'] for tips in chaintips1]
+            assert(set(tip_hashes0) == set(tip_hashes1))
+            assert (last_mined in tip_hashes0)
 
+            # check all tips have same winner tickets
+            winningtickets0 = self.nodes[0].winningtickets()
+            winningtickets1 = self.nodes[1].winningtickets()
+            block_winner0 = {winner['blockhash']: winner['tickets'] for winner in winningtickets0}
+            block_winner1 = {winner['blockhash']: winner['tickets'] for winner in winningtickets1}
+            shared_items = {k: block_winner0[k] for k in block_winner0 if k in block_winner1 and set(block_winner0[k]) == set(block_winner1[k])}
+            assert(len(shared_items) == len(block_winner0))
+            assert(last_mined in block_winner0)
 
+            winners_for_last_mined = block_winner0[last_mined]
+
+            tickets_spent1, all_txids1 = self.get_raw_mempool(1)
+            
+            tickets_owned_by_voting_node = self.nodes[1].gettickets(False)
+            voting_tickets_owned_by_voting_node = [winner in tickets_owned_by_voting_node['hashes'] for winner in winners_for_last_mined]
+
+            voted_tickets = [ticket_spent in winners_for_last_mined for ticket_spent in tickets_spent1]
+            assert(sum(voting_tickets_owned_by_voting_node) >= sum(voted_tickets)) # all voting tickets are owned by the voting node
 
 if __name__ == "__main__":
     TestGetBlockTemplate().main()
