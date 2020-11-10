@@ -134,6 +134,24 @@ bool CCoinsViewCache::HaveCoin(const COutPoint &outpoint) const {
     return (it != cacheCoins.end() && !it->second.coin.IsSpent());
 }
 
+std::string CCoinsViewCache::HaveCoinString(const COutPoint &outpoint) const {
+    CCoinsMap::const_iterator it = FetchCoin(outpoint);
+    if (it != cacheCoins.end()) {
+        if (!it->second.coin.IsSpent())
+        {
+            return "not spent";
+        }
+        else
+        {
+            return "spent";
+        }
+    }
+    else {
+        return "missing";
+    }
+        
+}
+
 bool CCoinsViewCache::HaveCoinInCache(const COutPoint &outpoint) const {
     CCoinsMap::const_iterator it = cacheCoins.find(outpoint);
     return (it != cacheCoins.end() && !it->second.coin.IsSpent());

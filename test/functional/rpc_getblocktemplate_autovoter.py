@@ -60,8 +60,8 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
                 print(k,v['type'])
                 print(v['voting']['blockhash'],v['voting']['blockheight'],v['voting']['ticket'])
                 tickets_spent.append(v['voting']['ticket'])
-            # else:
-                # print(k,v['type'])
+            else:
+                print(k,v['type'])
 
             txids.append(k)
         return tickets_spent, txids
@@ -140,7 +140,9 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         self.nodes[0].stopautovoter()
         # self.nodes[1].stopautovoter()
 
-        for i in range(10):
+        for i in range(100):
+            print("mempool before get block template:")
+            self.get_raw_mempool(0)
             idx += 1 # expected to increase
             gbt_height, num_votes, gbt_txids = self.get_block_template(0)
             if gbt_height < idx:
@@ -171,6 +173,7 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
 
             winners_for_last_mined = block_winner0[last_mined]
 
+            tickets_spent0, all_txids0 = self.get_raw_mempool(0)
             tickets_spent1, all_txids1 = self.get_raw_mempool(1)
             
             tickets_owned_by_voting_node = self.nodes[1].gettickets(False)

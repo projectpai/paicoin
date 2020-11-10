@@ -2274,8 +2274,10 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
             {
                 CAmount txfee = 0;
                 auto txClass = ParseTxClass(tx);
-                LogPrint(BCLog::ALL, "    - CheckTxInputs: %s , %d , vin[0]: %s n: %d\n", tx.GetHash().GetHex().c_str(),
-                 txClass, tx.vin[0].prevout.hash.GetHex(), tx.vin[0].prevout.n);
+                LogPrint(BCLog::ALL, "    - CheckTxInputs: %s , %d , vin[0]: %s n: %d -> %s\n", tx.GetHash().GetHex().c_str(),
+                    txClass, tx.vin[0].prevout.hash.GetHex(), tx.vin[0].prevout.n, view.HaveCoinString(tx.vin[0].prevout).c_str());
+                
+                LogPrint(BCLog::ALL, "    - CheckTxInputs: coinscacheview best block: %s\n", view.GetBestBlock().GetHex().c_str());
                 if (!Consensus::CheckTxInputs(tx, state, view, pindex->nHeight, txfee, chainparams)) {
                     return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), FormatStateMessage(state));
                 }
