@@ -214,10 +214,10 @@ size_t GetEstimatedP2PKHTxOutSize();
 
 size_t GetEstimatedBuyTicketDeclTxOutSize();
 size_t GetEstimatedTicketContribTxOutSize();
-size_t GetEstimatedSizeOfBuyTicketTx(bool useVsp);
+size_t GetEstimatedSizeOfBuyTicketTx(bool useVsp, bool includeExpiry = true);
 
 size_t GetEstimatedRevokeTicketDeclTxOutSize();
-size_t GetEstimatedSizeOfRevokeTicketTx(const size_t refundsCount, bool compressedInput = true);
+size_t GetEstimatedSizeOfRevokeTicketTx(const size_t refundsCount, bool compressedInput = true, bool includeExpiry = true);
 
 // ==============================
 

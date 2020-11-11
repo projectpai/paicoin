@@ -560,12 +560,12 @@ size_t GetEstimatedTicketContribTxOutSize()
     return GetSerializeSize(txOut, SER_NETWORK, PROTOCOL_VERSION);
 }
 
-size_t GetEstimatedSizeOfBuyTicketTx(bool useVsp)
+size_t GetEstimatedSizeOfBuyTicketTx(bool useVsp, bool includeExpiry)
 {
     // since the format of the ticket purchase transaction is fixed,
     // its size can be estimated precisely.
     // A ticket purchase transaction has the structure described in ValidateBuyTicketStructure().
-    // version + in count (1|2) + (1|2) regular input + out count (4|5) + buy ticket decl output + ticket address output + pool fee contributor (optional)  + pool fee change output (optional) + contributor info output + change output + locktime
+    // version + in count (1|2) + (1|2) regular input + out count (4|5) + buy ticket decl output + ticket address output + pool fee contributor (optional)  + pool fee change output (optional) + contributor info output + change output + locktime + expiry (optional)
 
     return 4
             + 1
@@ -578,7 +578,8 @@ size_t GetEstimatedSizeOfBuyTicketTx(bool useVsp)
             + (useVsp ? GetEstimatedP2PKHTxOutSize() : 0)
             + GetEstimatedTicketContribTxOutSize()
             + GetEstimatedP2PKHTxOutSize()
-            + 4;
+            + 4
+            + (includeExpiry ? 4 : 0);
 }
 
 size_t GetEstimatedRevokeTicketDeclTxOutSize()
@@ -588,12 +589,12 @@ size_t GetEstimatedRevokeTicketDeclTxOutSize()
     return GetSerializeSize(txOut, SER_NETWORK, PROTOCOL_VERSION);
 }
 
-size_t GetEstimatedSizeOfRevokeTicketTx(const size_t refundsCount, bool compressedInput)
+size_t GetEstimatedSizeOfRevokeTicketTx(const size_t refundsCount, bool compressedInput, bool includeExpiry)
 {
     // since the format of the revocation transaction is fixed,
     // its size can be estimated precisely.
     // A revocation transaction has the structure described in ValidateRevokeTicketStructure().
-    // version + in count 1 + 1 regular input + out count (1+n) + revoke ticket decl output + n regular outputs + locktime
+    // version + in count 1 + 1 regular input + out count (1+n) + revoke ticket decl output + n regular outputs + locktime + expiry (optional)
 
     return 4
             + 1
@@ -601,7 +602,8 @@ size_t GetEstimatedSizeOfRevokeTicketTx(const size_t refundsCount, bool compress
             + 2
             + GetEstimatedRevokeTicketDeclTxOutSize()
             + refundsCount * GetEstimatedP2PKHTxOutSize()
-            + 4;
+            + 4
+            + (includeExpiry ? 4 : 0);
 }
 
 StakeSlice::StakeSlice(std::vector<CTransactionRef> vtx)

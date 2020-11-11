@@ -490,8 +490,10 @@ BOOST_AUTO_TEST_CASE(ticket_purchase_estimated_sizes)
 
     BOOST_CHECK_EQUAL(GetEstimatedTicketContribTxOutSize(), 64U);
 
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(true), 552U);
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(false), 306U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(true), 556U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(false), 310U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(true, false), 552U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(false, false), 306U);
 }
 
 // test the ticket ownership verification
