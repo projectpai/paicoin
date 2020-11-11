@@ -1262,7 +1262,7 @@ public:
        - numTickets: number of tickets to purchase
        - vspAddress: address to pay stake pool fees to
        - vspFeePercent: percent from the voter subsidy to pay to the stake pool
-       - expiry: height at which the purchase tickets expire
+       - expiry: height at which the purchased tickets expire
        - feeRate: transaction fee rate (PAI/kB) to use (overrides current fees if larger than them) (optional, default = -1)
        In case of success, the returned vector contains the transactions' hashes.
        In case of partial success, meaning only some tickets could not have been created, the returned values are the

@@ -1136,6 +1136,59 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
     }
 }
 
+// test the mempool removal of tickets with expired residence
+BOOST_FIXTURE_TEST_CASE(ticket_residence, WalletStakeTestingSetup)
+{
+    std::vector<std::string> txHashes;
+    CWalletError we;
+
+    auto ticketsInMempool = [](std::vector<std::string>& txHashes) -> bool {
+        auto& tx_class_index = mempool.mapTx.get<tx_class>();
+        auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+
+        bool found = (existingTickets.first != existingTickets.second);
+        for (auto tickettxiter = existingTickets.first; found && (tickettxiter != existingTickets.second); ++tickettxiter)
+            found = (std::find(txHashes.begin(), txHashes.end(), tickettxiter->GetSharedTx()->GetHash().GetHex()) != txHashes.end());
+
+        return found;
+    };
+
+    LOCK2(cs_main, wallet->cs_wallet);
+
+    CPubKey ticketPubKey;
+    BOOST_CHECK(wallet->GetKeyFromPool(ticketPubKey));
+    CTxDestination ticketKeyId = ticketPubKey.GetID();
+
+    // adjust the mempool residence for test purposes
+    nMempoolResidence = 10;
+
+    ExtendChain(consensus.nStakeEnabledHeight - chainActive.Height());
+
+    // purchase enough tickets with zero expiry to potentially surpass their residence expiration
+    const int numTickets = (consensus.nMaxFreshStakePerBlock + 5) * nMempoolResidence;
+    const int numTicketsPerSplitTx = nMempoolResidence;
+    for (int i = 0; i < numTickets/numTicketsPerSplitTx; ++i) {
+        std::vector<std::string> hashes;
+        std::tie(hashes, we) = wallet->PurchaseTicket("", 1000000, 1, ticketKeyId, CNoDestination(), static_cast<unsigned int>(numTicketsPerSplitTx), CNoDestination(), 0.0, 0);
+        txHashes.insert(txHashes.end(), hashes.begin(), hashes.end());
+    }
+
+    // these tickets should be in the mempool
+    BOOST_CHECK(ticketsInMempool(txHashes));
+
+    // Generate blocks until just before the mempool residence expiration for these tickets
+    ExtendChain(nMempoolResidence - 1);
+
+    // the tickets should still be in the mempool
+    BOOST_CHECK(ticketsInMempool(txHashes));
+
+    // Generate one more block, to reach mempool residence expiration
+    ExtendChain(1);
+
+    // the tickets should not be in the mempool anymore
+    BOOST_CHECK(!ticketsInMempool(txHashes));
+}
+
 // test the block template for low stake difficulty tickets filtration
 BOOST_FIXTURE_TEST_CASE(stake_difficulty_filtration, WalletStakeTestingSetup)
 {

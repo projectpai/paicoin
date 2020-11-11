@@ -320,6 +320,11 @@ Wallet options:
        Disabling this mechanism leaves the vote in mempool indefinitely. Please note that
        this can crowd the mempool if multiple such votes linger.
 
+  -mempoolresidence
+       Specifies the number of blocks to keep a transaction in the mempool when its
+       expiration value is set to zero. This interval is calculated from the height the
+       transaction entered the mempool. Only applies to tickets for now.
+
 ZeroMQ notification options:
 
   -zmqpubhashblock=<address>

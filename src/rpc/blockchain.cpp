@@ -443,6 +443,7 @@ static std::string EntryDescriptionString()
            "    \"ancestorsize\" : n,     (numeric) virtual transaction size of in-mempool ancestors (including this one)\n"
            "    \"ancestorfees\" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this one)\n"
            "    \"wtxid\" : hash,         (string) hash of serialized transaction, including witness data\n"
+           "    \"expiry\" : expiry,      (numeric) height at which the transaction is considered expired. Only applies to tickets.\n"
            "    \"depends\" : [           (array) unconfirmed transactions used as inputs for this transaction\n"
            "        \"transactionid\",    (string) parent transaction id\n"
            "       ... ]\n";
@@ -466,6 +467,7 @@ static void entryToJSON(UniValue &info, const CTxMemPoolEntry &e)
     info.push_back(Pair("ancestorfees", e.GetModFeesWithAncestors()));
     info.push_back(Pair("wtxid", mempool.vTxHashes[e.vTxHashesIdx].first.ToString()));
     const auto& tx = e.GetTx();
+    info.push_back(Pair("expiry", static_cast<int64_t>(tx.nExpiry)));
     std::set<std::string> setDepends;
     for (const auto& txin : tx.vin)
     {

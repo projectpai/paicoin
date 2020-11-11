@@ -1912,7 +1912,7 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
 
         CMutableTransaction mTicketTx;
 
-        mTicketTx.nExpiry = expiry;
+        mTicketTx.nExpiry = static_cast<uint32_t>(expiry);
 
         // inputs
 
