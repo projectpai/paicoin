@@ -1139,9 +1139,6 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 // test the block template for low stake difficulty tickets filtration
 BOOST_FIXTURE_TEST_CASE(stake_difficulty_filtration, WalletStakeTestingSetup)
 {
-    std::vector<std::string> txHashes;
-    CWalletError we;
-
     LOCK2(cs_main, wallet->cs_wallet);
 
     ExtendChain(consensus.nStakeEnabledHeight + 1 - chainActive.Height());
@@ -1182,6 +1179,70 @@ BOOST_FIXTURE_TEST_CASE(stake_difficulty_filtration, WalletStakeTestingSetup)
             return entry->GetHash() == mtxHash;
         }) == block.vtx.end());
     }
+}
+
+// test the block template for low stake difficulty tickets filtration
+BOOST_FIXTURE_TEST_CASE(expiry_malleability, WalletStakeTestingSetup)
+{
+    auto isInMempool = [](const CMutableTransaction& tx) -> bool {
+        auto& tx_class_index = mempool.mapTx.get<tx_class>();
+        auto mempoolTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+        for (auto tickettxiter = mempoolTickets.first; tickettxiter != mempoolTickets.second; ++tickettxiter)
+            if (tx.GetHash() == tickettxiter->GetSharedTx()->GetHash())
+                return true;
+        return false;
+    };
+
+    LOCK2(cs_main, wallet->cs_wallet);
+
+    ExtendChain(consensus.nStakeEnabledHeight + 1 - chainActive.Height());
+
+    // create tickets
+
+    CMutableTransaction mtx = CreateTicketTx(consensus.nMinimumStakeDiff);
+
+    BOOST_CHECK(mtx.nVersion >= 3);
+
+    mtx.nExpiry = static_cast<uint32_t>(chainActive.Tip()->nHeight) + 123;
+
+    // add the tickets to the mempool
+
+    BOOST_CHECK(AddToMempoolUnchecked(mtx));
+
+    BOOST_CHECK(isInMempool(mtx));
+
+    // generate the block
+
+    std::unique_ptr<CBlockTemplate> pblocktemplate1 = BlockAssembler(params).CreateNewBlock(coinbaseScriptPubKey);
+    const CBlock& block1 = pblocktemplate1->block;
+
+    // verify the ticket's presence
+
+    uint256 mtxHash = mtx.GetHash();
+    BOOST_CHECK(std::find_if(block1.vtx.begin(), block1.vtx.end(), [&mtxHash] (const CTransactionRef entry) {
+        return entry->GetHash() == mtxHash;
+    }) != block1.vtx.end());
+
+    // create a duplicate ticket with different expiry
+
+    ++mtx.nExpiry;
+    mtxHash = mtx.GetHash();
+
+    BOOST_CHECK(AddToMempoolUnchecked(mtx));
+
+    BOOST_CHECK(isInMempool(mtx));
+
+    // try generating a new block
+
+    bool exceptionThrown = false;
+    try {
+        std::unique_ptr<CBlockTemplate> pblocktemplate2 = BlockAssembler(params).CreateNewBlock(coinbaseScriptPubKey);
+    }  catch (std::runtime_error e) {
+        exceptionThrown = true;
+         BOOST_CHECK(strstr(e.what(), "inputs missing/spent") != NULL);
+    }
+
+    BOOST_CHECK(exceptionThrown);
 }
 
 // test the ticket buyer

@@ -563,7 +563,7 @@ CMutableTransaction WalletStakeTestingSetup::CreateTicketTx(const CAmount stakeD
 
 bool WalletStakeTestingSetup::AddToMempoolUnchecked(const CMutableTransaction& mtx) {
     LockPoints lp;
-    mempool.addUnchecked(mtx.GetHash(), CTxMemPoolEntry(MakeTransactionRef(mtx), 10000, 0, 1, false, false, 4, lp));
+    return mempool.addUnchecked(mtx.GetHash(), CTxMemPoolEntry(MakeTransactionRef(mtx), 0, 0, 1, false, false, 4, lp));
 }
 
 bool WalletStakeTestingSetup::MempoolHasTicket() {
