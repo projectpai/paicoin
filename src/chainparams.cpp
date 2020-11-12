@@ -272,8 +272,8 @@ public:
         vSeeds.emplace_back("sing-seed.projectpai.com", false); //Project PAI Foundation
         vSeeds.emplace_back("china-seed.projectpai.com", false); //Project PAI Foundation
         vSeeds.emplace_back("painode.lanier.ai", false); //Lanier AI Labs
-        vSeeds.emplace_back("painode.everchain.site", false); //J1149
-        vSeeds.emplace_back("relay.j1149.com", false); //Ever Chain
+        vSeeds.emplace_back("painode.everchain.site", false); //Ever Chain
+        vSeeds.emplace_back("relay.j1149.com", false); //J1149
         vSeeds.emplace_back("pai-seed-ohio-1.paico.in", false); //MJH Technologies
         vSeeds.emplace_back("pai-seed-china-1.paico.in", false); //MJH Technologies
         vSeeds.emplace_back("paiseed.upandrunningsoftware.com", false); //Up and Running Software
