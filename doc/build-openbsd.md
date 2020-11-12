@@ -20,6 +20,7 @@ pkg_add python # (select highest version, e.g. 3.5)
 
 See [dependencies.md](dependencies.md) for a complete overview.
 
+
 GCC
 -------
 
@@ -68,29 +69,23 @@ config_opts="runtime-link=shared threadapi=pthread threading=multi link=static v
 
 ### Building BerkeleyDB
 
-BerkeleyDB is only necessary for the wallet functionality. To skip this, pass `--disable-wallet` to `./configure`.
+BerkeleyDB is only necessary for the wallet functionality. To skip this, pass
+`--disable-wallet` to `./configure` and skip to the next section.
 
-See "Berkeley DB" in [build_unix.md](build_unix.md) for instructions on how to build BerkeleyDB 4.8.
-You cannot use the BerkeleyDB library from ports, for the same reason as boost above (g++/libstd++ incompatibility).
+It is recommended to use Berkeley DB 4.8. You cannot use the BerkeleyDB library
+from ports, for the same reason as boost above (g++/libstd++ incompatibility).
+If you have to build it yourself, you can use [the installation script included
+in contrib/](/contrib/install_db4.sh) like so:
 
 ```bash
-# Pick some path to install BDB to, here we create a directory within the paicoin directory
-PAICOIN_ROOT=$(pwd)
-BDB_PREFIX="${PAICOIN_ROOT}/db4"
-mkdir -p $BDB_PREFIX
-
-# Fetch the source and verify that it is not tampered with
-curl -o db-4.8.30.NC.tar.gz 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz'
-echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256 -c
-# MUST output: (SHA256) db-4.8.30.NC.tar.gz: OK
-tar -xzf db-4.8.30.NC.tar.gz
-
-# Build the library and install to specified prefix
-cd db-4.8.30.NC/build_unix/
-#  Note: Do a static build so that it can be embedded into the executable, instead of having to find a .so at runtime
-../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX CC=egcc CXX=eg++ CPP=ecpp
-make install # do NOT use -jX, this is broken
+./contrib/install_db4.sh `pwd` CC=cc CXX=c++
 ```
+
+from the root of the repository. Then set `BDB_PREFIX` for the next section:
+
+```bash
+export BDB_PREFIX="$PWD/db4"
+``````
 
 ### Resource limits
 

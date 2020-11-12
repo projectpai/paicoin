@@ -26,6 +26,20 @@ If you want to build the disk image with `make deploy` (.dmg / optional), you ne
 
 NOTE: Building with Qt4 is still supported, however, could result in a broken UI. Building with Qt5 is recommended.
 
+## Berkeley DB
+It is recommended to use Berkeley DB 4.8. If you have to build it yourself,
+you can use [this script](/contrib/install_db4.sh) to install it
+like so:
+
+```shell
+./contrib/install_db4.sh .
+```
+
+from the root of the repository.
+
+**Note**: You only need Berkeley DB if the wallet is enabled (see [*Disable-wallet mode*](/doc/build-osx.md#disable-wallet-mode)).
+
+
 Build PAI Coin Core
 ------------------------
 
@@ -54,6 +68,17 @@ Build PAI Coin Core
 4.  You can also create a .dmg that contains the .app bundle (optional):
 
         make deploy
+
+## `disable-wallet` mode
+When the intention is to run only a P2P node without a wallet, Bitcoin Core may be
+compiled in `disable-wallet` mode with:
+```shell
+./configure --disable-wallet
+```
+
+In this case there is no dependency on Berkeley DB 4.8 and SQLite.
+
+Mining is also possible in disable-wallet mode using the `getblocktemplate` RPC call.
 
 Running
 -------
