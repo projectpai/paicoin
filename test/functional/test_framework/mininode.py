@@ -468,6 +468,7 @@ class CTransaction(object):
             self.vout = []
             self.wit = CTxWitness()
             self.nLockTime = 0
+            self.nExpiry = 0
             self.sha256 = None
             self.hash = None
         else:
@@ -475,6 +476,7 @@ class CTransaction(object):
             self.vin = copy.deepcopy(tx.vin)
             self.vout = copy.deepcopy(tx.vout)
             self.nLockTime = tx.nLockTime
+            self.nExpiry = tx.nExpiry
             self.sha256 = tx.sha256
             self.hash = tx.hash
             self.wit = copy.deepcopy(tx.wit)
@@ -496,6 +498,8 @@ class CTransaction(object):
             self.wit.vtxinwit = [CTxInWitness() for i in range(len(self.vin))]
             self.wit.deserialize(f)
         self.nLockTime = struct.unpack("<I", f.read(4))[0]
+        if self.nVersion >= 3:
+            self.nExpiry = struct.unpack("<I", f.read(4))[0]
         self.sha256 = None
         self.hash = None
 
@@ -505,6 +509,8 @@ class CTransaction(object):
         r += ser_vector(self.vin)
         r += ser_vector(self.vout)
         r += struct.pack("<I", self.nLockTime)
+        if self.nVersion >= 3:
+            r += struct.pack("<I", self.nExpiry)
         return r
 
     # Only serialize with witness when explicitly called for
@@ -528,6 +534,8 @@ class CTransaction(object):
                     self.wit.vtxinwit.append(CTxInWitness())
             r += self.wit.serialize()
         r += struct.pack("<I", self.nLockTime)
+        if self.nVersion >= 3:
+            r += struct.pack("<I", self.nExpiry)
         return r
 
     # Regular serialization is without witness -- must explicitly
@@ -559,8 +567,8 @@ class CTransaction(object):
         return True
 
     def __repr__(self):
-        return "CTransaction(nVersion=%i vin=%s vout=%s wit=%s nLockTime=%i)" \
-            % (self.nVersion, repr(self.vin), repr(self.vout), repr(self.wit), self.nLockTime)
+        return "CTransaction(nVersion=%i vin=%s vout=%s wit=%s nLockTime=%i nExpiry=%i)" \
+            % (self.nVersion, repr(self.vin), repr(self.vout), repr(self.wit), self.nLockTime, self.nExpiry)
 
 
 class CBlockHeader(object):

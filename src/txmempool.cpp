@@ -390,7 +390,9 @@ bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry,
 
     const CTransaction& tx = newit->GetTx();
     std::set<uint256> setParentTransactions;
-    for (unsigned int i = 0; i < tx.vin.size(); i++) {
+    const auto& txClass =  ParseTxClass(tx);
+    const auto& startIndex = (txClass == TX_Vote) ? voteStakeInputIndex : 0; // first input in a vote is subsidy generation; skip it
+    for (unsigned int i = startIndex; i < tx.vin.size(); i++) {
         mapNextTx.insert(std::make_pair(&tx.vin[i].prevout, &tx));
         setParentTransactions.insert(tx.vin[i].prevout.hash);
     }
@@ -521,7 +523,10 @@ void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMem
             // So it's critical that we remove the tx and not depend on the LockPoints.
             txToRemove.insert(it);
         } else if (it->GetSpendsCoinbase() || it->GetSpendsStake()) {
-            for (const CTxIn& txin : tx.vin) {
+            const auto& txClass = ParseTxClass(tx);
+            const auto& startIndex = (txClass == TX_Vote) ? voteStakeInputIndex : 0; // first input in a vote is subsidy generation; skip it
+            for (unsigned int i = startIndex; i < tx.vin.size(); i++) {
+                const auto txin = tx.vin[i];
                 indexed_transaction_set::const_iterator it2 = mapTx.find(txin.prevout.hash);
                 if (it2 != mapTx.end())
                     continue;

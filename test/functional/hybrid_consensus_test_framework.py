@@ -17,7 +17,7 @@ class TestHybridConsensusTestFramework(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2 # we need at least 2 nodes to have non zero connections for getblocktemplate to work
-        self.extra_args = [['-autostake','-tblimit=1','-blockenoughvoteswaittime=0','-blockallvoteswaittime=0'],[]] 
+        self.extra_args = [['-autostake','-tblimit=1','-blockallvoteswaittime=0'],[]] 
 
     def run_test(self):
         # these are the same values as in chainparams.cpp for REGTEST, update them if they change

@@ -508,7 +508,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     // don't).
     const auto fSupportsSegwit = setClientRules.find(segwit_info.name) != setClientRules.end();
 
-    const auto nBlockVotesWaitTime = gArgs.GetArg("-blockvoteswaittime", DEFAULT_BLOCK_VOTES_WAIT_TIME);
+    const auto nBlockAllVotesWaitTime = gArgs.GetArg("-blockallvoteswaittime", DEFAULT_BLOCK_ALL_VOTES_WAIT_TIME);
 
     // Update block
     static CBlockIndex* pindexPrev;
@@ -518,6 +518,9 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     // a segwit-block to a non-segwit caller.
     static bool fLastTemplateSupportsSegwit = true;
     const auto nTimeElapsed = GetTime() - nStart;
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    auto bTooFewVotes = false;
+
     if (pindexPrev != chainActive.Tip() ||
         (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && nTimeElapsed > 5) ||
         fLastTemplateSupportsSegwit != fSupportsSegwit)
@@ -527,32 +530,92 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         // Store the pindexBest used before CreateNewBlock, to avoid races
         nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
-        auto* const pindexPrevNew = chainActive.Tip();
-        nStart = GetTime();
+        CBlockIndex* pindexPrevNew = nullptr;
         fLastTemplateSupportsSegwit = fSupportsSegwit;
 
-        // Create new block
-        CScript scriptDummy = CScript() << OP_TRUE;
-        pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
+        const int& tipHeight = chainActive.Tip()->nHeight;
+        auto maxVotes = 0;
+        if (tipHeight >= Params().GetConsensus().nStakeValidationHeight - 1) {
+            CBlockIndex* selectedIndex = nullptr;
+            const auto& setTips = GetChainTips();
+            for (auto pBlockIndex : setTips) {
+                if (pBlockIndex->nHeight < tipHeight)
+                    continue;
+
+                const uint256& blockHash = pBlockIndex->GetBlockHash();
+                if (blockHash == uint256())
+                    continue;
+
+                auto& voted_hash_index = mempool.mapTx.get<voted_block_hash>();
+                auto votesForBlockHash = voted_hash_index.equal_range(pBlockIndex->GetBlockHash());
+
+
+                assert (pBlockIndex->pstakeNode != nullptr);
+                auto winningHashes = pBlockIndex->pstakeNode->Winners();
+
+                int nNewVotes = 0;
+                for (auto votetxiter = votesForBlockHash.first; votetxiter != votesForBlockHash.second; ++votetxiter) {
+                    const auto& spentTicketHash = votetxiter->GetTx().vin[voteStakeInputIndex].prevout.hash;
+                    if (std::find(winningHashes.begin(), winningHashes.end(), spentTicketHash) == winningHashes.end())
+                        continue; //not a winner
+
+                    ++nNewVotes;
+                }
+
+                if (nNewVotes > maxVotes) {
+                    selectedIndex = pBlockIndex;
+                    maxVotes = nNewVotes;
+                }
+            }
+            const auto& majority = (consensusParams.nTicketsPerBlock / 2) + 1;
+            if (maxVotes >= majority) {
+                // Create new block based on selected tip
+                pindexPrevNew = selectedIndex;
+            } else {
+                // too-few-votes: none of the tips have enough to be mined, we will remine on top of previous
+                bTooFewVotes = true;
+            }
+        } else {
+            pindexPrevNew = chainActive.Tip();
+        }
+
+        if (bTooFewVotes) {
+            // nothing to do, we'll use the cached template, but update its time, otherwise we'll mine the exact same block
+            // which leads to 'duplicate' status in submitblock
+            if (!pblocktemplate)
+                throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Unable to return previous block template");
+            pindexPrevNew = chainActive.Tip()->pprev;
+            pblocktemplate->block.nTime++;
+            LogPrintf("returning cached template with adjusted time %d!\n", pblocktemplate->block.nTime);
+        } else {
+            // Create new block
+            assert(pindexPrevNew != nullptr && (pindexPrevNew->nHeight == tipHeight));
+            nStart = GetTime(); // reinitialize Start
+            CScript scriptDummy = CScript() << OP_TRUE;
+            pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit, pindexPrevNew);
+        }
+
         if (!pblocktemplate)
             throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Out of memory");
 
-        if ( pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight
+        // we have enough votes, but some vote transactions may still be in transit,
+        // return error while waiting for more votes in the specified time
+        if ( !bTooFewVotes
+           && pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight
            && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock
-           && nTimeElapsed > nBlockVotesWaitTime)
-        {
-            //not enough votes yet, wait no more than nBlockVotesWaitTime seconds
-            throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Not reached maximum votes");
+           && nTimeElapsed < nBlockAllVotesWaitTime) {
+            throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Some vote transactions are not yet available, waiting <blockallvoteswaittime>");
         }
 
         // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
     }
+
     auto pblock = &pblocktemplate->block; // pointer for convenience
-    const Consensus::Params& consensusParams = Params().GetConsensus();
 
     // Update nTime
     UpdateTime(pblock, consensusParams, pindexPrev);
+    LogPrintf("UpdateTime %d!\n", pblock->nTime);
     pblock->nNonce = 0;
 
     // NOTE: If at some point we support pre-segwit miners post-segwit-activation, this needs to take segwit support into consideration
@@ -769,6 +832,7 @@ UniValue submitblock(const JSONRPCRequest& request)
     {
         LOCK(cs_main);
         auto mi = mapBlockIndex.find(hash);
+        LogPrintf("submitted block hash %s\n", hash.GetHex());
         if (mi != mapBlockIndex.end()) {
             const auto* const pindex = mi->second;
             if (pindex->IsValid(BLOCK_VALID_SCRIPTS)) {
@@ -1076,14 +1140,33 @@ UniValue winningtickets(const JSONRPCRequest& request)
     }
 
     LOCK(cs_main);
-    CBlockIndex* pblockindex = chainActive[nHeight];
-    const auto& winningTickets = pblockindex->pstakeNode->Winners();
-    auto result = UniValue{UniValue::VOBJ};
-    auto array = UniValue{UniValue::VARR};
-    for (const auto& tx : winningTickets){
-        array.push_back(tx.GetHex());
+
+    const auto& setTips = GetChainTips();
+    auto result = UniValue{UniValue::VARR};
+    for (const auto& block : setTips) {
+        if (block->pstakeNode == nullptr)
+            continue;
+
+        const int& blockHeight = block->nHeight;
+
+        if (blockHeight < nHeight)
+            continue;
+
+        const uint256& blockHash = block->GetBlockHash();
+        if (blockHash == uint256())
+            continue;
+
+        auto tip = UniValue{UniValue::VOBJ};
+        tip.push_back(Pair("blockhash", blockHash.GetHex()));
+
+        auto array = UniValue{UniValue::VARR};
+        for (const uint256& ticketHash : block->pstakeNode->Winners()) {
+            array.push_back(ticketHash.GetHex());
+        }
+        tip.push_back(Pair("tickets",array));
+        result.push_back(tip);
     }
-    result.push_back(Pair("tickets",array));
+
     return result;
 }
 
