@@ -600,8 +600,9 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         // we have enough votes, but some vote transactions may still be in transit,
         // return error while waiting for more votes in the specified time
-        if (  pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight 
-           && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock 
+        if ( !bTooFewVotes
+           && pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight
+           && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock
            && nTimeElapsed < nBlockAllVotesWaitTime) {
             throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Some vote transactions are not yet available, waiting <blockallvoteswaittime>");
         }
