@@ -169,7 +169,7 @@ void CTicketBuyer::mainLoop()
         // Determine how many tickets to buy
         spendable = pwallet->GetAvailableBalance();
         if (spendable < config.maintain) {
-            LogPrintf("CTicketBuyer: Skipping purchase: low available balance\n");
+            LogPrintf("CTicketBuyer: Skipping purchase: low available balance (less than amount to maintain)\n");
             if (shouldRelock) pwallet->Lock();
             continue;
         }
