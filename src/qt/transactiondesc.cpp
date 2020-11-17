@@ -127,6 +127,8 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
         strHTML += GUIUtil::HtmlEscape(strAddress) + "<br>";
     }
 
+    ETxClass txClass = ParseTxClass(*wtx.tx);
+
     //
     // Amount
     //
@@ -136,8 +138,8 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
         // Coinbase
         //
         CAmount nUnmatured = 0;
-        for (const CTxOut& txout : wtx.tx->vout)
-            nUnmatured += wallet->GetCredit(txout, ISMINE_ALL);
+        for (uint32_t i = 0; i < wtx.tx->vout.size(); ++i)
+            nUnmatured += wallet->GetCredit(txClass, i, wtx.tx->vout[i], ISMINE_ALL);
         strHTML += "<b>" + tr("Credit") + ":</b> ";
         if (wtx.IsInMainChain())
             strHTML += PAIcoinUnits::formatHtmlWithUnit(unit, nUnmatured)+ " (" + tr("matures in %n more block(s)", "", wtx.GetBlocksToMaturity()) + ")";
@@ -227,9 +229,11 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
             for (const CTxIn& txin : wtx.tx->vin)
                 if (wallet->IsMine(txin))
                     strHTML += "<b>" + tr("Debit") + ":</b> " + PAIcoinUnits::formatHtmlWithUnit(unit, -wallet->GetDebit(txin, ISMINE_ALL)) + "<br>";
-            for (const CTxOut& txout : wtx.tx->vout)
+            for (uint32_t i = 0; i < wtx.tx->vout.size(); ++i) {
+                const CTxOut& txout = wtx.tx->vout[i];
                 if (wallet->IsMine(txout))
-                    strHTML += "<b>" + tr("Credit") + ":</b> " + PAIcoinUnits::formatHtmlWithUnit(unit, wallet->GetCredit(txout, ISMINE_ALL)) + "<br>";
+                    strHTML += "<b>" + tr("Credit") + ":</b> " + PAIcoinUnits::formatHtmlWithUnit(unit, wallet->GetCredit(txClass, i, txout, ISMINE_ALL)) + "<br>";
+            }
         }
     }
 
@@ -282,9 +286,11 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
         for (const CTxIn& txin : wtx.tx->vin)
             if(wallet->IsMine(txin))
                 strHTML += "<b>" + tr("Debit") + ":</b> " + PAIcoinUnits::formatHtmlWithUnit(unit, -wallet->GetDebit(txin, ISMINE_ALL)) + "<br>";
-        for (const CTxOut& txout : wtx.tx->vout)
-            if(wallet->IsMine(txout))
-                strHTML += "<b>" + tr("Credit") + ":</b> " + PAIcoinUnits::formatHtmlWithUnit(unit, wallet->GetCredit(txout, ISMINE_ALL)) + "<br>";
+        for (uint32_t i = 0; i < wtx.tx->vout.size(); ++i) {
+            const CTxOut& txout = wtx.tx->vout[i];
+            if (wallet->IsMine(txout))
+                strHTML += "<b>" + tr("Credit") + ":</b> " + PAIcoinUnits::formatHtmlWithUnit(unit, wallet->GetCredit(txClass, i, txout, ISMINE_ALL)) + "<br>";
+        }
 
         strHTML += "<br><b>" + tr("Transaction") + ":</b><br>";
         strHTML += GUIUtil::HtmlEscape(wtx.tx->ToString(), true);

@@ -2823,6 +2823,7 @@ UniValue getwalletinfo(const JSONRPCRequest& request)
             "  \"walletname\": xxxxx,             (string) the wallet name\n"
             "  \"walletversion\": xxxxx,          (numeric) the wallet version\n"
             "  \"balance\": xxxxxxx,              (numeric) the total confirmed balance of the wallet in " + CURRENCY_UNIT + "\n"
+            "  \"staked_balance\": xxxxxxx,       (numeric) the total staked balance of the wallet in " + CURRENCY_UNIT + "\n"
             "  \"unconfirmed_balance\": xxx,      (numeric) the total unconfirmed balance of the wallet in " + CURRENCY_UNIT + "\n"
             "  \"immature_balance\": xxxxxx,      (numeric) the total immature balance of the wallet in " + CURRENCY_UNIT + "\n"
             "  \"txcount\": xxxxxxx,              (numeric) the total number of transactions in the wallet\n"
@@ -2846,20 +2847,21 @@ UniValue getwalletinfo(const JSONRPCRequest& request)
     const auto kpExternalSize = pwallet->KeypoolCountExternalKeys();
     obj.push_back(Pair("walletname", pwallet->GetName()));
     obj.push_back(Pair("walletversion", pwallet->GetVersion()));
-    obj.push_back(Pair("balance",       ValueFromAmount(pwallet->GetBalance())));
+    obj.push_back(Pair("balance", ValueFromAmount(pwallet->GetBalance())));
+    obj.push_back(Pair("staked_balance", ValueFromAmount(pwallet->GetStakedBalance())));
     obj.push_back(Pair("unconfirmed_balance", ValueFromAmount(pwallet->GetUnconfirmedBalance())));
-    obj.push_back(Pair("immature_balance",    ValueFromAmount(pwallet->GetImmatureBalance())));
-    obj.push_back(Pair("txcount",       (int)pwallet->mapWallet.size()));
+    obj.push_back(Pair("immature_balance", ValueFromAmount(pwallet->GetImmatureBalance())));
+    obj.push_back(Pair("txcount", (int)pwallet->mapWallet.size()));
     obj.push_back(Pair("keypoololdest", pwallet->GetOldestKeyPoolTime()));
     obj.push_back(Pair("keypoolsize", static_cast<int64_t>(kpExternalSize)));
     const CKeyID masterKeyID{pwallet->GetHDChain().masterKeyID};
     if (!masterKeyID.IsNull() && pwallet->CanSupportFeature(FEATURE_HD_SPLIT)) {
-        obj.push_back(Pair("keypoolsize_hd_internal",   static_cast<int64_t>((pwallet->GetKeyPoolSize() - kpExternalSize))));
+        obj.push_back(Pair("keypoolsize_hd_internal", static_cast<int64_t>((pwallet->GetKeyPoolSize() - kpExternalSize))));
     }
     if (pwallet->IsCrypted()) {
         obj.push_back(Pair("unlocked_until", pwallet->nRelockTime));
     }
-    obj.push_back(Pair("paytxfee",      ValueFromAmount(payTxFee.GetFeePerK())));
+    obj.push_back(Pair("paytxfee", ValueFromAmount(payTxFee.GetFeePerK())));
     if (!masterKeyID.IsNull())
          obj.push_back(Pair("hdmasterkeyid", masterKeyID.GetHex()));
     return obj;

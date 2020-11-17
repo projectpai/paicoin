@@ -200,6 +200,7 @@ bool ParseTicketContribs(const CTransaction& tx, std::vector<TicketContribData>&
 bool ParseVote(const CTransaction& tx, VoteData& data);
 bool IsStakeTx(ETxClass txClass);
 bool IsStakeTx(const CTransaction& tx);
+bool IsStakeTxOutSpendableByRegularTx(ETxClass txClass, const uint32_t txoutIndex);
 bool IsStakeTxOutSpendableByRegularTx(const CTransaction& tx, const uint32_t txoutIndex);
 bool HasStakebaseContents(const CTxIn& txIn);
 
