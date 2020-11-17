@@ -171,11 +171,18 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         assert(pindexPrev->pstakeNode != nullptr);
         auto winningHashes = pindexPrev->pstakeNode->Winners();
 
-        int nNewVotes = 0;
+        int nNewVotes = 0, nVotesYes = 0;
         for (auto votetxiter = votesForBlockHash.first; votetxiter != votesForBlockHash.second; ++votetxiter) {
             const auto& spentTicketHash = votetxiter->GetTx().vin[voteStakeInputIndex].prevout.hash;
             if (std::find(winningHashes.begin(), winningHashes.end(), spentTicketHash) == winningHashes.end())
                 continue; //not a winner
+
+            VoteData voteData;
+            if (ParseVote(votetxiter->GetTx(), voteData)) {
+                if (voteData.voteBits.isRttAccepted())
+                    ++nVotesYes;
+            } else
+                LogPrintf("Warning! Vote data parsing failed for tx %s when assembling block at height %d", votetxiter->GetSharedTx()->GetHash().GetHex().c_str(), nHeight);
 
             // tx must be included in the block
             auto txiter = mempool.mapTx.project<0>(votetxiter);
@@ -183,6 +190,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             ++nNewVotes;
         }
         pblock->nVoters = nNewVotes;
+
+        if (nVotesYes <= nNewVotes / 2)
+            pblock->nVoteBits.setRttAccepted(false);
     }
 
     // Get the newly purchased tickets
