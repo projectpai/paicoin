@@ -41,6 +41,10 @@ struct BuyTicketData {
     int nVersion;
 };
 
+const int defaultTicketTxExpiry = 144;
+const int ticketTxExpiryMin = 10;
+const int ticketTxExpiryMax = 144;
+
 struct TicketContribData {
 
     static const CAmount DefaultFeeLimit;
@@ -196,6 +200,7 @@ bool ParseTicketContribs(const CTransaction& tx, std::vector<TicketContribData>&
 bool ParseVote(const CTransaction& tx, VoteData& data);
 bool IsStakeTx(ETxClass txClass);
 bool IsStakeTx(const CTransaction& tx);
+bool IsStakeTxOutSpendableByRegularTx(ETxClass txClass, const uint32_t txoutIndex);
 bool IsStakeTxOutSpendableByRegularTx(const CTransaction& tx, const uint32_t txoutIndex);
 bool HasStakebaseContents(const CTxIn& txIn);
 
@@ -210,10 +215,10 @@ size_t GetEstimatedP2PKHTxOutSize();
 
 size_t GetEstimatedBuyTicketDeclTxOutSize();
 size_t GetEstimatedTicketContribTxOutSize();
-size_t GetEstimatedSizeOfBuyTicketTx(bool useVsp);
+size_t GetEstimatedSizeOfBuyTicketTx(bool useVsp, bool includeExpiry = true);
 
 size_t GetEstimatedRevokeTicketDeclTxOutSize();
-size_t GetEstimatedSizeOfRevokeTicketTx(const size_t refundsCount, bool compressedInput = true);
+size_t GetEstimatedSizeOfRevokeTicketTx(const size_t refundsCount, bool compressedInput = true, bool includeExpiry = true);
 
 // ==============================
 

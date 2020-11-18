@@ -332,15 +332,14 @@ public:
 
     CAmount GetContributedAmount(const CTxMemPoolEntry& a) const
     {
-        auto contribAmount = CAmount(0);
-        TicketContribData contribData;
-        if (!ParseTicketContrib(a.GetTx(), ticketContribOutputIndex, contribData))
-        {
-            assert(!"not a vote transaction");
-        }
-        contribAmount = contribData.contributedAmount;
+        std::vector<TicketContribData> contributions;
+        CAmount totalContribution{0}, totalVoteFeeLimit{0}, totalRevocationFeeLimit{0};
 
-        return contribAmount;
+        if (!ParseTicketContribs(a.GetTx(), contributions, totalContribution, totalVoteFeeLimit, totalRevocationFeeLimit)) {
+            assert(!"not a ticket transaction");
+        }
+
+        return totalContribution;
     }
 };
 
@@ -388,6 +387,9 @@ struct TxMempoolInfo
 
     /** Time the transaction entered the mempool. */
     int64_t nTime;
+
+    /** Height the transaction entered the mempool. */
+    int64_t nHeight;
 
     /** Feerate of the transaction. */
     CFeeRate feeRate;
@@ -625,7 +627,8 @@ public:
     void removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMemPoolHeight, int flags);
     void removeConflicts(const CTransaction &tx);
     void removeForBlock(const std::vector<CTransactionRef>& vtx, unsigned int nBlockHeight);
-    void removeExpiredVotes(const uint32_t currentHeight, const Consensus::Params& params);
+    void removeExpiredTickets(const int currentHeight, const Consensus::Params& params);
+    void removeExpiredVotes(const int currentHeight, const Consensus::Params& params);
 
     void clear();
     void _clear(); //lock free
@@ -639,6 +642,13 @@ public:
      * the tx is not dependent on other mempool transactions to be included in a block.
      */
     bool HasNoInputsOf(const CTransaction& tx) const;
+
+    /**
+     * Check if transaction has stayed too long in the mempool, with respect to given block height.
+     * Should only be applied to tickets, for now.
+     */
+    bool DidResidenceExpire(uint32_t txExpiry, int txHeight, int blockHeight) const;
+    bool DidResidenceExpire(const CTxMemPoolEntry &tx, int blockHeight) const;
 
     /** Affect CreateNewBlock prioritisation of transactions */
     void PrioritiseTransaction(const uint256& hash, const CAmount& nFeeDelta);

@@ -443,6 +443,7 @@ static std::string EntryDescriptionString()
            "    \"ancestorsize\" : n,     (numeric) virtual transaction size of in-mempool ancestors (including this one)\n"
            "    \"ancestorfees\" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this one)\n"
            "    \"wtxid\" : hash,         (string) hash of serialized transaction, including witness data\n"
+           "    \"expiry\" : expiry,      (numeric) height at which the transaction is considered expired. Only applies to tickets.\n"
            "    \"depends\" : [           (array) unconfirmed transactions used as inputs for this transaction\n"
            "        \"transactionid\",    (string) parent transaction id\n"
            "       ... ]\n";
@@ -466,6 +467,7 @@ static void entryToJSON(UniValue &info, const CTxMemPoolEntry &e)
     info.push_back(Pair("ancestorfees", e.GetModFeesWithAncestors()));
     info.push_back(Pair("wtxid", mempool.vTxHashes[e.vTxHashesIdx].first.ToString()));
     const auto& tx = e.GetTx();
+    info.push_back(Pair("expiry", static_cast<int64_t>(tx.nExpiry)));
     std::set<std::string> setDepends;
     for (const auto& txin : tx.vin)
     {
@@ -1314,21 +1316,6 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
     return obj;
 }
 
-/** Comparison function for sorting the getchaintips heads.  */
-struct CompareBlocksByHeight
-{
-    bool operator()(const CBlockIndex* a, const CBlockIndex* b) const
-    {
-        /* Make sure that unequal blocks with the same height do not compare
-           equal. Use the pointers themselves to make a distinction. */
-
-        if (a->nHeight != b->nHeight)
-          return (a->nHeight > b->nHeight);
-
-        return a < b;
-    }
-};
-
 UniValue getchaintips(const JSONRPCRequest& request)
 {
     if (request.fHelp || !request.params.empty())
@@ -1364,34 +1351,7 @@ UniValue getchaintips(const JSONRPCRequest& request)
 
     LOCK(cs_main);
 
-    /*
-     * Idea:  the set of chain tips is chainActive.tip, plus orphan blocks which do not have another orphan building off of them.
-     * Algorithm:
-     *  - Make one pass through mapBlockIndex, picking out the orphan blocks, and also storing a set of the orphan block's pprev pointers.
-     *  - Iterate through the orphan blocks. If the block isn't pointed to by another orphan, it is a chain tip.
-     *  - add chainActive.Tip()
-     */
-    std::set<const CBlockIndex*, CompareBlocksByHeight> setTips;
-    std::set<const CBlockIndex*> setOrphans;
-    std::set<const CBlockIndex*> setPrevs;
-
-    for (const auto& item : mapBlockIndex)
-    {
-        if (!chainActive.Contains(item.second)) {
-            setOrphans.insert(item.second);
-            setPrevs.insert(item.second->pprev);
-        }
-    }
-
-    for (auto it = setOrphans.begin(); it != setOrphans.end(); ++it)
-    {
-        if (setPrevs.erase(*it) == 0) {
-            setTips.insert(*it);
-        }
-    }
-
-    // Always report the currently active tip.
-    setTips.insert(chainActive.Tip());
+    auto setTips = GetChainTips();
 
     /* Construct the output array.  */
     UniValue res{UniValue::VARR};

@@ -30,7 +30,7 @@ WalletStakeTestingSetup::WalletStakeTestingSetup()
 
     ::bitdb.MakeMock();
 
-    wallet.reset(new CWallet(std::unique_ptr<CWalletDBWrapper>(new CWalletDBWrapper(&bitdb, "wallet_stake_test.dat"))));
+    wallet.reset(new CWallet(std::unique_ptr<CWalletDBWrapper>(new CWalletDBWrapper(&bitdb, "wallet_stake_test.dat")), false, false));
 
     bool firstRun;
     wallet->LoadWallet(firstRun);
@@ -79,7 +79,7 @@ uint256 WalletStakeTestingSetup::SendMoney(const std::vector<std::pair<CTxDestin
     return wtx.GetHash();
 }
 
-uint256 WalletStakeTestingSetup::AddTicketTx(bool useVsp, bool foreign)
+uint256 WalletStakeTestingSetup::AddTicketTx(bool useVsp, bool foreign, const CAmount stakeDifficulty)
 {
     const CBlockIndex* chainTip = chainActive.Tip();
     BOOST_CHECK(chainTip != nullptr);
@@ -109,7 +109,7 @@ uint256 WalletStakeTestingSetup::AddTicketTx(bool useVsp, bool foreign)
         BOOST_CHECK_NE(vspKeyId.which(), 0);
     }
 
-    const CAmount ticketPrice = CalculateNextRequiredStakeDifficulty(chainTip, consensus);
+    const CAmount ticketPrice = MoneyRange(stakeDifficulty) ? stakeDifficulty : CalculateNextRequiredStakeDifficulty(chainTip, consensus);
     CFeeRate feeRate{10000};
     const CAmount ticketFee = feeRate.GetFee(GetEstimatedSizeOfBuyTicketTx(false));
     const CAmount contributedAmount = ticketPrice + ticketFee;
@@ -498,6 +498,72 @@ uint256 WalletStakeTestingSetup::AddRevokeTx(const uint256& ticketHash, bool for
     }
 
     return emptyData.hash;
+}
+
+CMutableTransaction WalletStakeTestingSetup::CreateTicketTx(const CAmount stakeDifficulty) {
+    // ticket settings
+
+    CKey ticketKey;
+    CPubKey ticketPubKey;
+    CTxDestination ticketKeyId = CNoDestination();
+    wallet->GetKeyFromPool(ticketPubKey);
+    ticketKeyId = ticketPubKey.GetID();
+    BOOST_CHECK_NE(ticketKeyId.which(), 0);
+
+    CFeeRate feeRate{10000};
+    const CAmount ticketFee = feeRate.GetFee(GetEstimatedSizeOfBuyTicketTx(false));
+    const CAmount contributedAmount = stakeDifficulty + ticketFee;
+
+    // split transaction
+
+    uint256 splitTxHash;
+    CWalletError we;
+    std::tie(splitTxHash, we) = wallet->CreateTicketPurchaseSplitTx("", stakeDifficulty, ticketFee, 0);
+    BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
+    BOOST_CHECK(splitTxHash != emptyData.hash);
+
+    const CWalletTx* splitWTx = wallet->GetWalletTx(splitTxHash);
+    BOOST_CHECK(splitWTx != nullptr);
+    BOOST_CHECK(splitWTx->tx != nullptr);
+
+    CTransactionRef splitTx = splitWTx->tx;
+    BOOST_CHECK_GE(splitTx->vout.size(), 1U);
+    BOOST_CHECK_GE(splitTx->vout[0].nValue, contributedAmount);
+
+    // ticket
+
+    CMutableTransaction mtx;
+
+    // input
+
+    mtx.vin.push_back(CTxIn(splitTxHash, 0));
+
+    // outputs
+
+    BuyTicketData buyTicketData{1};
+    CScript declScript = GetScriptForBuyTicketDecl(buyTicketData);
+    mtx.vout.push_back(CTxOut(0, declScript));
+
+    CScript ticketScript = GetScriptForDestination(ticketKeyId);
+    mtx.vout.push_back(CTxOut(stakeDifficulty, ticketScript));
+
+    TicketContribData ticketContribData{1, ticketKeyId, contributedAmount, 0, TicketContribData::DefaultFeeLimit};
+    CScript contributorInfoScript = GetScriptForTicketContrib(ticketContribData);
+    mtx.vout.push_back(CTxOut(0, contributorInfoScript));
+
+    CScript changeScript = GetScriptForDestination(ticketKeyId);
+    mtx.vout.push_back(CTxOut(0, changeScript));
+
+    // signature
+
+    BOOST_CHECK(wallet->SignTransaction(mtx));
+
+    return mtx;
+}
+
+bool WalletStakeTestingSetup::AddToMempoolUnchecked(const CMutableTransaction& mtx) {
+    LockPoints lp;
+    return mempool.addUnchecked(mtx.GetHash(), CTxMemPoolEntry(MakeTransactionRef(mtx), 0, 0, 1, false, false, 4, lp));
 }
 
 bool WalletStakeTestingSetup::MempoolHasTicket() {

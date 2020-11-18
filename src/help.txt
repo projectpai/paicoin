@@ -300,6 +300,10 @@ Wallet options:
   -tbvotingaccount
        Specify the account to be used for voting.
 
+  -tbtxexpiry
+       Specifies the height after which the ticket transaction still in the mempool
+       is expired and can be removed from the mempool.
+
   -autovote
        Enable the automatic voter. This is going to send the votes for the tickets
        belonging to the wallet as soon as they are selected as winners.
@@ -315,6 +319,11 @@ Wallet options:
        it can be discarded from the mempool. This flag enables or disables this mechanism.
        Disabling this mechanism leaves the vote in mempool indefinitely. Please note that
        this can crowd the mempool if multiple such votes linger.
+
+  -mempoolresidence
+       Specifies the number of blocks to keep a transaction in the mempool when its
+       expiration value is set to zero. This interval is calculated from the height the
+       transaction entered the mempool. Only applies to tickets for now.
 
 ZeroMQ notification options:
 

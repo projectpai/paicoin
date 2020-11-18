@@ -159,59 +159,16 @@ Berkeley DB
 -----------
 It is recommended to use Berkeley DB 4.8. If you have to build it yourself:
 
-```bash
-PAICOIN_ROOT=$(pwd)
+you can use [the installation script included in contrib/](/contrib/install_db4.sh)
+like so:
 
-# Pick some path to install BDB to, here we create a directory within the paicoin directory
-BDB_PREFIX="${PAICOIN_ROOT}/db4"
-mkdir -p $BDB_PREFIX
-
-# Fetch the source and verify that it is not tampered with
-wget 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz'
-echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c
-# -> db-4.8.30.NC.tar.gz: OK
-tar -xzvf db-4.8.30.NC.tar.gz
-
-# Build the library and install to our prefix
-cd db-4.8.30.NC/
-
-# patch it
-wget https://raw.github.com/narkoleptik/os-x-berkeleydb-patch/master/atomic.patch
-patch dbinc/atomic.h < atomic.patch
-
-#  Note: Do a static build so that it can be embedded into the executable, instead of having to find a .so at runtime
-cd build_unix/
-../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
-make install
-
-# Configure PAIcoin Core to use our own-built instance of BDB
-cd $PAICOIN_ROOT
-./autogen.sh
-./configure LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/" # (other args...)
+```shell
+./contrib/install_db4.sh `pwd`
 ```
 
-If you receive an error like the following when building Berkeley DB:
-```
-$ make install
-...
-...
-libtool: compile:  g++ -c -I. -I../dist/.. -D_GNU_SOURCE -D_REENTRANT -O ../dist/../cxx/cxx_db.cpp  -fPIC -DPIC -o cxx_db.o
-In file included from ../dist/../dbinc/mutex_int.h:12,
-                 from ../dist/../dbinc/mutex.h:15,
-                 from ./db_int.h:884,
-                 from ../dist/../cxx/cxx_db.cpp:11:
-../dist/../dbinc/atomic.h:179:19: error: definition of ‘int __atomic_compare_exchange(db_atomic_t*, atomic_value_t, atomic_value_t)’ ambiguates built-in declaration ‘bool __atomic_compare_exchange(long unsigned int, volatile void*, void*, void*, int, int)’
-  179 | static inline int __atomic_compare_exchange(
-      |                   ^~~~~~~~~~~~~~~~~~~~~~~~~
-make: *** [Makefile:2018: cxx_db.o] Error 1
-```
-You will have to manually patch it to avoid an issue with `atomic_compare_exchange`
-```
-sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' db-4.8.30.NC/dbinc/atomic.h
-```
-and then do `make install` again from the `db-4.8.30.NC` directory.
+from the root of the repository.
 
-**Note**: You only need Berkeley DB if the wallet is enabled (see the section *Disable-Wallet mode* below).
+**Note**: You only need Berkeley DB if the wallet is enabled (see [*Disable-wallet mode*](/doc/build-unix.md#disable-wallet-mode)).
 
 Boost
 -----

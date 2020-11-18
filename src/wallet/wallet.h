@@ -26,6 +26,7 @@
 #include "wallet/auto-voter/autovoter.h"
 #include "wallet/auto-revoker/autorevoker.h"
 #include "wallet/ticket-buyer/ticketbuyer.h"
+#include "stake/staketx.h"
 
 #include <algorithm>
 #include <atomic>
@@ -337,6 +338,7 @@ public:
     // memory only
     mutable bool fDebitCached;
     mutable bool fCreditCached;
+    mutable bool fStakedCreditCached;
     mutable bool fImmatureCreditCached;
     mutable bool fAvailableCreditCached;
     mutable bool fWatchDebitCached;
@@ -346,6 +348,7 @@ public:
     mutable bool fChangeCached;
     mutable CAmount nDebitCached;
     mutable CAmount nCreditCached;
+    mutable CAmount nStakedCreditCached;
     mutable CAmount nImmatureCreditCached;
     mutable CAmount nAvailableCreditCached;
     mutable CAmount nWatchDebitCached;
@@ -376,6 +379,7 @@ public:
         strFromAccount.clear();
         fDebitCached = false;
         fCreditCached = false;
+        fStakedCreditCached = false;
         fImmatureCreditCached = false;
         fAvailableCreditCached = false;
         fWatchDebitCached = false;
@@ -385,6 +389,7 @@ public:
         fChangeCached = false;
         nDebitCached = 0;
         nCreditCached = 0;
+        nStakedCreditCached = 0;
         nImmatureCreditCached = 0;
         nAvailableCreditCached = 0;
         nWatchDebitCached = 0;
@@ -442,6 +447,7 @@ public:
     void MarkDirty()
     {
         fCreditCached = false;
+        fStakedCreditCached = false;
         fAvailableCreditCached = false;
         fImmatureCreditCached = false;
         fWatchDebitCached = false;
@@ -461,6 +467,7 @@ public:
     //! filter decides which addresses will count towards the debit
     CAmount GetDebit(const isminefilter& filter) const;
     CAmount GetCredit(const isminefilter& filter) const;
+    CAmount GetStakedCredit(bool fUseCache=true) const;
     CAmount GetImmatureCredit(bool fUseCache=true) const;
     CAmount GetAvailableCredit(bool fUseCache=true) const;
     CAmount GetImmatureWatchOnlyCredit(const bool& fUseCache=true) const;
@@ -812,28 +819,28 @@ public:
     unsigned int nMasterKeyMaxID;
 
     // Create wallet with dummy database handle
-    CWallet() :
+    CWallet(bool autoVote = fAutoVote, bool autoRevoke = fAutoRevoke) :
         dbw(new CWalletDBWrapper()),
         ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
         autoVoter = MakeUnique<CAutoVoter>(this);
-        if (fAutoVote) autoVoter->start();
+        if (autoVote) autoVoter->start();
         autoRevoker = MakeUnique<CAutoRevoker>(this);
-        if (fAutoRevoke) autoRevoker->start();
+        if (autoRevoke) autoRevoker->start();
         ticketBuyer = MakeUnique<CTicketBuyer>(this);
         ticketBuyer->GetConfig().buyTickets = fAutoBuy;
         SetNull();
     }
 
     // Create wallet with passed-in database handle
-    explicit CWallet(std::unique_ptr<CWalletDBWrapper> dbw_in) :
+    explicit CWallet(std::unique_ptr<CWalletDBWrapper> dbw_in, bool autoVote = fAutoVote, bool autoRevoke = fAutoRevoke) :
         dbw(std::move(dbw_in)),
         ticketFeeRate(2 * minTxFee.GetFeePerK())
     {
         autoVoter = MakeUnique<CAutoVoter>(this);
-        if (fAutoVote) autoVoter->start();
+        if (autoVote) autoVoter->start();
         autoRevoker = MakeUnique<CAutoRevoker>(this);
-        if (fAutoRevoke) autoRevoker->start();
+        if (autoRevoke) autoRevoker->start();
         ticketBuyer = MakeUnique<CTicketBuyer>(this);
         ticketBuyer->GetConfig().buyTickets = fAutoBuy;
         SetNull();
@@ -1010,6 +1017,7 @@ public:
     // ResendWalletTransactionsBefore may only be called if fBroadcastTransactions!
     std::vector<uint256> ResendWalletTransactionsBefore(int64_t nTime, CConnman* connman);
     CAmount GetBalance() const;
+    CAmount GetStakedBalance() const;
     CAmount GetUnconfirmedBalance() const;
     CAmount GetImmatureBalance() const;
     CAmount GetWatchOnlyBalance() const;
@@ -1080,7 +1088,8 @@ public:
      */
     CAmount GetDebit(const CTxIn& txin, const isminefilter& filter) const;
     isminetype IsMine(const CTxOut& txout) const;
-    CAmount GetCredit(const CTxOut& txout, const isminefilter& filter) const;
+    CAmount GetCredit(const CTxOut& txOut, const isminefilter& filter) const;
+    CAmount GetCredit(const ETxClass txClass, const uint32_t txIndex, const CTxOut& txOut, const isminefilter& filter) const;
     bool IsChange(const CTxOut& txout) const;
     CAmount GetChange(const CTxOut& txout) const;
     bool IsMine(const CTransaction& tx) const;
@@ -1262,7 +1271,7 @@ public:
        - numTickets: number of tickets to purchase
        - vspAddress: address to pay stake pool fees to
        - vspFeePercent: percent from the voter subsidy to pay to the stake pool
-       - expiry: height at which the purchase tickets expire
+       - expiry: height at which the purchased tickets expire
        - feeRate: transaction fee rate (PAI/kB) to use (overrides current fees if larger than them) (optional, default = -1)
        In case of success, the returned vector contains the transactions' hashes.
        In case of partial success, meaning only some tickets could not have been created, the returned values are the
