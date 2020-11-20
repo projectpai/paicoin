@@ -63,12 +63,12 @@ BOOST_AUTO_TEST_CASE(block_subsidy_test)
     CAmount minerSubsidy = GetMinerSubsidy(nStakeValidationHeight-1, chainParams->GetConsensus());
     BOOST_CHECK(minerSubsidy == 1500 * COIN);
     minerSubsidy = GetMinerSubsidy(nStakeValidationHeight, chainParams->GetConsensus());
-    BOOST_CHECK(minerSubsidy == 1050 * COIN);
+    BOOST_CHECK(minerSubsidy == 600 * COIN);
 
     CAmount voterSubsidy = GetVoterSubsidy(nStakeValidationHeight-1, chainParams->GetConsensus());
     BOOST_CHECK(voterSubsidy == 0);
     voterSubsidy = GetVoterSubsidy(nStakeValidationHeight, chainParams->GetConsensus());
-    BOOST_CHECK(voterSubsidy == 90 * COIN);
+    BOOST_CHECK(voterSubsidy == 180 * COIN);
 }
 
 BOOST_AUTO_TEST_CASE(subsidy_limit_test)

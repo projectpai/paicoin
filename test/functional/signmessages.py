@@ -18,7 +18,7 @@ class SignMessagesTest(PAIcoinTestFramework):
         self.log.info('test signing with priv_key')
         priv_key = 'aaRneEfX1zQaioZT78Zi3Cz5W4TFRyqGqYAHLcP3tsM8rLkbRmKq'
         address = 'Mf2os4mqUkE31xWEZkk8WRbBDvjmMmXpH9'
-        expected_signature = 'H/dFsomHhYcYD4+g+q81PHaviAGNa30bTQa76slhd1iJF0ENLN61RfnHesKiivTcqfCO4jVsX+UIvrRV7Lb6dmk='
+        expected_signature = 'IF99kAgJwEU84G3q1xQGa6vDV9Ecwa633pJcLSv8JM8MIBLsL32roQtQKDpavX+QiyygIdC9SKEkk0LdmoDoOLU='
         signature = self.nodes[0].signmessagewithprivkey(priv_key, message)
         assert_equal(expected_signature, signature)
         assert(self.nodes[0].verifymessage(address, signature, message))

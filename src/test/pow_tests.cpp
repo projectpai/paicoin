@@ -110,18 +110,21 @@ static CBlockIndex GetBlockIndex(CBlockIndex *pindexPrev, int64_t nTimeInterval,
 
 BOOST_AUTO_TEST_CASE(cash_difficulty_test)
 {
-    // TODO: update this test to use the hybridConsensusPowLimit when needed
-
     const auto chainParams = CreateChainParams(CBaseChainParams::MAIN);
 
-    std::vector<CBlockIndex> blocks(3000);
-
     const Consensus::Params &params = chainParams->GetConsensus();
-    const arith_uint256 powLimit = UintToArith256(params.powLimit);
-    uint32_t powLimitBits = powLimit.GetCompact();
-    arith_uint256 currentPow = powLimit >> 4;
+    // const arith_uint256 powLimit = UintToArith256(params.powLimit);
+    // uint32_t powLimitBits = powLimit.GetCompact();
+
+    // NOTE: updated to use the hybridConsensusPowLimit,
+    // it forces another POWLimit between nHybridConsensusHeight and nHybridConsensusHeight + nHybridConsensusInitialDifficultyBlockCount
+    // and afterwards it can never go below hybridConsensusPowLimit
+    const arith_uint256 hybridConsensusPowLimit = UintToArith256(params.hybridConsensusPowLimit);
+    uint32_t hybridConsensusPowLimitBits = hybridConsensusPowLimit.GetCompact();
+    arith_uint256 currentPow = hybridConsensusPowLimit >> 4;
     uint32_t initialBits = currentPow.GetCompact();
 
+    std::vector<CBlockIndex> blocks(params.nHybridConsensusHeight + 3000);
     // Genesis block.
     blocks[0] = CBlockIndex();
     blocks[0].nHeight = 0;
@@ -131,16 +134,16 @@ BOOST_AUTO_TEST_CASE(cash_difficulty_test)
     blocks[0].nChainWork = GetBlockProof(blocks[0]);
 
     // Block counter.
-    size_t i;
+    int i;
 
     // Pile up some blocks every 10 mins to establish some history.
-    for (i = 1; i < 2050; i++) {
+    for (i = 1; i < params.nHybridConsensusHeight + 2050; i++) {
         blocks[i] = GetBlockIndex(&blocks[i - 1], 600, initialBits);
     }
 
     CBlockHeader blkHeaderDummy;
     uint32_t nBits =
-        GetNextCashWorkRequired(&blocks[2049], &blkHeaderDummy, params);
+        GetNextCashWorkRequired(&blocks[params.nHybridConsensusHeight + 2049], &blkHeaderDummy, params);
 
     // Difficulty stays the same as long as we produce a block every 10 mins.
     for (size_t j = 0; j < 10; i++, j++) {
@@ -193,7 +196,7 @@ BOOST_AUTO_TEST_CASE(cash_difficulty_test)
     }
 
     // Check the actual value.
-    BOOST_CHECK_EQUAL(nBits, 0x1c009ef3);// changed from 0x1c0fe7b1 due to different powLimit setting
+    BOOST_CHECK_EQUAL(nBits, 0x1d3e16f2); // changed due to different powLimit setting
 
     // If we dramatically shorten block production, difficulty increases faster.
     for (size_t j = 0; j < 20; i++, j++) {
@@ -214,7 +217,7 @@ BOOST_AUTO_TEST_CASE(cash_difficulty_test)
     }
 
     // Check the actual value.
-    BOOST_CHECK_EQUAL(nBits, 0x1c0088d9);// changed from 0x1c0db19f due to different powLimit setting
+    BOOST_CHECK_EQUAL(nBits, 0x1d357522);// changed due to different powLimit setting
 
     // We start to emit blocks significantly slower. The first block has no
     // impact.
@@ -222,7 +225,7 @@ BOOST_AUTO_TEST_CASE(cash_difficulty_test)
     nBits = GetNextCashWorkRequired(&blocks[i++], &blkHeaderDummy, params);
 
     // Check the actual value.
-    BOOST_CHECK_EQUAL(nBits, 0x1c00879f); // changed from 0x1c0d9222 due to different powLimit setting
+    BOOST_CHECK_EQUAL(nBits, 0x1d34fa36); // changed due to different powLimit setting
 
     // If we dramatically slow down block production, difficulty decreases.
     for (size_t j = 0; j < 93; i++, j++) {
@@ -236,7 +239,7 @@ BOOST_AUTO_TEST_CASE(cash_difficulty_test)
         nextTarget.SetCompact(nextBits);
 
         // Check the difficulty decreases.
-        BOOST_CHECK(nextTarget <= powLimit);
+        BOOST_CHECK(nextTarget <= hybridConsensusPowLimit);
         BOOST_CHECK(nextTarget > currentTarget);
         BOOST_CHECK((nextTarget - currentTarget) < (currentTarget >> 3));
 
@@ -244,13 +247,13 @@ BOOST_AUTO_TEST_CASE(cash_difficulty_test)
     }
 
     // Check the actual value.
-    BOOST_CHECK_EQUAL(nBits, 0x1c01d677); // changed from 0x1c2f13b9 due to different powLimit setting
+    BOOST_CHECK_EQUAL(nBits, 0x1e00b7c6); // changed due to different powLimit setting
 
     // Due to the window of time being bounded, next block's difficulty actually
     // gets harder.
     blocks[i] = GetBlockIndex(&blocks[i - 1], 6000, nBits);
     nBits = GetNextCashWorkRequired(&blocks[i++], &blkHeaderDummy, params);
-    BOOST_CHECK_EQUAL(nBits, 0x1c01d4d4); // changed from 0x1c2ee9bf due to different powLimit setting
+    BOOST_CHECK_EQUAL(nBits, 0x1e00b723); // changed due to different powLimit setting
 
     // And goes down again. It takes a while due to the window being bounded and
     // the skewed block causes 2 blocks to get out of the window.
@@ -265,7 +268,7 @@ BOOST_AUTO_TEST_CASE(cash_difficulty_test)
         nextTarget.SetCompact(nextBits);
 
         // Check the difficulty decreases.
-        BOOST_CHECK(nextTarget <= powLimit);
+        BOOST_CHECK(nextTarget <= hybridConsensusPowLimit);
         BOOST_CHECK(nextTarget > currentTarget);
         BOOST_CHECK((nextTarget - currentTarget) < (currentTarget >> 3));
 
@@ -273,7 +276,7 @@ BOOST_AUTO_TEST_CASE(cash_difficulty_test)
     }
 
     // Check the actual value.
-    BOOST_CHECK_EQUAL(nBits, 0x1c09fe61); // changed from 0x1d00ffff due to different powLimit setting
+    BOOST_CHECK_EQUAL(nBits, hybridConsensusPowLimitBits); // changed due to different powLimit setting
 
     // Once the difficulty reached the minimum allowed level, it doesn't get any
     // easier.
@@ -283,7 +286,7 @@ BOOST_AUTO_TEST_CASE(cash_difficulty_test)
             GetNextCashWorkRequired(&blocks[i], &blkHeaderDummy, params);
 
         // Check the difficulty stays constant.
-        BOOST_CHECK_EQUAL(nextBits, powLimitBits);
+        BOOST_CHECK_EQUAL(nextBits, hybridConsensusPowLimitBits);
         nBits = nextBits;
     }
 }

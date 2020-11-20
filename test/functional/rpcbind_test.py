@@ -43,9 +43,12 @@ class RPCBindTest(PAIcoinTestFramework):
         at a non-localhost IP.
         '''
         self.log.info("Allow IP test for %s:%d" % (rpchost, rpcport))
-        base_args = ['-disablewallet', '-nolisten'] + ['-rpcallowip='+x for x in allow_ips]
+        node_args = \
+            ['-disablewallet', '-nolisten'] + \
+            ['-rpcallowip='+x for x in allow_ips] + \
+            ['-rpcbind='+addr for addr in ['127.0.0.1', "%s:%d" % (rpchost, rpcport)]] # Bind to localhost as well so start_nodes doesn't hang
         self.nodes[0].rpchost = None
-        self.start_nodes([base_args])
+        self.start_nodes([node_args])
         # connect to node through non-loopback interface
         node = get_rpc_proxy(rpc_url(get_datadir_path(self.options.tmpdir, 0), 0, "%s:%d" % (rpchost, rpcport)), 0, coveragedir=self.options.coveragedir)
         node.getnetworkinfo()
@@ -79,7 +82,7 @@ class RPCBindTest(PAIcoinTestFramework):
             [('127.0.0.1', defaultport), ('::1', defaultport)])
         # check default with rpcallowip (IPv6 any)
         self.run_bind_test(['127.0.0.1'], '127.0.0.1', [],
-            [('::0', defaultport)])
+            [('127.0.0.1', defaultport), ('::1', defaultport)])
         # check only IPv4 localhost (explicit)
         self.run_bind_test(['127.0.0.1'], '127.0.0.1', ['127.0.0.1'],
             [('127.0.0.1', defaultport)])

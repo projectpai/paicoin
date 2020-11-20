@@ -29,6 +29,8 @@ class MultinodeHybridConsensusFork(PAIcoinTestFramework):
     def run_test(self):
         HybridForkHeight = 1501 # in chainparams.cpp -> consensus.HybridConsensusHeight = 1500;
         StakeValidationHeight = 2100
+        StakeEnabledHeight   = 2000
+        TicketMaturity        = 8
         MinimumStakeDiff = Decimal('0.0002')
 
         self.nodes[0].generate(1000)
@@ -61,11 +63,23 @@ class MultinodeHybridConsensusFork(PAIcoinTestFramework):
         self.nodes[0].generate(400)
         self.sync_all()
 
+        # we must get to the height at which purchasing is permitted
+        # otherwise purchase txs will accummulate in the mempool with a great chance to fill the it,
+        # preventing sync to work
+        startBuyHeight = StakeEnabledHeight - TicketMaturity
+        for blkidx in range(HybridForkHeight + 401, startBuyHeight):
+            self.nodes[0].generate(1)
+            print(blkidx)
+            chainInfo = self.nodes[0].getblockchaininfo()
+            assert(chainInfo['blocks'] == blkidx)
+
+        self.sync_all()
+
         nMaxFreshStakePerBlock = 20
         txaddress = self.nodes[0].getnewaddress()
         rewardaddress = self.nodes[0].getnewaddress()
         txs = []
-        for blkidx in range(HybridForkHeight + 401, StakeValidationHeight):
+        for blkidx in range(startBuyHeight, StakeValidationHeight):
             print("purchase", nMaxFreshStakePerBlock, "at", blkidx)
             txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, rewardaddress, nMaxFreshStakePerBlock))
             assert(len(txs[-1])==nMaxFreshStakePerBlock)

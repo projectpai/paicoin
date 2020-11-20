@@ -57,16 +57,16 @@ class InfoOPTest(PAIcoinTestFramework):
 
         assert(float(result['pos']) == 0)
         assert(float(result['pow']) == 1500)
-        assert(float(result['total']) == 1500)
+        assert(float(result['total']) == float(result['pos']) + float(result['pow']))
 
         result = chain_node.getblocksubsidy(2100, 3) #height at which voting is needed
-        assert(float(result['pos']) == 0)
-        assert(float(result['pow']) == 0.06408691)
-        assert(float(result['total']) ==0.06408691)
+        assert(float(result['pos']) == 0.03295896)
+        assert(float(result['pow']) == 0.03662109)
+        assert(float(result['total']) == float(result['pos']) + float(result['pow']))
 
         result = chain_node.getblocksubsidy(3000, 5)
         assert(float(result['pos']) == 0.00085830)
-        assert(float(result['pow']) == 0.00100135)
+        assert(float(result['pow']) == 0.00057220)
         assert(float(result['total']) == float(result['pos']) + float(result['pow']))
 
         util.assert_raises_rpc_error(-1, None, chain_node.getblocksubsidy, -1)

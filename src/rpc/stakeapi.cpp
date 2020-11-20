@@ -269,7 +269,7 @@ UniValue getstakeversioninfo(const JSONRPCRequest& request)
         adjust = 0;
 
         // Get prior block index.
-        pCurrentIndex = pCurrentIndex->pprev;
+        pCurrentIndex = chainActive[startHeight - 1];
     }
 
     result.push_back(Pair("intervals", resultIntervals));
