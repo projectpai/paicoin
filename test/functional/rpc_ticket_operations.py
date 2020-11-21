@@ -27,7 +27,7 @@ class TicketOperations(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1
-        self.extra_args = [['-txindex']] 
+        self.extra_args = [['-txindex','-autovote=0','-autorevoke=0']]
 
     def test_tx_type_info_last_block(self, expected_tx_types = []):
         # test getblock and getrawtransaction
@@ -73,6 +73,10 @@ class TicketOperations(PAIcoinTestFramework):
 
         txs = []
         for blkidx in range(nStakeEnabledHeight - nTicketMaturity , nStakeEnabledHeight+1):
+            funds = self.nodes[0].getbalance()
+            print("funds:", funds)
+            ticketPrice = self.nodes[0].getstakedifficulty()
+            print("ticketPrice", ticketPrice)
             print("purchase", nMaxFreshStakePerBlock, "at", blkidx)
             txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, rewardaddress, nMaxFreshStakePerBlock))
             assert(len(txs[-1])==nMaxFreshStakePerBlock)
@@ -286,10 +290,10 @@ class TicketOperations(PAIcoinTestFramework):
             # support yet multiple funding inputs to our ticket purchasing transactions
             # TODO try to go further when multiple inputs are supported
             if blkidx < nPurchaseMaxHeight:
-                # funds = self.nodes[0].getbalance()
-                # print("funds:", funds)
-                # ticketPrice = self.nodes[0].getstakedifficulty()
-                # print("ticketPrice", ticketPrice)
+                funds = self.nodes[0].getbalance()
+                print("funds:", funds)
+                ticketPrice = self.nodes[0].getstakedifficulty()
+                print("ticketPrice", ticketPrice)
                 print("purchase", nMaxFreshStakePerBlock, "at", blkidx)
                 txs.append(self.nodes[0].purchaseticket("", 1.5, 1, txaddress, rewardaddress,nMaxFreshStakePerBlock))
                 assert(len(txs[-1])==nMaxFreshStakePerBlock)
@@ -325,10 +329,11 @@ class TicketOperations(PAIcoinTestFramework):
         for blkidx in range(nStakeValidationHeight, nHeightExpiredBecomeMissed + 10):
             # winners vote
             winners = self.nodes[0].winningtickets()
-            assert(len(winners['tickets'])==nTicketsPerBlock)
+            assert(len(winners) == 1)
+            assert(len(winners[0]['tickets'])==nTicketsPerBlock)
             blockhash = chainInfo['bestblockhash']
             blockheight = chainInfo['blocks']
-            for tickethash in winners['tickets']:
+            for tickethash in winners[0]['tickets']:
                 votehash = self.nodes[0].generatevote(blockhash, blockheight, tickethash, dummyVoteBits, dummyVoteBitsExt)
                 totalVotes += 1
             
@@ -346,12 +351,14 @@ class TicketOperations(PAIcoinTestFramework):
             chainInfo = self.nodes[0].getblockchaininfo()
             assert(chainInfo['blocks'] == blkidx)
 
+            walletinfo = self.nodes[0].getwalletinfo()
             stakeinfo = self.nodes[0].getstakeinfo()
-            # print(stakeinfo)
-            allPurchasedTickets -=  len(winners['tickets'])
+            print(stakeinfo)
+            print(walletinfo)
+            allPurchasedTickets -= len(winners[0]['tickets'])
             # TODO seems the wallet finds only one ticket to be spent by a vote, retry this after integrating the auto-voter changes
-            # assert(stakeinfo['voted'] == totalVotes)
-            # assert(stakeinfo['unspent'] == allPurchasedTickets)
+            assert(stakeinfo['voted'] == totalVotes)
+            assert(stakeinfo['unspent'] + stakeinfo['expired'] == allPurchasedTickets)
             assert(stakeinfo['live'] == stakeinfo['poolsize'])
             assert(stakeinfo['live'] + stakeinfo['missed'] + stakeinfo['expired'] == allPurchasedTickets)
 
@@ -359,7 +366,6 @@ class TicketOperations(PAIcoinTestFramework):
             print("len live",stakeinfo['live'])
             assert(stakeinfo['live'] == len(live['tickets']))
 
-        
         self.test_tx_type_info_last_block(['coinbase', 'vote', 'stake_revocation'])
         
         # getstakeversioninfo
