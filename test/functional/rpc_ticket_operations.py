@@ -50,6 +50,17 @@ class TicketOperations(PAIcoinTestFramework):
                 assert(raw_tx['voting']['vote'] == 'valid' or raw_tx['voting']['vote'] == 'invalid')
                 assert(raw_tx['voting'] == tx['voting'])# check that sme info is present in both raw and block output
 
+    def check_balance(self, height):
+        getbalance = self.nodes[0].getbalance()
+        print("getbalance at ",height," :", getbalance)
+        getwalletinfo = self.nodes[0].getwalletinfo()
+        print("getwalletinfo at ",height,":", getwalletinfo)
+        getstakeinfo = self.nodes[0].getstakeinfo()
+        print("getstakeinfo at ",height,":", getstakeinfo)
+        listaccounts = self.nodes[0].listaccounts()
+        print("listaccounts at ",height,":", listaccounts)
+        assert(float(getbalance) == float(getwalletinfo['balance']))
+        assert(float(getbalance) == float(listaccounts['']))
 
     def run_test(self):
         # these are the same values as in chainparams.cpp for REGTEST, update them if they change
@@ -106,6 +117,7 @@ class TicketOperations(PAIcoinTestFramework):
 
         # we should be at nStakeEnabledHeight, so only tickets in txs[0] should be live
         assert(blkidx == nStakeEnabledHeight)
+        self.check_balance(blkidx)
 
         # existsexpiredtickets tests:
         # 1. valid parameters
@@ -245,6 +257,7 @@ class TicketOperations(PAIcoinTestFramework):
         assert_raises_rpc_error(-1, None, self.nodes[0].ticketvwap, "param1", "param2", "param3")
 
         self.nodes[0].generate(1)
+        blkidx += 1
         self.sync_all()
         chainInfo = self.nodes[0].getblockchaininfo()
         assert(chainInfo['blocks'] == nStakeEnabledHeight + 1)
@@ -282,6 +295,8 @@ class TicketOperations(PAIcoinTestFramework):
         x = self.nodes[0].missedtickets()
         assert(x == { "tickets": [] })
 
+        self.check_balance(blkidx)
+
         # build the chain up to nStakeValidationHeight - 1
         txs = []
         for blkidx in range(nStakeEnabledHeight + 2 , nStakeValidationHeight):
@@ -309,6 +324,7 @@ class TicketOperations(PAIcoinTestFramework):
             assert(chainInfo['blocks'] == blkidx)
 
         assert(blkidx == nStakeValidationHeight - 1)
+        self.check_balance(blkidx)
 
         # starting with nStakeValidationHeight we need to add vote txs into blocks, otherwise TestBlockValidity fails: too-few-votes
         assert_raises_rpc_error(-1, None, self.nodes[0].generate,1)
@@ -356,7 +372,6 @@ class TicketOperations(PAIcoinTestFramework):
             print(stakeinfo)
             print(walletinfo)
             allPurchasedTickets -= len(winners[0]['tickets'])
-            # TODO seems the wallet finds only one ticket to be spent by a vote, retry this after integrating the auto-voter changes
             assert(stakeinfo['voted'] == totalVotes)
             assert(stakeinfo['unspent'] + stakeinfo['expired'] == allPurchasedTickets)
             assert(stakeinfo['live'] == stakeinfo['poolsize'])
@@ -365,9 +380,12 @@ class TicketOperations(PAIcoinTestFramework):
             live = self.nodes[0].livetickets()
             print("len live",stakeinfo['live'])
             assert(stakeinfo['live'] == len(live['tickets']))
+            if blkidx <= nHeightExpiredBecomeMissed:
+                # TODO listaccounts and getbalance start having different values above this height
+                self.check_balance(blkidx)
 
         self.test_tx_type_info_last_block(['coinbase', 'vote', 'stake_revocation'])
-        
+
         # getstakeversioninfo
         numintervals = 2
         stakeversioninfo = self.nodes[0].getstakeversioninfo(numintervals)
