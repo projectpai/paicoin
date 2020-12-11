@@ -743,6 +743,9 @@ private:
 
     void SyncMetaData(std::pair<TxSpends::iterator, TxSpends::iterator>);
 
+    /* Remove all the outpoints corresponding to the specified transactions from the spends list */
+    void RemoveFromSpends(const std::vector<uint256>& hashes);
+
     /* Used by TransactionAddedToMemorypool/BlockConnected/Disconnected.
      * Should be called with pindexBlock and posInBlock if this is for a transaction that is included in a block. */
     void SyncTransaction(const CTransactionRef& tx, const CBlockIndex *pindex = nullptr, int posInBlock = 0);
@@ -892,6 +895,8 @@ public:
     typedef std::multimap<int64_t, TxPair > TxItems;
     TxItems wtxOrdered;
 
+    void RemoveFromWtxOrdered(std::vector<uint256> hashes);
+
     int64_t nOrderPosNext;
     uint64_t nAccountingEntryNumber;
     std::map<uint256, int> mapRequestCount;
@@ -1017,7 +1022,7 @@ public:
     // ResendWalletTransactionsBefore may only be called if fBroadcastTransactions!
     std::vector<uint256> ResendWalletTransactionsBefore(int64_t nTime, CConnman* connman);
     CAmount GetBalance() const;
-    CAmount GetStakedBalance() const;
+    void GetStakedBalances(CAmount& total, CAmount& mempool, CAmount& immature, CAmount& live, CAmount& voted, CAmount& missed, CAmount& expired, CAmount& revoked) const;
     CAmount GetUnconfirmedBalance() const;
     CAmount GetImmatureBalance() const;
     CAmount GetWatchOnlyBalance() const;
@@ -1025,6 +1030,10 @@ public:
     CAmount GetImmatureWatchOnlyBalance() const;
     CAmount GetLegacyBalance(const isminefilter& filter, int minDepth, const std::string* account) const;
     CAmount GetAvailableBalance(const CCoinControl* coinControl = nullptr) const;
+    void GetRewardsAndRefunds(CAmount& rewards, CAmount& refunds) const;
+    CAmount GetMinedFunds() const;
+
+    CAmount GetTotalFees() const;
 
     /**
      * Insert additional inputs into the transaction by
@@ -1086,7 +1095,7 @@ public:
      * Returns amount of debit if the input matches the
      * filter, otherwise returns 0
      */
-    CAmount GetDebit(const CTxIn& txin, const isminefilter& filter) const;
+    CAmount GetDebit(const ETxClass txClass, const CTxIn& txIn, const isminefilter& filter) const;
     isminetype IsMine(const CTxOut& txout) const;
     CAmount GetCredit(const CTxOut& txOut, const isminefilter& filter) const;
     CAmount GetCredit(const ETxClass txClass, const uint32_t txIndex, const CTxOut& txOut, const isminefilter& filter) const;
@@ -1101,6 +1110,13 @@ public:
     CAmount GetCredit(const CTransaction& tx, const isminefilter& filter) const;
     CAmount GetChange(const CTransaction& tx) const;
     void SetBestChain(const CBlockLocator& loc) override;
+
+    void CleanupTransactions(const int height) override;
+
+    // return the hashes of all the descendants of a wallet transaction.
+    // optionally, check if the descendant is in a block or in mempool, i.e. not lingering in the wallet.
+    // if check is enabled and a descendant is either in blockchain or in mempool, the function returns false.
+    bool GetDescendants(const CWalletTx& wtx, std::vector<uint256>& descendants, bool checkLingering = true);
 
     DBErrors LoadWallet(bool& fFirstRunRet);
     DBErrors ZapWalletTx(std::vector<CWalletTx>& vWtx);

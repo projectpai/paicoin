@@ -173,6 +173,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
         int nNewVotes = 0;
         for (auto votetxiter = votesForBlockHash.first; votetxiter != votesForBlockHash.second; ++votetxiter) {
+            if (nNewVotes >= 65535) // votes cannot exceed the maximum number allowed in a block (sizeof(uint16_t)-1)
+                break;
+
             const auto& spentTicketHash = votetxiter->GetTx().vin[voteStakeInputIndex].prevout.hash;
             if (std::find(winningHashes.begin(), winningHashes.end(), spentTicketHash) == winningHashes.end())
                 continue; //not a winner
@@ -195,9 +198,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         uint64_t nNoLimit = std::numeric_limits<uint64_t>::max();
         std::string dummy;
         for (auto tickettxiter = existingTickets.first; tickettxiter != existingTickets.second; ++tickettxiter) {
-            if (nNewTickets >= chainparams.GetConsensus().nMaxFreshStakePerBlock) //new ticket purchases not more than max allowed in block
+            if (nNewTickets >= chainparams.GetConsensus().nMaxFreshStakePerBlock || nNewTickets >= 255) // new ticket purchases cannot exceed the maximum number allowed in block,
+                                                                                                        // including the size of the summary field (sizeof(uint8_t)-1)
                 break;
-
 
             // do not include ticket transactions that are expired
             if (IsExpiredTx(tickettxiter->GetTx(), nHeight))
@@ -235,6 +238,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
         int nNewRevocations = 0;
         for (auto revocationtxiter = revocations.first; revocationtxiter != revocations.second; ++revocationtxiter) {
+            if (nNewRevocations >= 255) // revocations could not exceed the maximum number allowed in a block (sizeof(uint8_t)-1)
+                break;
+
             const auto& ticketHash = revocationtxiter->GetTx().vin[revocationStakeInputIndex].prevout.hash;
             if (std::find(missedTickets.begin(), missedTickets.end(), ticketHash) == missedTickets.end())
                 continue; // Skip all missed tickets that we've never heard of
