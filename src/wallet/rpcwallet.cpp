@@ -2820,19 +2820,32 @@ UniValue getwalletinfo(const JSONRPCRequest& request)
             "Returns an object containing various wallet state info.\n"
             "\nResult:\n"
             "{\n"
-            "  \"walletname\": xxxxx,             (string) the wallet name\n"
-            "  \"walletversion\": xxxxx,          (numeric) the wallet version\n"
-            "  \"balance\": xxxxxxx,              (numeric) the total confirmed balance of the wallet in " + CURRENCY_UNIT + "\n"
-            "  \"staked_balance\": xxxxxxx,       (numeric) the total staked balance of the wallet in " + CURRENCY_UNIT + "\n"
-            "  \"unconfirmed_balance\": xxx,      (numeric) the total unconfirmed balance of the wallet in " + CURRENCY_UNIT + "\n"
-            "  \"immature_balance\": xxxxxx,      (numeric) the total immature balance of the wallet in " + CURRENCY_UNIT + "\n"
-            "  \"txcount\": xxxxxxx,              (numeric) the total number of transactions in the wallet\n"
-            "  \"keypoololdest\": xxxxxx,         (numeric) the timestamp (seconds since Unix epoch) of the oldest pre-generated key in the key pool\n"
-            "  \"keypoolsize\": xxxx,             (numeric) how many new keys are pre-generated (only counts external keys)\n"
-            "  \"keypoolsize_hd_internal\": xxxx, (numeric) how many new keys are pre-generated for internal use (used for change outputs, only appears if the wallet is using this feature, otherwise external keys are used)\n"
-            "  \"unlocked_until\": ttt,           (numeric) the timestamp in seconds since epoch (midnight Jan 1 1970 GMT) that the wallet is unlocked for transfers, or 0 if the wallet is locked\n"
-            "  \"paytxfee\": x.xxxx,              (numeric) the transaction fee configuration, set in " + CURRENCY_UNIT + "/kB\n"
-            "  \"hdmasterkeyid\": \"<hash160>\"     (string) the Hash160 of the HD master pubkey\n"
+            "  \"walletname\": xxxxx,                (string) the wallet name\n"
+            "  \"walletversion\": xxxxx,             (numeric) the wallet version\n"
+            "  \"available_balance\": xxxxxxx,       (numeric) the total balance of the wallet in " + CURRENCY_UNIT + " that is available for spending\n"
+            "  \"balance\": xxxxxxx,                 (numeric) the total confirmed balance of the wallet in " + CURRENCY_UNIT + "\n"
+            "  \"total_staked_balance\": xxxxxxx,    (numeric) the total staked balance of the wallet in " + CURRENCY_UNIT + "\n"
+            "  \"staked_balance_mempool\": xxxxxxx,  (numeric) the total staked balance of the wallet in " + CURRENCY_UNIT + " that is currently in the mempool\n"
+            "  \"staked_balance_immature\": xxxxxxx, (numeric) the total staked balance of the wallet in " + CURRENCY_UNIT + " that is currently in immature (cannot be selected for voting yet)\n"
+            "  \"staked_balance_live\": xxxxxxx,     (numeric) the total staked balance of the wallet in " + CURRENCY_UNIT + " that is currently live (can be selected for voting)\n"
+            "  \"staked_balance_voted\": xxxxxxx,    (numeric) the total staked balance of the wallet in " + CURRENCY_UNIT + " that has been used in votes\n"
+            "  \"staked_balance_missed\": xxxxxxx,   (numeric) the total staked balance of the wallet in " + CURRENCY_UNIT + " that has been missed and not revoked yet\n"
+            "  \"staked_balance_expired\": xxxxxxx,  (numeric) the total staked balance of the wallet in " + CURRENCY_UNIT + " that has been expired and not revoked yet\n"
+            "  \"staked_balance_revoked\": xxxxxxx,  (numeric) the total staked balance of the wallet in " + CURRENCY_UNIT + " that has been revoked\n"
+            "  \"unconfirmed_balance\": xxx,         (numeric) the total unconfirmed balance of the wallet in " + CURRENCY_UNIT + "\n"
+            "  \"immature_balance\": xxxxxx,         (numeric) the total immature balance of the wallet in " + CURRENCY_UNIT + "\n"
+            "  \"legacy_balance\": xxxxxx,           (numeric) the total balance of the wallet in " + CURRENCY_UNIT + ", computed by a different method than the balances above\n"
+            "  \"rewards\": xxxxxxx,                 (numeric) the total amount of rewards received by the wallet from votes in " + CURRENCY_UNIT + "\n"
+            "  \"refunds\": xxxxxxx,                 (numeric) the total amount of refunds received by the wallet from revocations in " + CURRENCY_UNIT + "\n"
+            "  \"mined\": xxxxxx,                    (numeric) the total amount of " + CURRENCY_UNIT + " that has been mined to addresses belonging to this wallet\n"
+            "  \"txcount\": xxxxxxx,                 (numeric) the total number of transactions in the wallet\n"
+            "  \"keypoololdest\": xxxxxx,            (numeric) the timestamp (seconds since Unix epoch) of the oldest pre-generated key in the key pool\n"
+            "  \"keypoolsize\": xxxx,                (numeric) how many new keys are pre-generated (only counts external keys)\n"
+            "  \"keypoolsize_hd_internal\": xxxx,    (numeric) how many new keys are pre-generated for internal use (used for change outputs, only appears if the wallet is using this feature, otherwise external keys are used)\n"
+            "  \"unlocked_until\": ttt,              (numeric) the timestamp in seconds since epoch (midnight Jan 1 1970 GMT) that the wallet is unlocked for transfers, or 0 if the wallet is locked\n"
+            "  \"paytxfee\": x.xxxx,                 (numeric) the transaction fee configuration, set in " + CURRENCY_UNIT + "/kB\n"
+            "  \"total_fees\": x.xxxx,               (numeric) the total fees paid for transactions in " + CURRENCY_UNIT + "\n"
+            "  \"hdmasterkeyid\": \"<hash160>\"      (string) the Hash160 of the HD master pubkey\n"
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("getwalletinfo", "")
@@ -2847,10 +2860,27 @@ UniValue getwalletinfo(const JSONRPCRequest& request)
     const auto kpExternalSize = pwallet->KeypoolCountExternalKeys();
     obj.push_back(Pair("walletname", pwallet->GetName()));
     obj.push_back(Pair("walletversion", pwallet->GetVersion()));
+    obj.push_back(Pair("available_balance", ValueFromAmount(pwallet->GetAvailableBalance())));
     obj.push_back(Pair("balance", ValueFromAmount(pwallet->GetBalance())));
-    obj.push_back(Pair("staked_balance", ValueFromAmount(pwallet->GetStakedBalance())));
+    CAmount totalStake, mempoolStake, immatureStake, liveStake, votedStake, missedStake, expiredStake, revokedStake;
+    pwallet->GetStakedBalances(totalStake, mempoolStake, immatureStake, liveStake, votedStake, missedStake, expiredStake, revokedStake);
+    obj.push_back(Pair("total_staked_balance", ValueFromAmount(totalStake)));
+    obj.push_back(Pair("staked_balance_mempool", ValueFromAmount(mempoolStake)));
+    obj.push_back(Pair("staked_balance_immature", ValueFromAmount(immatureStake)));
+    obj.push_back(Pair("staked_balance_live", ValueFromAmount(liveStake)));
+    obj.push_back(Pair("staked_balance_voted", ValueFromAmount(votedStake)));
+    obj.push_back(Pair("staked_balance_missed", ValueFromAmount(missedStake)));
+    obj.push_back(Pair("staked_balance_expired", ValueFromAmount(expiredStake)));
+    obj.push_back(Pair("staked_balance_revoked", ValueFromAmount(revokedStake)));
     obj.push_back(Pair("unconfirmed_balance", ValueFromAmount(pwallet->GetUnconfirmedBalance())));
     obj.push_back(Pair("immature_balance", ValueFromAmount(pwallet->GetImmatureBalance())));
+    std::string account{""};
+    obj.push_back(Pair("legacy_balance", ValueFromAmount(pwallet->GetLegacyBalance(ISMINE_SPENDABLE, 0, &account))));
+    CAmount rewards, refunds;
+    pwallet->GetRewardsAndRefunds(rewards, refunds);
+    obj.push_back(Pair("rewards", ValueFromAmount(rewards)));
+    obj.push_back(Pair("refunds", ValueFromAmount(refunds)));
+    obj.push_back(Pair("mined", ValueFromAmount(pwallet->GetMinedFunds())));
     obj.push_back(Pair("txcount", (int)pwallet->mapWallet.size()));
     obj.push_back(Pair("keypoololdest", pwallet->GetOldestKeyPoolTime()));
     obj.push_back(Pair("keypoolsize", static_cast<int64_t>(kpExternalSize)));
@@ -2862,6 +2892,7 @@ UniValue getwalletinfo(const JSONRPCRequest& request)
         obj.push_back(Pair("unlocked_until", pwallet->nRelockTime));
     }
     obj.push_back(Pair("paytxfee", ValueFromAmount(payTxFee.GetFeePerK())));
+    obj.push_back(Pair("total_fees", ValueFromAmount(pwallet->GetTotalFees())));
     if (!masterKeyID.IsNull())
          obj.push_back(Pair("hdmasterkeyid", masterKeyID.GetHex()));
     return obj;
@@ -2951,7 +2982,7 @@ UniValue getstakeinfo(const JSONRPCRequest& request)
         if (pwtx->IsCoinBase() || !CheckFinalTx(tx))
             continue;
         
-        if (ETxClass::TX_BuyTicket ==  ParseTxClass(tx)) {
+        if (ETxClass::TX_BuyTicket == ParseTxClass(tx)) {
             const auto& depth = pwtx->GetDepthInMainChain();
             if (depth == 0) {
                 // in mempool

@@ -3077,6 +3077,11 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
     if (fDiscardExpiredMempoolVotes)
         mempool.removeExpiredVotes(height, chainparams.GetConsensus());
 
+    // notify wallet and other interested listeners.
+    // This should go after the mempool cleanup above, since the wallet
+    // relies on mempool presence for cleanup.
+    GetMainSignals().CleanupTransactions(height);
+
     // Write changes periodically to disk, after relay.
     if (!FlushStateToDisk(chainparams, state, FLUSH_STATE_PERIODIC)) {
         return false;

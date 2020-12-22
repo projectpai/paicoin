@@ -228,7 +228,7 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
             //
             for (const CTxIn& txin : wtx.tx->vin)
                 if (wallet->IsMine(txin))
-                    strHTML += "<b>" + tr("Debit") + ":</b> " + PAIcoinUnits::formatHtmlWithUnit(unit, -wallet->GetDebit(txin, ISMINE_ALL)) + "<br>";
+                    strHTML += "<b>" + tr("Debit") + ":</b> " + PAIcoinUnits::formatHtmlWithUnit(unit, -wallet->GetDebit(txClass, txin, ISMINE_ALL)) + "<br>";
             for (uint32_t i = 0; i < wtx.tx->vout.size(); ++i) {
                 const CTxOut& txout = wtx.tx->vout[i];
                 if (wallet->IsMine(txout))
@@ -285,7 +285,7 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
         strHTML += "<hr><br>" + tr("Debug information") + "<br><br>";
         for (const CTxIn& txin : wtx.tx->vin)
             if(wallet->IsMine(txin))
-                strHTML += "<b>" + tr("Debit") + ":</b> " + PAIcoinUnits::formatHtmlWithUnit(unit, -wallet->GetDebit(txin, ISMINE_ALL)) + "<br>";
+                strHTML += "<b>" + tr("Debit") + ":</b> " + PAIcoinUnits::formatHtmlWithUnit(unit, -wallet->GetDebit(txClass, txin, ISMINE_ALL)) + "<br>";
         for (uint32_t i = 0; i < wtx.tx->vout.size(); ++i) {
             const CTxOut& txout = wtx.tx->vout[i];
             if (wallet->IsMine(txout))
