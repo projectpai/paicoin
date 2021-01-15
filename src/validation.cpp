@@ -1929,7 +1929,8 @@ static bool DisconnectDisapprovedTip(CValidationState& state, const CChainParams
         return AbortNode(state, "Failed to read block");
     CCoinsViewCache view(pcoinsTip);
     assert(view.GetBestBlock() == pindexDisapproved->GetBlockHash());
-    if (DisconnectBlock(block, pindexDisapproved, view, true /*bOnlyDisconnectRegularTxs*/) != DISCONNECT_OK)
+    bool disconnectResult = DisconnectBlock(block, pindexDisapproved, view, true /*bOnlyDisconnectRegularTxs*/);
+    if (disconnectResult != DISCONNECT_OK && disconnectResult != DISCONNECT_UNCLEAN)
         return error("DisconnectDisapprovedTip(): DisconnectBlock %s failed", pindexDisapproved->GetBlockHash().ToString());
     bool flushed = view.Flush();
     assert(flushed);
