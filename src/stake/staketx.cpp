@@ -199,14 +199,13 @@ bool IsStakeTx(const CTransaction& tx)
     return IsStakeTx(ParseTxClass(tx));
 }
 
-bool IsStakeTxOutSpendableByRegularTx(const CTransaction& tx, const uint32_t txoutIndex)
+bool IsStakeTxOutSpendableByRegularTx(ETxClass txClass, const uint32_t txoutIndex)
 {
     // the stake transaction outputs that can be spent directly by a regular transaction are:
     // - ticket purchase: any change output (but not the stake output)
     // - vote: any reward output
     // - revocation: any refund output
 
-    ETxClass txClass = ParseTxClass(tx);
     switch (txClass) {
         case TX_Regular:
             return true;
@@ -222,6 +221,11 @@ bool IsStakeTxOutSpendableByRegularTx(const CTransaction& tx, const uint32_t txo
     }
 
     return false;
+}
+
+bool IsStakeTxOutSpendableByRegularTx(const CTransaction& tx, const uint32_t txoutIndex)
+{
+    return IsStakeTxOutSpendableByRegularTx(ParseTxClass(tx), txoutIndex);
 }
 
 bool HasStakebaseContents(const CTxIn& txIn)
