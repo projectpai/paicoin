@@ -11,9 +11,6 @@
 #include "validationinterface.h"
 
 #include <atomic>
-#include <thread>
-#include <condition_variable>
-#include <mutex>
 
 class CWallet;
 
@@ -37,20 +34,13 @@ public:
     bool isStarted() const;
 
 private:
-    void mainLoop();
-
     CTicketBuyerConfig config;
 
     CWallet* pwallet;
 
     std::atomic<bool> configured;
 
-    std::atomic<bool> shouldRun;
-
-    std::thread thread;
-
-    std::condition_variable cv;
-    std::mutex mtx;
+    int64_t nextIntervalStart, currentInterval, intervalSize;
 };
 
 #endif // PAICOIN_WALLET_TICKETBUYER_TICKETBUYER_H
