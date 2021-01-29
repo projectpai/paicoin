@@ -5472,3 +5472,44 @@ bool CMerkleTx::AcceptToMemoryPool(const CAmount& nAbsurdFee, CValidationState& 
     return ::AcceptToMemoryPool(mempool, state, tx, nullptr /* pfMissingInputs */,
                                 nullptr /* plTxnReplaced */, false /* bypass_limits */, nAbsurdFee);
 }
+
+bool CMerkleTx::IsConfiscatedCoinbase() const
+{
+    // Find the block this belongs to and get its successor, if available. Check
+    // if the block's regular transactions tree is rejected by the successor, and
+    // if so, then consider the coinbase confiscated.
+
+    if (hashUnset())
+        return false;
+
+    if (!IsCoinBase())
+        return false;
+
+    AssertLockHeld(cs_main);
+
+    BlockMap::iterator mi = mapBlockIndex.find(hashBlock);
+    if (mi == mapBlockIndex.end())
+        return false;
+
+    CBlockIndex* pindex = (*mi).second;
+    if (!pindex)
+        return 0;
+
+    if (pindex->nHeight < Params().GetConsensus().nStakeValidationHeight)
+        return false;
+
+    if (pindex->nHeight == mapBlockIndex.size())
+        return false;
+
+    BlockMap::iterator misuccessor = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [&pindex] (const std::pair<uint256, CBlockIndex*>& p) {
+        return p.second->nHeight == pindex->nHeight+1;
+    });
+    if (misuccessor == mapBlockIndex.end())
+        return false;
+
+    CBlockIndex* pindexsuccessor = (*misuccessor).second;
+    if (!pindexsuccessor)
+        return false;
+
+    return !pindexsuccessor->nVoteBits.isRttAccepted();
+}
