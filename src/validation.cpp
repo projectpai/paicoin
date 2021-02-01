@@ -264,6 +264,50 @@ bool CheckFinalTx(const CTransaction &tx, int flags)
     return IsFinalTx(tx, nBlockHeight, nBlockTime);
 }
 
+bool CheckConfiscatedCoinbaseTx(const CTransaction &tx, uint256 hashBlock)
+{
+    if (!tx.IsCoinBase())
+        return false;
+
+    AssertLockHeld(cs_main);
+
+    BlockMap::iterator mi;
+
+    if (hashBlock != uint256()) {
+        mi = mapBlockIndex.find(hashBlock);
+    } else {
+        mi = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [tx] (const std::pair<uint256, CBlockIndex*>& p) {
+            // TODO: find parent block index!!!
+        });
+    }
+
+    if (mi == mapBlockIndex.end())
+        return false;
+
+    CBlockIndex* pindex = (*mi).second;
+    if (!pindex)
+        return 0;
+
+    if (pindex->nHeight < Params().GetConsensus().nStakeValidationHeight)
+        return false;
+
+    if (pindex->nHeight == mapBlockIndex.size())
+        return false;
+
+    int successorHeight = pindex->nHeight + 1;
+    BlockMap::iterator misuccessor = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [successorHeight] (const std::pair<uint256, CBlockIndex*>& p) {
+        return p.second->nHeight == successorHeight;
+    });
+    if (misuccessor == mapBlockIndex.end())
+        return false;
+
+    CBlockIndex* pindexsuccessor = (*misuccessor).second;
+    if (!pindexsuccessor)
+        return false;
+
+    return !pindexsuccessor->nVoteBits.isRttAccepted();
+}
+
 bool TestLockPointValidity(const LockPoints* lp)
 {
     AssertLockHeld(cs_main);

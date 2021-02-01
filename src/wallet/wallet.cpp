@@ -5501,8 +5501,9 @@ bool CMerkleTx::IsConfiscatedCoinbase() const
     if (pindex->nHeight == mapBlockIndex.size())
         return false;
 
-    BlockMap::iterator misuccessor = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [&pindex] (const std::pair<uint256, CBlockIndex*>& p) {
-        return p.second->nHeight == pindex->nHeight+1;
+    int successorHeight = pindex->nHeight + 1;
+    BlockMap::iterator misuccessor = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [successorHeight] (const std::pair<uint256, CBlockIndex*>& p) {
+        return p.second->nHeight == successorHeight;
     });
     if (misuccessor == mapBlockIndex.end())
         return false;
