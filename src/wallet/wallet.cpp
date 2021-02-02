@@ -5498,19 +5498,5 @@ bool CMerkleTx::IsConfiscatedCoinbase() const
     if (pindex->nHeight < Params().GetConsensus().nStakeValidationHeight)
         return false;
 
-    if (pindex->nHeight == mapBlockIndex.size())
-        return false;
-
-    int successorHeight = pindex->nHeight + 1;
-    BlockMap::iterator misuccessor = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [successorHeight] (const std::pair<uint256, CBlockIndex*>& p) {
-        return p.second->nHeight == successorHeight;
-    });
-    if (misuccessor == mapBlockIndex.end())
-        return false;
-
-    CBlockIndex* pindexsuccessor = (*misuccessor).second;
-    if (!pindexsuccessor)
-        return false;
-
-    return !pindexsuccessor->nVoteBits.isRttAccepted();
+    return pindex->IsRttRejected();
 }

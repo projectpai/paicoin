@@ -168,9 +168,11 @@ enum BlockStatus: uint32_t {
     BLOCK_FAILED_CHILD       =   64, //!< descends from failed block
     BLOCK_FAILED_MASK        =   BLOCK_FAILED_VALID | BLOCK_FAILED_CHILD,
 
-    BLOCK_OPT_WITNESS       =   128, //!< block data in blk*.data was received with a witness-enforcing client
+    BLOCK_OPT_WITNESS        =   128, //!< block data in blk*.data was received with a witness-enforcing client
 
     // BLOCK_HAVE_STAKE        =   256, //!< stake data available in stk*.dat
+
+    BLOCK_RTT_REJECTED        =   512, //!< the regular transactions tree (RTT) is rejected by the votes in the next block
 };
 
 /** The block chain is a tree shaped structure starting with the
@@ -423,6 +425,16 @@ public:
             return true;
         }
         return false;
+    }
+
+    //! Check whether the regular transactions tree of this block is rejected by the votes in the next block
+    bool IsRttRejected() const {
+        return (nStatus & BLOCK_RTT_REJECTED) != 0;
+    }
+
+    //! Set the flag indicating that the current block egular transactions tree has been rejected by the votes in the next block
+    void SetRttRejected() {
+        nStatus |= BLOCK_RTT_REJECTED;
     }
 
     //! Build the skiplist pointer for this entry.

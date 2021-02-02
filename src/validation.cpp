@@ -264,48 +264,73 @@ bool CheckFinalTx(const CTransaction &tx, int flags)
     return IsFinalTx(tx, nBlockHeight, nBlockTime);
 }
 
-bool CheckConfiscatedCoinbaseTx(const CTransaction &tx, uint256 hashBlock)
+bool IsCoinbaseConfiscated(const CTransaction &tx, const CCoinsViewCache& coins)
 {
+    if (Params().IsGenesisBlockTx(tx))
+        return false;
+
     if (!tx.IsCoinBase())
         return false;
 
-    AssertLockHeld(cs_main);
+    const Coin& coin = coins.AccessCoin(COutPoint(tx.GetHash(), 0));
+    assert(!coin.IsSpent());
 
-    BlockMap::iterator mi;
-
-    if (hashBlock != uint256()) {
-        mi = mapBlockIndex.find(hashBlock);
-    } else {
-        mi = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [tx] (const std::pair<uint256, CBlockIndex*>& p) {
-            // TODO: find parent block index!!!
-        });
-    }
-
+    BlockMap::iterator mi = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [coin] (const std::pair<uint256, CBlockIndex*>& p) {
+        return coin.nHeight == p.second->nHeight;
+    });
     if (mi == mapBlockIndex.end())
         return false;
 
-    CBlockIndex* pindex = (*mi).second;
-    if (!pindex)
-        return 0;
+    if (mi->second->IsRttRejected())
+        return true;
 
-    if (pindex->nHeight < Params().GetConsensus().nStakeValidationHeight)
+    return false;
+}
+
+bool IsCoinbaseConfiscated(const Coin &coin, const CCoinsViewCache& coins)
+{
+    if (coin.nHeight == 0)
         return false;
 
-    if (pindex->nHeight == mapBlockIndex.size())
+    if (!coin.IsCoinBase())
         return false;
 
-    int successorHeight = pindex->nHeight + 1;
-    BlockMap::iterator misuccessor = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [successorHeight] (const std::pair<uint256, CBlockIndex*>& p) {
-        return p.second->nHeight == successorHeight;
+    assert(!coin.IsSpent());
+
+    BlockMap::iterator mi = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [coin] (const std::pair<uint256, CBlockIndex*>& p) {
+        return coin.nHeight == p.second->nHeight;
     });
-    if (misuccessor == mapBlockIndex.end())
+    if (mi == mapBlockIndex.end())
         return false;
 
-    CBlockIndex* pindexsuccessor = (*misuccessor).second;
-    if (!pindexsuccessor)
-        return false;
+    if (mi->second->IsRttRejected())
+        return true;
 
-    return !pindexsuccessor->nVoteBits.isRttAccepted();
+    return false;
+}
+
+bool IsFundedByConfiscatedCoinbase(const CTransaction &tx, const CCoinsViewCache& coins)
+{
+    const CChainParams& params = Params();
+
+    for (auto& txIn: tx.vin) {
+        const COutPoint &prevout = txIn.prevout;
+        const Coin& coin = coins.AccessCoin(txIn.prevout);
+        assert(!coin.IsSpent());
+
+        if (!params.HasGenesisBlockTxOutPoint(prevout) && coin.IsCoinBase()) {
+            BlockMap::iterator mi = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [coin] (const std::pair<uint256, CBlockIndex*>& p) {
+                return coin.nHeight == p.second->nHeight;
+            });
+            if (mi == mapBlockIndex.end())
+                continue;
+
+            if (mi->second->IsRttRejected())
+                return true;
+        }
+    }
+
+    return false;
 }
 
 bool TestLockPointValidity(const LockPoints* lp)
@@ -1980,6 +2005,9 @@ static bool DisconnectDisapprovedTip(CValidationState& state, const CChainParams
     assert(flushed);
 
     assert (disconnectpool != nullptr);
+
+    pindexDisapproved->SetRttRejected();
+    setDirtyBlockIndex.insert(pindexDisapproved);
 
     for ( auto it = block.vtx.crbegin(); it != block.vtx.crend(); ++it ) {
         if (TX_Regular == ParseTxClass(**it))

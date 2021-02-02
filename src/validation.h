@@ -367,13 +367,30 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, int nHeight);
 bool CheckFinalTx(const CTransaction &tx, int flags = -1);
 
 /**
- * Check if transaction is a coinbase that has been confiscated, i.e. the regular transactions tree
- * of the block where this coinbase belongs has been invalidated by a negative mojority vote in the
- * successor block.
+ * Check if the coinbase has been confiscated, i.e. the regular transactions tree
+ * of the block where this belongs has been invalidated by a negative mojority vote
+ * in the successor block.
  *
  * Returns true if the coinbase has been confiscated, false otherwise.
  */
-bool CheckConfiscatedCoinbaseTx(const CTransaction &tx, uint256 hashBlock = uint256());
+bool IsCoinbaseConfiscated(const CTransaction &tx, const CCoinsViewCache& coins);
+
+/**
+ * Check if the coin has been confiscated, i.e. the regular transactions tree
+ * of the block where this belongs has been invalidated by a negative mojority
+ * vote in the successor block.
+ *
+ * Returns true if the coin has been confiscated, false otherwise.
+ */
+bool IsCoinbaseConfiscated(const Coin &coin, const CCoinsViewCache& coins);
+
+/**
+ * Check if the transaction has one or more inputs pointing to coinbase transactions
+ * that have been confiscated by the votes in the next block.
+ *
+ * Returns true if funded by confiscated coinbase, false otherwise.
+ */
+bool IsFundedByConfiscatedCoinbase(const CTransaction &tx, const CCoinsViewCache& coins);
 
 /**
  * Test whether the LockPoints height and time are still valid on the current chain

@@ -507,11 +507,17 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
 
         // If prev is coinbase, check that it's matured
         if (!chainparams.HasGenesisBlockTxOutPoint(prevout)) {
-          if (coin.IsCoinBase() && nSpendHeight - coin.nHeight < COINBASE_MATURITY) {
-              return state.Invalid(false,
-                  REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
-                  strprintf("tried to spend coinbase at depth %d", nSpendHeight - coin.nHeight));
-          }
+            if (coin.IsCoinBase()) {
+                if (nSpendHeight - coin.nHeight < COINBASE_MATURITY)
+                    return state.Invalid(false,
+                                         REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
+                                         strprintf("tried to spend coinbase at depth %d", nSpendHeight - coin.nHeight));
+
+                if (IsFundedByConfiscatedCoinbase(tx, inputs))
+                    return state.Invalid(false,
+                                         REJECT_INVALID, "bad-txns-spend-of-confiscated-coinbase",
+                                         strprintf("tried to spend confiscated coinbase from height %d", coin.nHeight));
+            }
         }
 
         // Unless the tx is a vote or a revocation, it is forbidden to spend ticket stake

@@ -126,6 +126,15 @@ bool CChainParams::HasGenesisBlockTxOutPoint(const COutPoint& out) const
     return false;
 }
 
+bool CChainParams::IsGenesisBlockTx(const CTransaction& tx) const
+{
+    for (const auto& gtx: genesis.vtx)
+        if (tx.GetHash() == gtx->GetHash())
+            return true;
+
+    return false;
+}
+
 /**
  * Main network
  */
