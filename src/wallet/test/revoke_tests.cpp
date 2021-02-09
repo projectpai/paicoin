@@ -19,12 +19,14 @@ BOOST_AUTO_TEST_CASE(revoke_estimated_sizes)
 {
     BOOST_CHECK_EQUAL(GetEstimatedRevokeTicketDeclTxOutSize(), 16U);
 
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(0), 175U);
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(0, false), 207U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(0), 179U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(0, false), 211U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(0, false, false), 207U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(0, true, false), 175U);
 
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(1), 209U);
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(2), 243U);
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(10), 515U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(1), 213U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(2), 247U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfRevokeTicketTx(10), 519U);
 }
 
 // test the calculation of gross and net remunerations

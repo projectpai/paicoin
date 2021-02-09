@@ -48,6 +48,9 @@ public:
     // Wallet passphrase
     SecureString passphrase;
 
+    // Ticket expiry
+    int txExpiry;
+
     CTicketBuyerConfig();
 
     void ParseCommandline();

@@ -92,6 +92,7 @@ uint64_t nPruneTarget = 0;
 int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 bool fEnableReplacement = DEFAULT_ENABLE_REPLACEMENT;
 bool fDiscardExpiredMempoolVotes = DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES;
+int nMempoolResidence = DEFAULT_MEMPOOL_RESIDENCE;
 
 uint256 hashAssumeValid;
 arith_uint256 nMinimumChainWork;
@@ -485,7 +486,7 @@ static bool CheckInputsFromMempoolAndCache(const CTransaction& tx, CValidationSt
 }
 
 static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool& pool, CValidationState& state, const CTransactionRef& ptx,
-                              bool* pfMissingInputs, int64_t nAcceptTime, std::list<CTransactionRef>* plTxnReplaced,
+                              bool* pfMissingInputs, int64_t nAcceptTime, int64_t nAcceptHeight, std::list<CTransactionRef>* plTxnReplaced,
                               bool bypass_limits, const CAmount& nAbsurdFee, std::vector<COutPoint>& coins_to_uncache)
 {
     const CTransaction& tx = *ptx;
@@ -520,7 +521,17 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 
     // is it already in the memory pool?
     if (pool.exists(hash)) {
-        return state.Invalid(false, REJECT_DUPLICATE, "txn-already-in-mempool");
+        // A mempool transaction with the acceptance height invalid or higher, can be replaced by the new entry.
+        // This should only be the case for transactions that are loaded from the mempool file and have valid acceptance height.
+        // Here we just remove the existing mempool entry. The insertion will be done further in the code.
+        if (nAcceptHeight > 0 && nAcceptHeight <= chainActive.Height()) {
+            auto itExisting = pool.mapTx.find(hash);
+            if (itExisting != pool.mapTx.end() && (itExisting->GetHeight() <= 0 || itExisting->GetHeight() >= nAcceptHeight))
+                pool.removeRecursive(itExisting->GetTx(), MemPoolRemovalReason::REPLACED);
+            else
+                return state.Invalid(false, REJECT_DUPLICATE, "txn-already-in-mempool");
+        } else
+            return state.Invalid(false, REJECT_DUPLICATE, "txn-already-in-mempool");
     }
 
     // Check for conflicts with in-memory transactions
@@ -578,6 +589,10 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     int nextBlockHeight = chainActive.Height() + 1;
     int stakeValidationHeight = chainparams.GetConsensus().nStakeValidationHeight;
 
+    // Reject ticket transactions that are expired.
+    if (txClass == TX_BuyTicket && IsExpiredTx(tx, nextBlockHeight))
+        return state.DoS(100, false, REJECT_INVALID, "bad-txns-expired");
+
     // Reject votes before stake validation height.
     if (txClass == TX_Vote && nextBlockHeight < stakeValidationHeight)
         return state.DoS(100, false, REJECT_INVALID, "vote-too-early");
@@ -601,7 +616,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     // If the transaction is a ticket, ensure that it meets the next stake difficulty.
     if (txClass == TX_BuyTicket) {
         CBlock dummyBlock;
-        CAmount expectedStakeDifficulty =  CalculateNextRequiredStakeDifficulty(chainActive.Tip(),chainparams.GetConsensus());
+        CAmount expectedStakeDifficulty = CalculateNextRequiredStakeDifficulty(chainActive.Tip(),chainparams.GetConsensus());
         if (tx.vout[ticketStakeOutputIndex].nValue < expectedStakeDifficulty)
             return state.DoS(100, false, REJECT_INVALID, "insufficient-stake");
     }
@@ -686,7 +701,11 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
             fSpendsStake |= IsStakeTx(coin.txClass);
         }
 
-        CTxMemPoolEntry entry(ptx, nFees, nAcceptTime, chainActive.Height(),
+        // Make sure that the transaction has a valid acceptance height
+        if (nAcceptHeight <= 0)
+            nAcceptHeight = chainActive.Height();
+
+        CTxMemPoolEntry entry(ptx, nFees, nAcceptTime, static_cast<unsigned int>(nAcceptHeight),
                               fSpendsCoinbase, fSpendsStake, nSigOpsCost, lp);
         unsigned int nSize = entry.GetTxSize();
 
@@ -960,13 +979,13 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     return true;
 }
 
-/** (try to) add transaction to memory pool with a specified acceptance time **/
-static bool AcceptToMemoryPoolWithTime(const CChainParams& chainparams, CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx,
-                        bool* pfMissingInputs, int64_t nAcceptTime, std::list<CTransactionRef>* plTxnReplaced,
+/** (try to) add transaction to memory pool with a specified acceptance time and height **/
+static bool AcceptToMemoryPoolWithTimeAndHeight(const CChainParams& chainparams, CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx,
+                        bool* pfMissingInputs, int64_t nAcceptTime, int64_t nAcceptHeight, std::list<CTransactionRef>* plTxnReplaced,
                         bool bypass_limits, const CAmount nAbsurdFee)
 {
     std::vector<COutPoint> coins_to_uncache;
-    bool res = AcceptToMemoryPoolWorker(chainparams, pool, state, tx, pfMissingInputs, nAcceptTime, plTxnReplaced, bypass_limits, nAbsurdFee, coins_to_uncache);
+    bool res = AcceptToMemoryPoolWorker(chainparams, pool, state, tx, pfMissingInputs, nAcceptTime, nAcceptHeight, plTxnReplaced, bypass_limits, nAbsurdFee, coins_to_uncache);
     if (!res) {
         for (const COutPoint& hashTx : coins_to_uncache)
             pcoinsTip->Uncache(hashTx);
@@ -982,7 +1001,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
                         bool bypass_limits, const CAmount nAbsurdFee)
 {
     const CChainParams& chainparams = Params();
-    return AcceptToMemoryPoolWithTime(chainparams, pool, state, tx, pfMissingInputs, GetTime(), plTxnReplaced, bypass_limits, nAbsurdFee);
+    return AcceptToMemoryPoolWithTimeAndHeight(chainparams, pool, state, tx, pfMissingInputs, GetTime(), 0, plTxnReplaced, bypass_limits, nAbsurdFee);
 }
 
 bool ReadTransaction(CTransactionRef& tx, const CDiskTxPos &pos, uint256 &hashBlock) {
@@ -1874,18 +1893,19 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
         // restore inputs
         if (reorderedIndexes[i] > 0) { // not coinbases
             CTxUndo &txundo = blockUndo.vtxundo[reorderedIndexes[i]-1];
-            // in case of Vote tx, skip first vin, it is stakebase, see UpdateCoins
-            const auto& startIndex = ParseTxClass(tx) == ETxClass::TX_Vote ? voteStakeInputIndex : 0;
-            if (txundo.vprevout.size() != tx.vin.size() - startIndex) {
-                error("DisconnectBlock(): transaction and undo data inconsistent");
-                return DISCONNECT_FAILED;
-            }
-            for (unsigned int j = tx.vin.size(); j-- > startIndex;) {
-                const COutPoint &out = tx.vin[j].prevout;
-                int res = ApplyTxInUndo(std::move(txundo.vprevout[j - startIndex]), view, out);
-                if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
-                fClean = fClean && res != DISCONNECT_UNCLEAN;
-            }
+            // in case of Vote tx, skip altogether see UpdateCoins
+                // first vin, it is stakebase, see UpdateCoins
+                const auto& startIndex = ParseTxClass(tx) == ETxClass::TX_Vote ? voteStakeInputIndex : 0;
+                if (txundo.vprevout.size() != tx.vin.size() - startIndex) {
+                    error("DisconnectBlock(): transaction and undo data inconsistent");
+                    return DISCONNECT_FAILED;
+                }
+                for (unsigned int j = tx.vin.size(); j-- > startIndex;) {
+                    const COutPoint& out = tx.vin[j].prevout;
+                    int res = ApplyTxInUndo(std::move(txundo.vprevout[j - startIndex]), view, out);
+                    if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
+                    fClean = fClean && res != DISCONNECT_UNCLEAN;
+                }
             // At this point, all of txundo.vprevout should have been moved out.
         }
     }
@@ -2102,8 +2122,10 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         return error("%s: Consensus::CheckBlock: %s", __func__, FormatStateMessage(state));
 
     // verify that the view's current state corresponds to the previous block
+    // or, when tip has insuffiecient votes and a side chain is mined, check that previous is the one behind tip
+    // or builds on top of a side chain tip
     uint256 hashPrevBlock = pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash();
-    assert(hashPrevBlock == view.GetBestBlock());
+    assert(hashPrevBlock == view.GetBestBlock() || chainActive.Tip()->pprev == pindex->pprev || pindex->pprev->nHeight == chainActive.Height());
 
     // Special case for the genesis block, skipping connection of its transactions
     // (its coinbase is unspendable)
@@ -2247,6 +2269,11 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
             if (!tx.IsCoinBase())
             {
                 CAmount txfee = 0;
+                // auto txClass = ParseTxClass(tx);
+                // LogPrint(BCLog::ALL, "    - CheckTxInputs: %s , %d , vin[0]: %s n: %d -> %s\n", tx.GetHash().GetHex().c_str(),
+                //     txClass, tx.vin[0].prevout.hash.GetHex(), tx.vin[0].prevout.n, view.HaveCoinString(tx.vin[0].prevout).c_str());
+                
+                // LogPrint(BCLog::ALL, "    - CheckTxInputs: coinscacheview best block: %s\n", view.GetBestBlock().GetHex().c_str());
                 if (!Consensus::CheckTxInputs(tx, state, view, pindex->nHeight, txfee, chainparams)) {
                     return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), FormatStateMessage(state));
                 }
@@ -2351,19 +2378,21 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         setDirtyBlockIndex.insert(pindex);
     }
 
-    if (pindex->nHeight == 0) {
-        assert(pindex->pprev == nullptr);
-        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
-    }
-    else{
-        assert(pindex->pprev != nullptr);
-        assert(pindex->pprev->pstakeNode != nullptr);
+    // build stake node information if not already built by AcceptBlock
+    if (pindex->pstakeNode == nullptr) {
+        if (pindex->nHeight == 0) {
+            assert(pindex->pprev == nullptr);
+            pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+        } else {
+            assert(pindex->pprev != nullptr);
+            assert(pindex->pprev->pstakeNode != nullptr);
 
-        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus() );
-        if (pindex->pstakeNode == nullptr)
-            return state.DoS(100,
-                error("ConnectBlock(): FetchStakeNode - Failed to get Stake data"),
-                REJECT_INVALID, "bad-stake-data");
+            pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus());
+            if (pindex->pstakeNode == nullptr)
+                return state.DoS(100,
+                    error("ConnectBlock(): FetchStakeNode - Failed to get Stake data"),
+                    REJECT_INVALID, "bad-stake-data");
+        }
     }
 
     // if(pindex->GetStakePos().IsNull()){
@@ -2627,9 +2656,20 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
 
     if (disconnectpool) {
         // Save transactions to re-add to mempool at end of reorg
+        // Use regularTxs to allow reordering so that in:
+        // UpdateMempoolForReorg funding regular txs end up in front of ticket purchase txs
+        auto regularTxs = std::vector<CTransactionRef>{};
         for (auto it = block.vtx.rbegin(); it != block.vtx.rend(); ++it) {
+            if (!IsStakeTx(**it)) {
+                regularTxs.push_back(*it);
+                continue;
+            }
             disconnectpool->addTransaction(*it);
         }
+        for (const auto& tx : regularTxs){
+            disconnectpool->addTransaction(tx);
+        }
+
         while (disconnectpool->DynamicMemoryUsage() > MAX_DISCONNECTED_TX_POOL_SIZE * 1000) {
             // Drop the earliest entry, and remove its children from the mempool.
             auto it = disconnectpool->queuedTx.get<insertion_order>().begin();
@@ -2989,7 +3029,10 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
 
             bool fInvalidFound = false;
             std::shared_ptr<const CBlock> nullBlockPtr;
-            if (!ActivateBestChainStep(state, chainparams, pindexMostWork, pblock && pblock->GetHash() == pindexMostWork->GetBlockHash() ? pblock : nullBlockPtr, fInvalidFound, connectTrace))
+            // try activating a new block on top of most work chain or on a side chain forking on previous block to the tip
+            if (!ActivateBestChainStep(state, chainparams, pindexMostWork
+            , pblock && (pblock->GetHash() == pindexMostWork->GetBlockHash() || pblock->hashPrevBlock == pindexMostWork->pprev->GetBlockHash()) ? pblock : nullBlockPtr
+            , fInvalidFound, connectTrace))
                 return false;
 
             if (fInvalidFound) {
@@ -3021,16 +3064,23 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
     } while (pindexNewTip != pindexMostWork);
     CheckBlockIndex(chainparams.GetConsensus());
 
-    // remove expired mempool votes
-    if (fDiscardExpiredMempoolVotes) {
-        const auto& height = []()
-        {
-            LOCK(cs_main);
-            return chainActive.Height();
-        }();
+    const auto& height = []()
+    {
+        LOCK(cs_main);
+        return chainActive.Height();
+    }();
 
+    // remove expired ticket transactions
+    mempool.removeExpiredTickets(height, chainparams.GetConsensus());
+
+    // remove expired mempool votes
+    if (fDiscardExpiredMempoolVotes)
         mempool.removeExpiredVotes(height, chainparams.GetConsensus());
-    }
+
+    // notify wallet and other interested listeners.
+    // This should go after the mempool cleanup above, since the wallet
+    // relies on mempool presence for cleanup.
+    GetMainSignals().CleanupTransactions(height);
 
     // Write changes periodically to disk, after relay.
     if (!FlushStateToDisk(chainparams, state, FLUSH_STATE_PERIODIC)) {
@@ -3781,7 +3831,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
     int numYesVotes = 0;
 
     // Check that all transactions are finalized and that they aren't expired
-    for (auto i = 0; i < block.vtx.size(); i++) {
+    for (size_t i = 0; i < block.vtx.size(); i++) {
         if (!IsFinalTx(*block.vtx[i], nHeight, nLockTimeCutoff))
             return state.DoS(10, false, REJECT_INVALID, "bad-txns-nonfinal", false, "non-final transaction");
         if (IsExpiredTx(*block.vtx[i], nHeight))
@@ -4035,11 +4085,6 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
         return error("%s: %s", __func__, FormatStateMessage(state));
     }
 
-    // Header is valid/has work, merkle tree and segwit merkle tree are good...RELAY NOW
-    // (but if it does not build on our best tip, let the SendMessages loop relay it)
-    if (!IsInitialBlockDownload() && chainActive.Tip() == pindex->pprev)
-        GetMainSignals().NewPoWValidBlock(pindex, pblock);
-
     int nHeight = pindex->nHeight;
 
     // Write block to history file
@@ -4061,6 +4106,28 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
 
     if (fCheckForPruning)
         FlushStateToDisk(chainparams, state, FLUSH_STATE_NONE); // we just allocated more disk space for block files
+
+    // build the stake node information when a block is accepted, as it is needed in case a side chain tip is checked for votes
+    // either in autovoter, either in getblocktemplate rpc implementation
+    if (pindex->nHeight == 0) {
+        assert(pindex->pprev == nullptr);
+        pindex->pstakeNode = StakeNode::genesisNode(chainparams.GetConsensus());
+    } else {
+        assert(pindex->pprev != nullptr);
+        if (pindex->pprev->pstakeNode != nullptr) {
+
+        pindex->pstakeNode = FetchStakeNode(pindex, chainparams.GetConsensus());
+        if (pindex->pstakeNode == nullptr)
+            return state.DoS(100,
+                error("AcceptBlock(): FetchStakeNode - Failed to get Stake data"),
+                REJECT_INVALID, "bad-stake-data");
+        }
+    }
+
+    // Header is valid/has work, merkle tree and segwit merkle tree are good...RELAY NOW
+    // (but if it does not build on our best tip, let the SendMessages loop relay it)
+    if (!IsInitialBlockDownload() && (chainActive.Tip() == pindex->pprev || (chainActive.Tip()->pprev && chainActive.Tip()->pprev == pindex->pprev)) )
+        GetMainSignals().NewPoWValidBlock(pindex, pblock);
 
     return true;
 }
@@ -4100,7 +4167,8 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
 bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase)
 {
     AssertLockHeld(cs_main);
-    assert(pindexPrev && pindexPrev == chainActive.Tip());
+    // we expect building on top of the current tip, also on the previous in case current tip has insufficient votes, also on a side chain with same height as current tip
+    assert(pindexPrev && (pindexPrev == chainActive.Tip() || pindexPrev == chainActive.Tip()->pprev || pindexPrev->nHeight == chainActive.Height()));
     CCoinsViewCache viewNew(pcoinsTip);
     CBlockIndex indexDummy(block);
     indexDummy.pprev = pindexPrev;
@@ -5213,6 +5281,7 @@ int VersionBitsTipStateSinceHeight(const Consensus::Params& params, Consensus::D
 }
 
 static const uint64_t MEMPOOL_DUMP_VERSION = 1;
+static const uint64_t MEMPOOL_RESIDENCE_VERSION = 2;
 
 bool LoadMempool()
 {
@@ -5233,7 +5302,7 @@ bool LoadMempool()
     try {
         uint64_t version;
         file >> version;
-        if (version != MEMPOOL_DUMP_VERSION) {
+        if (version != MEMPOOL_DUMP_VERSION && version != MEMPOOL_RESIDENCE_VERSION) {
             return false;
         }
         uint64_t num;
@@ -5242,8 +5311,11 @@ bool LoadMempool()
             CTransactionRef tx;
             int64_t nTime;
             int64_t nFeeDelta;
+            int64_t nHeight = 0;
             file >> tx;
             file >> nTime;
+            if (version == MEMPOOL_RESIDENCE_VERSION)
+                file >> nHeight;
             file >> nFeeDelta;
 
             CAmount amountdelta = nFeeDelta;
@@ -5253,7 +5325,7 @@ bool LoadMempool()
             CValidationState state;
             if (nTime + nExpiryTimeout > nNow) {
                 LOCK(cs_main);
-                AcceptToMemoryPoolWithTime(chainparams, mempool, state, tx, nullptr /* pfMissingInputs */, nTime,
+                AcceptToMemoryPoolWithTimeAndHeight(chainparams, mempool, state, tx, nullptr /* pfMissingInputs */, nTime, nHeight,
                                            nullptr /* plTxnReplaced */, false /* bypass_limits */, 0 /* nAbsurdFee */);
                 if (state.IsValid()) {
                     ++count;
@@ -5306,13 +5378,14 @@ bool DumpMempool()
 
         CAutoFile file(filestr, SER_DISK, CLIENT_VERSION);
 
-        uint64_t version = MEMPOOL_DUMP_VERSION;
+        uint64_t version = MEMPOOL_RESIDENCE_VERSION;
         file << version;
 
         file << (uint64_t)vinfo.size();
         for (const auto& i : vinfo) {
             file << *(i.tx);
             file << (int64_t)i.nTime;
+            file << (int64_t)i.nHeight;
             file << (int64_t)i.nFeeDelta;
             mapDeltas.erase(i.tx->GetHash());
         }
@@ -5516,4 +5589,38 @@ std::shared_ptr<StakeNode> FetchStakeNode(CBlockIndex* pindex, const Consensus::
     }
 
     return pindex->pstakeNode;
+}
+
+std::set<CBlockIndex*, CompareBlocksByHeight> GetChainTips()
+{
+    /*
+     * Idea:  the set of chain tips is chainActive.tip, plus orphan blocks which do not have another orphan building off of them.
+     * Algorithm:
+     *  - Make one pass through mapBlockIndex, picking out the orphan blocks, and also storing a set of the orphan block's pprev pointers.
+     *  - Iterate through the orphan blocks. If the block isn't pointed to by another orphan, it is a chain tip.
+     *  - add chainActive.Tip()
+     */
+    std::set<CBlockIndex*, CompareBlocksByHeight> setTips;
+    std::set<CBlockIndex*> setOrphans;
+    std::set<const CBlockIndex*> setPrevs;
+
+    for (const auto& item : mapBlockIndex)
+    {
+        if (!chainActive.Contains(item.second)) {
+            setOrphans.insert(item.second);
+            setPrevs.insert(item.second->pprev);
+        }
+    }
+
+    for (auto it = setOrphans.begin(); it != setOrphans.end(); ++it)
+    {
+        if (setPrevs.erase(*it) == 0) {
+            setTips.insert(*it);
+        }
+    }
+
+    // Always report the currently active tip.
+    setTips.insert(chainActive.Tip());
+
+    return setTips;
 }

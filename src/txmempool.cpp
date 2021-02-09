@@ -390,7 +390,9 @@ bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry,
 
     const CTransaction& tx = newit->GetTx();
     std::set<uint256> setParentTransactions;
-    for (unsigned int i = 0; i < tx.vin.size(); i++) {
+    const auto& txClass =  ParseTxClass(tx);
+    const auto& startIndex = (txClass == TX_Vote) ? voteStakeInputIndex : 0; // first input in a vote is subsidy generation; skip it
+    for (unsigned int i = startIndex; i < tx.vin.size(); i++) {
         mapNextTx.insert(std::make_pair(&tx.vin[i].prevout, &tx));
         setParentTransactions.insert(tx.vin[i].prevout.hash);
     }
@@ -521,7 +523,10 @@ void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMem
             // So it's critical that we remove the tx and not depend on the LockPoints.
             txToRemove.insert(it);
         } else if (it->GetSpendsCoinbase() || it->GetSpendsStake()) {
-            for (const CTxIn& txin : tx.vin) {
+            const auto& txClass = ParseTxClass(tx);
+            const auto& startIndex = (txClass == TX_Vote) ? voteStakeInputIndex : 0; // first input in a vote is subsidy generation; skip it
+            for (unsigned int i = startIndex; i < tx.vin.size(); i++) {
+                const auto txin = tx.vin[i];
                 indexed_transaction_set::const_iterator it2 = mapTx.find(txin.prevout.hash);
                 if (it2 != mapTx.end())
                     continue;
@@ -597,7 +602,38 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
     blockSinceLastRollingFeeBump = true;
 }
 
-void CTxMemPool::removeExpiredVotes(const uint32_t currentHeight, const Consensus::Params& params)
+void CTxMemPool::removeExpiredTickets(const int currentHeight, const Consensus::Params& params)
+{
+    // When a ticket transaction is expired, it is remmoved from the mempool.
+    // This is a two sides process:
+    // 1. Remove the tickets that are expired by the transaction's nExpiry value;
+    // 2. Remove the tickets that have nExpiry set to zero and lingered in the mempool longer than acceptable.
+
+    if (!IsHybridConsensusForkEnabled(currentHeight, params))
+        return;
+
+    LOCK(cs);
+
+    // get the tickets
+    auto& tx_class_index = mapTx.get<tx_class>();
+    auto tickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+
+    CTxMemPool::setEntries txToRemove;
+    for (auto tickettxiter = tickets.first; tickettxiter != tickets.second; ++tickettxiter) {
+        const CTransaction& tx = tickettxiter->GetTx();
+        if (IsExpiredTx(tx, currentHeight + 1) || DidResidenceExpire(tx.nExpiry, static_cast<int>(tickettxiter->GetHeight()), currentHeight)) {
+            auto txiter = mapTx.project<0>(tickettxiter);
+
+            txToRemove.insert(txiter);
+
+            CalculateDescendants(txiter, txToRemove);
+        }
+    }
+
+    RemoveStaged(txToRemove, true, MemPoolRemovalReason::EXPIRY);
+}
+
+void CTxMemPool::removeExpiredVotes(const int currentHeight, const Consensus::Params& params)
 {
     // When a vote is lingering in the mempool for longer that the specified delay,
     // it is removed as it cannot be useful anymore. All its mempool descendants are
@@ -607,20 +643,21 @@ void CTxMemPool::removeExpiredVotes(const uint32_t currentHeight, const Consensu
         return;
 
     LOCK(cs);
+
     // get the votes
     auto& tx_class_index = mapTx.get<tx_class>();
     auto votes = tx_class_index.equal_range(ETxClass::TX_Vote);
 
     CTxMemPool::setEntries txToRemove;
     for (auto votetxiter = votes.first; votetxiter != votes.second; ++votetxiter) {
-        if (!IsHybridConsensusForkEnabled(votetxiter->GetHeight(), params))
+        if (!IsHybridConsensusForkEnabled(static_cast<int>(votetxiter->GetHeight()), params))
             continue;
 
         VoteData voteData;
         if (!ParseVote(votetxiter->GetTx(), voteData))
             continue;
 
-        if (voteData.blockHeight < currentHeight - params.nMempoolVoteExpiry) {
+        if (voteData.blockHeight < static_cast<unsigned int>(currentHeight) - params.nMempoolVoteExpiry) {
             auto txiter = mapTx.project<0>(votetxiter);
 
             txToRemove.insert(txiter);
@@ -847,7 +884,7 @@ void CTxMemPool::queryHashes(std::vector<uint256>& vtxid)
 }
 
 static TxMempoolInfo GetInfo(CTxMemPool::indexed_transaction_set::const_iterator it) {
-    return TxMempoolInfo{it->GetSharedTx(), it->GetTime(), CFeeRate(it->GetFee(), it->GetTxSize()), it->GetModifiedFee() - it->GetFee()};
+    return TxMempoolInfo{it->GetSharedTx(), it->GetTime(), it->GetHeight(), CFeeRate(it->GetFee(), it->GetTxSize()), it->GetModifiedFee() - it->GetFee()};
 }
 
 std::vector<TxMempoolInfo> CTxMemPool::infoAll() const
@@ -934,6 +971,16 @@ bool CTxMemPool::HasNoInputsOf(const CTransaction &tx) const
         if (exists(tx.vin[i].prevout.hash))
             return false;
     return true;
+}
+
+bool CTxMemPool::DidResidenceExpire(uint32_t txExpiry, int txHeight, int blockHeight) const
+{
+    return txExpiry == 0 && nMempoolResidence >= 0 && blockHeight >= txHeight + nMempoolResidence;
+}
+
+bool CTxMemPool::DidResidenceExpire(const CTxMemPoolEntry &tx, int blockHeight) const
+{
+    return DidResidenceExpire(tx.GetSharedTx()->nExpiry, static_cast<int>(tx.GetHeight()), blockHeight);
 }
 
 CCoinsViewMemPool::CCoinsViewMemPool(CCoinsView* baseIn, const CTxMemPool& mempoolIn) : CCoinsViewBacked(baseIn), mempool(mempoolIn) { }

@@ -7,6 +7,7 @@
 
 #include "ticketbuyerconfig.h"
 #include "util.h"
+#include "stake/staketx.h"
 
 CTicketBuyerConfig::CTicketBuyerConfig() :
     buyTickets(false),
@@ -15,7 +16,8 @@ CTicketBuyerConfig::CTicketBuyerConfig() :
     rewardAddress(CNoDestination()),
     poolFeeAddress(CNoDestination()),
     poolFees(0.0),
-    limit(1)
+    limit(1),
+    txExpiry(defaultTicketTxExpiry)
 {
 }
 
@@ -39,4 +41,14 @@ void CTicketBuyerConfig::ParseCommandline()
 
     if (gArgs.IsArgSet("-tbvotingaccount"))
         votingAccount = gArgs.GetArg("-tbvotingaccount", "");
+
+    if (gArgs.IsArgSet("-tbtxexpiry")) {
+        auto expiry = gArgs.GetArg("-tbtxexpiry", txExpiry);
+        if (expiry < ticketTxExpiryMin)
+            txExpiry = ticketTxExpiryMin;
+        else if (expiry > ticketTxExpiryMax)
+            txExpiry = ticketTxExpiryMax;
+        else
+            txExpiry = static_cast<int>(expiry);
+    }
 }

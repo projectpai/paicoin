@@ -490,8 +490,10 @@ BOOST_AUTO_TEST_CASE(ticket_purchase_estimated_sizes)
 
     BOOST_CHECK_EQUAL(GetEstimatedTicketContribTxOutSize(), 64U);
 
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(true), 552U);
-    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(false), 306U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(true), 556U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(false), 310U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(true, false), 552U);
+    BOOST_CHECK_EQUAL(GetEstimatedSizeOfBuyTicketTx(false, false), 306U);
 }
 
 // test the ticket ownership verification
@@ -850,7 +852,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
     const double vspFeePercent{5.0};
 
     // validate a single ticket, with or without VSP fee
-    auto checkTicket = [&](uint256 txHash, bool useVsp) {
+    auto checkTicket = [&](uint256 txHash, bool useVsp, uint32_t expiry) {
         // Transaction
 
         BOOST_CHECK(txHash != emptyData.hash);
@@ -860,6 +862,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         BOOST_CHECK(wtx->tx != nullptr);
         const CTransaction& tx = *(wtx->tx);
+
+        BOOST_CHECK(tx.nExpiry == expiry);
 
         // Inputs
 
@@ -947,7 +951,21 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         uint256 txHash = uint256S(txHashes[0]);
 
-        checkTicket(txHash, false);
+        checkTicket(txHash, false, 0);
+    }
+
+    // Single purchase, no VSP, expiry
+    {
+        txHashes.clear();
+
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 1, CNoDestination(), 0.0, chainActive.Height() + 100, feeRate);
+        BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
+
+        BOOST_CHECK_EQUAL(txHashes.size(), 1U);
+
+        uint256 txHash = uint256S(txHashes[0]);
+
+        checkTicket(txHash, false, static_cast<uint32_t>(chainActive.Height() + 100));
     }
 
     // Single purchase, with VSP
@@ -961,7 +979,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         uint256 txHash = uint256S(txHashes[0]);
 
-        checkTicket(txHash, true);
+        checkTicket(txHash, true, 0);
     }
 
     // Multiple purchase, no VSP
@@ -977,7 +995,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         for (unsigned int i = 0; i < numTickets; ++i) {
             uint256 txHash = uint256S(txHashes[i]);
-            checkTicket(txHash, false);
+            checkTicket(txHash, false, 0);
         }
     }
 
@@ -994,9 +1012,292 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
 
         for (unsigned int i = 0; i < numTickets; ++i) {
             uint256 txHash = uint256S(txHashes[i]);
-            checkTicket(txHash, true);
+            checkTicket(txHash, true, 0);
         }
     }
+
+    // Expiry verifications
+    {
+        txHashes.clear();
+
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 1, CNoDestination(), 0.0, chainActive.Height() + 0, feeRate);
+        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
+        BOOST_CHECK_EQUAL(txHashes.size(), 0);
+
+        std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 1, CNoDestination(), 0.0, chainActive.Height() + 1, feeRate);
+        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
+        BOOST_CHECK_EQUAL(txHashes.size(), 0);
+
+        {
+            std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 1, CNoDestination(), 0.0, chainActive.Height() + 2, feeRate);
+            BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
+
+            BOOST_CHECK_EQUAL(txHashes.size(), 1U);
+
+            uint256 txHash = uint256S(txHashes[0]);
+
+            checkTicket(txHash, false, static_cast<uint32_t>(chainActive.Height() + 2));
+
+            ExtendChain(1);
+
+            BOOST_CHECK(std::find_if(txsInMempoolBeforeLastBlock.begin(), txsInMempoolBeforeLastBlock.end(), [&txHash](const CTransactionRef entry) {
+                return entry->GetHash() == txHash;
+            }) != txsInMempoolBeforeLastBlock.end());
+        }
+
+        {
+            std::tie(txHashes, we) = wallet->PurchaseTicket("", spendLimit, 1, ticketKeyId, CNoDestination(), 100, CNoDestination(), 0.0, chainActive.Height() + 3, feeRate);
+            BOOST_CHECK_EQUAL(we.code, CWalletError::SUCCESSFUL);
+
+            BOOST_CHECK_EQUAL(txHashes.size(), 100U);
+
+            {
+                // tickets should be in the mempool
+
+                auto& tx_class_index = mempool.mapTx.get<tx_class>();
+                auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+
+                bool found = false;
+                for (auto tickettxiter = existingTickets.first; !found && (tickettxiter != existingTickets.second); ++tickettxiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), tickettxiter->GetSharedTx()->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(found);
+            }
+
+            ExtendChain(1);
+
+            {
+                // some tickets should still be in the mempool
+
+                auto& tx_class_index = mempool.mapTx.get<tx_class>();
+                auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+
+                bool found = false;
+                for (auto tickettxiter = existingTickets.first; !found && (tickettxiter != existingTickets.second); ++tickettxiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), tickettxiter->GetSharedTx()->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(found);
+            }
+
+            {
+                // block should contain some of the generated tickets
+
+                CBlock block;
+                BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
+
+                bool found = false;
+                for (auto ticketiter = block.vtx.begin(); !found && (ticketiter != block.vtx.end()); ++ticketiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), (*ticketiter)->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(found);
+            }
+
+            ExtendChain(1);
+
+            {
+                // tickets should not be in the mempool
+
+                auto& tx_class_index = mempool.mapTx.get<tx_class>();
+                auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+
+                bool found = false;
+                for (auto tickettxiter = existingTickets.first; !found && (tickettxiter != existingTickets.second); ++tickettxiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), tickettxiter->GetSharedTx()->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(!found);
+            }
+
+            {
+                // block should contain some of the generated tickets
+
+                CBlock block;
+                BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
+
+                bool found = false;
+                for (auto ticketiter = block.vtx.begin(); !found && (ticketiter != block.vtx.end()); ++ticketiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), (*ticketiter)->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(found);
+            }
+
+            ExtendChain(1);
+
+            {
+                // block tickets should not be from the generated ones
+
+                CBlock block;
+                BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
+
+                bool found = false;
+                for (auto ticketiter = block.vtx.begin(); !found && (ticketiter != block.vtx.end()); ++ticketiter)
+                    found = (std::find(txHashes.begin(), txHashes.end(), (*ticketiter)->GetHash().GetHex()) != txHashes.end());
+
+                BOOST_CHECK(!found);
+            }
+        }
+    }
+}
+
+// test the mempool removal of tickets with expired residence
+BOOST_FIXTURE_TEST_CASE(ticket_residence, WalletStakeTestingSetup)
+{
+    std::vector<std::string> txHashes;
+    CWalletError we;
+
+    auto ticketsInMempool = [](std::vector<std::string>& txHashes) -> bool {
+        auto& tx_class_index = mempool.mapTx.get<tx_class>();
+        auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+
+        bool found = (existingTickets.first != existingTickets.second);
+        for (auto tickettxiter = existingTickets.first; found && (tickettxiter != existingTickets.second); ++tickettxiter)
+            found = (std::find(txHashes.begin(), txHashes.end(), tickettxiter->GetSharedTx()->GetHash().GetHex()) != txHashes.end());
+
+        return found;
+    };
+
+    LOCK2(cs_main, wallet->cs_wallet);
+
+    CPubKey ticketPubKey;
+    BOOST_CHECK(wallet->GetKeyFromPool(ticketPubKey));
+    CTxDestination ticketKeyId = ticketPubKey.GetID();
+
+    // adjust the mempool residence for test purposes
+    nMempoolResidence = 10;
+
+    ExtendChain(consensus.nStakeEnabledHeight - chainActive.Height());
+
+    // purchase enough tickets with zero expiry to potentially surpass their residence expiration
+    const int numTickets = (consensus.nMaxFreshStakePerBlock + 5) * nMempoolResidence;
+    const int numTicketsPerSplitTx = nMempoolResidence;
+    for (int i = 0; i < numTickets/numTicketsPerSplitTx; ++i) {
+        std::vector<std::string> hashes;
+        std::tie(hashes, we) = wallet->PurchaseTicket("", 1000000, 1, ticketKeyId, CNoDestination(), static_cast<unsigned int>(numTicketsPerSplitTx), CNoDestination(), 0.0, 0);
+        txHashes.insert(txHashes.end(), hashes.begin(), hashes.end());
+    }
+
+    // these tickets should be in the mempool
+    BOOST_CHECK(ticketsInMempool(txHashes));
+
+    // Generate blocks until just before the mempool residence expiration for these tickets
+    ExtendChain(nMempoolResidence - 1);
+
+    // the tickets should still be in the mempool
+    BOOST_CHECK(ticketsInMempool(txHashes));
+
+    // Generate one more block, to reach mempool residence expiration
+    ExtendChain(1);
+
+    // the tickets should not be in the mempool anymore
+    BOOST_CHECK(!ticketsInMempool(txHashes));
+}
+
+// test the block template for low stake difficulty tickets filtration
+BOOST_FIXTURE_TEST_CASE(stake_difficulty_filtration, WalletStakeTestingSetup)
+{
+    LOCK2(cs_main, wallet->cs_wallet);
+
+    ExtendChain(consensus.nStakeEnabledHeight + 1 - chainActive.Height());
+
+    // create invalid tickets
+
+    std::vector<CMutableTransaction> tickets;
+
+    tickets.push_back(CreateTicketTx(10));
+    tickets.push_back(CreateTicketTx(100));
+    tickets.push_back(CreateTicketTx(10000));
+    tickets.push_back(CreateTicketTx(consensus.nMinimumStakeDiff - 1));
+
+    // add the tickets to the mempool
+
+    for (const auto& mtx: tickets)
+        AddToMempoolUnchecked(mtx);
+
+    auto& tx_class_index = mempool.mapTx.get<tx_class>();
+    auto mempoolTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+    for (auto tickettxiter = mempoolTickets.first; tickettxiter != mempoolTickets.second; ++tickettxiter) {
+        const uint256 ticketHash = tickettxiter->GetSharedTx()->GetHash();
+        BOOST_CHECK(std::find_if(tickets.begin(), tickets.end(), [&ticketHash] (const CMutableTransaction entry) {
+            return entry.GetHash() == ticketHash;
+        }) != tickets.end());
+    }
+
+    // generate the block
+
+    std::unique_ptr<CBlockTemplate> pblocktemplate = BlockAssembler(params).CreateNewBlock(coinbaseScriptPubKey);
+    const CBlock& block = pblocktemplate->block;
+
+    // verify the tickets presence
+
+    for (const auto& mtx: tickets) {
+        const uint256 mtxHash = mtx.GetHash();
+        BOOST_CHECK(std::find_if(block.vtx.begin(), block.vtx.end(), [&mtxHash] (const CTransactionRef entry) {
+            return entry->GetHash() == mtxHash;
+        }) == block.vtx.end());
+    }
+}
+
+// test the block template for low stake difficulty tickets filtration
+BOOST_FIXTURE_TEST_CASE(expiry_malleability, WalletStakeTestingSetup)
+{
+    auto isInMempool = [](const CMutableTransaction& tx) -> bool {
+        auto& tx_class_index = mempool.mapTx.get<tx_class>();
+        auto mempoolTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+        for (auto tickettxiter = mempoolTickets.first; tickettxiter != mempoolTickets.second; ++tickettxiter)
+            if (tx.GetHash() == tickettxiter->GetSharedTx()->GetHash())
+                return true;
+        return false;
+    };
+
+    LOCK2(cs_main, wallet->cs_wallet);
+
+    ExtendChain(consensus.nStakeEnabledHeight + 1 - chainActive.Height());
+
+    // create tickets
+
+    CMutableTransaction mtx = CreateTicketTx(consensus.nMinimumStakeDiff);
+
+    BOOST_CHECK(mtx.nVersion >= 3);
+
+    mtx.nExpiry = static_cast<uint32_t>(chainActive.Tip()->nHeight) + 123;
+
+    // add the tickets to the mempool
+
+    BOOST_CHECK(AddToMempoolUnchecked(mtx));
+
+    BOOST_CHECK(isInMempool(mtx));
+
+    // generate the block
+
+    std::unique_ptr<CBlockTemplate> pblocktemplate1 = BlockAssembler(params).CreateNewBlock(coinbaseScriptPubKey);
+    const CBlock& block1 = pblocktemplate1->block;
+
+    // verify the ticket's presence
+
+    uint256 mtxHash = mtx.GetHash();
+    BOOST_CHECK(std::find_if(block1.vtx.begin(), block1.vtx.end(), [&mtxHash] (const CTransactionRef entry) {
+        return entry->GetHash() == mtxHash;
+    }) != block1.vtx.end());
+
+    // create a duplicate ticket with different expiry
+
+    ++mtx.nExpiry;
+    mtxHash = mtx.GetHash();
+
+    BOOST_CHECK(AddToMempoolUnchecked(mtx));
+
+    BOOST_CHECK(isInMempool(mtx));
+
+    // try generating a new block
+
+    bool exceptionThrown = false;
+    try {
+        std::unique_ptr<CBlockTemplate> pblocktemplate2 = BlockAssembler(params).CreateNewBlock(coinbaseScriptPubKey);
+    }  catch (std::runtime_error e) {
+        exceptionThrown = true;
+         BOOST_CHECK(strstr(e.what(), "inputs missing/spent") != NULL);
+    }
+
+    BOOST_CHECK(exceptionThrown);
 }
 
 // test the ticket buyer
@@ -1036,6 +1337,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, WalletStakeTestingSetup)
     cfg.poolFees = 0.0;
     cfg.limit = 1;
     cfg.passphrase = "";
+    cfg.txExpiry = 3;
 
     // Coin availability
 
@@ -1073,6 +1375,10 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer, WalletStakeTestingSetup)
 
     // TODO: Add amount validation
     CheckTicket(*txsInMempoolBeforeLastBlock[1].get(), {TicketContribData(1, ticketKeyId, 0, 0, TicketContribData::DefaultFeeLimit)});
+
+    BOOST_CHECK(txsInMempoolBeforeLastBlock[1].get()->nExpiry == (chainActive.Tip()->nHeight - 2 + cfg.txExpiry));
+
+    cfg.txExpiry = defaultTicketTxExpiry;
 
     // Single ticket, VSP
 
@@ -1300,6 +1606,9 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK_THROW(CallRpc("setticketbuyermaxperblock"), std::runtime_error);
     BOOST_CHECK_NO_THROW(CallRpc("setticketbuyermaxperblock 5"));
 
+    BOOST_CHECK_THROW(CallRpc("setticketbuyerexpiry"), std::runtime_error);
+    BOOST_CHECK_NO_THROW(CallRpc("setticketbuyerexpiry 100"));
+
     BOOST_CHECK_EQUAL(cfg.buyTickets, false);
     BOOST_CHECK_EQUAL(cfg.account, "abc");
     BOOST_CHECK_EQUAL(cfg.maintain, 12300000000);
@@ -1308,6 +1617,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 5.0);
     BOOST_CHECK_EQUAL(cfg.limit, 5);
+    BOOST_CHECK_EQUAL(cfg.minConf, 1);
+    BOOST_CHECK_EQUAL(cfg.txExpiry, 100);
 
     // Settings (read)
 
@@ -1323,6 +1634,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "poolFees").get_real(), 5.0);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "limit").get_int(), 5);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "minConf").get_int(), 1);
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "expiry").get_int(), 100);
 
     // Start (with minimal settings)
 
@@ -1334,10 +1646,12 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK_EQUAL(cfg.account, "def");
     BOOST_CHECK_EQUAL(cfg.maintain, 12400000000);
     BOOST_CHECK_EQUAL(cfg.votingAccount, "");
-    BOOST_CHECK(cfg.votingAddress.which() == 0);
-    BOOST_CHECK(cfg.poolFeeAddress.which() == 0);
-    BOOST_CHECK_EQUAL(cfg.poolFees, 0.0);
-    BOOST_CHECK_EQUAL(cfg.limit, 1);
+    BOOST_CHECK(cfg.votingAddress == ticketKeyId);
+    BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
+    BOOST_CHECK_EQUAL(cfg.poolFees, 5.0);
+    BOOST_CHECK_EQUAL(cfg.limit, 5);
+    BOOST_CHECK_EQUAL(cfg.minConf, 1);
+    BOOST_CHECK_EQUAL(cfg.txExpiry, 100);
 
     // Start (with full settings)
 
@@ -1345,7 +1659,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, false);
 
-    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 \"\" votingaccount ") + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8"));
+    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 \"\" votingaccount ") + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8 120"));
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, true);
     BOOST_CHECK_EQUAL(cfg.account, "fromaccount");
@@ -1355,6 +1669,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 10.0);
     BOOST_CHECK_EQUAL(cfg.limit, 8);
+    BOOST_CHECK_EQUAL(cfg.minConf, 1);
+    BOOST_CHECK_EQUAL(cfg.txExpiry, 120);
 
     // Stop
 
@@ -1373,9 +1689,9 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
 
     BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124"), std::runtime_error);
     BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124 wrongP4ssword!"), std::runtime_error);
-    BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124 wrongP4ssword votingaccount " + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8"), std::runtime_error);
+    BOOST_CHECK_THROW(CallRpc("startticketbuyer def 124 wrongP4ssword votingaccount " + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8 120"), std::runtime_error);
 
-    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 ") + std::string(passphrase.c_str()) + " votingaccount " + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8"));
+    BOOST_CHECK_NO_THROW(CallRpc(std::string("startticketbuyer fromaccount 125 ") + std::string(passphrase.c_str()) + " votingaccount " + ticketAddress + " " + rewardAddress + " " + vspAddress + " 10.0 8 120"));
 
     BOOST_CHECK_EQUAL(cfg.buyTickets, true);
     BOOST_CHECK_EQUAL(cfg.account, "fromaccount");
@@ -1385,6 +1701,8 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
     BOOST_CHECK(cfg.poolFeeAddress == vspKeyId);
     BOOST_CHECK_EQUAL(cfg.poolFees, 10.0);
     BOOST_CHECK_EQUAL(cfg.limit, 8);
+    BOOST_CHECK_EQUAL(cfg.minConf, 1);
+    BOOST_CHECK_EQUAL(cfg.txExpiry, 120);
     BOOST_CHECK_EQUAL(cfg.passphrase, passphrase);
 
     tb->stop();

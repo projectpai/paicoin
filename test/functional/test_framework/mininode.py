@@ -54,6 +54,8 @@ NODE_WITNESS = (1 << 3)
 NODE_UNSUPPORTED_SERVICE_BIT_5 = (1 << 5)
 NODE_UNSUPPORTED_SERVICE_BIT_7 = (1 << 7)
 
+HARDFORK_VERSION_BIT = 0x80000000
+
 logger = logging.getLogger("TestFramework.mininode")
 
 # Keep our own socket map for asyncore, so that we can track disconnects
@@ -75,6 +77,11 @@ def sha256(s):
 
 def ripemd160(s):
     return hashlib.new('ripemd160', s).digest()
+
+def shake256(s):
+    hash = hashlib.new('shake_256', s).digest(512)
+    last = hash[-32:]
+    return last
 
 def hash256(s):
     return sha256(sha256(s))
@@ -108,6 +115,38 @@ def deser_string(f):
 def ser_string(s):
     return ser_compact_size(len(s)) + s
 
+def deser_uint48(f):
+    r = 0
+    for i in range(6):
+        t = struct.unpack("<B", f.read(1))[0]
+        r += t << (i * 8)
+    return r
+
+def ser_uint48(u):
+    rs = b""
+    for i in range(6):
+        rs += struct.pack("<B", u & 0xFF)
+        u >>= 8
+    return rs
+
+def deser_hexcode(s, bits):
+    r = ""
+    bytes = int(bits/8)
+    for i in range(bytes):
+        t = struct.unpack("<B", f.read(1))[0]
+        r += chr(t)
+    return r
+
+def ser_hexcode(s):
+    # some fields of block header are serialized by iterating each byte and outputing it as hex
+    # when switching to using the same GetHex mechanism as for uint256, please use (de)ser_uint48 or (de)ser_uint256
+    length = int(len(s)/2)
+    b = [int(s[n*2:n*2+2],16) for n in range(length)]
+    rs = b""
+    for i in range(length):
+        rs += struct.pack("<B", b[i] & 0xFF)
+    return rs
+
 def deser_uint256(f):
     r = 0
     for i in range(8):
@@ -115,14 +154,12 @@ def deser_uint256(f):
         r += t << (i * 32)
     return r
 
-
 def ser_uint256(u):
     rs = b""
     for i in range(8):
         rs += struct.pack("<I", u & 0xFFFFFFFF)
         u >>= 32
     return rs
-
 
 def uint256_from_str(s):
     r = 0
@@ -431,6 +468,7 @@ class CTransaction(object):
             self.vout = []
             self.wit = CTxWitness()
             self.nLockTime = 0
+            self.nExpiry = 0
             self.sha256 = None
             self.hash = None
         else:
@@ -438,6 +476,7 @@ class CTransaction(object):
             self.vin = copy.deepcopy(tx.vin)
             self.vout = copy.deepcopy(tx.vout)
             self.nLockTime = tx.nLockTime
+            self.nExpiry = tx.nExpiry
             self.sha256 = tx.sha256
             self.hash = tx.hash
             self.wit = copy.deepcopy(tx.wit)
@@ -459,6 +498,8 @@ class CTransaction(object):
             self.wit.vtxinwit = [CTxInWitness() for i in range(len(self.vin))]
             self.wit.deserialize(f)
         self.nLockTime = struct.unpack("<I", f.read(4))[0]
+        if self.nVersion >= 3:
+            self.nExpiry = struct.unpack("<I", f.read(4))[0]
         self.sha256 = None
         self.hash = None
 
@@ -468,6 +509,8 @@ class CTransaction(object):
         r += ser_vector(self.vin)
         r += ser_vector(self.vout)
         r += struct.pack("<I", self.nLockTime)
+        if self.nVersion >= 3:
+            r += struct.pack("<I", self.nExpiry)
         return r
 
     # Only serialize with witness when explicitly called for
@@ -491,6 +534,8 @@ class CTransaction(object):
                     self.wit.vtxinwit.append(CTxInWitness())
             r += self.wit.serialize()
         r += struct.pack("<I", self.nLockTime)
+        if self.nVersion >= 3:
+            r += struct.pack("<I", self.nExpiry)
         return r
 
     # Regular serialization is without witness -- must explicitly
@@ -522,8 +567,8 @@ class CTransaction(object):
         return True
 
     def __repr__(self):
-        return "CTransaction(nVersion=%i vin=%s vout=%s wit=%s nLockTime=%i)" \
-            % (self.nVersion, repr(self.vin), repr(self.vout), repr(self.wit), self.nLockTime)
+        return "CTransaction(nVersion=%i vin=%s vout=%s wit=%s nLockTime=%i nExpiry=%i)" \
+            % (self.nVersion, repr(self.vin), repr(self.vout), repr(self.wit), self.nLockTime, self.nExpiry)
 
 
 class CBlockHeader(object):
@@ -539,6 +584,15 @@ class CBlockHeader(object):
             self.nNonce = header.nNonce
             self.sha256 = header.sha256
             self.hash = header.hash
+            self.nStakeDifficulty = header.nStakeDifficulty
+            self.nVoteBits = header.nVoteBits
+            self.nTicketPoolSize = header.nTicketPoolSize
+            self.ticketLotteryState = header.ticketLotteryState
+            self.nVoters = header.nVoters
+            self.nFreshStake = header.nFreshStake
+            self.nRevocations = header.nRevocations
+            self.extraData = header.extraData
+            self.nStakeVersion = header.nStakeVersion
             self.calc_sha256()
 
     def set_null(self):
@@ -550,6 +604,15 @@ class CBlockHeader(object):
         self.nNonce = 0
         self.sha256 = None
         self.hash = None
+        self.nStakeDifficulty = 0
+        self.nVoteBits = 1#VoteBits::rttAccepted;
+        self.nTicketPoolSize = 0
+        self.ticketLotteryState = ""
+        self.nVoters = 0
+        self.nFreshStake = 0
+        self.nRevocations = 0
+        self.extraData = ""
+        self.nStakeVersion = 0
 
     def deserialize(self, f):
         self.nVersion = struct.unpack("<i", f.read(4))[0]
@@ -558,6 +621,16 @@ class CBlockHeader(object):
         self.nTime = struct.unpack("<I", f.read(4))[0]
         self.nBits = struct.unpack("<I", f.read(4))[0]
         self.nNonce = struct.unpack("<I", f.read(4))[0]
+        if self.nVersion & HARDFORK_VERSION_BIT:
+            self.nStakeDifficulty = struct.unpack("<q", f.read(8))[0]
+            self.nVoteBits= struct.unpack("<H", f.read(2))[0]
+            self.nTicketPoolSize= struct.unpack("<I", f.read(4))[0]
+            self.ticketLotteryState= deser_hexcode(self.ticketLotteryState,48) # when GetHex is used in paicoind use deser_uint48
+            self.nVoters= struct.unpack("<H", f.read(2))[0]
+            self.nFreshStake= struct.unpack("<B", f.read(1))[0]
+            self.nRevocations= struct.unpack("<B",  f.read(1))[0]
+            self.extraData= deser_hexcode(self.extraData,256) # when GetHex is used in paicoind use deser_uint256
+            self.nStakeVersion= struct.unpack("<I", f.read(4))[0]
         self.sha256 = None
         self.hash = None
 
@@ -569,6 +642,17 @@ class CBlockHeader(object):
         r += struct.pack("<I", self.nTime)
         r += struct.pack("<I", self.nBits)
         r += struct.pack("<I", self.nNonce)
+        # serialization of stake fields activates when Hybrid PoW/PoS deploys
+        if self.nVersion & HARDFORK_VERSION_BIT:
+            r += struct.pack("<q", self.nStakeDifficulty)
+            r += struct.pack("<H", self.nVoteBits)
+            r += struct.pack("<I", self.nTicketPoolSize)
+            r += ser_hexcode(self.ticketLotteryState) # when GetHex is used in paicoind use ser_uint48
+            r += struct.pack("<H", self.nVoters)
+            r += struct.pack("<B", self.nFreshStake)
+            r += struct.pack("<B", self.nRevocations)
+            r += ser_hexcode(self.extraData) # when GetHex is used in paicoind use ser_uint256
+            r += struct.pack("<I", self.nStakeVersion)
         return r
 
     def calc_sha256(self):
@@ -580,8 +664,22 @@ class CBlockHeader(object):
             r += struct.pack("<I", self.nTime)
             r += struct.pack("<I", self.nBits)
             r += struct.pack("<I", self.nNonce)
-            self.sha256 = uint256_from_str(hash256(r))
-            self.hash = encode(hash256(r)[::-1], 'hex_codec').decode('ascii')
+            if self.nVersion & HARDFORK_VERSION_BIT:
+                r += struct.pack("<q", self.nStakeDifficulty)
+                r += struct.pack("<H", self.nVoteBits)
+                r += struct.pack("<I", self.nTicketPoolSize)
+                r += ser_hexcode(self.ticketLotteryState) # when GetHex is used in paicoind use ser_uint48
+                r += struct.pack("<H", self.nVoters)
+                r += struct.pack("<B", self.nFreshStake)
+                r += struct.pack("<B", self.nRevocations)
+                r += ser_hexcode(self.extraData) # when GetHex is used in paicoind use ser_uint256
+                r += struct.pack("<I", self.nStakeVersion)
+                self.sha256 = uint256_from_str(shake256(r))
+                self.hash = encode(shake256(r)[::-1], 'hex_codec').decode('ascii')
+            else:
+                self.sha256 = uint256_from_str(hash256(r))
+                self.hash = encode(hash256(r)[::-1], 'hex_codec').decode('ascii')
+
 
     def rehash(self):
         self.sha256 = None

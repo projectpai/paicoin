@@ -15,6 +15,7 @@
 #include "wallet/coincontrol.h"
 #include "consensus/consensus.h"
 #include "consensus/validation.h"
+#include "consensus/tx_verify.h"
 #include "fs.h"
 #include "init.h"
 #include "key.h"
@@ -122,6 +123,52 @@ public:
 
     void operator()(const CNoDestination &none) {}
 };
+
+void CWallet::RemoveFromWtxOrdered(std::vector<uint256> hashes)
+{
+    // This is a 2 step process:
+    // 1. remove all the specified entries in the ordered list
+    // 2. reindex the remaining entries, considering that they are already ordered, but might have gaps because of the removal
+    // Also, update the global position cursor.
+
+    for (const uint256& hash: hashes) {
+        auto it = std::find_if(wtxOrdered.begin(), wtxOrdered.end(), [hash] (const std::pair<int64_t, TxPair>& entry) -> bool { return entry.second.first->GetHash() == hash; });
+        if (it != wtxOrdered.end())
+            wtxOrdered.erase(it);
+    }
+
+    nOrderPosNext = 0;
+    for (auto it = wtxOrdered.begin(); it != wtxOrdered.end(); ++it) {
+        if (it->first == nOrderPosNext) {
+            ++nOrderPosNext;
+            continue;
+        }
+
+        if (it->second.first != nullptr) {
+            CWalletTx* wtx = it->second.first;
+
+            wtxOrdered.erase(it);
+
+            wtx->nOrderPos = nOrderPosNext;
+            it = wtxOrdered.insert(std::make_pair(wtx->nOrderPos, TxPair(wtx, nullptr)));
+
+        } else if (it->second.second != nullptr) {
+            CAccountingEntry* accentry = it->second.second;
+
+            wtxOrdered.erase(it);
+
+            accentry->nOrderPos = nOrderPosNext;
+            it = wtxOrdered.insert(std::make_pair(accentry->nOrderPos, TxPair(nullptr, accentry)));
+
+        } else {
+            // this should not happen. Assert?
+        }
+
+        ++nOrderPosNext;
+    }
+
+    CWalletDB(*dbw).WriteOrderPosNext(nOrderPosNext);
+}
 
 const CWalletTx* CWallet::GetWalletTx(const uint256& hash) const
 {
@@ -451,6 +498,98 @@ void CWallet::SetBestChain(const CBlockLocator& loc)
     walletdb.WriteBestBlock(loc);
 }
 
+void CWallet::CleanupTransactions(const int height)
+{
+    // Remove all tickets and votes that are expired or no longer in main chain or mempool.
+
+    const Consensus::Params& cosensus = Params().GetConsensus();
+
+    if (!IsHybridConsensusForkEnabled(height, cosensus))
+        return;
+
+    if (IsInitialBlockDownload())
+        return;
+
+    std::vector<uint256> hashesIn, hashesOut;
+
+    LOCK2(cs_main, cs_wallet);
+    for (std::map<uint256, CWalletTx>::iterator it = mapWallet.begin(); it != mapWallet.end(); ++it) {
+        const CWalletTx& wtx = it->second;
+
+        if (wtx.tx->IsNull())
+            continue;
+
+        ETxClass txClass = ParseTxClass(*wtx.tx);
+        if (txClass != TX_BuyTicket && txClass != TX_Vote)
+            continue;
+
+        if (wtx.GetDepthInMainChain() > 0)
+            continue;
+
+        if (txClass == TX_BuyTicket && (IsExpiredTx(*wtx.tx, height + 1) || !wtx.InMempool())) {
+            hashesIn.push_back(wtx.GetHash());
+
+            if (!GetDescendants(wtx, hashesIn, true)) {
+                // descendants are in the blockchain or in mempool (assert?)
+            }
+        } else if (txClass == TX_Vote) {
+            VoteData voteData;
+
+            if (!ParseVote(*wtx.tx, voteData))
+                continue;
+
+            if (voteData.blockHeight < static_cast<unsigned int>(height) - cosensus.nMempoolVoteExpiry) {
+                hashesIn.push_back(wtx.GetHash());
+
+                if (!GetDescendants(wtx, hashesIn, true)) {
+                    // descendants are in the blockchain or in mempool (assert?)
+                }
+            }
+        }
+    }
+
+    if (!hashesIn.empty()) {
+        // cleanup the wallet txs
+        ZapSelectTx(hashesIn, hashesOut);
+
+        // recreate the wtx order
+        RemoveFromWtxOrdered(hashesOut);
+
+        // remove outputs from spends list
+        RemoveFromSpends(hashesOut);
+    }
+}
+
+bool CWallet::GetDescendants(const CWalletTx& wtx, std::vector<uint256>& descendants, bool checkLingering)
+{
+    AssertLockHeld(cs_wallet);
+
+    const uint256 hash = wtx.GetHash();
+
+    for (std::map<uint256, CWalletTx>::iterator it = mapWallet.begin(); it != mapWallet.end(); ++it) {
+        const CWalletTx& wtxi = it->second;
+
+        if (wtxi.tx->IsNull())
+            continue;
+
+        for (const CTxIn& txIn: wtxi.tx->vin) {
+            if (txIn.prevout.hash == hash) {
+                descendants.push_back(wtxi.tx->GetHash());
+
+                if (checkLingering && (wtxi.GetDepthInMainChain() > 0 || wtxi.InMempool()))
+                    return false;
+
+                if (!GetDescendants(wtxi, descendants, checkLingering))
+                    return false;
+
+                break; // matching one input is enough
+            }
+        }
+    }
+
+    return true;
+}
+
 bool CWallet::SetMinVersion(enum WalletFeature nVersion, CWalletDB* pwalletdbIn, bool fExplicit)
 {
     LOCK(cs_wallet); // nWalletVersion
@@ -559,6 +698,16 @@ void CWallet::SyncMetaData(std::pair<TxSpends::iterator, TxSpends::iterator> ran
         // nOrderPos not copied on purpose
         // cached members not copied on purpose
     }
+}
+
+void CWallet::RemoveFromSpends(const std::vector<uint256>& hashes)
+{
+    for (const uint256& hash: hashes)
+        for (auto it = mapTxSpends.begin(); it != mapTxSpends.end(); )
+            if (it->second == hash || it->first.hash == hash)
+                it = mapTxSpends.erase(it);
+            else
+                ++it;
 }
 
 /**
@@ -1273,17 +1422,22 @@ isminetype CWallet::IsMine(const CTxIn &txin) const
 
 // Note that this function doesn't distinguish between a 0-valued input,
 // and a not-"is mine" (according to the filter) input.
-CAmount CWallet::GetDebit(const CTxIn &txin, const isminefilter& filter) const
+CAmount CWallet::GetDebit(const ETxClass txClass, const CTxIn &txIn, const isminefilter& filter) const
 {
+    // Vote and revocation funding inputs are not considered debit
+    // because they spend and output that is also not considered credit
+    if (txClass == TX_Vote || txClass == TX_RevokeTicket)
+        return 0;
+
     {
         LOCK(cs_wallet);
-        std::map<uint256, CWalletTx>::const_iterator mi = mapWallet.find(txin.prevout.hash);
+        std::map<uint256, CWalletTx>::const_iterator mi = mapWallet.find(txIn.prevout.hash);
         if (mi != mapWallet.end())
         {
             const CWalletTx& prev = (*mi).second;
-            if (txin.prevout.n < prev.tx->vout.size())
-                if (IsMine(prev.tx->vout[txin.prevout.n]) & filter)
-                    return prev.tx->vout[txin.prevout.n].nValue;
+            if (txIn.prevout.n < prev.tx->vout.size())
+                if (IsMine(prev.tx->vout[txIn.prevout.n]) & filter)
+                    return prev.tx->vout[txIn.prevout.n].nValue;
         }
     }
     return 0;
@@ -1298,7 +1452,16 @@ CAmount CWallet::GetCredit(const CTxOut& txout, const isminefilter& filter) cons
 {
     if (!MoneyRange(txout.nValue))
         throw std::runtime_error(std::string(__func__) + ": value out of range");
+    // only consider the credit if it's spendable by regular transactions
     return ((IsMine(txout) & filter) ? txout.nValue : 0);
+}
+
+CAmount CWallet::GetCredit(const ETxClass txClass, const uint32_t txIndex, const CTxOut& txout, const isminefilter& filter) const
+{
+    if (!MoneyRange(txout.nValue))
+        throw std::runtime_error(std::string(__func__) + ": value out of range");
+    // only consider the credit if it's spendable by regular transactions
+    return ((IsStakeTxOutSpendableByRegularTx(txClass, txIndex) && (IsMine(txout) & filter)) ? txout.nValue : 0);
 }
 
 bool CWallet::IsChange(const CTxOut& txout) const
@@ -1345,10 +1508,11 @@ bool CWallet::IsFromMe(const CTransaction& tx) const
 
 CAmount CWallet::GetDebit(const CTransaction& tx, const isminefilter& filter) const
 {
+    ETxClass txClass = ParseTxClass(tx);
     CAmount nDebit = 0;
     for (const CTxIn& txin : tx.vin)
     {
-        nDebit += GetDebit(txin, filter);
+        nDebit += GetDebit(txClass, txin, filter);
         if (!MoneyRange(nDebit))
             throw std::runtime_error(std::string(__func__) + ": value out of range");
     }
@@ -1378,10 +1542,11 @@ bool CWallet::IsAllFromMe(const CTransaction& tx, const isminefilter& filter) co
 
 CAmount CWallet::GetCredit(const CTransaction& tx, const isminefilter& filter) const
 {
+    ETxClass txClass = ParseTxClass(tx);
     CAmount nCredit = 0;
-    for (const CTxOut& txout : tx.vout)
+    for (uint32_t i = 0; i < tx.vout.size(); ++i)
     {
-        nCredit += GetCredit(txout, filter);
+        nCredit += GetCredit(txClass, i, tx.vout[i], filter);
         if (!MoneyRange(nCredit))
             throw std::runtime_error(std::string(__func__) + ": value out of range");
     }
@@ -1912,6 +2077,8 @@ std::pair<std::vector<std::string>, CWalletError> CWallet::PurchaseTicket(std::s
 
         CMutableTransaction mTicketTx;
 
+        mTicketTx.nExpiry = static_cast<uint32_t>(expiry);
+
         // inputs
 
         if (useVsp) {
@@ -2061,20 +2228,8 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
 
     LOCK2(cs_main, cs_wallet);
 
-    const CBlockIndex* chainTip = chainActive.Tip();
-
     if (IsLocked()) {
         error.Load(CWalletError::WALLET_UNLOCK_NEEDED, "Please enter the wallet passphrase with walletpassphrase first");
-        return std::make_pair(voteHash, error);
-    }
-
-    if (blockHash != chainTip->GetBlockHash()) {
-        error.Load(CWalletError::INVALID_PARAMETER, "Invalid block hash (different than the hash of the previous block)");
-        return std::make_pair(voteHash, error);
-    }
-
-    if (blockHeight != chainTip->nHeight) {
-        error.Load(CWalletError::INVALID_PARAMETER, "Invalid block height (different than the height of the previous block)");
         return std::make_pair(voteHash, error);
     }
 
@@ -2112,8 +2267,19 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
         return std::make_pair(voteHash, error);
     }
 
-    if (std::find(chainTip->pstakeNode->Winners().begin(), chainTip->pstakeNode->Winners().end(), ticket->GetHash()) == chainTip->pstakeNode->Winners().end()) {
-        error.Load(CWalletError::INVALID_ADDRESS_OR_KEY, "Ticket is not selected to vote in this block");
+    // verify the voted block and it's winners
+    if (mapBlockIndex.count(blockHash) == 0) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Block not found");
+        return std::make_pair(voteHash, error);
+    }
+    const CBlockIndex* const blockIndex = mapBlockIndex[blockHash];
+    if (blockHeight != blockIndex->nHeight) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Invalid block height (different than the actual height of the specified block)");
+        return std::make_pair(voteHash, error);
+    }
+    if (blockIndex->pstakeNode != nullptr
+            && std::find(blockIndex->pstakeNode->Winners().begin(), blockIndex->pstakeNode->Winners().end(), ticket->GetHash()) == blockIndex->pstakeNode->Winners().end()) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Ticket is not selected to vote in this block");
         return std::make_pair(voteHash, error);
     }
 
@@ -2131,7 +2297,7 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
     // funds
 
     const CAmount& ticketPrice = ticket->vout[ticketStakeOutputIndex].nValue;
-    const CAmount& voteSubsidy = GetVoterSubsidy(chainTip->nHeight + 1, consensus);
+    const CAmount& voteSubsidy = GetVoterSubsidy(blockHeight + 1, consensus);
 
     // rewards
 
@@ -2499,6 +2665,8 @@ void CWalletTx::GetAmounts(std::list<COutputEntry>& listReceived,
         nFee = nDebit - nValueOut;
     }
 
+    ETxClass txClass = ParseTxClass(*tx);
+
     // Sent/received.
     for (unsigned int i = 0; i < tx->vout.size(); ++i)
     {
@@ -2533,7 +2701,8 @@ void CWalletTx::GetAmounts(std::list<COutputEntry>& listReceived,
             listSent.push_back(output);
 
         // If we are receiving the output, add it as a "received" entry
-        if (fIsMine & filter)
+        // Only allow outputs that are spendable by regular transactions
+        if (IsStakeTxOutSpendableByRegularTx(txClass, i) && (fIsMine & filter))
             listReceived.push_back(output);
     }
 
@@ -2765,6 +2934,41 @@ CAmount CWalletTx::GetCredit(const isminefilter& filter) const
     return credit;
 }
 
+CAmount CWalletTx::GetStakedCredit(bool fUseCache) const
+{
+    if (pwallet == nullptr)
+        return 0;
+
+    // Must wait until the ticket purchase transaction is safely deep enough in the chain before valuing it
+    if (GetBlocksToMaturity() > 0)
+        return 0;
+
+    if (fUseCache && fStakedCreditCached)
+        return nStakedCreditCached;
+
+    // Only ticket purchases can stake
+    ETxClass txClass = ParseTxClass(*tx);
+    if (txClass != TX_BuyTicket)
+        return 0;
+
+    // Stake output must be valid
+    if (tx->vout.size() < ticketStakeOutputIndex + 1 || !MoneyRange(tx->vout[ticketStakeOutputIndex].nValue))
+        return 0;
+
+    // Stake output must not be spent
+    if (pwallet->IsSpent(GetHash(), ticketStakeOutputIndex))
+        return 0;
+
+    CAmount nStakedCredit = pwallet->GetCredit(tx->vout[ticketStakeOutputIndex], ISMINE_SPENDABLE);
+    if (!MoneyRange(nStakedCredit))
+        throw std::runtime_error(std::string(__func__) + " : value out of range");
+
+    nStakedCreditCached = nStakedCredit;
+    fStakedCreditCached = true;
+
+    return nStakedCredit;
+}
+
 CAmount CWalletTx::GetImmatureCredit(bool fUseCache) const
 {
     if (((IsCoinBase() || IsStakeTx(*tx)) && GetBlocksToMaturity() > 0) && IsInMainChain())
@@ -2789,7 +2993,8 @@ CAmount CWalletTx::GetAvailableCredit(bool fUseCache) const
         return 0;
 
     // Must wait until stake transaction is safely deep enough in the chain before valuing it
-    if (IsStakeTx(*tx) && GetBlocksToMaturity() > 0)
+    ETxClass txClass = ParseTxClass(*tx);
+    if (IsStakeTx(txClass) && GetBlocksToMaturity() > 0)
         return 0;
 
     if (fUseCache && fAvailableCreditCached)
@@ -2801,8 +3006,7 @@ CAmount CWalletTx::GetAvailableCredit(bool fUseCache) const
     {
         if (!pwallet->IsSpent(hashTx, i))
         {
-            const CTxOut &txout = tx->vout[i];
-            nCredit += pwallet->GetCredit(txout, ISMINE_SPENDABLE);
+            nCredit += pwallet->GetCredit(txClass, i, tx->vout[i], ISMINE_SPENDABLE);
             if (!MoneyRange(nCredit))
                 throw std::runtime_error(std::string(__func__) + " : value out of range");
         }
@@ -2837,7 +3041,8 @@ CAmount CWalletTx::GetAvailableWatchOnlyCredit(const bool& fUseCache) const
         return 0;
 
     // Must wait until stake transaction is safely deep enough in the chain before valuing it
-    if (IsStakeTx(*tx) && GetBlocksToMaturity() > 0)
+    ETxClass txClass = ParseTxClass(*tx);
+    if (IsStakeTx(txClass) && GetBlocksToMaturity() > 0)
         return 0;
 
     if (fUseCache && fAvailableWatchCreditCached)
@@ -2848,8 +3053,7 @@ CAmount CWalletTx::GetAvailableWatchOnlyCredit(const bool& fUseCache) const
     {
         if (!pwallet->IsSpent(GetHash(), i))
         {
-            const CTxOut &txout = tx->vout[i];
-            nCredit += pwallet->GetCredit(txout, ISMINE_WATCH_ONLY);
+            nCredit += pwallet->GetCredit(txClass, i, tx->vout[i], ISMINE_WATCH_ONLY);
             if (!MoneyRange(nCredit))
                 throw std::runtime_error(std::string(__func__) + ": value out of range");
         }
@@ -2996,6 +3200,71 @@ CAmount CWallet::GetBalance() const
     return nTotal;
 }
 
+void CWallet::GetStakedBalances(CAmount& total, CAmount& mempool, CAmount& immature, CAmount& live, CAmount& voted, CAmount& missed, CAmount& expired, CAmount& revoked) const
+{
+    const Consensus::Params& consensus = Params().GetConsensus();
+    CWalletTx spendingWtx;
+
+    total = mempool = immature = live = voted = missed = expired = revoked = 0;
+
+    LOCK2(cs_main, cs_wallet);
+
+    auto stakeNode = chainActive.Tip()->pstakeNode;
+
+    for (std::map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+    {
+        const CWalletTx* wtx = &(*it).second;
+        const CTransactionRef tx = wtx->tx;
+        if (wtx->IsTrusted()) {
+            // Only ticket purchases can stake
+            ETxClass txClass = ParseTxClass(*tx);
+            if (txClass != TX_BuyTicket)
+                continue;
+
+            // Stake output must be valid
+            if (tx->vout.size() < ticketStakeOutputIndex + 1 || !MoneyRange(tx->vout[ticketStakeOutputIndex].nValue))
+                continue;
+
+            CAmount stakedCredit = GetCredit(tx->vout[ticketStakeOutputIndex], ISMINE_SPENDABLE);
+            if (!MoneyRange(stakedCredit))
+                throw std::runtime_error(std::string(__func__) + " : value out of range");
+
+            total += stakedCredit;
+
+            if (wtx->InMempool())
+                mempool += stakedCredit;
+
+            if (wtx->GetDepthInMainChain() < consensus.nTicketMaturity)
+                immature += stakedCredit;
+
+            const uint256& hash = tx->GetHash();
+
+            if (IsSpent(hash, ticketStakeOutputIndex, &spendingWtx)) {
+                switch (ParseTxClass(*spendingWtx.tx)) {
+                case TX_Vote:
+                    voted += stakedCredit;
+                    break;
+                case TX_RevokeTicket:
+                    revoked += stakedCredit;
+                    break;
+                default:
+                    throw std::runtime_error(std::string(__func__) + " : ticket " + hash.GetHex() + " spent by illegal transaction");
+                    break;
+                }
+            }
+
+            if (stakeNode->ExistsLiveTicket(hash))
+                live += stakedCredit;
+
+            if (stakeNode->ExistsMissedTicket(hash))
+                missed += stakedCredit;
+
+            if (stakeNode->ExistsExpiredTicket(hash))
+                expired += stakedCredit;
+        }
+    }
+}
+
 CAmount CWallet::GetUnconfirmedBalance() const
 {
     CAmount nTotal = 0;
@@ -3128,6 +3397,82 @@ CAmount CWallet::GetAvailableBalance(const CCoinControl* coinControl) const
     return balance;
 }
 
+void CWallet::GetRewardsAndRefunds(CAmount& rewards, CAmount& refunds) const
+{
+    rewards = refunds = 0;
+
+    LOCK2(cs_main, cs_wallet);
+
+    for (std::map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+    {
+        const CWalletTx* wtx = &(*it).second;
+        const CTransactionRef tx = wtx->tx;
+        if (wtx->IsTrusted()) {
+            ETxClass txClass = ParseTxClass(*tx);
+
+            if (txClass == TX_Vote) {
+                for (size_t i = voteRewardOutputIndex; i < tx->vout.size(); ++i) {
+                    const CTxOut& txOut = tx->vout[i];
+                    if (IsMine(txOut) & ISMINE_ALL)
+                        rewards += txOut.nValue;
+                }
+
+            } else if (txClass == TX_RevokeTicket) {
+                for (size_t i = revocationRefundOutputIndex; i < tx->vout.size(); ++i) {
+                    const CTxOut& txOut = tx->vout[i];
+                    if (IsMine(txOut) & ISMINE_ALL)
+                        refunds += txOut.nValue;
+                }
+            }
+        }
+    }
+}
+
+CAmount CWallet::GetMinedFunds() const
+{
+    CAmount mined = 0;
+
+    LOCK2(cs_main, cs_wallet);
+
+    for (std::map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+    {
+        const CWalletTx* wtx = &(*it).second;
+        const CTransactionRef tx = wtx->tx;
+        if (wtx->IsTrusted() && tx->IsCoinBase())
+            for (auto txOut: tx->vout)
+                if (IsMine(txOut) & ISMINE_ALL)
+                    mined += txOut.nValue;
+    }
+
+    return mined;
+}
+
+CAmount CWallet::GetTotalFees() const
+{
+    CAmount totalFee{0};
+
+    LOCK2(cs_main, cs_wallet);
+
+    for (std::map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+    {
+        const CWalletTx* wtx = &(*it).second;
+        const CTransactionRef tx = wtx->tx;
+        if (wtx->IsTrusted()) {
+            CAmount fee{0};
+            std::string account;
+            std::list<COutputEntry> received;
+            std::list<COutputEntry> send;
+
+            wtx->GetAmounts(received, send, fee, account, ISMINE_ALL);
+
+            if (MoneyRange(fee))
+                totalFee += fee;
+        }
+    }
+
+    return totalFee;
+}
+
 void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const CCoinControl *coinControl, const CAmount &nMinimumAmount, const CAmount &nMaximumAmount, const CAmount &nMinimumSumAmount, const uint64_t &nMaximumCount, const int &nMinDepth, const int &nMaxDepth) const
 {
     vCoins.clear();
@@ -3223,7 +3568,8 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
 
                 // A stake transaction output is spendable by regular transactions only in some cases,
                 // such as if it is a ticket purchase change, a vote reward or revocation refund
-                const auto& bSpendableByRegularTx = ((!IsStakeTx(*pcoin->tx)) || IsStakeTxOutSpendableByRegularTx(*pcoin->tx, i));
+                const auto txClass = ParseTxClass(*pcoin->tx);
+                const auto bSpendableByRegularTx = ((!IsStakeTx(txClass)) || IsStakeTxOutSpendableByRegularTx(txClass, i));
 
                 bool fSpendableIn = bSpendableByRegularTx && (((mine & ISMINE_SPENDABLE) != ISMINE_NO) || (coinControl && coinControl->fAllowWatchOnly && (mine & ISMINE_WATCH_SOLVABLE) != ISMINE_NO));
                 bool fSolvableIn = (mine & (ISMINE_SPENDABLE | ISMINE_WATCH_SOLVABLE)) != ISMINE_NO;

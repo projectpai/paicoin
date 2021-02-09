@@ -12,13 +12,13 @@
 #define CLIENT_VERSION_BUILD 0
 
 /* Version is release */
-#define CLIENT_VERSION_IS_RELEASE false
+#define CLIENT_VERSION_IS_RELEASE true
 
 /* Major version */
 #define CLIENT_VERSION_MAJOR 2
 
 /* Minor version */
-#define CLIENT_VERSION_MINOR 0
+#define CLIENT_VERSION_MINOR 2
 
 /* Build revision */
 #define CLIENT_VERSION_REVISION 0

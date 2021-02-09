@@ -185,6 +185,7 @@ struct CMutableTransaction;
  * - std::vector<CTxIn> vin
  * - std::vector<CTxOut> vout
  * - uint32_t nLockTime
+ * - uint32_t nExpiry (if nVersion >= 3)
  *
  * Extended transaction serialization format:
  * - int32_t nVersion
@@ -195,6 +196,7 @@ struct CMutableTransaction;
  * - if (flags & 1):
  *   - CTxWitness wit;
  * - uint32_t nLockTime
+ * - uint32_t nExpiry (if nVersion >= 3)
  */
 template<typename Stream, typename TxType>
 inline void UnserializeTransaction(TxType& tx, Stream& s) {
@@ -229,11 +231,10 @@ inline void UnserializeTransaction(TxType& tx, Stream& s) {
         throw std::ios_base::failure("Unknown transaction optional data");
     }
     s >> tx.nLockTime;
-    // if (tx.nVersion > 4) {
-    //     s >> tx.nExpiry;
-    // } else {
+    if (tx.nVersion >= 3)
+        s >> tx.nExpiry;
+    else
         tx.nExpiry = 0;
-    // }
 }
 
 template<typename Stream, typename TxType>
@@ -263,9 +264,8 @@ inline void SerializeTransaction(const TxType& tx, Stream& s) {
         }
     }
     s << tx.nLockTime;
-    // if (tx.nVersion > 4) {
-    //     s << tx.nExpiry;
-    // }
+    if (tx.nVersion >= 3)
+        s << tx.nExpiry;
 }
 
 
@@ -282,7 +282,7 @@ public:
     // adapting relay policy by bumping MAX_STANDARD_VERSION, and then later date
     // bumping the default CURRENT_VERSION at which point both CURRENT_VERSION and
     // MAX_STANDARD_VERSION will be equal.
-    static const int32_t MAX_STANDARD_VERSION=2;
+    static const int32_t MAX_STANDARD_VERSION=3;
 
     // The local variables are made const to prevent unintended modification
     // without updating the cached hash value. However, CTransaction is not

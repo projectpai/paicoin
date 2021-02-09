@@ -385,30 +385,39 @@ Wallet options:
        address.
 
   -tbrewardaddress
-     Specify the address to be used when sending the reward. The voter or revoker
-     will send the reward or refund to this address.
+       Specify the address to be used when sending the reward. The voter or revoker
+       will send the reward or refund to this address.
 
   -tblimit
        The maximum number of tickets to purchase in one batch.
 
   -tbvotingaccount
        Specify the account to be used for voting.
+       
+  -tbtxexpiry
+       Specifies the height after which the ticket transaction still in the mempool
+       is expired and can be removed from the mempool.
 
   -autovote
        Enable the automatic voter. This is going to send the votes for the tickets
        belonging to the wallet as soon as they are selected as winners.
 
   -autorevoke
-     Enable the automatic revoker. As soon as a ticket becomes expired or missed,
-     the automatic revoker creates and publishes a transaction that is unlocking the
-     staked funds.
+       Enable the automatic revoker. As soon as a ticket becomes expired or missed,
+       the automatic revoker creates and publishes a transaction that is unlocking the
+       staked funds.
      
   -discardexpiredmempoolvotes
-     Enable or disable the mempool vote expiration. When a vote in mempool doesn't
-     make it into a block, it becomes missed and after a delay expired. Once expired
-     it can be discarded from the mempool. This flag enables or disables this mechanism.
-     Disabling this mechanism leaves the vote in mempool indefinitely. Please note that
-     this can crowd the mempool if multiple such votes linger.
+       Enable or disable the mempool vote expiration. When a vote in mempool doesn't
+       make it into a block, it becomes missed and after a delay expired. Once expired
+       it can be discarded from the mempool. This flag enables or disables this mechanism.
+       Disabling this mechanism leaves the vote in mempool indefinitely. Please note that
+       this can crowd the mempool if multiple such votes linger.
+     
+  -mempoolresidence
+       Specifies the number of blocks to keep a transaction in the mempool when its
+       expiration value is set to zero. This interval is calculated from the height the
+       transaction entered the mempool. Only applies to tickets for now.
 
 Debugging/Testing options:
 

@@ -575,21 +575,26 @@ BOOST_FIXTURE_TEST_CASE(vote_transaction, WalletStakeTestingSetup)
 
         ExtendChain(consensus.nStakeValidationHeight - chainActive.Height());
 
-        // block hash
-        std::tie(voteHashStr, we) = wallet->Vote(chainActive.Tip()->GetBlockHash(), emptyData.hash, chainActive.Tip()->nHeight, VoteBits::allRejected, extendedVoteBitsData.empty);
-        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
-        std::tie(voteHashStr, we) = wallet->Vote(chainActive.Tip()->GetBlockHash(), chainActive.Tip()->pprev->GetBlockHash(), chainActive.Tip()->nHeight, VoteBits::allRejected, extendedVoteBitsData.empty);
-        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
-
-        // block height
-        std::tie(voteHashStr, we) = wallet->Vote(chainActive.Tip()->GetBlockHash(), chainActive.Tip()->GetBlockHash(), chainActive.Tip()->nHeight - 1, VoteBits::allRejected, extendedVoteBitsData.empty);
-        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
-        std::tie(voteHashStr, we) = wallet->Vote(chainActive.Tip()->GetBlockHash(), chainActive.Tip()->GetBlockHash(), chainActive.Tip()->nHeight + 1, VoteBits::allRejected, extendedVoteBitsData.empty);
-        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
-
         // ticket
         std::tie(voteHashStr, we) = wallet->Vote(chainActive.Tip()->GetBlockHash(), chainActive.Tip()->GetBlockHash(), chainActive.Tip()->nHeight, VoteBits::allRejected, extendedVoteBitsData.empty);
         BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_ADDRESS_OR_KEY);
+
+        BOOST_CHECK(chainActive.Tip()->pstakeNode->Winners().size() > 0);
+
+        const uint256 ticketHash = chainActive.Tip()->pstakeNode->Winners()[0];
+        BOOST_CHECK(ticketHash != emptyData.hash);
+
+        // block hash
+        std::tie(voteHashStr, we) = wallet->Vote(ticketHash, emptyData.hash, chainActive.Tip()->nHeight, VoteBits::allRejected, extendedVoteBitsData.empty);
+        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
+        std::tie(voteHashStr, we) = wallet->Vote(ticketHash, chainActive.Tip()->pprev->GetBlockHash(), chainActive.Tip()->nHeight, VoteBits::allRejected, extendedVoteBitsData.empty);
+        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
+
+        // block height
+        std::tie(voteHashStr, we) = wallet->Vote(ticketHash, chainActive.Tip()->GetBlockHash(), chainActive.Tip()->nHeight - 1, VoteBits::allRejected, extendedVoteBitsData.empty);
+        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
+        std::tie(voteHashStr, we) = wallet->Vote(ticketHash, chainActive.Tip()->GetBlockHash(), chainActive.Tip()->nHeight + 1, VoteBits::allRejected, extendedVoteBitsData.empty);
+        BOOST_CHECK_EQUAL(we.code, CWalletError::INVALID_PARAMETER);
     }
 
     // Single vote
@@ -879,6 +884,73 @@ BOOST_FIXTURE_TEST_CASE(auto_voter_vsp, WalletStakeTestingSetup)
     av->stop();
 }
 
+// test the automatic voter on multiple tips chain
+BOOST_FIXTURE_TEST_CASE(auto_voter_multiple_tips, WalletStakeTestingSetup)
+{
+    LOCK2(cs_main, wallet->cs_wallet);
+
+    CAutoVoter* av = wallet->GetAutoVoter();
+    BOOST_CHECK(av != nullptr);
+
+    BOOST_CHECK(!av->isStarted());
+
+    ExtendChain(consensus.nStakeValidationHeight - chainActive.Height());
+
+    av->start();
+
+    ExtendChain(30);
+    CheckLatestVotes(true);
+
+    // Revert the chain tip and then generate new tips
+    // Votes should be generated for these too
+
+    int height = chainActive.Tip()->nHeight;
+
+    CPubKey pubKey;
+    wallet->GetKeyFromPool(pubKey);
+
+    std::set<CBlockIndex*, CompareBlocksByHeight> tips;
+    while ((tips = GetChainTips()).size() < 2) {
+        CValidationState state;
+
+        InvalidateBlock(state, params, chainActive.Tip());
+        BOOST_CHECK(chainActive.Tip()->nHeight == height - 1);
+
+        InvalidateBlock(state, params, chainActive.Tip());
+        BOOST_CHECK(chainActive.Tip()->nHeight == height - 2);
+
+        ExtendChain(1);
+        BOOST_CHECK(chainActive.Tip()->nHeight == height - 1);
+
+        SendMoney({std::make_pair(pubKey.GetID(), 1*COIN)});
+
+        ExtendChain(1);
+        BOOST_CHECK(chainActive.Tip()->nHeight == height);
+    }
+
+    for (const CBlockIndex* blockIndex: tips) {
+        BOOST_CHECK(blockIndex->pstakeNode != nullptr);
+
+        auto& voted_hash_index = mempool.mapTx.get<voted_block_hash>();
+        auto votesForBlockHash = voted_hash_index.equal_range(blockIndex->GetBlockHash());
+
+        auto winningHashes = blockIndex->pstakeNode->Winners();
+
+        int votes = 0;
+        for (auto votetxiter = votesForBlockHash.first; votetxiter != votesForBlockHash.second; ++votetxiter) {
+            const auto& spentTicketHash = votetxiter->GetTx().vin[voteStakeInputIndex].prevout.hash;
+            if (std::find(winningHashes.begin(), winningHashes.end(), spentTicketHash) == winningHashes.end())
+                continue;
+
+            ++votes;
+        }
+
+        BOOST_CHECK(votes > 0);
+    }
+
+    av->stop();
+}
+
 // test the vote generating RPC
 BOOST_FIXTURE_TEST_CASE(generate_vote_rpc, WalletStakeTestingSetup)
 {
@@ -1086,7 +1158,7 @@ BOOST_FIXTURE_TEST_CASE(auto_voter_rpc, WalletStakeTestingSetup)
 
     BOOST_CHECK_EQUAL(cfg.autoVote, true);
     BOOST_CHECK(cfg.voteBits == VoteBits(65535U));
-    BOOST_CHECK(cfg.extendedVoteBits == extendedVoteBitsData.empty);
+    BOOST_CHECK(cfg.extendedVoteBits == ExtendedVoteBits("12345678900abcdef0"));
     BOOST_CHECK_EQUAL(cfg.passphrase, "");
 
     // Start (with full settings)
@@ -1131,7 +1203,7 @@ BOOST_FIXTURE_TEST_CASE(auto_voter_rpc, WalletStakeTestingSetup)
 
     BOOST_CHECK_EQUAL(cfg.autoVote, true);
     BOOST_CHECK(cfg.voteBits == VoteBits(1U));
-    BOOST_CHECK(cfg.extendedVoteBits == extendedVoteBitsData.empty);
+    BOOST_CHECK(cfg.extendedVoteBits == ExtendedVoteBits("123456789abcdef0"));
     BOOST_CHECK_EQUAL(cfg.passphrase, passphrase);
 
     av->stop();
