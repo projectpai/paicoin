@@ -998,6 +998,31 @@ static void RelayAddress(const CAddress& addr, bool fReachable, CConnman* connma
     connman->ForEachNodeThen(std::move(sortfunc), std::move(pushfunc));
 }
 
+void static SendAllMempoolVotes(CNode* pfrom, CConnman* connman, const std::atomic<bool>& interruptMsgProc)
+{
+    const CNetMsgMaker msgMaker(pfrom->GetSendVersion());
+    int nSendFlags = 0;
+
+    LOCK(cs_main);
+
+    auto& tx_class_index = mempool.mapTx.get<tx_class>();
+    auto votes = tx_class_index.equal_range(ETxClass::TX_Vote);
+
+    for (auto votetxiter = votes.first; votetxiter != votes.second; ++votetxiter) {
+        if (pfrom->fPauseSend)
+            break;
+
+        if (interruptMsgProc)
+            return;
+
+        const auto& vote = votetxiter->GetTx();
+
+        nSendFlags = (vote.HasWitness() ? SERIALIZE_TRANSACTION_NO_WITNESS : 0);
+
+        connman->PushMessage(pfrom, msgMaker.Make(nSendFlags, NetMsgType::TX, vote));
+    }
+}
+
 void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParams, CConnman* connman, const std::atomic<bool>& interruptMsgProc)
 {
     std::deque<CInv>::iterator it = pfrom->vRecvGetData.begin();
@@ -1479,6 +1504,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::SENDCMPCT, fAnnounceUsingCMPCTBLOCK, nCMPCTBLOCKVersion));
         }
         pfrom->fSuccessfullyConnected = true;
+
+        // send all the votes in mempool, if not during the initial block download
+        if (!IsInitialBlockDownload())
+            SendAllMempoolVotes(pfrom, connman, interruptMsgProc);
     }
 
     else if (!pfrom->fSuccessfullyConnected)
