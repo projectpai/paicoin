@@ -35,6 +35,8 @@
 #include "utilstrencodings.h"
 #include "validationinterface.h"
 
+#include <iterator>
+
 #if defined(NDEBUG)
 # error "PAI Coin cannot be compiled without assertions."
 #endif
@@ -1023,6 +1025,45 @@ void static SendAllMempoolVotes(CNode* pfrom, CConnman* connman, const std::atom
     }
 }
 
+void static SendAllChainTips(CNode* pfrom, const Consensus::Params& consensusParams, CConnman* connman, const std::atomic<bool>& interruptMsgProc, const int maxDepth = -1)
+{
+    const CNetMsgMaker msgMaker(pfrom->GetSendVersion());
+
+    LOCK(cs_main);
+
+    std::set<CBlockIndex*, CompareBlocksByHeight> setTips = GetChainTips();
+    std::set<CBlockIndex*, CompareBlocksByHeight> setLatestTips;
+
+    if (maxDepth > -1) {
+        int minHeight = chainActive.Tip()->nHeight - maxDepth;
+        std::copy_if(std::begin(setTips), std::end(setTips),
+                     std::inserter(setLatestTips, std::end(setLatestTips)),
+                     [minHeight] (const CBlockIndex* pindex) -> bool { return pindex->nHeight >= minHeight; });
+    } else {
+        setLatestTips = setTips;
+    }
+
+    for (const CBlockIndex* pindex: setTips) {
+        if (pfrom->fPauseSend)
+            break;
+
+        if (interruptMsgProc)
+            return;
+
+        if ((pindex->nStatus & BLOCK_HAVE_DATA) == 0)
+            continue;
+
+        // Send block from disk
+        std::shared_ptr<const CBlock> pblock;
+        std::shared_ptr<CBlock> pblockRead = std::make_shared<CBlock>();
+        if (!ReadBlockFromDisk(*pblockRead, pindex, consensusParams))
+            continue;
+        pblock = pblockRead;
+
+        connman->PushMessage(pfrom, msgMaker.Make(SERIALIZE_TRANSACTION_NO_WITNESS, NetMsgType::BLOCK, *pblock));
+    }
+}
+
 void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParams, CConnman* connman, const std::atomic<bool>& interruptMsgProc)
 {
     std::deque<CInv>::iterator it = pfrom->vRecvGetData.begin();
@@ -1505,9 +1546,11 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         }
         pfrom->fSuccessfullyConnected = true;
 
-        // send all the votes in mempool, if not during the initial block download
-        if (!IsInitialBlockDownload())
+        // send all the votes in mempool and the chain tips, if not during the initial block download
+        if (!IsInitialBlockDownload()) {
             SendAllMempoolVotes(pfrom, connman, interruptMsgProc);
+            SendAllChainTips(pfrom, chainparams.GetConsensus(), connman, interruptMsgProc);
+        }
     }
 
     else if (!pfrom->fSuccessfullyConnected)
