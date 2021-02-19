@@ -1025,7 +1025,7 @@ void static SendAllMempoolVotes(CNode* pfrom, CConnman* connman, const std::atom
     }
 }
 
-void static SendAllChainTips(CNode* pfrom, const Consensus::Params& consensusParams, CConnman* connman, const std::atomic<bool>& interruptMsgProc, const int maxDepth = -1)
+void static SendChainTips(CNode* pfrom, const Consensus::Params& consensusParams, CConnman* connman, const std::atomic<bool>& interruptMsgProc, const int maxDepth = DEFAULT_HANDSHAKE_TIPS_DEPTH)
 {
     const CNetMsgMaker msgMaker(pfrom->GetSendVersion());
 
@@ -1034,7 +1034,7 @@ void static SendAllChainTips(CNode* pfrom, const Consensus::Params& consensusPar
     std::set<CBlockIndex*, CompareBlocksByHeight> setTips = GetChainTips();
     std::set<CBlockIndex*, CompareBlocksByHeight> setLatestTips;
 
-    if (maxDepth > -1) {
+    if (maxDepth >= 0) {
         int minHeight = chainActive.Tip()->nHeight - maxDepth;
         std::copy_if(std::begin(setTips), std::end(setTips),
                      std::inserter(setLatestTips, std::end(setLatestTips)),
@@ -1549,7 +1549,9 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         // send all the votes in mempool and the chain tips, if not during the initial block download
         if (!IsInitialBlockDownload()) {
             SendAllMempoolVotes(pfrom, connman, interruptMsgProc);
-            SendAllChainTips(pfrom, chainparams.GetConsensus(), connman, interruptMsgProc);
+
+            int depth = static_cast<int>(gArgs.GetArg("-handshaketipsdepth", DEFAULT_HANDSHAKE_TIPS_DEPTH));
+            SendChainTips(pfrom, chainparams.GetConsensus(), connman, interruptMsgProc, depth);
         }
     }
 
