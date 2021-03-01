@@ -97,14 +97,97 @@ class HandshakeVoteTest (PAIcoinTestFramework):
         print("- mempool vote count on node " + str(node_num) + ": " + str(voteCount))
 
         
-# class HandshakeChainTipsTest (PAIcoinTestFramework):
+class HandshakeChainTipsTest (PAIcoinTestFramework):
+    def set_test_params(self):
+        self.setup_clean_chain = True
+        self.num_nodes = 4
+        self.extra_args = [["-autostake=1", "-tblimit=20"], ["-autostake=1", "-tblimit=20"], ["-autostake=1", "-tblimit=20"], ["-autostake=1", "-tblimit=20"]]
 
-#     def set_test_params(self):
-#         self.num_nodes = 4
+    def run_test(self):
+        StakeEnabledHeight = 2000
+        StakeValidationHeight = 2100
+        TicketMaturity = 8
 
-#     def run_test(self):
-#         pass
+        # generate block until 5 blocks after stake validation height
+        # and synchornize the 2 nodes; to avoid log saving timeouts,
+        # mine the entire block until right before starting to buy tickets
+        # and then use incremental steps with small sleeps, to allow the
+        # log file to be stored properly.
+
+        self.nodes[0].generate(StakeEnabledHeight - TicketMaturity - self.nodes[0].getblockcount())
+
+        step = 6
+        for _ in range(self.nodes[0].getblockcount(), StakeValidationHeight, step):
+            self.nodes[0].generate(step)
+            sleep(0.1)
+        
+        self.nodes[0].generate(5)
+        sleep(0.1)
+
+        self.sync_all()
+
+        if not self.check_chain_tips():
+            print("Error! Chain tips mismatch before propagation test")
+            self.stop_nodes()
+            return
+
+        # disconnect all nodes, so that we get 4 concurrent chains;
+        # then, mine on each of them and validate the height and chaintips
+
+        self.disconnect_all_nodes()
+
+        for i in range(self.num_nodes):
+            self.nodes[i].generate(1)
+
+        if not self.check_chain_tips(True):
+            print("Error! Chain tips are still identical after disconnection")
+            self.stop_nodes()
+            return
+
+        # Reconnect all the nodes and check that the chaintips are the same
+
+        self.connect_all_nodes()
+        sleep(1)
+        
+        if not self.check_chain_tips():
+            print("Error! Chain tips are different after reconnection")
+            self.stop_nodes()
+            return
+
+    def connect_all_nodes(self):
+        for i in range(self.num_nodes):
+            for j in range(i+1, self.num_nodes):
+                connect_nodes_bi(self.nodes, i, j)
+
+    def disconnect_all_nodes(self):
+        for i in range(self.num_nodes):
+            for j in range(self.num_nodes):
+                if i != j:
+                    disconnect_nodes(self.nodes[i], j)
+
+    def check_chain_tips(self, different=False):
+        tip_list = []
+        for i in range(self.num_nodes):
+            tip_list.append(self.nodes[i].getchaintips())
+
+        for i in range(self.num_nodes):
+            for j in range(i+1, self.num_nodes):
+                if (different and self.equal_tip_lists(tip_list[i], tip_list[j])) or ((not different) and (not self.equal_tip_lists(tip_list[i], tip_list[j]))):
+                    return False
+
+        return True
+
+    def equal_tip_lists(self, tips0, tips1):
+        for t0 in tips0:
+            found = False
+            for t1 in tips1:
+                if t0['height'] == t1['height'] and t0['hash'] == t1['hash']:
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
 
 if __name__ == '__main__':
     HandshakeVoteTest().main()
-    #HandshakeChainTipsTest().main()
+    HandshakeChainTipsTest().main()
