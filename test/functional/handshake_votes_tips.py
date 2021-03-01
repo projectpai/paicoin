@@ -9,8 +9,9 @@
 """
 
 from collections import Counter
+from time import sleep
 from test_framework.test_framework import PAIcoinTestFramework
-from test_framework.util import *
+from test_framework.util import connect_nodes_bi, disconnect_nodes
 
 class HandshakeVoteTest (PAIcoinTestFramework):
     def set_test_params(self):
@@ -27,21 +28,21 @@ class HandshakeVoteTest (PAIcoinTestFramework):
         StakeValidationHeight = 2100
         TicketMaturity = 8
 
-        print("- advancing chain until right before buying tickets")
+        # generate block until 5 blocks after stake validation height
+        # and synchornize the 2 nodes; to avoid log saving timeouts,
+        # mine the entire block until right before starting to buy tickets
+        # and then use incremental steps with small sleeps, to allow the
+        # log file to be stored properly.
 
         self.nodes[0].generate(StakeEnabledHeight - TicketMaturity - self.nodes[0].getblockcount())
-        print("- height before buying tickets: " + str(self.nodes[0].getblockcount()))
 
         step = 6
-
-        print("continuing until the stake validation height in " + str(step) + " block batches")
-
         for _ in range(self.nodes[0].getblockcount(), StakeValidationHeight, step):
             self.nodes[0].generate(step)
+            sleep(0.1)
         
-        print("- height at stake validation: " + str(self.nodes[0].getblockcount()))
-
         self.nodes[0].generate(5)
+        sleep(0.1)
 
         self.sync_all()
 
@@ -52,51 +53,50 @@ class HandshakeVoteTest (PAIcoinTestFramework):
             self.stop_nodes()
             return
 
-        print("- height at node 1 disconnect: " + str(self.nodes[0].getblockcount()))
+        # disconnect the second node and advance the blockchain 5 blocks;
+        # verify that the mempools on the two nodes are different after this.
 
         disconnect_nodes(self.nodes[1], 0)
         disconnect_nodes(self.nodes[0], 1)
-        time.sleep(1)
+        sleep(1)
 
         self.nodes[0].generate(5)
 
-        mempool0 = self.nodes[0].getrawmempool(True)
-        voteCount0 = Counter([v for (txid,tx) in mempool0.items() for (k,v) in tx.items() if k == 'type' and v == 'vote']).get('vote')
-        print("- vote count on node 0 after node 1 disconnect " + str(voteCount0))
-
-        mempool1 = self.nodes[1].getrawmempool(True)
-        voteCount1 = Counter([v for (txid,tx) in mempool1.items() for (k,v) in tx.items() if k == 'type' and v == 'vote']).get('vote')
-        print("- vote count on node 1 after after disconnect " + str(voteCount1))
-
-        mempool0 = set(self.nodes[0].getrawmempool())
-        mempool1 = set(self.nodes[1].getrawmempool())
-        if len(mempool0.symmetric_difference(mempool1)) == 0:
-            print("Error! Mempool is identical after disconnecting node 1 and node 0 has mined")
+        #self.printVotesInMempoolForNode(0)
+        #self.printVotesInMempoolForNode(1)
+        mempools = [set(self.nodes[0].getrawmempool()), set(self.nodes[1].getrawmempool())]
+        if len(mempools[0].symmetric_difference(mempools[1])) == 0:
+            print("Error! Mempools are still identical after disconnecting node 1 and node 0 has mined")
             self.stop_nodes()
             return
 
+        # reconnect the second node and leave enough time to send the votes;
+        # then, verify that the two mempools are identical.
+
         connect_nodes_bi(self.nodes, 0, 1)
-        time.sleep(5)
+        sleep(1)
 
-        mempool1 = self.nodes[1].getrawmempool(True)
-        voteCount1 = Counter([v for (txid,tx) in mempool1.items() for (k,v) in tx.items() if k == 'type' and v == 'vote']).get('vote')
-        print("- vote count on node 1 after reconnection " + str(voteCount1))
-
-        votes0 = set(self.votesInMempool(self.nodes[0].getrawmempool(True)))
-        votes1 = set(self.votesInMempool(mempool1))
-        votesIntersection = votes0.intersection(votes1)
-        if votesIntersection != votes0:
+        #self.printVotesInMempoolForNode(0)
+        #self.printVotesInMempoolForNode(1)
+        votes = [set(self.votesInMempool(self.nodes[0].getrawmempool(True))), set(self.votesInMempool(self.nodes[1].getrawmempool(True)))]
+        votesIntersection = votes[0].intersection(votes[1])
+        if votesIntersection != votes[0]:
             print("Error! Mempool votes mismatch after reconnection")
-            print("- votes on node 0: " + str(votes0))
-            print("- votes on node 1: " + str(votes1))
+            print("- votes on node 0: " + str(votes[0]))
+            print("- votes on node 1: " + str(votes[1]))
             print("- votes set intersection: " + str(votesIntersection))
             self.stop_nodes()
             return
 
-        print("Test successful!")
-
     def votesInMempool(self, rawMempool):
         return [txid for (txid,tx) in rawMempool.items() for (k,v) in tx.items() if k == 'type' and v == 'vote']
+
+    def printVotesInMempoolForNode(self, node_num):
+        assert(node_num < len(self.nodes))
+        mempool = self.nodes[node_num].getrawmempool(True)
+        voteCount = Counter([v for (txid,tx) in mempool.items() for (k,v) in tx.items() if k == 'type' and v == 'vote']).get('vote')
+        print("- mempool vote count on node " + str(node_num) + ": " + str(voteCount))
+
         
 # class HandshakeChainTipsTest (PAIcoinTestFramework):
 
