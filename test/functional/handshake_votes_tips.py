@@ -52,7 +52,7 @@ class HandshakeVoteTest (PAIcoinTestFramework):
             self.stop_nodes()
             return
 
-        print("- height at second node stop: " + str(self.nodes[0].getblockcount()))
+        print("- height at node 1 disconnect: " + str(self.nodes[0].getblockcount()))
 
         disconnect_nodes(self.nodes[1], 0)
         disconnect_nodes(self.nodes[0], 1)
@@ -62,28 +62,28 @@ class HandshakeVoteTest (PAIcoinTestFramework):
 
         mempool0 = self.nodes[0].getrawmempool(True)
         voteCount0 = Counter([v for (txid,tx) in mempool0.items() for (k,v) in tx.items() if k == 'type' and v == 'vote']).get('vote')
-        print("- vote count on node 0 after only node 0 was mining " + str(voteCount0))
+        print("- vote count on node 0 after node 1 disconnect " + str(voteCount0))
 
         mempool1 = self.nodes[1].getrawmempool(True)
         voteCount1 = Counter([v for (txid,tx) in mempool1.items() for (k,v) in tx.items() if k == 'type' and v == 'vote']).get('vote')
-        print("- vote count on node 1 after only node 0 was mining, but before reconnecting " + str(voteCount1))
-
-        connect_nodes_bi(self.nodes, 0, 1)
-        time.sleep(5)
+        print("- vote count on node 1 after after disconnect " + str(voteCount1))
 
         mempool0 = set(self.nodes[0].getrawmempool())
         mempool1 = set(self.nodes[1].getrawmempool())
         if len(mempool0.symmetric_difference(mempool1)) == 0:
-            print("Error! Mempool is identical after reconnecting node 1")
+            print("Error! Mempool is identical after disconnecting node 1 and node 0 has mined")
             self.stop_nodes()
             return
 
+        connect_nodes_bi(self.nodes, 0, 1)
+        time.sleep(5)
+
         mempool1 = self.nodes[1].getrawmempool(True)
         voteCount1 = Counter([v for (txid,tx) in mempool1.items() for (k,v) in tx.items() if k == 'type' and v == 'vote']).get('vote')
-        print("- vote count on node 1 after only node 0 was mining, after reconnection " + str(voteCount1))
+        print("- vote count on node 1 after reconnection " + str(voteCount1))
 
         votes0 = set(self.votesInMempool(self.nodes[0].getrawmempool(True)))
-        votes1 = set(self.votesInMempool(self.nodes[1].getrawmempool(True)))
+        votes1 = set(self.votesInMempool(mempool1))
         votesIntersection = votes0.intersection(votes1)
         if votesIntersection != votes0:
             print("Error! Mempool votes mismatch after reconnection")
