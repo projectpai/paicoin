@@ -46,9 +46,8 @@ class HandshakeVoteTest (PAIcoinTestFramework):
 
         self.sync_all()
 
-        mempool0 = set(self.nodes[0].getrawmempool())
-        mempool1 = set(self.nodes[1].getrawmempool())
-        if len(mempool0 ^ mempool1) != 0:
+        mempools = [set(self.nodes[0].getrawmempool()), set(self.nodes[1].getrawmempool())]
+        if len(mempools[0] ^ mempools[1]) != 0:
             print("Error! Mempool mismatch before votes propagation test")
             self.stop_nodes()
             return
@@ -62,10 +61,10 @@ class HandshakeVoteTest (PAIcoinTestFramework):
 
         self.nodes[0].generate(5)
 
-        #self.printVotesInMempoolForNode(0)
-        #self.printVotesInMempoolForNode(1)
+        #self.print_votes_in_mempool_for_node(0)
+        #self.print_votes_in_mempool_for_node(1)
         mempools = [set(self.nodes[0].getrawmempool()), set(self.nodes[1].getrawmempool())]
-        if len(mempools[0].symmetric_difference(mempools[1])) == 0:
+        if len(mempools[0] ^ mempools[1]) == 0:
             print("Error! Mempools are still identical after disconnecting node 1 and node 0 has mined")
             self.stop_nodes()
             return
@@ -76,9 +75,9 @@ class HandshakeVoteTest (PAIcoinTestFramework):
         connect_nodes_bi(self.nodes, 0, 1)
         sleep(1)
 
-        #self.printVotesInMempoolForNode(0)
-        #self.printVotesInMempoolForNode(1)
-        votes = [set(self.votesInMempool(self.nodes[0].getrawmempool(True))), set(self.votesInMempool(self.nodes[1].getrawmempool(True)))]
+        #self.print_votes_in_mempool_for_node(0)
+        #self.print_votes_in_mempool_for_node(1)
+        votes = [set(self.votes_in_mempool(self.nodes[0].getrawmempool(True))), set(self.votes_in_mempool(self.nodes[1].getrawmempool(True)))]
         votesIntersection = votes[0].intersection(votes[1])
         if votesIntersection != votes[0]:
             print("Error! Mempool votes mismatch after reconnection")
@@ -88,10 +87,10 @@ class HandshakeVoteTest (PAIcoinTestFramework):
             self.stop_nodes()
             return
 
-    def votesInMempool(self, rawMempool):
+    def votes_in_mempool(self, rawMempool):
         return [txid for (txid,tx) in rawMempool.items() for (k,v) in tx.items() if k == 'type' and v == 'vote']
 
-    def printVotesInMempoolForNode(self, node_num):
+    def print_votes_in_mempool_for_node(self, node_num):
         assert(node_num < len(self.nodes))
         mempool = self.nodes[node_num].getrawmempool(True)
         voteCount = Counter([v for (txid,tx) in mempool.items() for (k,v) in tx.items() if k == 'type' and v == 'vote']).get('vote')
