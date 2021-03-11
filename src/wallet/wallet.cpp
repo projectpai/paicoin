@@ -131,10 +131,14 @@ void CWallet::RemoveFromWtxOrdered(std::vector<uint256> hashes)
     // 2. reindex the remaining entries, considering that they are already ordered, but might have gaps because of the removal
     // Also, update the global position cursor.
 
-    for (const uint256& hash: hashes) {
-        auto it = std::find_if(wtxOrdered.begin(), wtxOrdered.end(), [hash] (const std::pair<int64_t, TxPair>& entry) -> bool { return entry.second.first->GetHash() == hash; });
-        if (it != wtxOrdered.end())
-            wtxOrdered.erase(it);
+    for (auto hash: hashes) {
+        for (auto it = wtxOrdered.begin(); it != wtxOrdered.end();) {
+            auto h = it->second.first;
+            if (h && h->tx && h->tx->GetHash() == hash)
+                it = wtxOrdered.erase(it);
+            else
+                ++it;
+        }
     }
 
     nOrderPosNext = 0;

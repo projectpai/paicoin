@@ -483,7 +483,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
     // check inputs of stake transactions
     if (fCheckStake && txClass == TX_BuyTicket && !checkBuyTicketInputs(tx, state, inputs, nSpendHeight, chainparams))
         return false;
-    if (fCheckStake && txClass == TX_Vote && !checkVoteOrRevokeTicketInputs(tx, true, state, inputs, nSpendHeight, chainparams))
+    if (fCheckStake && txClass == TX_Vote && !checkVoteOrRevokeTicketInputs(tx, true, state, inputs, static_cast<int>(voteData.blockHeight + 1), chainparams))
         return false;
     if (fCheckStake && txClass == TX_RevokeTicket && !checkVoteOrRevokeTicketInputs(tx, false, state, inputs, nSpendHeight, chainparams))
         return false;
@@ -497,7 +497,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         // so we'll skip the checks
         if (fCheckStake && txClass == TX_Vote && i == voteSubsidyInputIndex)
         {
-            nValueIn += GetVoterSubsidy(nSpendHeight/*voteData.blockHeight*/, chainparams.GetConsensus());
+            nValueIn += GetVoterSubsidy(static_cast<int>(voteData.blockHeight + 1), chainparams.GetConsensus());
             continue;
         }
 

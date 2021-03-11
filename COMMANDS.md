@@ -308,6 +308,13 @@ Connection options:
        specified multiple times. Whitelisted peers cannot be DoS banned and
        their transactions are always relayed, even if they are already in the
        mempool, useful e.g. for a gateway
+       
+  -handshaketipsdepth=<n>
+      The maximum depth of chain tips to be sent on new connections. The actual
+      height is calculated relative to the currently active chain tip. The chain
+      tips are sent when the protocol handshake is done, but only if the initial
+      block download is completed. A negative value means sending all chain tips.
+      (default, -1)
 
 Wallet options:
 
