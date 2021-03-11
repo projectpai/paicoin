@@ -202,6 +202,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
                                                                                                         // including the size of the summary field (sizeof(uint8_t)-1)
                 break;
 
+            // skip tickets that were bought on a higher height which received too-few-votes
+            if (nHeight <= tickettxiter->GetHeight() + 1)
+                continue;
+
             // do not include ticket transactions that are expired
             if (IsExpiredTx(tickettxiter->GetTx(), nHeight))
                 continue;
@@ -244,6 +248,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             const auto& ticketHash = revocationtxiter->GetTx().vin[revocationStakeInputIndex].prevout.hash;
             if (std::find(missedTickets.begin(), missedTickets.end(), ticketHash) == missedTickets.end())
                 continue; // Skip all missed tickets that we've never heard of
+
+            // skip revocations that were added on a higher height which received too-few-votes
+            if (nHeight <= revocationtxiter->GetHeight() + 1)
+                continue;
 
             auto txiter = mempool.mapTx.project<0>(revocationtxiter);
             AddToBlock(txiter);
@@ -297,7 +305,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     int nPackagesSelected = 0;
     int nDescendantsUpdated = 0;
-    addPackageTxs(nPackagesSelected, nDescendantsUpdated);
+    addPackageTxs(nHeight ,nPackagesSelected, nDescendantsUpdated);
 
     int64_t nTime1 = GetTimeMicros();
 
@@ -456,7 +464,7 @@ void BlockAssembler::SortForBlock(const CTxMemPool::setEntries& package, CTxMemP
 // Each time through the loop, we compare the best transaction in
 // mapModifiedTxs with the next transaction in the mempool to decide what
 // transaction package to work on next.
-void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated)
+void BlockAssembler::addPackageTxs(int nHeight, int &nPackagesSelected, int &nDescendantsUpdated)
 {
     // mapModifiedTx will store sorted packages after they are modified
     // because some of their txs are already in the block
@@ -482,8 +490,8 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
         // First try to find a new transaction in mapTx to evaluate.
         if (mi != mempool.mapTx.get<ancestor_score>().end() &&
             (SkipMapTxEntry(mempool.mapTx.project<0>(mi), mapModifiedTx, failedTx) ||
-                mi->GetTxClass() != TX_Regular)) //we only deal with non-stake tx in this loop
-        {
+                mi->GetTxClass() != TX_Regular || nHeight <= mi->GetHeight() + 1) //we only deal with non-stake tx in this loop, and skip txs that were added on a higher height
+        ) {
             ++mi;
             continue;
         }

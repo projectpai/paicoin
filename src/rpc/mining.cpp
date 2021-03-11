@@ -582,11 +582,29 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         if (bTooFewVotes) {
             // nothing to do, we'll use the cached template, but update its time, otherwise we'll mine the exact same block
             // which leads to 'duplicate' status in submitblock
-            if (!pblocktemplate)
-                throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Unable to return previous block template");
-            pindexPrevNew = chainActive.Tip()->pprev;
-            pblocktemplate->block.nTime++;
-            LogPrintf("returning cached template with adjusted time %d!\n", pblocktemplate->block.nTime);
+            if (!pblocktemplate) {
+                CValidationState state;
+                // we have no cached template so we try to build one
+                // disconnect the tip briefly to return its content txs to mempool, so they will be included in the template
+                // then activate the tip back
+                if (!DisconnectTipForRemine(state, Params(), chainActive.Tip()))
+                    throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Unable to disconnect current tip");
+
+                pindexPrevNew = chainActive.Tip();
+                assert(pindexPrevNew != nullptr && (pindexPrevNew->nHeight == tipHeight - 1));
+                nStart = GetTime(); // reinitialize Start
+                CScript scriptDummy = CScript() << OP_TRUE;
+                pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit, pindexPrevNew);
+
+                ActivateBestChain(state, Params());
+                if (!state.IsValid()) {
+                    throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
+                }
+            } else {
+                pindexPrevNew = chainActive.Tip()->pprev;
+                pblocktemplate->block.nTime++;
+                LogPrintf("returning cached template with adjusted time %d!\n", pblocktemplate->block.nTime);
+            }
         } else {
             // Create new block
             assert(pindexPrevNew != nullptr && (pindexPrevNew->nHeight == tipHeight));

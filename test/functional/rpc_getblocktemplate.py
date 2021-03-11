@@ -18,14 +18,16 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2 # we need at least 2 nodes to have non zerp connections for getblocktemplate to work
-        self.extra_args = [['-autobuy','-tblimit=1','-autovote=0','-autorevoke=0','-blockallvoteswaittime=0'],[]] 
+        self.extra_args = [['-autobuy','-tblimit=1','-autovote=0','-autorevoke=1','-blockallvoteswaittime=0'],[]] 
 
-    def get_best_block(self, checkHeight):
+    def get_best_block(self, checkHeight = None):
         chainInfo = self.nodes[0].getbestblock()
         print("-------------")
         print("besthash",chainInfo['hash'])
         print("bestheight",chainInfo['height'])
-        assert(chainInfo['height'] == checkHeight)
+        if checkHeight != None:
+            print("expected height ", checkHeight)
+        assert(checkHeight == None or chainInfo['height'] == checkHeight)
         lastblock = self.nodes[0].getblock(chainInfo['hash'],2)
         txids = []
         for tx in lastblock['tx']:
@@ -33,27 +35,37 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
             txids.append(tx['txid'])
         return txids
 
-    def get_block_template(self):
-        tmpl = self.nodes[0].getblocktemplate()
+    def get_block_template(self, nodeidx=0):
+        tmpl = self.nodes[nodeidx].getblocktemplate()
         print("-------------")
         print("gbt prev bhash\t",tmpl['previousblockhash'])
         print("gbt height\t",tmpl['height'])
         rawtxs = [x['data'] for x in tmpl['transactions']]
-        decodedrawtxs = [self.nodes[0].decoderawtransaction(x) for x in rawtxs]
+        decodedrawtxs = [self.nodes[nodeidx].decoderawtransaction(x) for x in rawtxs]
         txids = []
+        num_votes = 0
         for decodedtx in decodedrawtxs:
             print(decodedtx['txid'],decodedtx['type'])
+            if decodedtx['type'] == 'vote':
+                num_votes +=1
             txids.append(decodedtx['txid'])
-        return txids
+        return tmpl['height'], num_votes, txids
     
     def get_raw_mempool(self, nodeidx = 0):
         print("-------------")
         print("mempool of node:",nodeidx)
         txids = []
+        tickets_spent = []
         for k,v in self.nodes[nodeidx].getrawmempool(True).items():
-            print(k,v['type'])
+            if v['type'] == 'vote':
+                print(k,v['type'])
+                print(v['voting']['blockhash'],v['voting']['blockheight'],v['voting']['ticket'])
+                tickets_spent.append(v['voting']['ticket'])
+            else:
+                print(k,v['type'])
+
             txids.append(k)
-        return txids
+        return tickets_spent, txids
 
     def mine_using_template(self):
         tmpl = self.nodes[0].getblocktemplate()
@@ -109,7 +121,7 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         self.get_best_block(nStakeValidationHeight - 4)
 
         for idx in range(nStakeValidationHeight-3, nStakeValidationHeight):
-            gbt_txids = self.get_block_template()
+            _, _, gbt_txids = self.get_block_template()
             self.mine_using_template()
             # self.nodes[0].generate(1)
             self.sync_all()
@@ -123,6 +135,8 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         dummyVoteBits    =  1
         dummyVoteBitsExt = "00"
         majority = int(nTicketsPerBlock / 2 + 1)
+
+        # self.nodes[0].stopticketbuyer()
 
         for _ in range(3):
             # self.get_raw_mempool()
@@ -153,7 +167,7 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
             self.get_raw_mempool(1)
 
             print("after adding votes")
-            gbt_txids = self.get_block_template()
+            _,_,gbt_txids = self.get_block_template()
 
             # we have votes so we can progress the chain
             self.mine_using_template()
@@ -182,11 +196,11 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
 
             # we have no votes for the current tip but we can progress from previous tip,
             print("progress from previous tip")
-            gbt_txids_previous = self.get_block_template()
+            _,_,gbt_txids_previous = self.get_block_template()
 
             print("-------------")
-            print("sleep 5s before mining")
-            time.sleep(5)
+            # print("sleep 5s before mining")
+            # time.sleep(5)
             chaintips = self.nodes[0].getchaintips()
             print("chaintip on node:",0)
             print(chaintips)
@@ -197,8 +211,8 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
             self.mine_using_template()
 
             print("-------------")
-            print("sleep 5s after mining")
-            time.sleep(5)
+            # print("sleep 5s after mining")
+            # time.sleep(5)
             chaintips = self.nodes[0].getchaintips()
             print("chaintip on node:",0)
             print(chaintips)

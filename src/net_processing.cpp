@@ -35,6 +35,8 @@
 #include "utilstrencodings.h"
 #include "validationinterface.h"
 
+#include <iterator>
+
 #if defined(NDEBUG)
 # error "PAI Coin cannot be compiled without assertions."
 #endif
@@ -998,6 +1000,70 @@ static void RelayAddress(const CAddress& addr, bool fReachable, CConnman* connma
     connman->ForEachNodeThen(std::move(sortfunc), std::move(pushfunc));
 }
 
+void static SendAllMempoolVotes(CNode* pfrom, CConnman* connman, const std::atomic<bool>& interruptMsgProc)
+{
+    const CNetMsgMaker msgMaker(pfrom->GetSendVersion());
+    int nSendFlags = 0;
+
+    LOCK(cs_main);
+
+    auto& tx_class_index = mempool.mapTx.get<tx_class>();
+    auto votes = tx_class_index.equal_range(ETxClass::TX_Vote);
+
+    for (auto votetxiter = votes.first; votetxiter != votes.second; ++votetxiter) {
+        if (pfrom->fPauseSend)
+            break;
+
+        if (interruptMsgProc)
+            return;
+
+        const auto& vote = votetxiter->GetTx();
+
+        nSendFlags = (vote.HasWitness() ? SERIALIZE_TRANSACTION_NO_WITNESS : 0);
+
+        connman->PushMessage(pfrom, msgMaker.Make(nSendFlags, NetMsgType::TX, vote));
+    }
+}
+
+void static SendChainTips(CNode* pfrom, const Consensus::Params& consensusParams, CConnman* connman, const std::atomic<bool>& interruptMsgProc, const int maxDepth = DEFAULT_HANDSHAKE_TIPS_DEPTH)
+{
+    const CNetMsgMaker msgMaker(pfrom->GetSendVersion());
+
+    LOCK(cs_main);
+
+    std::set<CBlockIndex*, CompareBlocksByHeight> setTips = GetChainTips();
+    std::set<CBlockIndex*, CompareBlocksByHeight> setLatestTips;
+
+    if (maxDepth >= 0) {
+        int minHeight = chainActive.Tip()->nHeight - maxDepth;
+        std::copy_if(std::begin(setTips), std::end(setTips),
+                     std::inserter(setLatestTips, std::end(setLatestTips)),
+                     [minHeight] (const CBlockIndex* pindex) -> bool { return pindex->nHeight >= minHeight; });
+    } else {
+        setLatestTips = setTips;
+    }
+
+    for (const CBlockIndex* pindex: setTips) {
+        if (pfrom->fPauseSend)
+            break;
+
+        if (interruptMsgProc)
+            return;
+
+        if ((pindex->nStatus & BLOCK_HAVE_DATA) == 0)
+            continue;
+
+        // Send block from disk
+        std::shared_ptr<const CBlock> pblock;
+        std::shared_ptr<CBlock> pblockRead = std::make_shared<CBlock>();
+        if (!ReadBlockFromDisk(*pblockRead, pindex, consensusParams))
+            continue;
+        pblock = pblockRead;
+
+        connman->PushMessage(pfrom, msgMaker.Make(SERIALIZE_TRANSACTION_NO_WITNESS, NetMsgType::BLOCK, *pblock));
+    }
+}
+
 void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParams, CConnman* connman, const std::atomic<bool>& interruptMsgProc)
 {
     std::deque<CInv>::iterator it = pfrom->vRecvGetData.begin();
@@ -1479,6 +1545,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::SENDCMPCT, fAnnounceUsingCMPCTBLOCK, nCMPCTBLOCKVersion));
         }
         pfrom->fSuccessfullyConnected = true;
+
+        // send all the votes in mempool and the chain tips, if not during the initial block download
+        if (!IsInitialBlockDownload()) {
+            SendAllMempoolVotes(pfrom, connman, interruptMsgProc);
+
+            int depth = static_cast<int>(gArgs.GetArg("-handshaketipsdepth", DEFAULT_HANDSHAKE_TIPS_DEPTH));
+            SendChainTips(pfrom, chainparams.GetConsensus(), connman, interruptMsgProc, depth);
+        }
     }
 
     else if (!pfrom->fSuccessfullyConnected)

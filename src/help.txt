@@ -203,6 +203,13 @@ Connection options:
        Tries to keep outbound traffic under the given target (in MiB per 24h),
        0 = no limit (default: 0)
 
+   -handshaketipsdepth=<n>
+       The maximum depth of chain tips to be sent on new connections. The actual
+       height is calculated relative to the currently active chain tip. The chain
+       tips are sent when the protocol handshake is done, but only if the initial
+       block download is completed. A negative value means sending all chain tips.
+       (default, -1)
+
 Wallet options:
 
   -disablewallet
