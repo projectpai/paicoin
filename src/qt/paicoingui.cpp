@@ -78,6 +78,10 @@ const std::string PAIcoinGUI::DEFAULT_UIPLATFORM =
 #endif
         ;
 
+#if BOOST_VERSION >= 106000
+using namespace boost::placeholders;
+#endif
+
 /** Display name for default wallet name. Uses tilde to avoid name
  * collisions in the future with additional wallets */
 const QString PAIcoinGUI::DEFAULT_WALLET = "~Default";

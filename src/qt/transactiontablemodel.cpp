@@ -30,6 +30,10 @@
 #include <QIcon>
 #include <QList>
 
+#if BOOST_VERSION >= 106000
+using namespace boost::placeholders;
+#endif
+
 // Amount column is right-aligned it contains numbers
 static int column_alignments[] = {
         Qt::AlignLeft|Qt::AlignVCenter, /* status */
