@@ -24,6 +24,7 @@
 #include "sync.h"
 #include "uint256.h"
 #include "threadinterrupt.h"
+#include "primitives/block.h"
 
 #include <atomic>
 #include <deque>
@@ -670,6 +671,13 @@ public:
     int64_t nNextAddrSend;
     int64_t nNextLocalAddrSend;
 
+    // chain tips prioritization
+    // sending chain tips does not follow the usual inventory path,
+    // but a dedicated sending of the entire block
+    std::vector<CBlock> vChainTipsToSend;
+    CCriticalSection cs_chainTips;
+    CRollingBloomFilter filterChainTipsKnown;
+
     // inventory based relay
     CRollingBloomFilter filterInventoryKnown;
     // Set of transaction ids we still have to announce.
@@ -805,6 +813,12 @@ public:
         }
     }
 
+    void PushChainTip(const CBlock block)
+    {
+        LOCK(cs_chainTips);
+        if (!filterChainTipsKnown.contains(block.GetHash()))
+            vChainTipsToSend.push_back(block);
+    }
 
     void AddInventoryKnown(const CInv& inv)
     {

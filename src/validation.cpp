@@ -58,6 +58,10 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/thread.hpp>
 
+#if BOOST_VERSION >= 106000
+using namespace boost::placeholders;
+#endif
+
 #if defined(NDEBUG)
 # error "PAI Coin cannot be compiled without assertions."
 #endif
@@ -2192,11 +2196,13 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     fEnforceBIP30 = fEnforceBIP30 && (!pindexBIP34height || !(pindexBIP34height->GetBlockHash() == chainparams.GetConsensus().BIP34Hash));
 
     if (fEnforceBIP30) {
-        for (const auto& tx : block.vtx) {
+        for (size_t t = 0; t < block.vtx.size(); ++t) {
+            const auto& tx = block.vtx[t];
             for (size_t o = 0; o < tx->vout.size(); o++) {
                 if (view.HaveCoin(COutPoint(tx->GetHash(), o))) {
                     const auto type = ParseTxClass(*tx);
-                    return state.DoS(100, error("ConnectBlock(): tried to overwrite transaction %d type %d , %s", o, type, tx->GetHash().GetHex()),
+                    return state.DoS(100, error("ConnectBlock(): tried to overwrite output %d in transaction %d of type %d in block %s:\n%s",
+                                                o, t, type, block.GetHash().GetHex().c_str(), tx->ToString().c_str()),
                                      REJECT_INVALID, "bad-txns-BIP30");
                 }
             }

@@ -208,7 +208,10 @@ Connection options:
        height is calculated relative to the currently active chain tip. The chain
        tips are sent when the protocol handshake is done, but only if the initial
        block download is completed. A negative value means sending all chain tips.
-       (default, -1)
+       (default, 0)
+
+   -handshaketipsinterval=<n>
+       The time interval in seconds to consider the peer in sync. (default, 60)
 
 Wallet options:
 

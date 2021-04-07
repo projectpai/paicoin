@@ -25,6 +25,10 @@
 #include <QDebug>
 #include <QTimer>
 
+#if BOOST_VERSION >= 106000
+using namespace boost::placeholders;
+#endif
+
 class CBlockIndex;
 
 static int64_t nLastHeaderTipUpdateNotification = 0;
