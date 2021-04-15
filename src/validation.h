@@ -473,6 +473,8 @@ bool PreciousBlock(CValidationState& state, const CChainParams& params, CBlockIn
 /** Mark a block as invalid. */
 bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex *pindex);
 
+bool DisconnectTipForRemine(CValidationState& state, const CChainParams& chainparams, CBlockIndex *pindex);
+
 /** Remove invalidity status from a block and its descendants. */
 bool ResetBlockFailureFlags(CBlockIndex *pindex);
 

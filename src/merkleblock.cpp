@@ -12,6 +12,7 @@
 #include "hash.h"
 #include "consensus/consensus.h"
 #include "utilstrencodings.h"
+#include "stake/staketx.h"
 
 
 CMerkleBlock::CMerkleBlock(const CBlock& block, CBloomFilter* filter, const std::set<uint256>* txids)
@@ -29,7 +30,7 @@ CMerkleBlock::CMerkleBlock(const CBlock& block, CBloomFilter* filter, const std:
         const uint256& hash = block.vtx[i]->GetHash();
         if (txids && txids->count(hash)) {
             vMatch.push_back(true);
-        } else if (filter && filter->IsRelevantAndUpdate(*block.vtx[i])) {
+        } else if (IsStakeTx(*block.vtx[i]) || (filter && filter->IsRelevantAndUpdate(*block.vtx[i]))) {
             vMatch.push_back(true);
             vMatchedTxn.emplace_back(i, hash);
         } else {
