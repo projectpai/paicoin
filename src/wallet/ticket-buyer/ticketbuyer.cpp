@@ -102,6 +102,9 @@ void CTicketBuyer::mainLoop()
         if (! shouldRun.load())
             break;
 
+        if (!config.buyTickets)
+            return;
+
         if (pwallet == nullptr)
             continue;
 

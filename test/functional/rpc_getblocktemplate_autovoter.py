@@ -18,8 +18,8 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2 # we need at least 2 nodes to have non zerp connections for getblocktemplate to work
-        self.extra_args = [['-autobuy', '-tblimit=3', '-autovote=1', '-autorevoke=0', '-blockallvoteswaittime=0']
-                           ,['-autobuy', '-tblimit=3', '-autovote=1', '-autorevoke=0', '-blockallvoteswaittime=0']]
+        self.extra_args = [['-autobuy', '-tblimit=3', '-autovote=1', '-autorevoke=1', '-blockallvoteswaittime=0']
+                           ,['-autobuy', '-tblimit=3', '-autovote=1', '-autorevoke=1', '-blockallvoteswaittime=0']]
 
     def get_best_block(self, checkHeight = None):
         chainInfo = self.nodes[0].getbestblock()
@@ -60,7 +60,7 @@ class TestGetBlockTemplate(PAIcoinTestFramework):
         for k,v in self.nodes[nodeidx].getrawmempool(True).items():
             if v['type'] == 'vote':
                 print(k,v['type'])
-                print(v['voting']['blockhash'],v['voting']['blockheight'],v['voting']['ticket'])
+                # print(v['voting']['blockhash'],v['voting']['blockheight'],v['voting']['ticket'])
                 tickets_spent.append(v['voting']['ticket'])
             else:
                 print(k,v['type'])

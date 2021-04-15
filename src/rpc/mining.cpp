@@ -549,8 +549,10 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                 auto& voted_hash_index = mempool.mapTx.get<voted_block_hash>();
                 auto votesForBlockHash = voted_hash_index.equal_range(pBlockIndex->GetBlockHash());
 
+                //assert (pBlockIndex->pstakeNode != nullptr);
+                if (pBlockIndex->pstakeNode == nullptr)
+                    throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "Tip doesn't have a stake node!");
 
-                assert (pBlockIndex->pstakeNode != nullptr);
                 auto winningHashes = pBlockIndex->pstakeNode->Winners();
 
                 int nNewVotes = 0;
@@ -582,14 +584,44 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         if (bTooFewVotes) {
             // nothing to do, we'll use the cached template, but update its time, otherwise we'll mine the exact same block
             // which leads to 'duplicate' status in submitblock
-            if (!pblocktemplate)
-                throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Unable to return previous block template");
-            pindexPrevNew = chainActive.Tip()->pprev;
-            pblocktemplate->block.nTime++;
-            LogPrintf("returning cached template with adjusted time %d!\n", pblocktemplate->block.nTime);
+            if (!pblocktemplate) {
+                CValidationState state;
+                // we have no cached template so we try to build one
+                // disconnect the tip briefly to return its content txs to mempool, so they will be included in the template
+                // then activate the tip back
+                if (!DisconnectTipForRemine(state, Params(), chainActive.Tip()))
+                    throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Unable to disconnect current tip");
+
+                pindexPrevNew = chainActive.Tip();
+
+                //assert(pindexPrevNew != nullptr && (pindexPrevNew->nHeight == tipHeight - 1));
+                if (pindexPrevNew == nullptr)
+                    throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Missing active chain tip!");
+                if (pindexPrevNew->nHeight != tipHeight - 1)
+                    throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "According to its height, the next block is not the successor of the active chain tip!");
+
+                nStart = GetTime(); // reinitialize Start
+                CScript scriptDummy = CScript() << OP_TRUE;
+                pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit, pindexPrevNew);
+
+                ActivateBestChain(state, Params());
+                if (!state.IsValid()) {
+                    throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
+                }
+            } else {
+                pindexPrevNew = chainActive.Tip()->pprev;
+                pblocktemplate->block.nTime++;
+                LogPrintf("returning cached template with adjusted time %d!\n", pblocktemplate->block.nTime);
+            }
         } else {
             // Create new block
-            assert(pindexPrevNew != nullptr && (pindexPrevNew->nHeight == tipHeight));
+
+            //assert(pindexPrevNew != nullptr && (pindexPrevNew->nHeight == tipHeight));
+            if (pindexPrevNew == nullptr)
+                throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Previous block index is not specified!");
+            if (pindexPrevNew->nHeight != tipHeight)
+                throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "According to its height, the next block is not the successor of the previous one!");
+
             nStart = GetTime(); // reinitialize Start
             CScript scriptDummy = CScript() << OP_TRUE;
             pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit, pindexPrevNew);

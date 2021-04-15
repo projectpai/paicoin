@@ -418,6 +418,8 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-whitelist=<IP address or network>", _("Whitelist peers connecting from the given IP address (e.g. 1.2.3.4) or CIDR notated network (e.g. 1.2.3.0/24). Can be specified multiple times.") +
         " " + _("Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway"));
     strUsage += HelpMessageOpt("-maxuploadtarget=<n>", strprintf(_("Tries to keep outbound traffic under the given target (in MiB per 24h), 0 = no limit (default: %d)"), DEFAULT_MAX_UPLOAD_TARGET));
+    strUsage += HelpMessageOpt("-handshaketipsdepth=<n>", strprintf(_("The maximum depth of chain tips to be sent on new connections. The actual height is calculated relative to the currently active chain tip. The chain tips are sent when the protocol handshake is done, but only if the initial block download is completed. A negative value means sending all chain tips. (default, %u)"), DEFAULT_HANDSHAKE_TIPS_DEPTH));
+    strUsage += HelpMessageOpt("-handshaketipsinterval=<n>", strprintf(_("The time interval in seconds to consider the peer in sync. (default, %u)"), DEFAULT_HANDSHAKE_TIPS_INTERVAL));
 
 #ifdef ENABLE_WALLET
     strUsage += GetWalletHelpString(showDebug);
