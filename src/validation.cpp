@@ -579,6 +579,12 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                     }
                 }
                 if (fReplacementOptOut) {
+                    std::string errorMessage = strprintf("Found duplicate vin in transaction: %s for transaction: %s and vin index: %d\n",
+                                                         ptxConflicting->GetHash().GetHex(),
+                                                         tx.GetHash().GetHex(),
+                                                         in);
+                    LogPrintf(errorMessage.c_str());
+
                     return state.Invalid(false, REJECT_DUPLICATE, "txn-mempool-conflict");
                 }
 
