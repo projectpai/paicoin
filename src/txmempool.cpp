@@ -624,7 +624,7 @@ void CTxMemPool::removeExpiredTickets(const int currentHeight, const CAmount cur
         const CTransaction& tx = tickettxiter->GetTx();
         if (IsExpiredTx(tx, currentHeight + 1)
                 || DidResidenceExpire(tx.nExpiry, static_cast<int>(tickettxiter->GetHeight()), currentHeight)
-                || (tx.vout[ticketStakeOutputIndex].nValue < currentStakeDifficulty)) {
+                || (tx.vout[ticketStakeOutputIndex].nValue != currentStakeDifficulty)) {
             auto txiter = mapTx.project<0>(tickettxiter);
 
             txToRemove.insert(txiter);
