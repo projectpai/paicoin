@@ -627,8 +627,8 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     if (txClass == TX_BuyTicket) {
         CBlock dummyBlock;
         CAmount expectedStakeDifficulty = CalculateNextRequiredStakeDifficulty(chainActive.Tip(),chainparams.GetConsensus());
-        if (tx.vout[ticketStakeOutputIndex].nValue < expectedStakeDifficulty)
-            return state.DoS(100, false, REJECT_INVALID, "insufficient-stake");
+        if (tx.vout[ticketStakeOutputIndex].nValue != expectedStakeDifficulty)
+            return state.Invalid(false, REJECT_STAKE_DIFFICULTY, "wrong-stake-difficulty");
     }
 
     {
@@ -3074,20 +3074,25 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
 
         if (nStopAtHeight && pindexNewTip && pindexNewTip->nHeight >= nStopAtHeight) StartShutdown();
     } while (pindexNewTip != pindexMostWork);
-    CheckBlockIndex(chainparams.GetConsensus());
 
-    const auto& height = []()
+    const auto& consensus = chainparams.GetConsensus();
+
+    CheckBlockIndex(consensus);
+
+    int height{0};
+    CAmount stakeDifficulty{0};
     {
         LOCK(cs_main);
-        return chainActive.Height();
-    }();
+        height = chainActive.Height();
+        stakeDifficulty = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), consensus);
+    }
 
     // remove expired ticket transactions
-    mempool.removeExpiredTickets(height, chainparams.GetConsensus());
+    mempool.removeExpiredTickets(height, stakeDifficulty, consensus);
 
     // remove expired mempool votes
     if (fDiscardExpiredMempoolVotes)
-        mempool.removeExpiredVotes(height, chainparams.GetConsensus());
+        mempool.removeExpiredVotes(height, consensus);
 
     // notify wallet and other interested listeners.
     // This should go after the mempool cleanup above, since the wallet
