@@ -2701,6 +2701,7 @@ CNode::CNode(NodeId idIn, ServiceFlags nLocalServicesIn, int nMyStartingHeightIn
     fInbound(fInboundIn),
     nKeyedNetGroup(nKeyedNetGroupIn),
     addrKnown(5000, 0.001),
+    filterChainTipsKnown(50000, 0.000001),
     filterInventoryKnown(50000, 0.000001),
     id(idIn),
     nLocalHostNonce(nLocalHostNonceIn),
@@ -2731,6 +2732,7 @@ CNode::CNode(NodeId idIn, ServiceFlags nLocalServicesIn, int nMyStartingHeightIn
     nSendOffset = 0;
     hashContinue = uint256();
     nStartingHeight = -1;
+    filterChainTipsKnown.reset();
     filterInventoryKnown.reset();
     fSendMempool = false;
     fGetAddr = false;

@@ -35,6 +35,8 @@
 #include "utilstrencodings.h"
 #include "validationinterface.h"
 
+#include <iterator>
+
 #if defined(NDEBUG)
 # error "PAI Coin cannot be compiled without assertions."
 #endif
@@ -962,6 +964,12 @@ static void RelayTransaction(const CTransaction& tx, CConnman* connman)
     });
 }
 
+static void RelayTransaction(const CTransaction& tx, CNode* pnode)
+{
+    CInv inv(MSG_TX, tx.GetHash());
+    pnode->PushInventory(inv);
+}
+
 static void RelayAddress(const CAddress& addr, bool fReachable, CConnman* connman)
 {
     unsigned int nRelayNodes = fReachable ? 2 : 1; // limited relaying of addresses outside our network(s)
@@ -996,6 +1004,121 @@ static void RelayAddress(const CAddress& addr, bool fReachable, CConnman* connma
     };
 
     connman->ForEachNodeThen(std::move(sortfunc), std::move(pushfunc));
+}
+
+void static RelayMempoolStakeTxs(CNode* pfrom)
+{
+    // add all the stake transactions in the specified order (this is reversed when sending).
+    // also add all regular transactions that fund ticket purchases.
+
+    LOCK(cs_main);
+
+    std::set<uint256> fundingTxIds;
+
+    auto& tx_class_index = mempool.mapTx.get<tx_class>();
+
+    auto revocations = tx_class_index.equal_range(TX_RevokeTicket);
+    for (auto txiter = revocations.first; txiter != revocations.second; ++txiter)
+        RelayTransaction(txiter->GetTx(), pfrom);
+
+    auto tickets = tx_class_index.equal_range(TX_BuyTicket);
+    for (auto txiter = tickets.first; txiter != tickets.second; ++txiter) {
+        const auto& tx = txiter->GetTx();
+        RelayTransaction(tx, pfrom);
+        for (auto txIn: tx.vin)
+            fundingTxIds.insert(txIn.prevout.hash);
+    }
+
+    auto votes = tx_class_index.equal_range(TX_Vote);
+    for (auto txiter = votes.first; txiter != votes.second; ++txiter)
+        RelayTransaction(txiter->GetTx(), pfrom);
+
+    auto regulars = tx_class_index.equal_range(TX_Regular);
+    for (auto txiter = regulars.first; txiter != regulars.second; ++txiter) {
+        const auto& tx = txiter->GetTx();
+        if (fundingTxIds.count(tx.GetHash()) > 0)
+            RelayTransaction(tx, pfrom);
+    }
+}
+
+void static RelayChainTips(CNode* pfrom, const Consensus::Params& consensusParams, CConnman* connman, const std::atomic<bool>& interruptMsgProc, const int maxDepth = DEFAULT_HANDSHAKE_TIPS_DEPTH, CBlock *pExcludeBlock = nullptr)
+{
+    const CNetMsgMaker msgMaker(pfrom->GetSendVersion());
+
+    LOCK(cs_main);
+
+    std::set<CBlockIndex*, CompareBlocksByHeight> setTips = GetChainTips();
+    std::set<CBlockIndex*, CompareBlocksByHeight> setLatestTips;
+
+    if (maxDepth >= 0) {
+        int minHeight = chainActive.Tip()->nHeight - maxDepth;
+        std::copy_if(std::begin(setTips), std::end(setTips),
+                     std::inserter(setLatestTips, std::end(setLatestTips)),
+                     [minHeight] (const CBlockIndex* pindex) -> bool { return pindex->nHeight >= minHeight; });
+    } else {
+        setLatestTips = setTips;
+    }
+
+    uint256 excludeHash;
+    if (pExcludeBlock)
+        excludeHash = pExcludeBlock->GetHash();
+
+    for (const CBlockIndex* pindex: setLatestTips) {
+        if (pfrom->fPauseSend)
+            break;
+
+        if (interruptMsgProc)
+            return;
+
+        if ((pindex->nStatus & BLOCK_HAVE_DATA) == 0)
+            continue;
+
+        if (pExcludeBlock && (pindex->GetBlockHash() == excludeHash))
+            continue;
+
+        // Send block from disk
+        std::shared_ptr<const CBlock> pblock;
+        std::shared_ptr<CBlock> pblockRead = std::make_shared<CBlock>();
+        if (!ReadBlockFromDisk(*pblockRead, pindex, consensusParams))
+            continue;
+        pblock = pblockRead;
+
+        pfrom->PushChainTip(*pblock);
+    }
+}
+
+void static RelayStakeTxsAndChainTipsIfNeeded(CBlock block, CNode* pfrom, const Consensus::Params& consensusParams, CConnman* connman, const std::atomic<bool>& interruptMsgProc, uint256 chainTipHash = uint256())
+{
+    // send all the votes in mempool and the chain tips,
+    // if not during the initial block download
+    // and the peer is at the same height as us.
+    // Height is estimated based on timestamps.
+
+    if (IsInitialBlockDownload())
+        return;
+
+    if (!pfrom || !connman)
+        return;
+
+    //int64_t chainTipTime = 0LL;
+    if (chainTipHash == uint256()) {
+        LOCK(cs_main);
+        //chainTipTime = chainActive.Tip()->GetBlockTime();
+        chainTipHash = chainActive.Tip()->GetBlockHash();
+    }
+
+    //int64_t tipsInterval = gArgs.GetArg("-handshaketipsinterval", DEFAULT_HANDSHAKE_TIPS_INTERVAL);
+
+    //if ((pfrom->nLastBlockTime < chainTipTime - tipsInterval) || (pfrom->nLastBlockTime > chainTipTime + tipsInterval))
+    //    return;
+
+    if (block.GetHash() != chainTipHash)
+        return;
+
+    RelayMempoolStakeTxs(pfrom);
+
+    int depth = static_cast<int>(gArgs.GetArg("-handshaketipsdepth", DEFAULT_HANDSHAKE_TIPS_DEPTH));
+    RelayChainTips(pfrom, consensusParams, connman, interruptMsgProc, depth, &block);
 }
 
 void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParams, CConnman* connman, const std::atomic<bool>& interruptMsgProc)
@@ -1078,10 +1201,14 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
                             assert(!"cannot load block from disk");
                         pblock = pblockRead;
                     }
-                    if (inv.type == MSG_BLOCK)
+                    if (inv.type == MSG_BLOCK) {
                         connman->PushMessage(pfrom, msgMaker.Make(SERIALIZE_TRANSACTION_NO_WITNESS, NetMsgType::BLOCK, *pblock));
-                    else if (inv.type == MSG_WITNESS_BLOCK)
+                        RelayStakeTxsAndChainTipsIfNeeded(*pblock, pfrom, consensusParams, connman, interruptMsgProc, chainActive.Tip()->GetBlockHash());
+                    }
+                    else if (inv.type == MSG_WITNESS_BLOCK) {
                         connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::BLOCK, *pblock));
+                        RelayStakeTxsAndChainTipsIfNeeded(*pblock, pfrom, consensusParams, connman, interruptMsgProc, chainActive.Tip()->GetBlockHash());
+                    }
                     else if (inv.type == MSG_FILTERED_BLOCK)
                     {
                         bool sendMerkleBlock = false;
@@ -1125,6 +1252,7 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
                             }
                         } else {
                             connman->PushMessage(pfrom, msgMaker.Make(nSendFlags, NetMsgType::BLOCK, *pblock));
+                            RelayStakeTxsAndChainTipsIfNeeded(*pblock, pfrom, consensusParams, connman, interruptMsgProc, chainActive.Tip()->GetBlockHash());
                         }
                     }
 
@@ -1479,6 +1607,22 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::SENDCMPCT, fAnnounceUsingCMPCTBLOCK, nCMPCTBLOCKVersion));
         }
         pfrom->fSuccessfullyConnected = true;
+
+        // if the peer is at the same height with us,
+        // then send it all the votes and chaintips we have
+        if (!IsInitialBlockDownload()) {
+            int64_t tipHeight = 0;
+            {
+                LOCK(cs_main);
+                tipHeight = chainActive.Tip()->nHeight;
+            }
+            if (pfrom->nStartingHeight == tipHeight) {
+                RelayMempoolStakeTxs(pfrom);
+
+                int depth = static_cast<int>(gArgs.GetArg("-handshaketipsdepth", DEFAULT_HANDSHAKE_TIPS_DEPTH));
+                RelayChainTips(pfrom, chainparams.GetConsensus(), connman, interruptMsgProc, depth);
+            }
+        }
     }
 
     else if (!pfrom->fSuccessfullyConnected)
@@ -2501,6 +2645,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         ProcessNewBlock(chainparams, pblock, forceProcessing, &fNewBlock);
         if (fNewBlock) {
             pfrom->nLastBlockTime = GetTime();
+            RelayStakeTxsAndChainTipsIfNeeded(*pblock, pfrom, chainparams.GetConsensus(), connman, interruptMsgProc);
         } else {
             LOCK(cs_main);
             mapBlockSource.erase(pblock->GetHash());
@@ -3021,6 +3166,19 @@ bool PeerLogicValidation::SendMessages(CNode* pto)
                 pto->vAddrToSend.shrink_to_fit();
         }
 
+        // Send chain tips, if available
+        {
+            LOCK(pto->cs_chainTips);
+            for (auto& block : pto->vChainTipsToSend) {
+                const uint256& hash = block.GetHash();
+                if (!pto->filterChainTipsKnown.contains(hash)) {
+                    connman->PushMessage(pto, msgMaker.Make(SERIALIZE_TRANSACTION_NO_WITNESS, NetMsgType::BLOCK, block));
+                    pto->filterChainTipsKnown.insert(hash);
+                }
+            }
+            pto->vChainTipsToSend.clear();
+        }
+
         // Start block sync
         if (pindexBestHeader == nullptr)
             pindexBestHeader = chainActive.Tip();
@@ -3243,11 +3401,12 @@ bool PeerLogicValidation::SendMessages(CNode* pto)
                     const uint256& hash = txinfo.tx->GetHash();
                     CInv inv(MSG_TX, hash);
                     pto->setInventoryTxToSend.erase(hash);
+                    ETxClass txClass = ParseTxClass(*txinfo.tx);
                     if (filterrate) {
-                        if (txinfo.feeRate.GetFeePerK() < filterrate && ParseTxClass(*txinfo.tx) != TX_Vote)
+                        if (txinfo.feeRate.GetFeePerK() < filterrate && txClass != TX_Vote)
                             continue;
                     }
-                    if (pto->pfilter) {
+                    if (!IsStakeTx(txClass) && pto->pfilter) {
                         if (!pto->pfilter->IsRelevantAndUpdate(*txinfo.tx)) continue;
                     }
                     pto->filterInventoryKnown.insert(hash);
@@ -3298,10 +3457,11 @@ bool PeerLogicValidation::SendMessages(CNode* pto)
                     if (!txinfo.tx) {
                         continue;
                     }
-                    if (filterrate && txinfo.feeRate.GetFeePerK() < filterrate && ParseTxClass(*txinfo.tx) != TX_Vote) {
+                    ETxClass txClass = ParseTxClass(*txinfo.tx);
+                    if (filterrate && txinfo.feeRate.GetFeePerK() < filterrate && txClass != TX_Vote) {
                         continue;
                     }
-                    if (pto->pfilter && !pto->pfilter->IsRelevantAndUpdate(*txinfo.tx)) continue;
+                    if (!IsStakeTx(txClass) && pto->pfilter && !pto->pfilter->IsRelevantAndUpdate(*txinfo.tx)) continue;
                     // Send
                     vInv.push_back(CInv(MSG_TX, hash));
                     nRelayedTransactions++;
