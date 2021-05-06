@@ -18,7 +18,7 @@
 #define CLIENT_VERSION_MAJOR 2
 
 /* Minor version */
-#define CLIENT_VERSION_MINOR 3
+#define CLIENT_VERSION_MINOR 4
 
 /* Build revision */
 #define CLIENT_VERSION_REVISION 0
