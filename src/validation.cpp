@@ -58,6 +58,10 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/thread.hpp>
 
+#if BOOST_VERSION >= 106000
+using namespace boost::placeholders;
+#endif
+
 #if defined(NDEBUG)
 # error "PAI Coin cannot be compiled without assertions."
 #endif
@@ -644,6 +648,12 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                     }
                 }
                 if (fReplacementOptOut) {
+                    std::string errorMessage = strprintf("Found duplicate vin in transaction: %s for transaction: %s and vin index: %d\n",
+                                                         ptxConflicting->GetHash().GetHex(),
+                                                         tx.GetHash().GetHex(),
+                                                         in);
+                    LogPrintf(errorMessage.c_str());
+
                     return state.Invalid(false, REJECT_DUPLICATE, "txn-mempool-conflict");
                 }
 
@@ -686,8 +696,8 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     if (txClass == TX_BuyTicket) {
         CBlock dummyBlock;
         CAmount expectedStakeDifficulty = CalculateNextRequiredStakeDifficulty(chainActive.Tip(),chainparams.GetConsensus());
-        if (tx.vout[ticketStakeOutputIndex].nValue < expectedStakeDifficulty)
-            return state.DoS(100, false, REJECT_INVALID, "insufficient-stake");
+        if (tx.vout[ticketStakeOutputIndex].nValue != expectedStakeDifficulty)
+            return state.Invalid(false, REJECT_STAKE_DIFFICULTY, "wrong-stake-difficulty");
     }
 
     {
@@ -1961,20 +1971,19 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
 
         // restore inputs
         if (reorderedIndexes[i] > 0) { // not coinbases
-            CTxUndo &txundo = blockUndo.vtxundo[reorderedIndexes[i]-1];
-            // in case of Vote tx, skip altogether see UpdateCoins
-                // first vin, it is stakebase, see UpdateCoins
-                const auto& startIndex = ParseTxClass(tx) == ETxClass::TX_Vote ? voteStakeInputIndex : 0;
-                if (txundo.vprevout.size() != tx.vin.size() - startIndex) {
-                    error("DisconnectBlock(): transaction and undo data inconsistent");
-                    return DISCONNECT_FAILED;
-                }
-                for (unsigned int j = tx.vin.size(); j-- > startIndex;) {
-                    const COutPoint& out = tx.vin[j].prevout;
-                    int res = ApplyTxInUndo(std::move(txundo.vprevout[j - startIndex]), view, out);
-                    if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
-                    fClean = fClean && res != DISCONNECT_UNCLEAN;
-                }
+            CTxUndo& txundo = blockUndo.vtxundo[reorderedIndexes[i] - 1];
+            // first vin, it is stakebase, see UpdateCoins
+            const auto& startIndex = ParseTxClass(tx) == ETxClass::TX_Vote ? voteStakeInputIndex : 0;
+            if (txundo.vprevout.size() != tx.vin.size() - startIndex) {
+                error("DisconnectBlock(): transaction and undo data inconsistent");
+                return DISCONNECT_FAILED;
+            }
+            for (unsigned int j = tx.vin.size(); j-- > startIndex;) {
+                const COutPoint& out = tx.vin[j].prevout;
+                int res = ApplyTxInUndo(std::move(txundo.vprevout[j - startIndex]), view, out);
+                if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
+                fClean = fClean && res != DISCONNECT_UNCLEAN;
+            }
             // At this point, all of txundo.vprevout should have been moved out.
         }
     }
@@ -2266,10 +2275,13 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     fEnforceBIP30 = fEnforceBIP30 && (!pindexBIP34height || !(pindexBIP34height->GetBlockHash() == chainparams.GetConsensus().BIP34Hash));
 
     if (fEnforceBIP30) {
-        for (const auto& tx : block.vtx) {
+        for (size_t t = 0; t < block.vtx.size(); ++t) {
+            const auto& tx = block.vtx[t];
             for (size_t o = 0; o < tx->vout.size(); o++) {
                 if (view.HaveCoin(COutPoint(tx->GetHash(), o))) {
-                    return state.DoS(100, error("ConnectBlock(): tried to overwrite transaction"),
+                    const auto type = ParseTxClass(*tx);
+                    return state.DoS(100, error("ConnectBlock(): tried to overwrite output %d in transaction %d of type %d in block %s:\n%s",
+                                                o, t, type, block.GetHash().GetHex().c_str(), tx->ToString().c_str()),
                                      REJECT_INVALID, "bad-txns-BIP30");
                 }
             }
@@ -3135,20 +3147,25 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
 
         if (nStopAtHeight && pindexNewTip && pindexNewTip->nHeight >= nStopAtHeight) StartShutdown();
     } while (pindexNewTip != pindexMostWork);
-    CheckBlockIndex(chainparams.GetConsensus());
 
-    const auto& height = []()
+    const auto& consensus = chainparams.GetConsensus();
+
+    CheckBlockIndex(consensus);
+
+    int height{0};
+    CAmount stakeDifficulty{0};
     {
         LOCK(cs_main);
-        return chainActive.Height();
-    }();
+        height = chainActive.Height();
+        stakeDifficulty = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), consensus);
+    }
 
     // remove expired ticket transactions
-    mempool.removeExpiredTickets(height, chainparams.GetConsensus());
+    mempool.removeExpiredTickets(height, stakeDifficulty, consensus);
 
     // remove expired mempool votes
     if (fDiscardExpiredMempoolVotes)
-        mempool.removeExpiredVotes(height, chainparams.GetConsensus());
+        mempool.removeExpiredVotes(height, consensus);
 
     // notify wallet and other interested listeners.
     // This should go after the mempool cleanup above, since the wallet
@@ -3191,6 +3208,41 @@ bool PreciousBlock(CValidationState& state, const CChainParams& params, CBlockIn
     }
 
     return ActivateBestChain(state, params);
+}
+
+bool DisconnectTipForRemine(CValidationState& state, const CChainParams& chainparams, CBlockIndex *pindex)
+{
+    // taken from InvalidateBlock, but we only do the disconnecting part here, no invalid marking
+    AssertLockHeld(cs_main);
+    DisconnectedBlockTransactions disconnectpool;
+    while (chainActive.Contains(pindex)) {
+        // pindex_was_in_chain = true;
+        // ActivateBestChain considers blocks already in chainActive
+        // unconditionally valid already, so force disconnect away from it.
+        if (!DisconnectTip(state, chainparams, &disconnectpool)) {
+            // It's probably hopeless to try to make the mempool consistent
+            // here if DisconnectTip failed, but we can try.
+            UpdateMempoolForReorg(disconnectpool, false);
+            return false;
+        }
+    }
+
+
+    // DisconnectTip will add transactions to disconnectpool; try to add these
+    // back to the mempool.
+    UpdateMempoolForReorg(disconnectpool, true);
+
+    // The resulting new best tip may not be in setBlockIndexCandidates anymore, so
+    // add it again.
+    BlockMap::iterator it = mapBlockIndex.begin();
+    while (it != mapBlockIndex.end()) {
+        if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx && !setBlockIndexCandidates.value_comp()(it->second, chainActive.Tip())) {
+            setBlockIndexCandidates.insert(it->second);
+        }
+        it++;
+    }
+
+    return true;
 }
 
 bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex *pindex)

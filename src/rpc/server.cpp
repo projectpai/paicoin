@@ -30,6 +30,10 @@
 #include <unordered_map>
 #include <iterator>
 
+#if BOOST_VERSION >= 106000
+using namespace boost::placeholders;
+#endif
+
 static auto fRPCRunning = false;
 static auto fRPCInWarmup = true;
 static std::string rpcWarmupStatus{"RPC server started"};
@@ -515,7 +519,7 @@ std::vector<std::string> CRPCTable::listCommands() const
 
     std::transform( std::begin(mapCommands), std::end(mapCommands),
                    std::back_inserter(commandList),
-                   boost::bind(&commandMap::value_type::first,_1) );
+                   boost::bind(&commandMap::value_type::first, _1) );
     return commandList;
 }
 
