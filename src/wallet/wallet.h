@@ -1087,8 +1087,9 @@ public:
     void MarkReserveKeysAsUsed(int64_t keypool_id);
     const std::map<CKeyID, int64_t>& GetAllReserveKeys() const { return m_pool_key_to_index; }
 
-    std::set< std::set<CTxDestination> > GetAddressGroupings();
+    CAmount GetAddressBalance(const CTxDestination& address, const int minConf, const bool includeImmature) const;
     std::map<CTxDestination, CAmount> GetAddressBalances();
+    std::set< std::set<CTxDestination> > GetAddressGroupings();
 
     std::set<CTxDestination> GetAccountAddresses(const std::string& strAccount) const;
 

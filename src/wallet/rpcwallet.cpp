@@ -1029,6 +1029,55 @@ UniValue getreceivedbyaccount(const JSONRPCRequest& request)
     return ValueFromAmount(nAmount);
 }
 
+UniValue getaddressbalance(const JSONRPCRequest& request)
+{
+    const auto pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
+        throw std::runtime_error{
+            "getaddressbalance address ( minconf include_immature )\n"
+            "\nReturns the balance of the specified address. If minconf is\n"
+            "specified the value only includes values from transactions with\n"
+            "that many confirmations (0 for mempool). To include the immature\n"
+            "transactions (for coinbase and stake) set include_immature to true.\n"
+            "\nArguments:\n"
+            "1. address          (string) The address for which the balance is calculted.\n"
+            "2. minconf          (numeric, optional, default=0) Only include transactions confirmed"
+            "                     at least this many times.\n"
+            "3. include_immature (bool, optional, default=false) Also include balance from immature\n"
+            "                     transactions.\n"
+            "\nResult:\n"
+            "amount              (numeric) The balance of this address in " + CURRENCY_UNIT + ".\n"
+            "\nExamples:\n"
+            "\nAmount for address 1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX without the immature transactions \n"
+            "but including mempool ones:\n"
+            + HelpExampleCli("getaddressbalance", "1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX") +
+            "\nAmount for address 1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX from transactions that have at least \n"
+            + "6 confirmations; they can also be immature:\n"
+            + HelpExampleRpc("getaddressbalance", "1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX 6 true")
+        };
+
+    ObserveSafeMode();
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    const auto address = DecodeDestination(request.params[0].get_str());
+    if (!IsValidDestination(address)) {
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Invalid PAI Coin address");
+    }
+
+    int minConf{0};
+    if (request.params.size() >= 2 && !request.params[1].isNull() && request.params[1].isNum())
+        minConf = request.params[1].get_int();
+
+    bool includeImmature{false};
+    if (request.params.size() >= 3 && !request.params[2].isNull() && request.params[2].isBool())
+        includeImmature = request.params[2].get_bool();
+
+    return ValueFromAmount(pwallet->GetAddressBalance(address, minConf, includeImmature));
+}
 
 UniValue getbalance(const JSONRPCRequest& request)
 {
@@ -5485,6 +5534,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "getaccountaddress",                &getaccountaddress,                 {"account"} },
     { "wallet",             "getaccount",                       &getaccount,                        {"address"} },
     { "wallet",             "getaddressesbyaccount",            &getaddressesbyaccount,             {"account"} },
+    { "wallet",             "getaddressbalance",                &getaddressbalance,                 {"minconf","include_immature"} },
     { "wallet",             "getbalance",                       &getbalance,                        {"account","minconf","include_watchonly"} },
     { "wallet",             "getnewaddress",                    &getnewaddress,                     {"account"} },
     { "wallet",             "createnewaccount",                 &createnewaccount,                  {"account"} },

@@ -4775,6 +4775,67 @@ int64_t CWallet::GetOldestKeyPoolTime()
     return oldestKey;
 }
 
+CAmount CWallet::GetAddressBalance(const CTxDestination& address, const int minConf, const bool includeImmature) const
+{
+    CAmount balance = 0;
+
+    {
+        LOCK(cs_wallet);
+
+        for (std::map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const CWalletTx* wtx = &(*it).second;
+            const CTransactionRef tx = wtx->tx;
+
+            if (!includeImmature && (wtx->IsCoinBase() || IsStakeTx(*tx)) && wtx->GetBlocksToMaturity() > 0)
+                continue;
+
+            if (wtx->GetDepthInMainChain() < minConf)
+                continue;
+
+            for (const auto& txOut: tx->vout)
+            {
+                CTxDestination addr;
+                if (!ExtractDestination(txOut.scriptPubKey, addr))
+                    continue;
+
+                if (addr != address)
+                    continue;
+
+                balance += txOut.nValue;
+            }
+
+            for (const auto& txIn: tx->vin)
+            {
+                std::map<uint256, CWalletTx>::const_iterator mit = mapWallet.find(txIn.prevout.hash);
+                if (mit == mapWallet.end())
+                    continue;
+
+                const auto& fundingWtx = mit->second;
+
+                if (fundingWtx.GetDepthInMainChain() < minConf)
+                    continue;
+
+                if (txIn.prevout.n >= fundingWtx.tx->vout.size())
+                    continue;
+
+                const auto& fundingtxOut = fundingWtx.tx->vout[txIn.prevout.n];
+
+                CTxDestination addr;
+                if (!ExtractDestination(fundingtxOut.scriptPubKey, addr))
+                    continue;
+
+                if (addr != address)
+                    continue;
+
+                balance -= fundingtxOut.nValue;
+            }
+        }
+    }
+
+    return balance;
+}
+
 std::map<CTxDestination, CAmount> CWallet::GetAddressBalances()
 {
     std::map<CTxDestination, CAmount> balances;

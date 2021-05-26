@@ -120,6 +120,7 @@ encryptwallet "passphrase"
 getaccount "paicoinaddress"
 getaccountaddress "account"
 getaddressesbyaccount "account"
+getaddressbalance address ( minconf includeImmature )
 getbalance ( "account" minconf includeWatchonly )
 getnewaddress ( "account" )
 getrawchangeaddress
