@@ -38,15 +38,18 @@ void CTicketBuyer::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockInd
     if (!config.buyTickets)
         return;
 
-    LOCK(cs_main);
+    const CBlockIndex* tip = nullptr;
+    int64_t height = -1;
 
-    const CBlockIndex* tip = chainActive.Tip();
+    {
+        LOCK(cs_main);
+        tip = chainActive.Tip();
+        height = chainActive.Height();
+    }
 
     // check if the new tip is indeed on chain active
-    if (pindexNew == nullptr || tip == nullptr || pindexNew->GetBlockHash() != tip->GetBlockHash())
+    if (pindexNew == nullptr || tip == nullptr || height == -1 || pindexNew->GetBlockHash() != tip->GetBlockHash())
         return;
-
-    int64_t height = chainActive.Height();
 
     // do not try to purchase tickets before the stake enabling height - ticket maturity,
     // so they are mature at stake enabling height
@@ -113,7 +116,7 @@ void CTicketBuyer::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockInd
     }
     spendable -= config.maintain;
 
-    CAmount sdiff = CalculateNextRequiredStakeDifficulty(chainActive.Tip(), Params().GetConsensus());
+    CAmount sdiff = CalculateNextRequiredStakeDifficulty(tip, Params().GetConsensus());
 
     int64_t buy = spendable / sdiff;
     if (buy <= 0) {
