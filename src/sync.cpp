@@ -23,6 +23,15 @@ void PrintLockContention(const char* pszName, const char* pszFile, int nLine)
 }
 #endif /* DEBUG_LOCKCONTENTION */
 
+#ifdef DEBUG_LOCKTHREADID
+#include <thread>
+std::string getThreadId() {
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    return ss.str();
+}
+#endif
+
 #ifdef DEBUG_LOCKORDER
 //
 // Early deadlock detection.
@@ -42,11 +51,19 @@ struct CLockLocation {
         sourceFile = pszFile;
         sourceLine = nLine;
         fTry = fTryIn;
+#ifdef DEBUG_LOCKTHREADID
+        threadId = getThreadId();
+#endif
     }
 
     std::string ToString() const
     {
-        return mutexName + "  " + sourceFile + ":" + itostr(sourceLine) + (fTry ? " (TRY)" : "");
+        return mutexName + "  " + sourceFile + ":" + itostr(sourceLine) + (fTry ? " (TRY)" : "") +
+#ifdef DEBUG_LOCKTHREADID
+                "  threadId: " + threadId;
+#else
+                "";
+#endif
     }
 
     bool fTry;
@@ -54,6 +71,9 @@ private:
     std::string mutexName;
     std::string sourceFile;
     int sourceLine;
+#ifdef DEBUG_LOCKTHREADID
+    std::string threadId;
+#endif
 };
 
 typedef std::vector<std::pair<void*, CLockLocation> > LockStack;
