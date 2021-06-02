@@ -33,6 +33,16 @@ LIBPAICOIN_CRYPTO=crypto/libpaicoin_crypto.a
 LIBPAICOINQT=qt/libpaicoinqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 
+if TARGET_WINDOWS
+LIBPAICOINHASH=-L$(srcdir)/crypto/paicoinhash/win -lpaicoinhash
+else
+if TARGET_DARWIN
+LIBPAICOINHASH=-L$(srcdir)/crypto/paicoinhash/macos -lpaicoinhash
+else
+LIBPAICOINHASH= -L$(srcdir)/crypto/paicoinhash/linux -lpaicoinhash
+endif
+endif
+
 if ENABLE_ZMQ
 LIBPAICOIN_ZMQ=libpaicoin_zmq.a
 endif
@@ -343,6 +353,7 @@ libpaicoin_consensus_a_SOURCES = \
   utilstrencodings.cpp \
   utilstrencodings.h \
   version.h
+libpaicoin_consensus_a_LDFLAGS = $(LIBPAICOINHASH)
 
 # common: shared between paicoind, and paicoin-qt and non-server tools
 libpaicoin_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES)
@@ -424,6 +435,7 @@ paicoind_LDADD = \
   $(LIBPAICOIN_WALLET) \
   $(LIBPAICOIN_ZMQ) \
   $(LIBPAICOIN_CONSENSUS) \
+  $(LIBPAICOINHASH) \
   $(LIBPAICOIN_CRYPTO) \
   $(LIBLEVELDB) \
   $(LIBLEVELDB_SSE42) \
@@ -446,6 +458,7 @@ paicoin_cli_LDADD = \
   $(LIBPAICOIN_CLI) \
   $(LIBUNIVALUE) \
   $(LIBPAICOIN_UTIL) \
+  $(LIBPAICOINHASH) \
   $(LIBPAICOIN_CRYPTO)
 
 paicoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
@@ -465,6 +478,7 @@ paicoin_block_generator_LDADD = \
   $(LIBPAICOIN_CLI) \
   $(LIBUNIVALUE) \
   $(LIBPAICOIN_UTIL) \
+  $(LIBPAICOINHASH) \
   $(LIBPAICOIN_CRYPTO)
 
 paicoin_block_generator_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
@@ -485,6 +499,7 @@ paicoin_tx_LDADD = \
   $(LIBPAICOIN_COMMON) \
   $(LIBPAICOIN_UTIL) \
   $(LIBPAICOIN_CONSENSUS) \
+  $(LIBPAICOINHASH) \
   $(LIBPAICOIN_CRYPTO) \
   $(LIBSECP256K1)
 

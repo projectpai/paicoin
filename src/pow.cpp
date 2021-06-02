@@ -132,6 +132,23 @@ static const CBlockIndex *GetSuitableBlock(const CBlockIndex *pindex) {
     return blocks[1];
 }
 
+/**
+ * Find the first block using Paicoin Hash by reverse searching the chain.
+ * This function should only be called once Paicoin Hash switching has been reached,
+ * since it assumes that at least the successor of pindexPrev block uses Paicoin Hash.
+ */
+static inline int GetFirstPaicoinHashHeight(const CBlockIndex *pindexPrev) {
+    assert(pindexPrev);
+
+    int height = pindexPrev->nHeight + 1;
+    while (height > 0 && pindexPrev != nullptr && pindexPrev->GetBlockHeader().isPaicoinHashBlock()) {
+        --height;
+        pindexPrev = pindexPrev->pprev;
+    }
+
+    return height;
+}
+
 unsigned int GetNextWorkRequired(const CBlockIndex *pindexPrev, const CBlockHeader *pblock, const Consensus::Params &params) {
     // GetNextWorkRequired should never be called on the genesis block
     assert(pindexPrev != nullptr);
@@ -213,6 +230,13 @@ uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
         return params.nHybridConsensusInitialDifficulty;
     }
 
+    // if the block is just after the Paicoin Hash fork,
+    // enforce the initial difficulty for this situation
+    int nPaicoinHashHeight = GetFirstPaicoinHashHeight(pindexPrev);
+    if (pblock->isPaicoinHashBlock() && pindexPrev->nHeight < nPaicoinHashHeight + params.nPaicoinHashInitialDifficultyBlockCount) {
+        return params.nPaicoinHashInitialDifficulty;
+    }
+
     // Special difficulty rule for testnet:
     // If the new block's timestamp is more than 2* 10 minutes then allow
     // mining of a min-difficulty block.
@@ -232,9 +256,13 @@ uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
 
     // Get the first suitable block of the difficulty interval.
     // Do not consider blocks before hybrid consensus takes effect.
-    int nHeightFirst = (nHeight - 144) < params.nHybridConsensusHeight + 1 ? params.nHybridConsensusHeight + 1: (nHeight - 144);
-    const CBlockIndex *pindexFirst =
-        GetSuitableBlock(pindexPrev->GetAncestor(nHeightFirst));
+    int nHeightFirst = 0;
+    if (pblock->isPaicoinHashBlock())
+        nHeightFirst = (nHeight - 144) < (nPaicoinHashHeight + 1) ? (nPaicoinHashHeight + 1) : (nHeight - 144);
+    else
+        nHeightFirst = (nHeight - 144) < (params.nHybridConsensusHeight + 1) ? (params.nHybridConsensusHeight + 1) : (nHeight - 144);
+
+    const CBlockIndex *pindexFirst = GetSuitableBlock(pindexPrev->GetAncestor(nHeightFirst));
     assert(pindexFirst);
     // Compute the target based on time and work done during the interval.
     const arith_uint256 nextTarget =
