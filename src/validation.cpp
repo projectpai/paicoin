@@ -3835,6 +3835,10 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
 {
     const int nHeight = pindexPrev == nullptr ? 0 : pindexPrev->nHeight + 1;
 
+    // make sure that the block follows the Paicoin Hash PoW requirements
+    if (nHeight >= consensusParams.nPaicoinHashMaximumActivationHeight && !block.isPaicoinHashBlock())
+        return state.DoS(50, false, REJECT_INVALID, "paicoin-hash-should-activate", false, "Paicoin Hash constraints are not met");
+
     // Start enforcing BIP113 (Median Time Past) using versionbits logic.
     int nLockTimeFlags = 0;
     if (VersionBitsState(pindexPrev, consensusParams, Consensus::DEPLOYMENT_CSV, versionbitscache) == THRESHOLD_ACTIVE) {
