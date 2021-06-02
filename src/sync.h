@@ -71,13 +71,13 @@ public:
 };
 
 #ifdef DEBUG_LOCKORDER
-void EnterCritical(const char* pszName, const char* pszFile, int nLine, void* cs, bool fTry = false);
+void EnterCritical(const char* pszName, const char* pszFile, int nLine, void* cs, bool fRecursive, bool fTry = false);
 void LeaveCritical();
 std::string LocksHeld();
 void AssertLockHeldInternal(const char* pszName, const char* pszFile, int nLine, void* cs);
 void DeleteLock(void* cs);
 #else
-void static inline EnterCritical(const char* pszName, const char* pszFile, int nLine, void* cs, bool fTry = false) {}
+void static inline EnterCritical(const char* pszName, const char* pszFile, int nLine, void* cs, bool fRecursive, bool fTry = false) {}
 void static inline LeaveCritical() {}
 void static inline AssertLockHeldInternal(const char* pszName, const char* pszFile, int nLine, void* cs) {}
 void static inline DeleteLock(void* cs) {}
@@ -112,10 +112,11 @@ class SCOPED_LOCKABLE CMutexLock
 {
 private:
     boost::unique_lock<Mutex> lock;
+    bool recursive;
 
     void Enter(const char* pszName, const char* pszFile, int nLine)
     {
-        EnterCritical(pszName, pszFile, nLine, (void*)(lock.mutex()));
+        EnterCritical(pszName, pszFile, nLine, (void*)(lock.mutex()), recursive);
 #ifdef DEBUG_LOCKCONTENTION
         if (!lock.try_lock()) {
             PrintLockContention(pszName, pszFile, nLine);
@@ -128,7 +129,7 @@ private:
 
     bool TryEnter(const char* pszName, const char* pszFile, int nLine)
     {
-        EnterCritical(pszName, pszFile, nLine, (void*)(lock.mutex()), true);
+        EnterCritical(pszName, pszFile, nLine, (void*)(lock.mutex()), recursive, true);
         lock.try_lock();
         if (!lock.owns_lock())
             LeaveCritical();
@@ -136,7 +137,7 @@ private:
     }
 
 public:
-    CMutexLock(Mutex& mutexIn, const char* pszName, const char* pszFile, int nLine, bool fTry = false) EXCLUSIVE_LOCK_FUNCTION(mutexIn) : lock(mutexIn, boost::defer_lock)
+    CMutexLock(Mutex& mutexIn, const char* pszName, const char* pszFile, int nLine, bool fRecursive, bool fTry = false) EXCLUSIVE_LOCK_FUNCTION(mutexIn) : lock(mutexIn, boost::defer_lock), recursive(fRecursive)
     {
         if (fTry)
             TryEnter(pszName, pszFile, nLine);
@@ -144,7 +145,7 @@ public:
             Enter(pszName, pszFile, nLine);
     }
 
-    CMutexLock(Mutex* pmutexIn, const char* pszName, const char* pszFile, int nLine, bool fTry = false) EXCLUSIVE_LOCK_FUNCTION(pmutexIn)
+    CMutexLock(Mutex* pmutexIn, const char* pszName, const char* pszFile, int nLine, bool fRecursive, bool fTry = false) EXCLUSIVE_LOCK_FUNCTION(pmutexIn) : recursive(fRecursive)
     {
         if (!pmutexIn) return;
 
@@ -172,14 +173,14 @@ typedef CMutexLock<CCriticalSection> CCriticalBlock;
 #define PASTE(x, y) x ## y
 #define PASTE2(x, y) PASTE(x, y)
 
-#define LOCK(cs) CCriticalBlock PASTE2(criticalblock, __COUNTER__)(cs, #cs, __FILE__, __LINE__)
-#define LOCK2(cs1, cs2) CCriticalBlock criticalblock1(cs1, #cs1, __FILE__, __LINE__), criticalblock2(cs2, #cs2, __FILE__, __LINE__)
-#define TRY_LOCK(cs, name) CCriticalBlock name(cs, #cs, __FILE__, __LINE__, true)
+#define LOCK(cs) CCriticalBlock PASTE2(criticalblock, __COUNTER__)(cs, #cs, __FILE__, __LINE__, true)
+#define LOCK2(cs1, cs2) CCriticalBlock criticalblock1(cs1, #cs1, __FILE__, __LINE__, true), criticalblock2(cs2, #cs2, __FILE__, __LINE__, true)
+#define TRY_LOCK(cs, name) CCriticalBlock name(cs, #cs, __FILE__, __LINE__, true, true)
 
-#define ENTER_CRITICAL_SECTION(cs)                            \
-    {                                                         \
-        EnterCritical(#cs, __FILE__, __LINE__, (void*)(&cs)); \
-        (cs).lock();                                          \
+#define ENTER_CRITICAL_SECTION(cs, recursive)                            \
+    {                                                                    \
+        EnterCritical(#cs, __FILE__, __LINE__, (void*)(&cs), recursive); \
+        (cs).lock();                                                     \
     }
 
 #define LEAVE_CRITICAL_SECTION(cs) \

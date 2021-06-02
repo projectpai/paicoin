@@ -45,6 +45,8 @@
 #define MAINNET_HYBRID_CONSENSUS_POW_LIMIT          uint256S("000003e75d000000000000000000000000000000000000000000000000000000");
 #define MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x1e03e75d
 
+#define MAINNET_PAICOIN_HASH_INITIAL_DIFFICULTY 0x1e03e75d
+
 #define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
 #define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
@@ -58,6 +60,8 @@
 #define TESTNET_HYBRID_CONSENSUS_POW_LIMIT   uint256S("000003e75d000000000000000000000000000000000000000000000000000000");
 #define TESTNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x1e03e75d
 
+#define TESTNET_PAICOIN_HASH_INITIAL_DIFFICULTY 0x1e03e75d
+
 #define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define REGTEST_GENESIS_BLOCK_POW_BITS   1
 #define REGTEST_GENESIS_BLOCK_NBITS      0x207fffff
@@ -70,6 +74,8 @@
 
 #define REGTEST_HYBRID_CONSENSUS_POW_LIMIT          REGTEST_CONSENSUS_POW_LIMIT
 #define REGTEST_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x207fffff
+
+#define REGTEST_PAICOIN_HASH_INITIAL_DIFFICULTY 0x207fffff
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
@@ -186,6 +192,12 @@ public:
         consensus.hybridConsensusPowLimit = MAINNET_HYBRID_CONSENSUS_POW_LIMIT;
         consensus.nHybridConsensusInitialDifficulty = MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
+
+        // hashing algorithm parameters
+        consensus.nPaicoinHashTimestamp = 1631631600LL;
+        consensus.nPaicoinHashMaximumActivationHeight = 220000;
+        consensus.nPaicoinHashInitialDifficulty = MAINNET_PAICOIN_HASH_INITIAL_DIFFICULTY;
+        consensus.nPaicoinHashInitialDifficultyBlockCount = 10;
 
         // stake parameters
         consensus.nMinimumStakeDiff                 = COIN * 2;
@@ -383,6 +395,12 @@ public:
         consensus.nHybridConsensusInitialDifficulty = TESTNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
 
+        // hashing algorithm parameters
+        consensus.nPaicoinHashTimestamp = 1628686800LL;
+        consensus.nPaicoinHashMaximumActivationHeight = 90000;
+        consensus.nPaicoinHashInitialDifficulty = TESTNET_PAICOIN_HASH_INITIAL_DIFFICULTY;
+        consensus.nPaicoinHashInitialDifficultyBlockCount = 10;
+
         // stake parameters
         consensus.nMinimumStakeDiff                 = COIN * 0.2;
         consensus.nTicketPoolSize                   = 1024;
@@ -557,6 +575,12 @@ public:
         consensus.hybridConsensusPowLimit = REGTEST_HYBRID_CONSENSUS_POW_LIMIT;
         consensus.nHybridConsensusInitialDifficulty = REGTEST_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
+
+        // hashing algorithm parameters
+        consensus.nPaicoinHashTimestamp = 0LL;
+        consensus.nPaicoinHashMaximumActivationHeight = 2100;
+        consensus.nPaicoinHashInitialDifficulty = REGTEST_PAICOIN_HASH_INITIAL_DIFFICULTY;
+        consensus.nPaicoinHashInitialDifficultyBlockCount = 10;
 
         // stake paramters
         consensus.nMinimumStakeDiff               = 20000;
