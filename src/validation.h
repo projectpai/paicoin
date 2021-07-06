@@ -292,6 +292,8 @@ bool GetTransaction(const uint256 &hash, CTransactionRef &tx, const Consensus::P
 CTransactionRef GetTicket(const uint256 &ticketTxHash);
 /** Find the best known block, and make it the tip of the block chain */
 bool ActivateBestChain(CValidationState& state, const CChainParams& chainparams, std::shared_ptr<const CBlock> pblock = std::shared_ptr<const CBlock>());
+/** Select the desired chain tip */
+bool SetActiveChainTip(const CChainParams& chainparams, const uint256 &hash);
 
 // An indicator of the desired fee distribution policy
 // This influences the way that the vote or revoke fees are distributed among the contributors.

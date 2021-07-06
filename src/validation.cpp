@@ -3107,6 +3107,25 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
     return true;
 }
 
+/**
+  * Change the active tip.
+  * The specified block must be one of the current chain tips, otherwise this
+  * function fails.
+  */
+bool SetActiveChainTip(const CChainParams& chainparams, const uint256 &hash)
+{
+    auto setTips = GetChainTips();
+
+    auto it = std::find_if(std::begin(setTips), std::end(setTips),
+                               [&hash] (const CBlockIndex* pBlockIndex) { return pBlockIndex->GetBlockHash() == hash; });
+
+    if (it == setTips.end())
+        return false;
+
+    UpdateTip(*it, chainparams);
+
+    return true;
+}
 
 bool PreciousBlock(CValidationState& state, const CChainParams& params, CBlockIndex *pindex)
 {

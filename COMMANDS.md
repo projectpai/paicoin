@@ -61,6 +61,7 @@ getblockchaininfo
 getblockcount
 getblockhash index
 getchaintips
+setactivechaintip
 getdifficulty
 getmempoolinfo
 getrawmempool ( verbose )
