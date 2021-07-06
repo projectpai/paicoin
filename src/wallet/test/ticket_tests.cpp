@@ -1054,6 +1054,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
             {
                 // tickets should be in the mempool
 
+                LOCK(mempool.cs);
                 auto& tx_class_index = mempool.mapTx.get<tx_class>();
                 auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
 
@@ -1069,6 +1070,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
             {
                 // some tickets should still be in the mempool
 
+                LOCK(mempool.cs);
                 auto& tx_class_index = mempool.mapTx.get<tx_class>();
                 auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
 
@@ -1097,6 +1099,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_purchase_transaction, WalletStakeTestingSetup)
             {
                 // tickets should not be in the mempool
 
+                LOCK(mempool.cs);
                 auto& tx_class_index = mempool.mapTx.get<tx_class>();
                 auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
 
@@ -1145,6 +1148,7 @@ BOOST_FIXTURE_TEST_CASE(ticket_residence, WalletStakeTestingSetup)
     CWalletError we;
 
     auto ticketsInMempool = [](std::vector<std::string>& txHashes) -> bool {
+        LOCK(mempool.cs);
         auto& tx_class_index = mempool.mapTx.get<tx_class>();
         auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
 
@@ -1212,6 +1216,8 @@ BOOST_FIXTURE_TEST_CASE(stake_difficulty_filtration, WalletStakeTestingSetup)
     for (const auto& mtx: tickets)
         AddToMempoolUnchecked(mtx);
 
+    LOCK(mempool.cs);
+
     auto& tx_class_index = mempool.mapTx.get<tx_class>();
     auto mempoolTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
     for (auto tickettxiter = mempoolTickets.first; tickettxiter != mempoolTickets.second; ++tickettxiter) {
@@ -1240,6 +1246,7 @@ BOOST_FIXTURE_TEST_CASE(stake_difficulty_filtration, WalletStakeTestingSetup)
 BOOST_FIXTURE_TEST_CASE(expiry_malleability, WalletStakeTestingSetup)
 {
     auto isInMempool = [](const CMutableTransaction& tx) -> bool {
+        LOCK(mempool.cs);
         auto& tx_class_index = mempool.mapTx.get<tx_class>();
         auto mempoolTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
         for (auto tickettxiter = mempoolTickets.first; tickettxiter != mempoolTickets.second; ++tickettxiter)

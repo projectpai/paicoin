@@ -97,6 +97,7 @@ int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 bool fEnableReplacement = DEFAULT_ENABLE_REPLACEMENT;
 bool fDiscardExpiredMempoolVotes = DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES;
 int nMempoolResidence = DEFAULT_MEMPOOL_RESIDENCE;
+int nMaxDepthForNotification = DEFAULT_MAX_DEPTH_FOR_NOTIFICATION;
 
 uint256 hashAssumeValid;
 arith_uint256 nMinimumChainWork;
@@ -2134,7 +2135,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     // or, when tip has insuffiecient votes and a side chain is mined, check that previous is the one behind tip
     // or builds on top of a side chain tip
     uint256 hashPrevBlock = pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash();
-    assert(hashPrevBlock == view.GetBestBlock() || chainActive.Tip()->pprev == pindex->pprev || pindex->pprev->nHeight == chainActive.Height());
+    assert(hashPrevBlock == view.GetBestBlock() || (pindex->pprev->nHeight >= chainActive.Height() && chainActive.IsForkAtMost(pindex, nMaxDepthForNotification)));
 
     // Special case for the genesis block, skipping connection of its transactions
     // (its coinbase is unspendable)
@@ -3107,6 +3108,25 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
     return true;
 }
 
+/**
+  * Change the active tip.
+  * The specified block must be one of the current chain tips, otherwise this
+  * function fails.
+  */
+bool SetActiveChainTip(const CChainParams& chainparams, const uint256 &hash)
+{
+    auto setTips = GetChainTips();
+
+    auto it = std::find_if(std::begin(setTips), std::end(setTips),
+                               [&hash] (const CBlockIndex* pBlockIndex) { return pBlockIndex->GetBlockHash() == hash; });
+
+    if (it == setTips.end())
+        return false;
+
+    UpdateTip(*it, chainparams);
+
+    return true;
+}
 
 bool PreciousBlock(CValidationState& state, const CChainParams& params, CBlockIndex *pindex)
 {
@@ -4177,9 +4197,13 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     }
 
     // Header is valid/has work, merkle tree and segwit merkle tree are good...RELAY NOW
-    // (but if it does not build on our best tip, let the SendMessages loop relay it)
-    if (!IsInitialBlockDownload() && (chainActive.Tip() == pindex->pprev || (chainActive.Tip()->pprev && chainActive.Tip()->pprev == pindex->pprev)) )
-        GetMainSignals().NewPoWValidBlock(pindex, pblock);
+    // (but if it does not build on our best tip, let the SendMessages loop relay it).
+    // Make sure to include successors of any chain tip at the same height with the active tip,
+    // or above.
+    if (!IsInitialBlockDownload()) {
+        if (pindex->nHeight >= chainActive.Tip()->nHeight && chainActive.IsForkAtMost(pindex, nMaxDepthForNotification))
+            GetMainSignals().NewPoWValidBlock(pindex, pblock);
+    }
 
     return true;
 }
@@ -4219,8 +4243,8 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
 bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase)
 {
     AssertLockHeld(cs_main);
-    // we expect building on top of the current tip, also on the previous in case current tip has insufficient votes, also on a side chain with same height as current tip
-    assert(pindexPrev && (pindexPrev == chainActive.Tip() || pindexPrev == chainActive.Tip()->pprev || pindexPrev->nHeight == chainActive.Height()));
+    // we expect building on top of the current tip, or a fork no deeper than permitted
+    assert(pindexPrev && pindexPrev->nHeight >= chainActive.Height() && chainActive.IsForkAtMost(pindexPrev, nMaxDepthForNotification-1));
     CCoinsViewCache viewNew(pcoinsTip);
     CBlockIndex indexDummy(block);
     indexDummy.pprev = pindexPrev;

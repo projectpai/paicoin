@@ -601,6 +601,9 @@ public:
 
     /** Find the earliest block with timestamp equal or greater than the given. */
     CBlockIndex* FindEarliestAtLeast(int64_t nTime) const;
+
+    /** Verifies if the block is on a fork at most maxDepth blocks deep. */
+    bool IsForkAtMost(CBlockIndex *pindex, int maxDepth) const;
 };
 
 #endif // PAICOIN_CHAIN_H
