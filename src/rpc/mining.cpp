@@ -539,6 +539,9 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             CBlockIndex* selectedIndex = nullptr;
             const auto& setTips = GetChainTips();
             for (auto pBlockIndex : setTips) {
+                if (pBlockIndex->nStatus & BLOCK_FAILED_MASK)
+                    continue;
+
                 if (pBlockIndex->nHeight < tipHeight)
                     continue;
 
