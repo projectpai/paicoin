@@ -672,6 +672,64 @@ void CTxMemPool::removeExpiredVotes(const int currentHeight, const Consensus::Pa
     RemoveStaged(txToRemove, true, MemPoolRemovalReason::EXPIRY);
 }
 
+void CTxMemPool::removeVotesForBlock(const uint256& blockHash, const Consensus::Params& params)
+{
+    LOCK(cs);
+
+    // get the votes
+    auto& tx_class_index = mapTx.get<tx_class>();
+    auto votes = tx_class_index.equal_range(ETxClass::TX_Vote);
+
+    CTxMemPool::setEntries txToRemove;
+    for (auto votetxiter = votes.first; votetxiter != votes.second; ++votetxiter) {
+        if (!IsHybridConsensusForkEnabled(static_cast<int>(votetxiter->GetHeight()), params))
+            continue;
+
+        VoteData voteData;
+        if (!ParseVote(votetxiter->GetTx(), voteData))
+            continue;
+
+        if (voteData.blockHash == blockHash) {
+            auto txiter = mapTx.project<0>(votetxiter);
+
+            txToRemove.insert(txiter);
+
+            CalculateDescendants(txiter, txToRemove);
+        }
+    }
+
+    RemoveStaged(txToRemove, true, MemPoolRemovalReason::UNKNOWN);
+}
+
+void CTxMemPool::removeAllVotesExceptForBlock(const uint256& blockHash, const Consensus::Params& params)
+{
+    LOCK(cs);
+
+    // get the votes
+    auto& tx_class_index = mapTx.get<tx_class>();
+    auto votes = tx_class_index.equal_range(ETxClass::TX_Vote);
+
+    CTxMemPool::setEntries txToRemove;
+    for (auto votetxiter = votes.first; votetxiter != votes.second; ++votetxiter) {
+        if (!IsHybridConsensusForkEnabled(static_cast<int>(votetxiter->GetHeight()), params))
+            continue;
+
+        VoteData voteData;
+        if (!ParseVote(votetxiter->GetTx(), voteData))
+            continue;
+
+        if (voteData.blockHash != blockHash) {
+            auto txiter = mapTx.project<0>(votetxiter);
+
+            txToRemove.insert(txiter);
+
+            CalculateDescendants(txiter, txToRemove);
+        }
+    }
+
+    RemoveStaged(txToRemove, true, MemPoolRemovalReason::UNKNOWN);
+}
+
 void CTxMemPool::_clear()
 {
     mapLinks.clear();

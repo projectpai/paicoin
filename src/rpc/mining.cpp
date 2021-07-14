@@ -1524,6 +1524,51 @@ UniValue ticketvwap(const JSONRPCRequest& request)
     return ValueFromAmount(CAmount(vwap));
 }
 
+UniValue removemempoolvotes(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) {
+        throw std::runtime_error{
+            "removemempoolvotes \"blockhash\"\n"
+            "\nRemoves the votes for the specified block hash.\n"
+            "\nArguments:\n"
+            "1. \"blockhash\"        (string, required) the hex-encoded hash of block in votes to remove\n"
+            "\nResult:\n"
+            "\nExamples:\n"
+            + HelpExampleCli("removemempoolvotes", "\"00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343\"")
+            + HelpExampleRpc("removemempoolvotes", "\"00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343\"")
+        };
+    }
+
+    const auto hash = uint256S(request.params[0].get_str());
+
+    mempool.removeVotesForBlock(hash, Params().GetConsensus());
+
+    return NullUniValue;
+}
+
+UniValue removeallmempoolvotesexcept(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) {
+        throw std::runtime_error{
+            "removeallmempoolvotesexcept \"blockhash\"\n"
+            "\nRemoves all the votes that are NOT for the specified block hash.\n"
+            "\nWARNING! This might leave mempool without necessary votes for chain advance. Use with caution!\n"
+            "\nArguments:\n"
+            "1. \"blockhash\"        (string, required) the hex-encoded hash of block in votes to keep\n"
+            "\nResult:\n"
+            "\nExamples:\n"
+            + HelpExampleCli("removeallmempoolvotesexcept", "\"00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343\"")
+            + HelpExampleRpc("removeallmempoolvotesexcept", "\"00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343\"")
+        };
+    }
+
+    const auto hash = uint256S(request.params[0].get_str());
+
+    mempool.removeAllVotesExceptForBlock(hash, Params().GetConsensus());
+
+    return NullUniValue;
+}
+
 UniValue estimatefee(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
@@ -1727,32 +1772,34 @@ UniValue estimaterawfee(const JSONRPCRequest& request)
 }
 
 static const CRPCCommand commands[] =
-{ //  category              name                      actor (function)         argNames
-  //  --------------------- ------------------------  -----------------------  ----------
-    { "mining",             "getnetworkhashps",       &getnetworkhashps,       {"nblocks","height"} },
-    { "mining",             "getmininginfo",          &getmininginfo,          {} },
-    { "mining",             "prioritisetransaction",  &prioritisetransaction,  {"txid","dummy","fee_delta"} },
-    { "mining",             "getblocktemplate",       &getblocktemplate,       {"template_request"} },
-    { "mining",             "submitblock",            &submitblock,            {"hexdata","dummy"} },
+{ //  category              name                            actor (function)                argNames
+  //  --------------------- ------------------------------- ------------------------------- ----------
+    { "mining",             "getnetworkhashps",             &getnetworkhashps,              {"nblocks","height"} },
+    { "mining",             "getmininginfo",                &getmininginfo,                 {} },
+    { "mining",             "prioritisetransaction",        &prioritisetransaction,         {"txid","dummy","fee_delta"} },
+    { "mining",             "getblocktemplate",             &getblocktemplate,              {"template_request"} },
+    { "mining",             "submitblock",                  &submitblock,                   {"hexdata","dummy"} },
 
-    { "mining",             "existsexpiredtickets",   &existsexpiredtickets,   {"txhashes"} },
-    { "mining",             "existsliveticket",       &existsliveticket,       {"txhash"} },
-    { "mining",             "existsmissedtickets",    &existsmissedtickets,    {"txhashes"} },
-    { "mining",             "existslivetickets",      &existslivetickets,      {"txhashes"} },
-    { "mining",             "getticketpoolvalue",     &getticketpoolvalue,     {} },
-    { "mining",             "livetickets",            &livetickets,            {"verbose", "blockheight"} },
-    { "mining",             "winningtickets",         &winningtickets,         {"blockheight"} },
-    { "mining",             "missedtickets",          &missedtickets,          {"verbose", "blockheight"} },
-    { "mining",             "ticketfeeinfo",          &ticketfeeinfo,          {"blocks","windows"} },
-    { "mining",             "ticketsforaddress",      &ticketsforaddress,      {"address"} },
-    { "mining",             "ticketvwap",             &ticketvwap,             {"start","stop"} },
+    { "mining",             "existsexpiredtickets",         &existsexpiredtickets,          {"txhashes"} },
+    { "mining",             "existsliveticket",             &existsliveticket,              {"txhash"} },
+    { "mining",             "existsmissedtickets",          &existsmissedtickets,           {"txhashes"} },
+    { "mining",             "existslivetickets",            &existslivetickets,             {"txhashes"} },
+    { "mining",             "getticketpoolvalue",           &getticketpoolvalue,            {} },
+    { "mining",             "livetickets",                  &livetickets,                   {"verbose", "blockheight"} },
+    { "mining",             "winningtickets",               &winningtickets,                {"blockheight"} },
+    { "mining",             "missedtickets",                &missedtickets,                 {"verbose", "blockheight"} },
+    { "mining",             "ticketfeeinfo",                &ticketfeeinfo,                 {"blocks","windows"} },
+    { "mining",             "ticketsforaddress",            &ticketsforaddress,             {"address"} },
+    { "mining",             "ticketvwap",                   &ticketvwap,                    {"start","stop"} },
+    { "mining",             "removemempoolvotes",           &removemempoolvotes,            {"blockhash"} },
+    { "mining",             "removeallmempoolvotesexcept",  &removeallmempoolvotesexcept,   {"blockhash"} },
 
-    { "generating",         "generatetoaddress",      &generatetoaddress,      {"nblocks","address","maxtries"} },
+    { "generating",         "generatetoaddress",            &generatetoaddress,             {"nblocks","address","maxtries"} },
 
-    { "util",               "estimatefee",            &estimatefee,            {"nblocks"} },
-    { "util",               "estimatesmartfee",       &estimatesmartfee,       {"conf_target", "estimate_mode"} },
+    { "util",               "estimatefee",                  &estimatefee,                   {"nblocks"} },
+    { "util",               "estimatesmartfee",             &estimatesmartfee,              {"conf_target", "estimate_mode"} },
 
-    { "hidden",             "estimaterawfee",         &estimaterawfee,         {"conf_target", "threshold"} },
+    { "hidden",             "estimaterawfee",               &estimaterawfee,                {"conf_target", "threshold"} },
 };
 
 void RegisterMiningRPCCommands(CRPCTable &t)
