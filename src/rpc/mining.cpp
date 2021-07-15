@@ -612,7 +612,13 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                     throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
                 }
             } else {
-                pindexPrevNew = chainActive.Tip()->pprev;
+                // find the index of the current template
+                auto mi = mapBlockIndex.find(pblocktemplate->block.GetHash());
+                if (mi == mapBlockIndex.end())
+                    throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "Template block index not found!");
+
+                pindexPrevNew = mi->second;
+
                 pblocktemplate->block.nTime++;
                 LogPrintf("returning cached template with adjusted time %d!\n", pblocktemplate->block.nTime);
             }
