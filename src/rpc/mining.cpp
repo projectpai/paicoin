@@ -613,7 +613,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                 }
             } else {
                 // find the index of the current template
-                auto mi = mapBlockIndex.find(pblocktemplate->block.GetHash());
+                auto mi = mapBlockIndex.find(pblocktemplate->block.hashPrevBlock);
                 if (mi == mapBlockIndex.end())
                     throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "Template block index not found!");
 
