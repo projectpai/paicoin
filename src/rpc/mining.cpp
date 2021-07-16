@@ -535,9 +535,13 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         const int& tipHeight = chainActive.Tip()->nHeight;
         auto maxVotes = 0;
+        const auto& majority = (consensusParams.nTicketsPerBlock / 2) + 1;
         if (tipHeight >= Params().GetConsensus().nStakeValidationHeight - 1) {
             CBlockIndex* selectedIndex = nullptr;
             const auto& setTips = GetChainTips();
+            if (setTips.size() == 0)
+                throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "Blockchain has no tips!");
+
             for (auto pBlockIndex : setTips) {
                 if (pBlockIndex->nStatus & BLOCK_FAILED_MASK)
                     continue;
@@ -567,12 +571,16 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                     ++nNewVotes;
                 }
 
+                // always select the highest tip with enought votes to make majority,
+                // regardless if it doesn't really have to most votes
+                if (selectedIndex != nullptr && maxVotes >= majority && pBlockIndex->nHeight < selectedIndex->nHeight)
+                    continue;
+
                 if (nNewVotes > maxVotes) {
                     selectedIndex = pBlockIndex;
                     maxVotes = nNewVotes;
                 }
             }
-            const auto& majority = (consensusParams.nTicketsPerBlock / 2) + 1;
             if (maxVotes >= majority) {
                 // Create new block based on selected tip
                 pindexPrevNew = selectedIndex;
