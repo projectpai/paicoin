@@ -74,6 +74,9 @@ void CAutoVoter::DoVote(const CBlockIndex *pindexNew)
 
     // process each chain tip and send the votes for all of them that are at least at the same height
     for (const auto block : setTips) {
+        if (block->nStatus & BLOCK_FAILED_MASK)
+            continue;
+
         if (block->pstakeNode == nullptr)
             continue;
 
