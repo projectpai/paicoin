@@ -4196,9 +4196,19 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     }
 
     // Header is valid/has work, merkle tree and segwit merkle tree are good...RELAY NOW
-    // (but if it does not build on our best tip, let the SendMessages loop relay it)
-    if (!IsInitialBlockDownload() && (chainActive.Tip() == pindex->pprev || (chainActive.Tip()->pprev && chainActive.Tip()->pprev == pindex->pprev)) )
-        GetMainSignals().NewPoWValidBlock(pindex, pblock);
+    // (but if it does not build on our best tip, let the SendMessages loop relay it).
+    // Make sure to include successors of any chain tip at the same height with the active tip,
+    // or above.
+    if (!IsInitialBlockDownload()) {
+        const auto genesis = chainActive.Genesis();
+        assert(genesis);
+
+        const auto commonAncestor = chainActive.FindFork(pindex);
+        assert(commonAncestor);
+
+        if (commonAncestor != genesis && pindex->nHeight >= chainActive.Tip()->nHeight)
+            GetMainSignals().NewPoWValidBlock(pindex, pblock);
+    }
 
     return true;
 }
