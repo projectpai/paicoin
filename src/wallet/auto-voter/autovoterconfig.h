@@ -18,6 +18,9 @@ public:
     // Enables the automatic voting
     bool autoVote;
 
+    // Specifies whether to vote for all tips
+    bool voteAllTips;
+
     // The bits that must be included in the vote
     // Default, RTT accepted
     VoteBits voteBits;

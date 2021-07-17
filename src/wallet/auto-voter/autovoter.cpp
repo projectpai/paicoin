@@ -59,8 +59,6 @@ void CAutoVoter::DoVote(const CBlockIndex *pindexNew)
     if (tipHeight < Params().GetConsensus().nStakeValidationHeight - 1)
         return;
 
-    auto setTips = GetChainTips();
-
     std::vector<std::string> voteHashes;
     std::string voteHash;
     CWalletError we;
@@ -72,25 +70,26 @@ void CAutoVoter::DoVote(const CBlockIndex *pindexNew)
         return;
     }
 
-    // process each chain tip and send the votes for all of them that are at least at the same height
-    for (const auto block : setTips) {
+    // send all possible votes for the block if this is at least at the
+    // same height with the chain tip.
+    auto voteForBlock = [&] (const CBlockIndex* block) {
         if (block->nStatus & BLOCK_FAILED_MASK)
-            continue;
+            return;
 
         if (block->pstakeNode == nullptr)
-            continue;
+            return;
 
         const int& blockHeight = block->nHeight;
 
         if (blockHeight < tipHeight)
-            continue;
+            return;
 
         if (blockHeight < Params().GetConsensus().nStakeValidationHeight - 1)
-            continue;
+            return;
 
         const uint256& blockHash = block->GetBlockHash();
         if (blockHash == uint256())
-            continue;
+            return;
 
         // verify each winning ticket in the previous block and
         // if it belongs to the wallet, cast a vote according to the
@@ -107,7 +106,15 @@ void CAutoVoter::DoVote(const CBlockIndex *pindexNew)
             else
                 LogPrintf("CAutoVoter: Failed to vote: (%d) %s - (%s)\n", we.code, we.message.c_str(), voteHash.c_str());
         }
-    }
+    };
+
+    // according to the preference, send votes for each chain tip or
+    // only for the specified block
+    if (config.voteAllTips)
+        for (const auto block : GetChainTips())
+            voteForBlock(block);
+    else
+        voteForBlock(pindexNew);
 
     if (shouldRelock) pwallet->Lock();
 
