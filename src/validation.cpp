@@ -97,6 +97,7 @@ int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 bool fEnableReplacement = DEFAULT_ENABLE_REPLACEMENT;
 bool fDiscardExpiredMempoolVotes = DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES;
 int nMempoolResidence = DEFAULT_MEMPOOL_RESIDENCE;
+int nMaxDepthForNotification = DEFAULT_MAX_DEPTH_FOR_NOTIFICATION;
 
 uint256 hashAssumeValid;
 arith_uint256 nMinimumChainWork;
@@ -4206,7 +4207,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
         const auto commonAncestor = chainActive.FindFork(pindex);
         assert(commonAncestor);
 
-        if (commonAncestor != genesis && pindex->nHeight >= chainActive.Tip()->nHeight)
+        if (commonAncestor != genesis && chainActive.Tip()->nHeight - commonAncestor->nHeight <= nMaxDepthForNotification && pindex->nHeight >= chainActive.Tip()->nHeight)
             GetMainSignals().NewPoWValidBlock(pindex, pblock);
     }
 

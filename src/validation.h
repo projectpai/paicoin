@@ -149,6 +149,8 @@ static const bool DEFAULT_FEEFILTER = true;
 static const bool DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES = true;
 /** Default for the transactions residence */
 static const unsigned int DEFAULT_MEMPOOL_RESIDENCE = 200;
+/** Default for the maximum depth of the fork for a block to be notified */
+static const unsigned int DEFAULT_MAX_DEPTH_FOR_NOTIFICATION = 10;
 
 /** Maximum number of headers to announce when relaying blocks with headers message.*/
 static const unsigned int MAX_BLOCKS_TO_ANNOUNCE = 8;
@@ -196,6 +198,7 @@ extern int64_t nMaxTipAge;
 extern bool fEnableReplacement;
 extern bool fDiscardExpiredMempoolVotes;
 extern int nMempoolResidence;
+extern int nMaxDepthForNotification;
 
 /** Block hash whose ancestors we will assume to have valid scripts without checking them. */
 extern uint256 hashAssumeValid;
