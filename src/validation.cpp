@@ -2135,7 +2135,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     // or, when tip has insuffiecient votes and a side chain is mined, check that previous is the one behind tip
     // or builds on top of a side chain tip
     uint256 hashPrevBlock = pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash();
-    assert(hashPrevBlock == view.GetBestBlock() || chainActive.Tip()->pprev == pindex->pprev || pindex->pprev->nHeight == chainActive.Height());
+    assert(hashPrevBlock == view.GetBestBlock() || (pindex->pprev->nHeight >= chainActive.Height() && chainActive.IsForkAtMost(pindex, nMaxDepthForNotification)));
 
     // Special case for the genesis block, skipping connection of its transactions
     // (its coinbase is unspendable)
@@ -4201,13 +4201,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     // Make sure to include successors of any chain tip at the same height with the active tip,
     // or above.
     if (!IsInitialBlockDownload()) {
-        const auto genesis = chainActive.Genesis();
-        assert(genesis);
-
-        const auto commonAncestor = chainActive.FindFork(pindex);
-        assert(commonAncestor);
-
-        if (commonAncestor != genesis && chainActive.Tip()->nHeight - commonAncestor->nHeight <= nMaxDepthForNotification && pindex->nHeight >= chainActive.Tip()->nHeight)
+        if (pindex->nHeight >= chainActive.Tip()->nHeight && chainActive.IsForkAtMost(pindex, nMaxDepthForNotification))
             GetMainSignals().NewPoWValidBlock(pindex, pblock);
     }
 
@@ -4249,8 +4243,8 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
 bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckCoinbase)
 {
     AssertLockHeld(cs_main);
-    // we expect building on top of the current tip, also on the previous in case current tip has insufficient votes, also on a side chain with same height as current tip
-    assert(pindexPrev && (pindexPrev == chainActive.Tip() || pindexPrev == chainActive.Tip()->pprev || pindexPrev->nHeight == chainActive.Height()));
+    // we expect building on top of the current tip, or a fork no deeper than permitted
+    assert(pindexPrev && pindexPrev->nHeight >= chainActive.Height() && chainActive.IsForkAtMost(pindexPrev, nMaxDepthForNotification-1));
     CCoinsViewCache viewNew(pcoinsTip);
     CBlockIndex indexDummy(block);
     indexDummy.pprev = pindexPrev;

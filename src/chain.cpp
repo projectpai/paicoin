@@ -70,6 +70,28 @@ CBlockIndex* CChain::FindEarliestAtLeast(int64_t nTime) const
     return (lower == vChain.end() ? nullptr : *lower);
 }
 
+bool CChain::IsForkAtMost(CBlockIndex *pindex, int maxDepth) const {
+    if (pindex == nullptr) {
+        return false;
+    }
+
+    if (pindex->nHeight > Height())
+        pindex = pindex->GetAncestor(Height());
+
+    while (pindex) {
+        if (Contains(pindex))
+            return true;
+
+        if (maxDepth <= 0)
+            return false;
+
+        pindex = pindex->pprev;
+        maxDepth--;
+    }
+
+    return false;
+}
+
 /** Turn the lowest '1' bit in the binary representation of a number into a '0'. */
 int static inline InvertLowestOne(int n) { return n & (n - 1); }
 
