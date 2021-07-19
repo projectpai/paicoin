@@ -636,8 +636,6 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             //assert(pindexPrevNew != nullptr && (pindexPrevNew->nHeight == tipHeight));
             if (pindexPrevNew == nullptr)
                 throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Previous block index is not specified!");
-            if (pindexPrevNew->nHeight != tipHeight)
-                throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "According to its height, the next block is not the successor of the previous one!");
 
             nStart = GetTime(); // reinitialize Start
             CScript scriptDummy = CScript() << OP_TRUE;
