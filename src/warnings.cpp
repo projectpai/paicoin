@@ -8,7 +8,7 @@
 #include "util.h"
 #include "warnings.h"
 
-CCriticalSection cs_warnings;
+RecursiveMutex cs_warnings;
 std::string strMiscWarning;
 bool fLargeWorkForkFound = false;
 bool fLargeWorkInvalidChainFound = false;

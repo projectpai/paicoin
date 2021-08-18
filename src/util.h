@@ -199,7 +199,7 @@ inline bool IsSwitchChar(char c)
 class ArgsManager
 {
 protected:
-    mutable CCriticalSection cs_args;
+    mutable RecursiveMutex cs_args;
     std::map<std::string, std::string> mapArgs;
     std::map<std::string, std::vector<std::string>> mapMultiArgs;
 public:
@@ -312,11 +312,6 @@ template <typename Callable> void TraceThread(const char* name,  Callable func)
         LogPrintf("%s thread start\n", name);
         func();
         LogPrintf("%s thread exit\n", name);
-    }
-    catch (const boost::thread_interrupted&)
-    {
-        LogPrintf("%s thread interrupt\n", name);
-        throw;
     }
     catch (const std::exception& e) {
         PrintExceptionContinue(&e, name);

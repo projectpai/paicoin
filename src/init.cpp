@@ -176,7 +176,7 @@ void Interrupt(boost::thread_group& threadGroup)
 void Shutdown()
 {
     LogPrintf("%s: In progress...\n", __func__);
-    static CCriticalSection cs_Shutdown;
+    static RecursiveMutex cs_Shutdown;
     TRY_LOCK(cs_Shutdown, lockShutdown);
     if (!lockShutdown)
         return;
@@ -560,14 +560,14 @@ static void BlockNotifyCallback(bool initialSync, const CBlockIndex *pBlockIndex
 }
 
 static bool fHaveGenesis = false;
-static boost::mutex cs_GenesisWait;
-static CConditionVariable condvar_GenesisWait;
+static std::mutex cs_GenesisWait;
+static std::condition_variable condvar_GenesisWait;
 
 static void BlockNotifyGenesisWait(bool, const CBlockIndex *pBlockIndex)
 {
     if (pBlockIndex != nullptr) {
         {
-            boost::unique_lock<boost::mutex> lock_GenesisWait(cs_GenesisWait);
+            std::unique_lock<std::mutex> lock_GenesisWait(cs_GenesisWait);
             fHaveGenesis = true;
         }
         condvar_GenesisWait.notify_all();
@@ -1669,7 +1669,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     // Wait for genesis block to be processed
     {
-        boost::unique_lock<boost::mutex> lock(cs_GenesisWait);
+        std::unique_lock<std::mutex> lock(cs_GenesisWait);
         while (!fHaveGenesis) {
             condvar_GenesisWait.wait(lock);
         }

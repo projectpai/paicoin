@@ -395,6 +395,8 @@ libpaicoin_util_a_SOURCES = \
   random.cpp \
   rpc/protocol.cpp \
   support/cleanse.cpp \
+  util/threadnames.cpp \
+  util/string.cpp \
   sync.cpp \
   threadinterrupt.cpp \
   util.cpp \

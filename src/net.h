@@ -360,8 +360,8 @@ private:
     static bool NodeFullyConnected(const CNode* pnode);
 
     // Network usage totals
-    CCriticalSection cs_totalBytesRecv;
-    CCriticalSection cs_totalBytesSent;
+    RecursiveMutex cs_totalBytesRecv;
+    RecursiveMutex cs_totalBytesSent;
     uint64_t nTotalBytesRecv GUARDED_BY(cs_totalBytesRecv);
     uint64_t nTotalBytesSent GUARDED_BY(cs_totalBytesSent);
 
@@ -381,17 +381,17 @@ private:
     std::vector<ListenSocket> vhListenSocket;
     std::atomic<bool> fNetworkActive;
     banmap_t setBanned;
-    CCriticalSection cs_setBanned;
+    RecursiveMutex cs_setBanned;
     bool setBannedIsDirty;
     bool fAddressesInitialized;
     CAddrMan addrman;
     std::deque<std::string> vOneShots;
-    CCriticalSection cs_vOneShots;
+    RecursiveMutex cs_vOneShots;
     std::vector<std::string> vAddedNodes GUARDED_BY(cs_vAddedNodes);
-    CCriticalSection cs_vAddedNodes;
+    RecursiveMutex cs_vAddedNodes;
     std::vector<CNode*> vNodes;
     std::list<CNode*> vNodesDisconnected;
-    mutable CCriticalSection cs_vNodes;
+    mutable RecursiveMutex cs_vNodes;
     std::atomic<NodeId> nLastNodeId;
 
     /** Services this instance offers */
@@ -508,7 +508,7 @@ struct LocalServiceInfo {
     int nPort;
 };
 
-extern CCriticalSection cs_mapLocalHost;
+extern RecursiveMutex cs_mapLocalHost;
 extern std::map<CNetAddr, LocalServiceInfo> mapLocalHost;
 typedef std::map<std::string, uint64_t> mapMsgCmdSize; //command, total bytes
 
@@ -603,15 +603,15 @@ public:
     size_t nSendOffset; // offset inside the first vSendMsg already sent
     uint64_t nSendBytes;
     std::deque<std::vector<unsigned char>> vSendMsg;
-    CCriticalSection cs_vSend;
-    CCriticalSection cs_hSocket;
-    CCriticalSection cs_vRecv;
+    RecursiveMutex cs_vSend;
+    RecursiveMutex cs_hSocket;
+    RecursiveMutex cs_vRecv;
 
-    CCriticalSection cs_vProcessMsg;
+    RecursiveMutex cs_vProcessMsg;
     std::list<CNetMessage> vProcessMsg;
     size_t nProcessQueueSize;
 
-    CCriticalSection cs_sendProcessing;
+    RecursiveMutex cs_sendProcessing;
 
     std::deque<CInv> vRecvGetData;
     uint64_t nRecvBytes;
@@ -631,7 +631,7 @@ public:
     // store the sanitized version in cleanSubVer. The original should be used when dealing with
     // the network or wire types and the cleaned string used when displayed or logged.
     std::string strSubVer, cleanSubVer;
-    CCriticalSection cs_SubVer; // used for both cleanSubVer and strSubVer
+    RecursiveMutex cs_SubVer; // used for both cleanSubVer and strSubVer
     bool fWhitelisted; // This peer can bypass DoS banning.
     bool fFeeler; // If true this node is being used as a short lived feeler.
     bool fOneShot;
@@ -647,7 +647,7 @@ public:
     bool fRelayTxes; //protected by cs_filter
     bool fSentAddr;
     CSemaphoreGrant grantOutbound;
-    CCriticalSection cs_filter;
+    RecursiveMutex cs_filter;
     std::unique_ptr<CBloomFilter> pfilter;
     std::atomic<int> nRefCount;
 
@@ -675,7 +675,7 @@ public:
     // sending chain tips does not follow the usual inventory path,
     // but a dedicated sending of the entire block
     std::vector<CBlock> vChainTipsToSend;
-    CCriticalSection cs_chainTips;
+    RecursiveMutex cs_chainTips;
     CRollingBloomFilter filterChainTipsKnown;
 
     // inventory based relay
@@ -687,7 +687,7 @@ public:
     // There is no final sorting before sending, as they are always sent immediately
     // and in the order requested.
     std::vector<uint256> vInventoryBlockToSend;
-    CCriticalSection cs_inventory;
+    RecursiveMutex cs_inventory;
     std::set<uint256> setAskFor;
     std::multimap<int64_t, CInv> mapAskFor;
     int64_t nNextInvSend;
@@ -717,7 +717,7 @@ public:
     std::atomic<bool> fPingQueued;
     // Minimum fee rate with which to filter inv's to this node
     CAmount minFeeFilter;
-    CCriticalSection cs_feeFilter;
+    RecursiveMutex cs_feeFilter;
     CAmount lastSentFeeFilter;
     int64_t nextSendTimeFeeFilter;
 
@@ -738,12 +738,12 @@ private:
     int nSendVersion;
     std::list<CNetMessage> vRecvMsg;  // Used only by SocketHandler thread
 
-    mutable CCriticalSection cs_addrName;
+    mutable RecursiveMutex cs_addrName;
     std::string addrName;
 
     // Our address, as reported by the peer
     CService addrLocal;
-    mutable CCriticalSection cs_addrLocal;
+    mutable RecursiveMutex cs_addrLocal;
 public:
 
     NodeId GetId() const {

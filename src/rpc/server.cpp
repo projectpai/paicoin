@@ -37,7 +37,7 @@ using namespace boost::placeholders;
 static auto fRPCRunning = false;
 static auto fRPCInWarmup = true;
 static std::string rpcWarmupStatus{"RPC server started"};
-static CCriticalSection cs_rpcWarmup;
+static RecursiveMutex cs_rpcWarmup;
 /* Timer-creating functions */
 static RPCTimerInterface* timerInterface{nullptr};
 /* Map of name to timer. */
