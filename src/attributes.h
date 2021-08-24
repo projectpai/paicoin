@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_ATTRIBUTES_H
-#define BITCOIN_ATTRIBUTES_H
+#ifndef PAICOIN_ATTRIBUTES_H
+#define PAICOIN_ATTRIBUTES_H
 
 #if defined(__clang__)
 #  if __has_attribute(lifetimebound)
@@ -16,4 +16,4 @@
 #  define LIFETIMEBOUND
 #endif
 
-#endif // BITCOIN_ATTRIBUTES_H
+#endif // PAICOIN_ATTRIBUTES_H

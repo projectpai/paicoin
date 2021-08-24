@@ -11,6 +11,7 @@
 #include <util.h>
 #include <tinyformat.h>
 #include <utilstrencodings.h>
+#include <util/threadids.h>
 #include <util/threadnames.h>
 
 #include <map>
@@ -52,18 +53,20 @@ struct CLockLocation {
         const char* pszFile,
         int nLine,
         bool fTryIn,
+        const std::string thread_id,
         const std::string& thread_name)
         : fTry(fTryIn),
           mutexName(pszName),
           sourceFile(pszFile),
+          threadId(thread_id),
           m_thread_name(thread_name),
           sourceLine(nLine) {}
 
     std::string ToString() const
     {
         return strprintf(
-            "'%s' in %s:%s%s (in thread '%s')",
-            mutexName, sourceFile, sourceLine, (fTry ? " (TRY)" : ""), m_thread_name);
+            "'%s' in %s:%s%s (in thread '%s' '%s')",
+            mutexName, sourceFile, sourceLine, (fTry ? " (TRY)" : ""), m_thread_name, threadId);
     }
 
     std::string Name() const
@@ -71,10 +74,16 @@ struct CLockLocation {
         return mutexName;
     }
 
+    std::string ThreadId() const
+    {
+        return threadId;
+    }
+
 private:
     bool fTry;
     std::string mutexName;
     std::string sourceFile;
+    std::string threadId;
     const std::string& m_thread_name;
     int sourceLine;
 };
@@ -216,7 +225,7 @@ static void pop_lock()
 template <typename MutexType>
 void EnterCritical(const char* pszName, const char* pszFile, int nLine, MutexType* cs, bool fTry)
 {
-    push_lock(cs, CLockLocation(pszName, pszFile, nLine, fTry, util::ThreadGetInternalName()));
+    push_lock(cs, CLockLocation(pszName, pszFile, nLine, fTry, util::ThreadGetId(), util::ThreadGetInternalName()));
 }
 template void EnterCritical(const char*, const char*, int, Mutex*, bool);
 template void EnterCritical(const char*, const char*, int, RecursiveMutex*, bool);
