@@ -200,6 +200,8 @@ libpaicoin_util_a-clientversion.$(OBJEXT): obj/build.h
 libpaicoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libpaicoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpaicoin_server_a_SOURCES = \
+  task_info.pb.cc \
+  task_info.grpc.pb.cc \
   verifier.pb.cc \
   verifier.grpc.pb.cc \
   addrdb.cpp \
