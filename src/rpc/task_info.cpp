@@ -1,5 +1,5 @@
 #include "rpc/server.h"
-#include "rpc/task_info_client.h"
+#include "task_info_client.h"
 
 #include "util.h"
 #include "utilstrencodings.h"
@@ -48,7 +48,7 @@ static const CRPCCommand commands[] =
     { "task_info",             "getwaitingtasks",       &getWaitingTasks,       {"page","per_page"} },
 };
 
-void RegisterMiningRPCCommands(CRPCTable &t)
+void RegisterTaskInfoRPCCommands(CRPCTable &t)
 {
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
         t.appendCommand(commands[vcidx].name, &commands[vcidx]);
