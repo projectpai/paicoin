@@ -1,6 +1,9 @@
 #include "rpc/server.h"
 #include "rpc/task_info_client.h"
 
+#include "util.h"
+#include "utilstrencodings.h"
+
 #include <univalue.h>
 
 
@@ -24,8 +27,8 @@ UniValue getWaitingTasks(const JSONRPCRequest& request)
             "tasks     ([TaskRecord]) List of tasks.\n"
         );
 
-    const uint32_t page = request.params[0].get_int();
-    const uint32_t per_page = request.params[1].get_int();
+    const uint64_t page = request.params[0].get_int();
+    const uint64_t per_page = request.params[1].get_int();
 
     std::string taskInfoServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
     TaskListClient client(grpc::CreateChannel(taskInfoServerAddress, grpc::InsecureChannelCredentials()));
