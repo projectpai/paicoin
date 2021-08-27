@@ -161,6 +161,9 @@ PAICOIN_CORE_H = \
   verifier.pb.h \
   verifier.grpc.pb.h \
   verification_client.h \
+  task_info.pb.h \
+  task_info.grpc.pb.h \
+  task_info_client.h \
   versionbits.h \
   wallet/coincontrol.h \
   wallet/crypter.h \
@@ -188,6 +191,8 @@ libpaicoin_util_a-clientversion.$(OBJEXT): obj/build.h
 libpaicoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libpaicoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpaicoin_server_a_SOURCES = \
+  task_info.pb.cc \
+  task_info.grpc.pb.cc \
   verifier.pb.cc \
   verifier.grpc.pb.cc \
   addrdb.cpp \
@@ -218,6 +223,7 @@ libpaicoin_server_a_SOURCES = \
   rpc/rawtransaction.cpp \
   rpc/safemode.cpp \
   rpc/server.cpp \
+  rpc/task_info.cpp \
   script/sigcache.cpp \
   script/ismine.cpp \
   timedata.cpp \

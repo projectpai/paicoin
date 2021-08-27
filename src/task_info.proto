@@ -1,0 +1,54 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+
+package pai.pouw.task_info;
+
+
+service TaskInfo {
+    rpc GetWaitingTasks (TaskListRequest) returns (TaskListResponse);
+}
+
+
+message TaskListRequest {
+    uint32 page = 1;
+    uint32 per_page = 2;
+}
+
+enum HTTPReturnCode {
+    GENERAL_ERROR = 0;
+    OK = 200;
+    BAD_REQUEST = 400;
+    NOT_FOUND = 404;
+    INVALID = 422;
+}
+
+message TaskRecord {
+    string task_id = 1;
+    string model_type = 2;
+    uint64 nodes_no = 3;
+    uint32 batch_size = 4;
+    string optimizer = 5;
+    google.protobuf.Timestamp created = 6;
+}
+
+message Pagination {
+    uint32 page = 1;
+    uint32 per_page = 2;
+    uint32 page_count = 3;
+    uint32 total_count = 4;
+
+    message Navigation {
+        string self = 1;
+        string first = 2;
+        string previous = 3;
+        string next = 4;
+        string last = 5;
+    }
+    Navigation navigation = 5;
+}
+
+message TaskListResponse {
+    HTTPReturnCode code = 1;
+    Pagination pagination = 2;
+    repeated TaskRecord tasks = 3;
+}
