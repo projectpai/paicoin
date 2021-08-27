@@ -170,9 +170,9 @@ PAICOIN_CORE_H = \
   verifier.pb.h \
   verifier.grpc.pb.h \
   verification_client.h \
-  rpc/task_info.pb.h \
-  rpc/task_info.grpc.pb.h \
-  rpc/task_info_client.h \
+  task_info.pb.h \
+  task_info.grpc.pb.h \
+  task_info_client.h \
   versionbits.h \
   wallet/coincontrol.h \
   wallet/crypter.h \
