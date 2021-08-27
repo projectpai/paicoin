@@ -141,6 +141,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "logging", 0, "include" },
     { "logging", 1, "exclude" },
     { "disconnectnode", 1, "nodeid" },
+    { "getwaitingtasks", 0, "page" },
+    { "getwaitingtasks", 1, "per_page" },
     { "estimatestakediff", 0, "numtickets" },
     { "getstakeversioninfo", 0, "count" },
     { "getstakeversions", 1, "count" },
