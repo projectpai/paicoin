@@ -25,7 +25,7 @@ void RegisterRawTransactionRPCCommands(CRPCTable &tableRPC);
 /** Register Stake API RPC commands */
 void RegisterStakeAPIRPCCommands(CRPCTable &tableRPC);
 /** Register task info transaction RPC commands */
-//void RegisterTaskInfoRPCCommands(CRPCTable &t);
+void RegisterTaskInfoRPCCommands(CRPCTable &t);
 
 static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
 {
@@ -34,7 +34,7 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
     RegisterMiscRPCCommands(t);
     RegisterMiningRPCCommands(t);
     RegisterRawTransactionRPCCommands(t);
-    //RegisterTaskInfoRPCCommands(t);
+    RegisterTaskInfoRPCCommands(t);
     RegisterStakeAPIRPCCommands(t);
 }
 
