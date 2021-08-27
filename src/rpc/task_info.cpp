@@ -3,6 +3,7 @@
 
 #include "util.h"
 #include "utilstrencodings.h"
+#include "validation.h"
 
 #include <univalue.h>
 
@@ -26,6 +27,8 @@ UniValue getWaitingTasks(const JSONRPCRequest& request)
             "pagination     (Pagination) Pagination information.\n"
             "tasks     ([TaskRecord]) List of tasks.\n"
         );
+
+    LOCK(cs_main);
 
     const uint64_t page = request.params[0].get_int();
     const uint64_t per_page = request.params[1].get_int();
