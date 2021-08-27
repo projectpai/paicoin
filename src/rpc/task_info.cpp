@@ -12,15 +12,12 @@ UniValue getWaitingTasks(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw std::runtime_error(
-            "getwaitingtasks ( TaskListRequest )\n"
-
+            "getwaitingtasks <page> <per_page>\n"
+            "\nGet the pending tasks.\n"
             "\nArguments:\n"
-            "1. getwaitingtasks_request         (json object) A json object in the following spec\n"
-            "     {\n"
-            "       \"page\":\"page\"       (int, required) Requested page.\n"
-            "       \"per_page\":\"per_page\"           (int, required) Results per page\n"
-            "     }\n"
-            "\n"
+            "1. page         (numeric, required) Requested page.\n"
+            "2. per_page       (numeric, required) Results per page.\n"
+
 
             "\nResult:\n"
             "code     (int) HTTP response code.\n"
@@ -28,17 +25,22 @@ UniValue getWaitingTasks(const JSONRPCRequest& request)
             "tasks     ([TaskRecord]) List of tasks.\n"
         );
 
-    LOCK(cs_main);
+    uint64_t page = 5;
+    uint64_t per_page = 20;
 
-    const uint64_t page = request.params[0].get_int();
-    const uint64_t per_page = request.params[1].get_int();
+    if (!request.params[0].isNull() && !request.params[1].isNull())
+    {
+        page = request.params[0].get_int64();
+        per_page = request.params[1].get_int64();
+    }
 
     std::string taskInfoServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
     TaskListClient client(grpc::CreateChannel(taskInfoServerAddress, grpc::InsecureChannelCredentials()));
     client.TestGetWaitingTasks();
 
     UniValue obj(UniValue::VOBJ);
-    obj.push_back(Pair("test", page));
+    obj.push_back(Pair("page", page));
+    obj.push_back(Pair("per_page", per_page));
     return obj;
 }
 
