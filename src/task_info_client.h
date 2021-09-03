@@ -7,6 +7,7 @@
 
 #include "task_info.grpc.pb.h"
 
+
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -21,11 +22,13 @@ public:
     TaskListClient(std::shared_ptr<Channel> channel)
     : stub_(TaskInfo::NewStub(channel)) {}
 
-    void TestGetWaitingTasks() {
+    UniValue GetWaitingTasks(uint64_t page, uint64_t per_page) {
+
+        UniValue obj(UniValue::VOBJ);
 
         TaskListRequest request;
-        request.set_page(1);
-        request.set_per_page(20);
+        request.set_page(page);
+        request.set_per_page(per_page);
 
         TaskListResponse response;
         ClientContext context;
@@ -34,39 +37,51 @@ public:
         Status status = stub_->GetWaitingTasks(&context, request, &response);
 
         // Act upon its status.
-        if (status.ok()) {
+        if (!status.ok()) {
+            std::cout << status.error_code() << ": " << status.error_message()
+            << std::endl;
+            obj.push_back(Pair("error_code", status.error_code()));
+            obj.push_back(Pair("error_message", status.error_message()));
+        }
+        else
+        {
             auto code = response.code();
             auto pagination = response.pagination();
             auto tasks = response.tasks();
-            std::cout << "Code: " << code << std::endl;
-            std::cout << std::endl;
-            std::cout << "Pagination:" << std::endl;
-            std::cout << "- page: " << pagination.page() << std::endl;
-            std::cout << "- per_page: " << pagination.per_page() << std::endl;
-            std::cout << "- page_count: " << pagination.page_count() << std::endl;
-            std::cout << "- total_count: " << pagination.total_count() << std::endl;
-            std::cout << std::endl;
-            std::cout << "- Navigation:" << std::endl;
-            std::cout << "  - self: " << pagination.navigation().self() << std::endl;
-            std::cout << "  - first: " << pagination.navigation().first() << std::endl;
-            std::cout << "  - previous: " << pagination.navigation().previous() << std::endl;
-            std::cout << "  - next: " << pagination.navigation().next() << std::endl;
-            std::cout << "  - last: " << pagination.navigation().last() << std::endl;
-            std::cout << std::endl;
-            std::cout << "Tasks: " << std::endl;
+
+            obj.push_back(Pair("code", code));
+
+            UniValue pagination_obj(UniValue::VOBJ);
+            pagination_obj.push_back(Pair("page", (uint64_t)pagination.page()));
+            pagination_obj.push_back(Pair("per_page", (uint64_t)pagination.per_page()));
+            pagination_obj.push_back(Pair("page_count", (uint64_t)pagination.page_count()));
+            pagination_obj.push_back(Pair("total_count", (uint64_t)pagination.total_count()));
+
+            UniValue navigation_obj(UniValue::VOBJ);
+            navigation_obj.push_back(Pair("self", pagination.navigation().self()));
+            navigation_obj.push_back(Pair("first", pagination.navigation().first()));
+            navigation_obj.push_back(Pair("previous", pagination.navigation().previous()));
+            navigation_obj.push_back(Pair("next", pagination.navigation().next()));
+            navigation_obj.push_back(Pair("last", pagination.navigation().last()));
+
+            pagination_obj.push_back(Pair("navigation", navigation_obj));
+            obj.push_back(Pair("pagination", pagination_obj));
+
+            UniValue task_list_obj(UniValue::VARR);
             for (auto task : tasks) {
-                std::cout << "- task_id: " << task.task_id() << std::endl;
-                std::cout << "  - model_type: " << task.model_type() << std::endl;
-                std::cout << "  - nodes_no: " << task.nodes_no() << std::endl;
-                std::cout << "  - batch_size: " << task.batch_size() << std::endl;
-                std::cout << "  - optimizer: " << task.optimizer() << std::endl;
-                std::cout << "  - created: " << google::protobuf::util::TimeUtil::ToString(task.created()) << std::endl;
-                std::cout << std::endl;
+                UniValue task_obj(UniValue::VOBJ);
+                task_obj.push_back(Pair("task_id", task.task_id()));
+                task_obj.push_back(Pair("model_type", task.model_type()));
+                task_obj.push_back(Pair("nodes_no", task.nodes_no()));
+                task_obj.push_back(Pair("batch_size", (uint64_t)task.batch_size()));
+                task_obj.push_back(Pair("optimizer", task.optimizer()));
+                task_obj.push_back(Pair("created", google::protobuf::util::TimeUtil::ToString(task.created())));
+                task_list_obj.push_back(task_obj);
             }
-        } else {
-            std::cout << status.error_code() << ": " << status.error_message()
-            << std::endl;
+            obj.push_back(Pair("tasks", task_list_obj));
         }
+
+        return obj;
     }
 
 private:
