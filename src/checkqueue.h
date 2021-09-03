@@ -185,7 +185,7 @@ public:
     {
         // passed queue is supposed to be unused, or nullptr
         if (pqueue != nullptr) {
-            ENTER_CRITICAL_SECTION(pqueue->ControlMutex);
+            ENTER_CRITICAL_SECTION(pqueue->ControlMutex, false);
         }
     }
 

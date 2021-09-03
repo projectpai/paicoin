@@ -495,7 +495,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                 }
             }
         }
-        ENTER_CRITICAL_SECTION(cs_main);
+        ENTER_CRITICAL_SECTION(cs_main, true);
 
         if (!IsRPCRunning())
             throw JSONRPCError(RPCErrorCode::CLIENT_NOT_CONNECTED, "Shutting down");
@@ -535,10 +535,21 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         const int& tipHeight = chainActive.Tip()->nHeight;
         auto maxVotes = 0;
+        const auto& majority = (consensusParams.nTicketsPerBlock / 2) + 1;
         if (tipHeight >= Params().GetConsensus().nStakeValidationHeight - 1) {
             CBlockIndex* selectedIndex = nullptr;
             const auto& setTips = GetChainTips();
+            if (setTips.size() == 0)
+                throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "Blockchain has no tips!");
+
+            LOCK(mempool.cs);
             for (auto pBlockIndex : setTips) {
+                if (pBlockIndex->nStatus & BLOCK_FAILED_MASK)
+                    continue;
+
+                if (!(pBlockIndex->nStatus & BLOCK_HAVE_DATA))
+                    continue;
+
                 if (pBlockIndex->nHeight < tipHeight)
                     continue;
 
@@ -564,12 +575,16 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                     ++nNewVotes;
                 }
 
+                // always select the highest tip with enought votes to make majority,
+                // regardless if it doesn't really have to most votes
+                if (selectedIndex != nullptr && maxVotes >= majority && pBlockIndex->nHeight < selectedIndex->nHeight)
+                    continue;
+
                 if (nNewVotes > maxVotes) {
                     selectedIndex = pBlockIndex;
                     maxVotes = nNewVotes;
                 }
             }
-            const auto& majority = (consensusParams.nTicketsPerBlock / 2) + 1;
             if (maxVotes >= majority) {
                 // Create new block based on selected tip
                 pindexPrevNew = selectedIndex;
@@ -609,7 +624,13 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
                     throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, state.GetRejectReason());
                 }
             } else {
-                pindexPrevNew = chainActive.Tip()->pprev;
+                // find the index of the current template
+                auto mi = mapBlockIndex.find(pblocktemplate->block.hashPrevBlock);
+                if (mi == mapBlockIndex.end())
+                    throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "Template block index not found!");
+
+                pindexPrevNew = mi->second;
+
                 pblocktemplate->block.nTime++;
                 LogPrintf("returning cached template with adjusted time %d!\n", pblocktemplate->block.nTime);
             }
@@ -619,8 +640,6 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             //assert(pindexPrevNew != nullptr && (pindexPrevNew->nHeight == tipHeight));
             if (pindexPrevNew == nullptr)
                 throw JSONRPCError(RPCErrorCode::OUT_OF_MEMORY, "Previous block index is not specified!");
-            if (pindexPrevNew->nHeight != tipHeight)
-                throw JSONRPCError(RPCErrorCode::DATABASE_ERROR, "According to its height, the next block is not the successor of the previous one!");
 
             nStart = GetTime(); // reinitialize Start
             CScript scriptDummy = CScript() << OP_TRUE;
@@ -1335,12 +1354,15 @@ UniValue ticketfeeinfo(const JSONRPCRequest& request)
     // mempool fee rates
     auto mempool_feerates = std::vector<CAmount>{};
 
-    auto& tx_class_index = mempool.mapTx.get<tx_class>();
-    auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
-    for (auto tickettxiter = existingTickets.first; tickettxiter != existingTickets.second; ++tickettxiter) {
-        auto txiter = mempool.mapTx.project<0>(tickettxiter);
-        const auto& fee_rate = CFeeRate(txiter->GetModifiedFee(), txiter->GetTxSize());
-        mempool_feerates.push_back(fee_rate.GetFeePerK());
+    {
+        LOCK(mempool.cs);
+        auto& tx_class_index = mempool.mapTx.get<tx_class>();
+        auto existingTickets = tx_class_index.equal_range(ETxClass::TX_BuyTicket);
+        for (auto tickettxiter = existingTickets.first; tickettxiter != existingTickets.second; ++tickettxiter) {
+            auto txiter = mempool.mapTx.project<0>(tickettxiter);
+            const auto& fee_rate = CFeeRate(txiter->GetModifiedFee(), txiter->GetTxSize());
+            mempool_feerates.push_back(fee_rate.GetFeePerK());
+        }
     }
 
     auto fee_info_mempool = FormatTxFeesInfo(mempool_feerates);
@@ -1519,6 +1541,51 @@ UniValue ticketvwap(const JSONRPCRequest& request)
     }
 
     return ValueFromAmount(CAmount(vwap));
+}
+
+UniValue removemempoolvotes(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) {
+        throw std::runtime_error{
+            "removemempoolvotes \"blockhash\"\n"
+            "\nRemoves the votes for the specified block hash.\n"
+            "\nArguments:\n"
+            "1. \"blockhash\"        (string, required) the hex-encoded hash of block in votes to remove\n"
+            "\nResult:\n"
+            "\nExamples:\n"
+            + HelpExampleCli("removemempoolvotes", "\"00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343\"")
+            + HelpExampleRpc("removemempoolvotes", "\"00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343\"")
+        };
+    }
+
+    const auto hash = uint256S(request.params[0].get_str());
+
+    mempool.removeVotesForBlock(hash, Params().GetConsensus());
+
+    return NullUniValue;
+}
+
+UniValue removeallmempoolvotesexcept(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) {
+        throw std::runtime_error{
+            "removeallmempoolvotesexcept \"blockhash\"\n"
+            "\nRemoves all the votes that are NOT for the specified block hash.\n"
+            "\nWARNING! This might leave mempool without necessary votes for chain advance. Use with caution!\n"
+            "\nArguments:\n"
+            "1. \"blockhash\"        (string, required) the hex-encoded hash of block in votes to keep\n"
+            "\nResult:\n"
+            "\nExamples:\n"
+            + HelpExampleCli("removeallmempoolvotesexcept", "\"00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343\"")
+            + HelpExampleRpc("removeallmempoolvotesexcept", "\"00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343\"")
+        };
+    }
+
+    const auto hash = uint256S(request.params[0].get_str());
+
+    mempool.removeAllVotesExceptForBlock(hash, Params().GetConsensus());
+
+    return NullUniValue;
 }
 
 UniValue estimatefee(const JSONRPCRequest& request)
@@ -1724,32 +1791,34 @@ UniValue estimaterawfee(const JSONRPCRequest& request)
 }
 
 static const CRPCCommand commands[] =
-{ //  category              name                      actor (function)         argNames
-  //  --------------------- ------------------------  -----------------------  ----------
-    { "mining",             "getnetworkhashps",       &getnetworkhashps,       {"nblocks","height"} },
-    { "mining",             "getmininginfo",          &getmininginfo,          {} },
-    { "mining",             "prioritisetransaction",  &prioritisetransaction,  {"txid","dummy","fee_delta"} },
-    { "mining",             "getblocktemplate",       &getblocktemplate,       {"template_request"} },
-    { "mining",             "submitblock",            &submitblock,            {"hexdata","dummy"} },
+{ //  category              name                            actor (function)                argNames
+  //  --------------------- ------------------------------- ------------------------------- ----------
+    { "mining",             "getnetworkhashps",             &getnetworkhashps,              {"nblocks","height"} },
+    { "mining",             "getmininginfo",                &getmininginfo,                 {} },
+    { "mining",             "prioritisetransaction",        &prioritisetransaction,         {"txid","dummy","fee_delta"} },
+    { "mining",             "getblocktemplate",             &getblocktemplate,              {"template_request"} },
+    { "mining",             "submitblock",                  &submitblock,                   {"hexdata","dummy"} },
 
-    { "mining",             "existsexpiredtickets",   &existsexpiredtickets,   {"txhashes"} },
-    { "mining",             "existsliveticket",       &existsliveticket,       {"txhash"} },
-    { "mining",             "existsmissedtickets",    &existsmissedtickets,    {"txhashes"} },
-    { "mining",             "existslivetickets",      &existslivetickets,      {"txhashes"} },
-    { "mining",             "getticketpoolvalue",     &getticketpoolvalue,     {} },
-    { "mining",             "livetickets",            &livetickets,            {"verbose", "blockheight"} },
-    { "mining",             "winningtickets",         &winningtickets,         {"blockheight"} },
-    { "mining",             "missedtickets",          &missedtickets,          {"verbose", "blockheight"} },
-    { "mining",             "ticketfeeinfo",          &ticketfeeinfo,          {"blocks","windows"} },
-    { "mining",             "ticketsforaddress",      &ticketsforaddress,      {"address"} },
-    { "mining",             "ticketvwap",             &ticketvwap,             {"start","stop"} },
+    { "mining",             "existsexpiredtickets",         &existsexpiredtickets,          {"txhashes"} },
+    { "mining",             "existsliveticket",             &existsliveticket,              {"txhash"} },
+    { "mining",             "existsmissedtickets",          &existsmissedtickets,           {"txhashes"} },
+    { "mining",             "existslivetickets",            &existslivetickets,             {"txhashes"} },
+    { "mining",             "getticketpoolvalue",           &getticketpoolvalue,            {} },
+    { "mining",             "livetickets",                  &livetickets,                   {"verbose", "blockheight"} },
+    { "mining",             "winningtickets",               &winningtickets,                {"blockheight"} },
+    { "mining",             "missedtickets",                &missedtickets,                 {"verbose", "blockheight"} },
+    { "mining",             "ticketfeeinfo",                &ticketfeeinfo,                 {"blocks","windows"} },
+    { "mining",             "ticketsforaddress",            &ticketsforaddress,             {"address"} },
+    { "mining",             "ticketvwap",                   &ticketvwap,                    {"start","stop"} },
+    { "mining",             "removemempoolvotes",           &removemempoolvotes,            {"blockhash"} },
+    { "mining",             "removeallmempoolvotesexcept",  &removeallmempoolvotesexcept,   {"blockhash"} },
 
-    { "generating",         "generatetoaddress",      &generatetoaddress,      {"nblocks","address","maxtries"} },
+    { "generating",         "generatetoaddress",            &generatetoaddress,             {"nblocks","address","maxtries"} },
 
-    { "util",               "estimatefee",            &estimatefee,            {"nblocks"} },
-    { "util",               "estimatesmartfee",       &estimatesmartfee,       {"conf_target", "estimate_mode"} },
+    { "util",               "estimatefee",                  &estimatefee,                   {"nblocks"} },
+    { "util",               "estimatesmartfee",             &estimatesmartfee,              {"conf_target", "estimate_mode"} },
 
-    { "hidden",             "estimaterawfee",         &estimaterawfee,         {"conf_target", "threshold"} },
+    { "hidden",             "estimaterawfee",               &estimaterawfee,                {"conf_target", "threshold"} },
 };
 
 void RegisterMiningRPCCommands(CRPCTable &t)

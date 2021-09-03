@@ -1392,6 +1392,33 @@ UniValue getchaintips(const JSONRPCRequest& request)
     return res;
 }
 
+UniValue setactivechaintip(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error{
+            "setactivechaintip hash\n"
+            "Changes the active tip to the block with the specified"
+            " hash, but only if this block is already a chain tip.\n"
+            "\nArguments:\n"
+            "1. hash        (hash)   The block hash of the new active tip.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("setactivechaintip", "00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343")
+            + HelpExampleRpc("setactivechaintip", "00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343")
+        };
+
+    const auto hash = uint256S(request.params[0].get_str());
+
+    LOCK(cs_main);
+
+    if (chainActive.Tip()->GetBlockHash() == hash)
+        return NullUniValue;
+
+    if (!SetActiveChainTip(Params(), hash))
+        throw JSONRPCError(RPCErrorCode::INVALID_PARAMETER, "Active chain tip could not be changed. Make sure the specified hash is among the current chain tips.");
+
+    return NullUniValue;
+}
+
 UniValue mempoolInfoToJSON()
 {
     UniValue ret{UniValue::VOBJ};
@@ -1863,12 +1890,16 @@ UniValue ComputeBlocksTxFees(uint32_t startBlockHeight, uint32_t endBlockHeight,
 UniValue computeMempoolTxFees()
 {
     std::vector<CAmount> txFees;
-    auto& tx_class_index = mempool.mapTx.get<tx_class>();
-    auto regularTxs = tx_class_index.equal_range(ETxClass::TX_Regular);
-    for (auto regular_tx_iter = regularTxs.first; regular_tx_iter != regularTxs.second; ++regular_tx_iter) {
-        auto txiter = mempool.mapTx.project<0>(regular_tx_iter);
-        const auto& fee_rate = CFeeRate(txiter->GetModifiedFee(), txiter->GetTxSize());
-        txFees.push_back(fee_rate.GetFeePerK());
+
+    {
+        LOCK(mempool.cs);
+        auto& tx_class_index = mempool.mapTx.get<tx_class>();
+        auto regularTxs = tx_class_index.equal_range(ETxClass::TX_Regular);
+        for (auto regular_tx_iter = regularTxs.first; regular_tx_iter != regularTxs.second; ++regular_tx_iter) {
+            auto txiter = mempool.mapTx.project<0>(regular_tx_iter);
+            const auto& fee_rate = CFeeRate(txiter->GetModifiedFee(), txiter->GetTxSize());
+            txFees.push_back(fee_rate.GetFeePerK());
+        }
     }
 
     return FormatTxFeesInfo(txFees);
@@ -2152,6 +2183,7 @@ static const CRPCCommand commands[] =
     { "blockchain",         "getcfilter",             &getcfilter,             {"hash","filtertype"} },
     { "blockchain",         "getcfilterheader",       &getcfilterheader,       {} },
     { "blockchain",         "getchaintips",           &getchaintips,           {} },
+    { "blockchain",         "setactivechaintip",      &setactivechaintip,      {"hash"} },
     { "blockchain",         "getcoinsupply",          &getcoinsupply,          {} },
     { "blockchain",         "getcurrentnet",          &getcurrentnet,          {} },
     { "blockchain",         "getdifficulty",          &getdifficulty,          {} },
