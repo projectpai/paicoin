@@ -36,12 +36,7 @@ UniValue getWaitingTasks(const JSONRPCRequest& request)
 
     std::string taskInfoServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
     TaskListClient client(grpc::CreateChannel(taskInfoServerAddress, grpc::InsecureChannelCredentials()));
-    client.TestGetWaitingTasks();
-
-    UniValue obj(UniValue::VOBJ);
-    obj.push_back(Pair("page", page));
-    obj.push_back(Pair("per_page", per_page));
-    return obj;
+    return client.GetWaitingTasks(page, per_page);
 }
 
 static const CRPCCommand commands[] =
