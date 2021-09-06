@@ -17,12 +17,30 @@ using pai::pouw::task_info::TaskListResponse;
 using pai::pouw::task_info::TaskInfo;
 
 
+enum class TaskListType { WaitingTasks, StartedTasks, CompletedTasks };
+
+
 class TaskListClient {
 public:
     TaskListClient(std::shared_ptr<Channel> channel)
     : stub_(TaskInfo::NewStub(channel)) {}
 
     UniValue GetWaitingTasks(uint64_t page, uint64_t per_page) {
+        return GetTaskList(TaskListType::WaitingTasks, page, per_page);
+    }
+
+    UniValue GetStartedTasks(uint64_t page, uint64_t per_page) {
+        return GetTaskList(TaskListType::StartedTasks, page, per_page);
+    }
+
+    UniValue GetCompletedTasks(uint64_t page, uint64_t per_page) {
+        return GetTaskList(TaskListType::CompletedTasks, page, per_page);
+    }
+
+protected:
+
+    UniValue GetTaskList(const TaskListType& task_list_type, uint64_t page, uint64_t per_page)
+    {
 
         UniValue obj(UniValue::VOBJ);
 
@@ -33,8 +51,19 @@ public:
         TaskListResponse response;
         ClientContext context;
 
-        // The actual RPC.
-        Status status = stub_->GetWaitingTasks(&context, request, &response);
+        Status status;
+        switch (task_list_type)
+        {
+        case TaskListType::StartedTasks:
+            status = stub_->GetStartedTasks(&context, request, &response);
+            break;
+        case TaskListType::CompletedTasks:
+            status = stub_->GetCompletedTasks(&context, request, &response);
+            break;
+        default:
+            status = stub_->GetWaitingTasks(&context, request, &response);
+            break;
+        }
 
         // Act upon its status.
         if (!status.ok()) {

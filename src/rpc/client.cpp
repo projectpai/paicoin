@@ -188,6 +188,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "generatevote", 3, "votebits" },
     { "startautovoter", 0, "votebits" },
     { "setautovotervotebits", 0, "votebits" },
+    { "getstartedtasks", 0, "page" },
+    { "getstartedtasks", 1, "per_page" },
+    { "getcompletedtasks", 0, "page" },
+    { "getcompletedtasks", 1, "per_page" },
     // Echo with conversion (For testing only)
     { "echojson", 0, "arg0" },
     { "echojson", 1, "arg1" },
