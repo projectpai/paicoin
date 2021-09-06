@@ -6,6 +6,8 @@ package pai.pouw.task_info;
 
 service TaskInfo {
     rpc GetWaitingTasks (TaskListRequest) returns (TaskListResponse);
+    rpc GetStartedTasks (TaskListRequest) returns (TaskListResponse);
+    rpc GetCompletedTasks (TaskListRequest) returns (TaskListResponse);
 }
 
 

@@ -131,6 +131,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "disconnectnode", 1, "nodeid" },
     { "getwaitingtasks", 0, "page" },
     { "getwaitingtasks", 1, "per_page" },
+    { "getstartedtasks", 0, "page" },
+    { "getstartedtasks", 1, "per_page" },
+    { "getcompletedtasks", 0, "page" },
+    { "getcompletedtasks", 1, "per_page" },
     // Echo with conversion (For testing only)
     { "echojson", 0, "arg0" },
     { "echojson", 1, "arg1" },
