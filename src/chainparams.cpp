@@ -194,7 +194,7 @@ public:
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
 
         // hashing algorithm parameters
-        consensus.nPaicoinHashTimestamp = 1631631600LL;
+        consensus.nPaicoinHashTimestamp = 1632841200LL;
         consensus.nPaicoinHashMaximumActivationHeight = 220000;
         consensus.nPaicoinHashInitialDifficulty = MAINNET_PAICOIN_HASH_INITIAL_DIFFICULTY;
         consensus.nPaicoinHashInitialDifficultyBlockCount = 10;
