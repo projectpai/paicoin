@@ -8,6 +8,7 @@ service TaskInfo {
     rpc GetWaitingTasks (TaskListRequest) returns (TaskListResponse);
     rpc GetStartedTasks (TaskListRequest) returns (TaskListResponse);
     rpc GetCompletedTasks (TaskListRequest) returns (TaskListResponse);
+    rpc GetTaskDetails (TaskDetailsRequest) returns (TaskDetailsResponse);
 }
 
 
@@ -31,6 +32,26 @@ message TaskRecord {
     uint32 batch_size = 4;
     string optimizer = 5;
     google.protobuf.Timestamp created = 6;
+}
+
+message TaskDetailsRequest {
+    string task_id = 1;
+}
+
+message TaskDetailsResponse {
+    HTTPReturnCode code = 1;
+    string task_id = 2;
+    string model_type = 3;
+    uint64 nodes_no = 4;
+    uint32 batch_size = 5;
+    string optimizer = 6;
+    google.protobuf.Timestamp created = 7;
+    string dataset = 8;
+    string initializer = 9;
+    string loss_function = 10;
+    uint32 epochs = 11;
+    float tau = 12;
+    repeated string evaluation_metrics = 13;
 }
 
 message Pagination {
