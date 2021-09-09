@@ -82,12 +82,50 @@ UniValue getCompletedTasks(const JSONRPCRequest& request)
     return getTasksList(TaskListType::CompletedTasks, request);
 }
 
+UniValue getTaskDetails(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+    throw std::runtime_error(
+        "gettaskdetails <task_id>\n"
+        "Provides details about a specific task.\n"
+        "\nArguments:\n"
+        "1. task_id         (string, required) Task ID.\n"
+
+        "\nResult:\n"
+        "code        (int) HTTP response code.\n"
+        "task_id     (string) The ID of the task.\n"
+        "model_type  (string) Type of model used in the ML task.\n"
+        "nodes_no  (numeric) Total number of nodes in the ML model.\n"
+        "batch_size  (numeric) Batch size used by the ML task.\n"
+        "optimizer  (string) Optimizer used by the ML task.\n"
+        "created  (timestamp) Task creation time.\n"
+        "dataset  (string) Dataset type.\n"
+        "initializer  (string) Initializer type for the optimizer.\n"
+        "loss_function  (string) Loss function.\n"
+        "epochs  (numeric) Number of epochs.\n"
+        "tau  (float) Quantization threshold for gradients.\n"
+        "evaluation_metrics  (list) Evaluation metrics to decide upon best model.\n"
+    );
+
+    std::string task_id;
+    if (!request.params[0].isNull())
+    {
+        task_id = request.params[0].get_str();
+    }
+
+    std::string taskInfoServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
+    TaskListClient client(grpc::CreateChannel(taskInfoServerAddress, grpc::InsecureChannelCredentials()));
+
+    return client.GetTaskDetails(task_id);
+}
+
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
   //  --------------------- ------------------------  -----------------------  ----------
     { "task_info",             "getwaitingtasks",       &getWaitingTasks,       {"page","per_page"} },
     { "task_info",             "getstartedtasks",       &getStartedTasks,       {"page","per_page"} },
     { "task_info",             "getcompletedtasks",     &getCompletedTasks,     {"page","per_page"} },
+    { "task_info",             "gettaskdetails",        &getTaskDetails,        {"task_id"} },
 };
 
 void RegisterTaskInfoRPCCommands(CRPCTable &t)

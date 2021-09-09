@@ -14,7 +14,12 @@ using grpc::Status;
 
 using pai::pouw::task_info::TaskListRequest;
 using pai::pouw::task_info::TaskListResponse;
+
+using pai::pouw::task_info::TaskDetailsRequest;
+using pai::pouw::task_info::TaskDetailsResponse;
+
 using pai::pouw::task_info::TaskInfo;
+using pai::pouw::task_info::HTTPReturnCode;
 
 
 enum class TaskListType { WaitingTasks, StartedTasks, CompletedTasks };
@@ -35,6 +40,58 @@ public:
 
     UniValue GetCompletedTasks(uint64_t page, uint64_t per_page) {
         return GetTaskList(TaskListType::CompletedTasks, page, per_page);
+    }
+
+    UniValue GetTaskDetails(std::string task_id) {
+        
+        UniValue task_obj(UniValue::VOBJ);
+        TaskDetailsRequest request;
+        request.set_task_id(task_id);
+
+        TaskDetailsResponse response;
+        ClientContext context;
+
+        Status status = stub_->GetTaskDetails(&context, request, &response);
+
+        if (!status.ok()) {
+            std::cout << status.error_code() << ": " << status.error_message()
+            << std::endl;
+            task_obj.push_back(Pair("error_code", status.error_code()));
+            task_obj.push_back(Pair("error_message", status.error_message()));
+            return task_obj;
+        }
+
+        auto code = response.code();
+        if(code != HTTPReturnCode::OK)
+        {
+            task_obj.push_back(Pair("error_code", code));
+            task_obj.push_back(Pair("error_message", "Task details unavailable."));
+            return task_obj;
+        }
+
+        task_obj.push_back(Pair("task_id", response.task_id()));
+        task_obj.push_back(Pair("model_type", response.model_type()));
+        task_obj.push_back(Pair("nodes_no", response.nodes_no()));
+        task_obj.push_back(Pair("batch_size", (uint64_t)response.batch_size()));
+        task_obj.push_back(Pair("optimizer", response.optimizer()));
+        task_obj.push_back(Pair("created", google::protobuf::util::TimeUtil::ToString(response.created())));
+        task_obj.push_back(Pair("dataset", response.dataset()));
+        task_obj.push_back(Pair("initializer", response.initializer()));
+        task_obj.push_back(Pair("loss_function", response.loss_function()));
+        task_obj.push_back(Pair("epochs", (uint64_t)response.epochs()));
+        task_obj.push_back(Pair("tau", (float)response.tau()));
+
+        auto evaluation_metrics = response.evaluation_metrics();
+        UniValue evaluation_metrics_obj(UniValue::VARR);
+        for (auto evaluation_metric : evaluation_metrics)
+        {
+            UniValue tmpVal(UniValue::VSTR, evaluation_metric);
+            evaluation_metrics_obj.push_back(tmpVal);
+        }
+        
+        task_obj.push_back(Pair("evaluation_metrics", evaluation_metrics_obj));
+
+        return task_obj;
     }
 
 protected:
