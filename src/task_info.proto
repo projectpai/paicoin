@@ -9,6 +9,7 @@ service TaskInfo {
     rpc GetStartedTasks (TaskListRequest) returns (TaskListResponse);
     rpc GetCompletedTasks (TaskListRequest) returns (TaskListResponse);
     rpc GetTaskDetails (TaskDetailsRequest) returns (TaskDetailsResponse);
+    rpc GetTaskID (TaskIDRequest) returns (TaskIDResponse);
 }
 
 
@@ -74,4 +75,13 @@ message TaskListResponse {
     HTTPReturnCode code = 1;
     Pagination pagination = 2;
     repeated TaskRecord tasks = 3;
+}
+
+message TaskIDRequest {
+    string msg_id = 1;
+}
+
+message TaskIDResponse {
+    HTTPReturnCode code = 1;
+    string task_id = 2;
 }

@@ -24,6 +24,7 @@
 #include "util.h"
 #include "utilstrencodings.h"
 #include "hash.h"
+#include "task_info_client.h"
 
 #include <stdint.h>
 
@@ -89,6 +90,11 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("versionHex", strprintf("%08x", blockindex->nVersion)));
     result.push_back(Pair("powMsgHistoryId", blockindex->powMsgHistoryId));
     result.push_back(Pair("powMsgId", blockindex->powMsgId));
+
+    std::string taskInfoServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
+    TaskListClient client(grpc::CreateChannel(taskInfoServerAddress, grpc::InsecureChannelCredentials()));
+    result.push_back(Pair("taskId", client.GetTaskId(blockindex->powMsgId)));
+
     result.push_back(Pair("merkleroot", blockindex->hashMerkleRoot.GetHex()));
     result.push_back(Pair("time", (int64_t)blockindex->nTime));
     result.push_back(Pair("mediantime", (int64_t)blockindex->GetMedianTimePast()));
@@ -123,6 +129,11 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
     result.push_back(Pair("powMsgHistoryId", std::string(block.powMsgHistoryId)));
     result.push_back(Pair("powMsgId", std::string(block.powMsgId)));
+
+    std::string taskInfoServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
+    TaskListClient client(grpc::CreateChannel(taskInfoServerAddress, grpc::InsecureChannelCredentials()));
+    result.push_back(Pair("taskId", client.GetTaskId(blockindex->powMsgId)));
+
     UniValue txs(UniValue::VARR);
     for(const auto& tx : block.vtx)
     {
@@ -715,8 +726,9 @@ UniValue getblock(const JSONRPCRequest& request)
             "  \"version\" : n,         (numeric) The block version\n"
             "  \"versionHex\" : \"00000000\", (string) The block version formatted in hexadecimal\n"
             "  \"merkleroot\" : \"xxxx\", (string) The merkle root\n"
-            "  \"powMsgHistoryId\" : \"...\",  (string) The ID of the message history used for POW\n"
-            "  \"powMsgId\" : \"...\",  (string) The ID of the message used for POW\n"
+            "  \"powMsgHistoryId\" : \"...\",  (string) The ID of the message history used for PoUW\n"
+            "  \"powMsgId\" : \"...\",  (string) The ID of the message used for PoUW\n"
+            "  \"taskId\" : \"...\",  (string) The ID of the PoUW task corresponding to the nonce\n"
             "  \"tx\" : [               (array of string) The transaction ids\n"
             "     \"transactionid\"     (string) The transaction id\n"
             "     ,...\n"
