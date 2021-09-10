@@ -18,6 +18,9 @@ using pai::pouw::task_info::TaskListResponse;
 using pai::pouw::task_info::TaskDetailsRequest;
 using pai::pouw::task_info::TaskDetailsResponse;
 
+using pai::pouw::task_info::TaskIDRequest;
+using pai::pouw::task_info::TaskIDResponse;
+
 using pai::pouw::task_info::TaskInfo;
 using pai::pouw::task_info::HTTPReturnCode;
 
@@ -92,6 +95,24 @@ public:
         task_obj.push_back(Pair("evaluation_metrics", evaluation_metrics_obj));
 
         return task_obj;
+    }
+
+    std::string GetTaskId(const std::string& msg_id)
+    {
+        TaskIDRequest request;
+        request.set_msg_id(msg_id);
+
+        TaskIDResponse response;
+        ClientContext context;
+
+        Status status = stub_->GetTaskID(&context, request, &response);
+        if (!status.ok() || response.code() != HTTPReturnCode::OK)
+        {
+            return std::string("unavailable");
+        }
+
+        return response.task_id();
+            
     }
 
 protected:
