@@ -36,20 +36,24 @@ void PrintLockContention(const char* pszName, const char* pszFile, int nLine)
 //
 
 struct CLockLocation {
-    CLockLocation(const char* pszName, const char* pszFile, int nLine, bool fTryIn)
+    CLockLocation(const char* pszName, const char* pszFile, int nLine, const std::string& threadIdIn, bool fRecursiveIn, bool fTryIn)
     {
         mutexName = pszName;
         sourceFile = pszFile;
         sourceLine = nLine;
+        threadId = threadIdIn;
+        fRecursive = fRecursiveIn;
         fTry = fTryIn;
     }
 
     std::string ToString() const
     {
-        return mutexName + "  " + sourceFile + ":" + itostr(sourceLine) + (fTry ? " (TRY)" : "");
+        return mutexName + "  " + sourceFile + ":" + itostr(sourceLine) + " (" + (threadId.size() > 0 ? threadId : "<unknown>") + ")" + (fTry ? " (TRY)" : "") + (fRecursive ? " (RECURSIVE)" : " (NON-RECURSIVE)");
     }
 
     bool fTry;
+    bool fRecursive;
+    std::string threadId;
 private:
     std::string mutexName;
     std::string sourceFile;
@@ -102,6 +106,19 @@ static void potential_deadlock_detected(const std::pair<void*, void*>& mismatch,
     assert(false);
 }
 
+static void double_lock_detected(const void* mutex, const LockStack& lock_stack)
+{
+    LogPrintf("DOUBLE LOCK DETECTED\n");
+    LogPrintf("Lock order:\n");
+    for (const std::pair<void*, CLockLocation> & i : lock_stack) {
+        if (i.first == mutex) {
+            LogPrintf(" (*)"); /* Continued */
+        }
+        LogPrintf(" %s\n", i.second.ToString());
+    }
+    assert(false);
+}
+
 static void push_lock(void* c, const CLockLocation& locklocation)
 {
     if (lockstack.get() == nullptr)
@@ -111,19 +128,34 @@ static void push_lock(void* c, const CLockLocation& locklocation)
 
     (*lockstack).push_back(std::make_pair(c, locklocation));
 
-    for (const std::pair<void*, CLockLocation> & i : (*lockstack)) {
-        if (i.first == c)
-            break;
+    for (size_t j = 0; j < (*lockstack).size() - 1; ++j) {
+        const std::pair<void*, CLockLocation>& i = (*lockstack)[j];
+        if (i.first == c) {
+            if (locklocation.fRecursive)
+                break;
+
+            double_lock_detected(c, (*lockstack));
+        }
 
         std::pair<void*, void*> p1 = std::make_pair(i.first, c);
         if (lockdata.lockorders.count(p1))
             continue;
+
         lockdata.lockorders[p1] = (*lockstack);
 
         std::pair<void*, void*> p2 = std::make_pair(c, i.first);
         lockdata.invlockorders.insert(p2);
-        if (lockdata.lockorders.count(p2))
-            potential_deadlock_detected(p1, lockdata.lockorders[p2], lockdata.lockorders[p1]);
+
+        auto deadlock_candidate_stack = lockdata.lockorders.find(p2);
+        if (deadlock_candidate_stack != lockdata.lockorders.end()) {
+            // this should not happen, however it's better to double check if it did
+            if (deadlock_candidate_stack->second.size() == 0)
+                potential_deadlock_detected(p1, deadlock_candidate_stack->second, lockdata.lockorders[p1]);
+
+            // there is a deadlock only if having different threads or not recursive mutex on the same thread
+            if ((deadlock_candidate_stack->second[0].second.threadId != locklocation.threadId) || (!locklocation.fRecursive))
+                potential_deadlock_detected(p1, deadlock_candidate_stack->second, lockdata.lockorders[p1]);
+        }
     }
 }
 
@@ -132,9 +164,16 @@ static void pop_lock()
     (*lockstack).pop_back();
 }
 
-void EnterCritical(const char* pszName, const char* pszFile, int nLine, void* cs, bool fTry)
+#define DEBUG_SHOW_LOCK_THREAD_ID
+void EnterCritical(const char* pszName, const char* pszFile, int nLine, void* cs, bool fRecursive, bool fTry)
 {
-    push_lock(cs, CLockLocation(pszName, pszFile, nLine, fTry));
+#ifdef DEBUG_SHOW_LOCK_THREAD_ID
+    std::stringstream ss;
+    ss << boost::this_thread::get_id();
+    push_lock(cs, CLockLocation(pszName, pszFile, nLine, ss.str(), fRecursive, fTry));
+#else
+    push_lock(cs, CLockLocation(pszName, pszFile, nLine, "", fRecursive, fTry));
+#endif
 }
 
 void LeaveCritical()

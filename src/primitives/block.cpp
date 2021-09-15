@@ -19,8 +19,12 @@
 uint256 CBlockHeader::GetHash() const
 {
     if (this->nVersion & HARDFORK_VERSION_BIT) {
-        // use SHAKE-256 hasher when Hybrid PoW/PoS deploys
-        return SerializeHash<CBlockHashWriter>(*this);
+        // between Hybrid PoW/PoS deployment and paicoin hasher deployment, use SHAKE-256;
+        // afterwards, use paicoin hasher
+        if (isPaicoinHashBlock())
+            return SerializeHash<CPaicoinHashWriter>(*this);
+        else
+            return SerializeHash<CBlockHashWriter>(*this);
     }
     return SerializeHash<CHashWriter>(*this);
 }
@@ -55,4 +59,9 @@ void CBlockHeader::SetReadStakeDefaultBeforeFork()
     nRevocations = 0;
     extraData.SetNull();
     nStakeVersion = 0;
+}
+
+bool CBlockHeader::isPaicoinHashBlock() const
+{
+    return nTime >= Params().GetConsensus().nPaicoinHashTimestamp;
 }
