@@ -39,7 +39,19 @@ else
 if TARGET_DARWIN
 LIBPAICOINHASH=-L$(srcdir)/crypto/paicoinhash/macos -lpaicoinhash
 else
-LIBPAICOINHASH= -L$(srcdir)/crypto/paicoinhash/linux -lpaicoinhash
+if TARGET_LINUX_AARCH64
+LIBPAICOINHASH= -L$(srcdir)/crypto/paicoinhash/linux/aarch64 -lpaicoinhash
+else
+if TARGET_LINUX_ARM64
+LIBPAICOINHASH= -L$(srcdir)/crypto/paicoinhash/linux/aarch64 -lpaicoinhash
+else
+if TARGET_LINUX_I386
+LIBPAICOINHASH= -L$(srcdir)/crypto/paicoinhash/linux/i386 -lpaicoinhash
+else
+LIBPAICOINHASH= -L$(srcdir)/crypto/paicoinhash/linux/amd64 -lpaicoinhash
+endif
+endif
+endif
 endif
 endif
 
