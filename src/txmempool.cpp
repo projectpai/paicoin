@@ -602,12 +602,13 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
     blockSinceLastRollingFeeBump = true;
 }
 
-void CTxMemPool::removeExpiredTickets(const int currentHeight, const Consensus::Params& params)
+void CTxMemPool::removeExpiredTickets(const int currentHeight, const CAmount currentStakeDifficulty, const Consensus::Params& params)
 {
     // When a ticket transaction is expired, it is remmoved from the mempool.
     // This is a two sides process:
     // 1. Remove the tickets that are expired by the transaction's nExpiry value;
     // 2. Remove the tickets that have nExpiry set to zero and lingered in the mempool longer than acceptable.
+    // 3. Remove the tickets that have low stake difficulty according to the current value.
 
     if (!IsHybridConsensusForkEnabled(currentHeight, params))
         return;
@@ -621,7 +622,9 @@ void CTxMemPool::removeExpiredTickets(const int currentHeight, const Consensus::
     CTxMemPool::setEntries txToRemove;
     for (auto tickettxiter = tickets.first; tickettxiter != tickets.second; ++tickettxiter) {
         const CTransaction& tx = tickettxiter->GetTx();
-        if (IsExpiredTx(tx, currentHeight + 1) || DidResidenceExpire(tx.nExpiry, static_cast<int>(tickettxiter->GetHeight()), currentHeight)) {
+        if (IsExpiredTx(tx, currentHeight + 1)
+                || DidResidenceExpire(tx.nExpiry, static_cast<int>(tickettxiter->GetHeight()), currentHeight)
+                || (tx.vout[ticketStakeOutputIndex].nValue != currentStakeDifficulty)) {
             auto txiter = mapTx.project<0>(tickettxiter);
 
             txToRemove.insert(txiter);
@@ -667,6 +670,64 @@ void CTxMemPool::removeExpiredVotes(const int currentHeight, const Consensus::Pa
     }
 
     RemoveStaged(txToRemove, true, MemPoolRemovalReason::EXPIRY);
+}
+
+void CTxMemPool::removeVotesForBlock(const uint256& blockHash, const Consensus::Params& params)
+{
+    LOCK(cs);
+
+    // get the votes
+    auto& tx_class_index = mapTx.get<tx_class>();
+    auto votes = tx_class_index.equal_range(ETxClass::TX_Vote);
+
+    CTxMemPool::setEntries txToRemove;
+    for (auto votetxiter = votes.first; votetxiter != votes.second; ++votetxiter) {
+        if (!IsHybridConsensusForkEnabled(static_cast<int>(votetxiter->GetHeight()), params))
+            continue;
+
+        VoteData voteData;
+        if (!ParseVote(votetxiter->GetTx(), voteData))
+            continue;
+
+        if (voteData.blockHash == blockHash) {
+            auto txiter = mapTx.project<0>(votetxiter);
+
+            txToRemove.insert(txiter);
+
+            CalculateDescendants(txiter, txToRemove);
+        }
+    }
+
+    RemoveStaged(txToRemove, true, MemPoolRemovalReason::UNKNOWN);
+}
+
+void CTxMemPool::removeAllVotesExceptForBlock(const uint256& blockHash, const Consensus::Params& params)
+{
+    LOCK(cs);
+
+    // get the votes
+    auto& tx_class_index = mapTx.get<tx_class>();
+    auto votes = tx_class_index.equal_range(ETxClass::TX_Vote);
+
+    CTxMemPool::setEntries txToRemove;
+    for (auto votetxiter = votes.first; votetxiter != votes.second; ++votetxiter) {
+        if (!IsHybridConsensusForkEnabled(static_cast<int>(votetxiter->GetHeight()), params))
+            continue;
+
+        VoteData voteData;
+        if (!ParseVote(votetxiter->GetTx(), voteData))
+            continue;
+
+        if (voteData.blockHash != blockHash) {
+            auto txiter = mapTx.project<0>(votetxiter);
+
+            txToRemove.insert(txiter);
+
+            CalculateDescendants(txiter, txToRemove);
+        }
+    }
+
+    RemoveStaged(txToRemove, true, MemPoolRemovalReason::UNKNOWN);
 }
 
 void CTxMemPool::_clear()

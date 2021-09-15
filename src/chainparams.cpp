@@ -45,6 +45,8 @@
 #define MAINNET_HYBRID_CONSENSUS_POW_LIMIT          uint256S("000003e75d000000000000000000000000000000000000000000000000000000");
 #define MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x1e03e75d
 
+#define MAINNET_PAICOIN_HASH_INITIAL_DIFFICULTY 0x1e03e75d
+
 #define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
 #define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
@@ -58,6 +60,8 @@
 #define TESTNET_HYBRID_CONSENSUS_POW_LIMIT   uint256S("000003e75d000000000000000000000000000000000000000000000000000000");
 #define TESTNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x1e03e75d
 
+#define TESTNET_PAICOIN_HASH_INITIAL_DIFFICULTY 0x1e03e75d
+
 #define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define REGTEST_GENESIS_BLOCK_POW_BITS   1
 #define REGTEST_GENESIS_BLOCK_NBITS      0x207fffff
@@ -70,6 +74,8 @@
 
 #define REGTEST_HYBRID_CONSENSUS_POW_LIMIT          REGTEST_CONSENSUS_POW_LIMIT
 #define REGTEST_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x207fffff
+
+#define REGTEST_PAICOIN_HASH_INITIAL_DIFFICULTY 0x207fffff
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
@@ -186,6 +192,12 @@ public:
         consensus.hybridConsensusPowLimit = MAINNET_HYBRID_CONSENSUS_POW_LIMIT;
         consensus.nHybridConsensusInitialDifficulty = MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
+
+        // hashing algorithm parameters
+        consensus.nPaicoinHashTimestamp = 1632841200LL;
+        consensus.nPaicoinHashMaximumActivationHeight = 220000;
+        consensus.nPaicoinHashInitialDifficulty = MAINNET_PAICOIN_HASH_INITIAL_DIFFICULTY;
+        consensus.nPaicoinHashInitialDifficultyBlockCount = 10;
 
         // stake parameters
         consensus.nMinimumStakeDiff                 = COIN * 2;
@@ -308,7 +320,10 @@ public:
                 { 120000, uint256S("0x000000000000009a81363c9b3ba2dfc722a7df8ac8a0a78e12eefb6dba9bfe5a")},
                 { 130000, uint256S("0x000000000000002a0f12ad179996aa0a5efed53717aa6854be34f9d94c8cef5a")},
                 { 140000, uint256S("0x000000000000004ea95aeaf16356c0061e530bcf796beccc657b931dad51ea2a")},
-                { 150000, uint256S("0x00000000000000dde450506496572c1825c1ccf682699398f4df8a8219bc33a2")}
+                { 150000, uint256S("0x00000000000000dde450506496572c1825c1ccf682699398f4df8a8219bc33a2")},
+                { 160000, uint256S("0x000000000105bc6d4b40dfc85bcd9c550a99b34a8d75ccb9af785f3c0fccc6c7")},
+                { 170000, uint256S("0x000000000012c935fd985397c70aa95de80a1fdbcf83645a35445ef491709f64")},
+                { 180000, uint256S("0x0000000000038e385d5543673eeda56b96ea69e0676073d128419d606961e0dc")}
             }
         };
 
@@ -379,6 +394,12 @@ public:
         consensus.hybridConsensusPowLimit = TESTNET_HYBRID_CONSENSUS_POW_LIMIT;
         consensus.nHybridConsensusInitialDifficulty = TESTNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
+
+        // hashing algorithm parameters
+        consensus.nPaicoinHashTimestamp = 1628686800LL;
+        consensus.nPaicoinHashMaximumActivationHeight = 90000;
+        consensus.nPaicoinHashInitialDifficulty = TESTNET_PAICOIN_HASH_INITIAL_DIFFICULTY;
+        consensus.nPaicoinHashInitialDifficultyBlockCount = 10;
 
         // stake parameters
         consensus.nMinimumStakeDiff                 = COIN * 0.2;
@@ -554,6 +575,12 @@ public:
         consensus.hybridConsensusPowLimit = REGTEST_HYBRID_CONSENSUS_POW_LIMIT;
         consensus.nHybridConsensusInitialDifficulty = REGTEST_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
+
+        // hashing algorithm parameters
+        consensus.nPaicoinHashTimestamp = 0LL;
+        consensus.nPaicoinHashMaximumActivationHeight = 2100;
+        consensus.nPaicoinHashInitialDifficulty = REGTEST_PAICOIN_HASH_INITIAL_DIFFICULTY;
+        consensus.nPaicoinHashInitialDifficultyBlockCount = 10;
 
         // stake paramters
         consensus.nMinimumStakeDiff               = 20000;

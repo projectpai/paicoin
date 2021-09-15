@@ -1011,7 +1011,7 @@ void static RelayMempoolStakeTxs(CNode* pfrom)
     // add all the stake transactions in the specified order (this is reversed when sending).
     // also add all regular transactions that fund ticket purchases.
 
-    LOCK(cs_main);
+    LOCK2(cs_main, mempool.cs);
 
     std::set<uint256> fundingTxIds;
 

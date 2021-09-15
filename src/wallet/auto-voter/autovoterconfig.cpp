@@ -10,6 +10,7 @@
 
 CAutoVoterConfig::CAutoVoterConfig() :
     autoVote(false),
+    voteAllTips(true),
     voteBits(VoteBits::rttAccepted)
 {
 }
@@ -23,6 +24,9 @@ void CAutoVoterConfig::ParseCommandline()
         else
             LogPrintf("ERROR: automatic vote bits out of range %lld. Using default: %d", vb, VoteBits().getBits());
     }
+
+    if (gArgs.IsArgSet("-avvotealltips"))
+        voteAllTips = gArgs.GetBoolArg("-avvotealltips", true);
 
     if (gArgs.IsArgSet("-avextendedvotebits")) {
         std::string evb = gArgs.GetArg("-avextendedvotebits", "");

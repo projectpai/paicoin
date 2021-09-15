@@ -928,6 +928,7 @@ BOOST_FIXTURE_TEST_CASE(auto_voter_multiple_tips, WalletStakeTestingSetup)
         BOOST_CHECK(chainActive.Tip()->nHeight == height);
     }
 
+    LOCK(mempool.cs);
     for (const CBlockIndex* blockIndex: tips) {
         BOOST_CHECK(blockIndex->pstakeNode != nullptr);
 

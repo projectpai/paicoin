@@ -149,6 +149,8 @@ static const bool DEFAULT_FEEFILTER = true;
 static const bool DEFAULT_DISCARD_EXPIRED_MEMPOOL_VOTES = true;
 /** Default for the transactions residence */
 static const unsigned int DEFAULT_MEMPOOL_RESIDENCE = 200;
+/** Default for the maximum depth of the fork for a block to be notified */
+static const unsigned int DEFAULT_MAX_DEPTH_FOR_NOTIFICATION = 10;
 
 /** Maximum number of headers to announce when relaying blocks with headers message.*/
 static const unsigned int MAX_BLOCKS_TO_ANNOUNCE = 8;
@@ -196,6 +198,7 @@ extern int64_t nMaxTipAge;
 extern bool fEnableReplacement;
 extern bool fDiscardExpiredMempoolVotes;
 extern int nMempoolResidence;
+extern int nMaxDepthForNotification;
 
 /** Block hash whose ancestors we will assume to have valid scripts without checking them. */
 extern uint256 hashAssumeValid;
@@ -292,6 +295,8 @@ bool GetTransaction(const uint256 &hash, CTransactionRef &tx, const Consensus::P
 CTransactionRef GetTicket(const uint256 &ticketTxHash);
 /** Find the best known block, and make it the tip of the block chain */
 bool ActivateBestChain(CValidationState& state, const CChainParams& chainparams, std::shared_ptr<const CBlock> pblock = std::shared_ptr<const CBlock>());
+/** Select the desired chain tip */
+bool SetActiveChainTip(const CChainParams& chainparams, const uint256 &hash);
 
 // An indicator of the desired fee distribution policy
 // This influences the way that the vote or revoke fees are distributed among the contributors.
@@ -511,6 +516,7 @@ int32_t ComputeBlockVersion(const CBlockIndex* pindexPrev, const Consensus::Para
 static const unsigned int REJECT_INTERNAL = 0x100;
 /** Too high fee. Can not be triggered by P2P transactions */
 static const unsigned int REJECT_HIGHFEE = 0x100;
+static const unsigned int REJECT_STAKE_DIFFICULTY = 0x101;
 
 /** Get block file info entry for one block file */
 CBlockFileInfo* GetBlockFileInfo(size_t n);
