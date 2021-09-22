@@ -435,6 +435,20 @@ case $host in
    *linux*)
      TARGET_OS=linux
      LEVELDB_TARGET_FLAGS="-DOS_LINUX"
+     case $host_cpu in
+       aarch64)
+         TARGET_OS=linux_aarch64
+         ;;
+       arm64)
+         TARGET_OS=linux_arm64
+         ;;
+       x86_64)
+         TARGET_OS=linux_amd64
+         ;;
+       i?86)
+         TARGET_OS=linux_i386
+         ;;
+     esac
      ;;
    *freebsd*)
      LEVELDB_TARGET_FLAGS="-DOS_FREEBSD"
@@ -1153,6 +1167,10 @@ if test x$build_paicoin_utils$build_paicoind$paicoin_enable_qt$use_bench$use_tes
   AC_MSG_ERROR([No targets! Please specify at least one of: --with-utils --with-daemon --with-gui --enable-bench or --enable-tests])
 fi
 
+AM_CONDITIONAL([TARGET_LINUX_AARCH64], [test x$TARGET_OS = xlinux_aarch64])
+AM_CONDITIONAL([TARGET_LINUX_ARM64], [test x$TARGET_OS = xlinux_arm64])
+AM_CONDITIONAL([TARGET_LINUX_X86_64], [test x$TARGET_OS = xlinux_x86_64])
+AM_CONDITIONAL([TARGET_LINUX_I386], [test x$TARGET_OS = xlinux_i386])
 AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])
 AM_CONDITIONAL([BUILD_DARWIN], [test x$BUILD_OS = xdarwin])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x$TARGET_OS = xwindows])
