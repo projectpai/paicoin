@@ -127,51 +127,62 @@ public:
 void CWallet::RemoveFromWtxOrdered(std::vector<uint256> hashes)
 {
     // This is a 2 step process:
-    // 1. remove all the specified entries in the ordered list
+    // 1. remove all the specified entries in the ordered list (including duplicates)
     // 2. reindex the remaining entries, considering that they are already ordered, but might have gaps because of the removal
     // Also, update the global position cursor.
 
-    for (auto hash: hashes) {
-        for (auto it = wtxOrdered.begin(); it != wtxOrdered.end();) {
-            auto h = it->second.first;
-            if (h && h->tx && h->tx->GetHash() == hash)
-                it = wtxOrdered.erase(it);
-            else
-                ++it;
-        }
-    }
+    for (auto it = wtxOrdered.begin(); it != wtxOrdered.end();)
+        if ((it->second.first != nullptr)
+                && it->second.first->tx
+                && (std::find_if(hashes.begin(),
+                                 hashes.end(),
+                                 [&it](const uint256& hash){ return it->second.first->GetHash() == hash; }) != hashes.end()))
+            it = wtxOrdered.erase(it);
+        else
+            ++it;
 
-    nOrderPosNext = 0;
-    for (auto it = wtxOrdered.begin(); it != wtxOrdered.end(); ++it) {
-        if (it->first == nOrderPosNext) {
-            ++nOrderPosNext;
-            continue;
-        }
+//    nOrderPosNext = 0;
+//    for (auto it = wtxOrdered.begin(); it != wtxOrdered.end();) {
+//        if (it->first == nOrderPosNext) {
+//            ++it;
+//            ++nOrderPosNext;
+//            continue;
+//        }
 
-        if (it->second.first != nullptr) {
-            CWalletTx* wtx = it->second.first;
+//        if (it->second.first != nullptr) {
+//            if (mapWallet.count(it->second.first->GetHash()) > 0) {
+//                CWalletTx &wtx = mapWallet[it->second.first->GetHash()];
 
-            wtxOrdered.erase(it);
+//                wtxOrdered.erase(it);
 
-            wtx->nOrderPos = nOrderPosNext;
-            it = wtxOrdered.insert(std::make_pair(wtx->nOrderPos, TxPair(wtx, nullptr)));
+//                wtx.nOrderPos = nOrderPosNext;
+//                WriteOrderPos(nOrderPosNext, wtx.mapValue);
 
-        } else if (it->second.second != nullptr) {
-            CAccountingEntry* accentry = it->second.second;
+//                it = wtxOrdered.insert(std::make_pair(wtx.nOrderPos, TxPair(&wtx, nullptr)));
 
-            wtxOrdered.erase(it);
+//                ++it;
+//                ++nOrderPosNext;
+//            } else
+//                it = wtxOrdered.erase(it);
 
-            accentry->nOrderPos = nOrderPosNext;
-            it = wtxOrdered.insert(std::make_pair(accentry->nOrderPos, TxPair(nullptr, accentry)));
+//        } else if (it->second.second != nullptr) {
+//            CAccountingEntry* accentry = it->second.second;
 
-        } else {
-            // this should not happen. Assert?
-        }
+//            wtxOrdered.erase(it);
 
-        ++nOrderPosNext;
-    }
+//            accentry->nOrderPos = nOrderPosNext;
+//            WriteOrderPos(nOrderPosNext, accentry->mapValue);
 
-    CWalletDB(*dbw).WriteOrderPosNext(nOrderPosNext);
+//            it = wtxOrdered.insert(std::make_pair(accentry->nOrderPos, TxPair(nullptr, accentry)));
+
+//            ++it;
+//            ++nOrderPosNext;
+//        } else {
+//            // this should not happen. Assert?
+//        }
+//    }
+
+//    CWalletDB(*dbw).WriteOrderPosNext(nOrderPosNext);
 }
 
 const CWalletTx* CWallet::GetWalletTx(const uint256& hash) const
@@ -553,11 +564,11 @@ void CWallet::CleanupTransactions(const int height)
     }
 
     if (!hashesIn.empty()) {
+        // recreate the wtx order
+        RemoveFromWtxOrdered(hashesIn);
+
         // cleanup the wallet txs
         ZapSelectTx(hashesIn, hashesOut);
-
-        // recreate the wtx order
-        RemoveFromWtxOrdered(hashesOut);
 
         // remove outputs from spends list
         RemoveFromSpends(hashesOut);
@@ -1656,6 +1667,7 @@ bool CWallet::IsTicketInMempool(const CTransaction& ticket) const
 {
     std::string reason;
 
+    LOCK(mempool.cs);
     auto& txClassIndex = mempool.mapTx.get<tx_class>();
     auto tickets = txClassIndex.equal_range(ETxClass::TX_BuyTicket);
 
@@ -1683,6 +1695,7 @@ bool CWallet::IsTicketVotedInMempool(const uint256& ticketHash) const
 {
     std::string reason;
 
+    LOCK(mempool.cs);
     auto& txClassIndex = mempool.mapTx.get<tx_class>();
     auto votes = txClassIndex.equal_range(ETxClass::TX_Vote);
 
@@ -1703,6 +1716,7 @@ bool CWallet::IsTicketRevokedInMempool(const uint256& ticketHash) const
 {
     std::string reason;
 
+    LOCK(mempool.cs);
     auto& txClassIndex = mempool.mapTx.get<tx_class>();
     auto revocations = txClassIndex.equal_range(ETxClass::TX_RevokeTicket);
 

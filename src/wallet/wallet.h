@@ -497,6 +497,47 @@ public:
     bool RelayWalletTransaction(CConnman* connman);
 
     std::set<uint256> GetConflicts() const;
+
+    // copy data from the other transaction
+    void FromWtx(CWalletTx* wtx) {
+        // Transaction
+        tx = wtx->tx;
+        // CMerkleTx
+        hashBlock = wtx->hashBlock;
+        nIndex = wtx->nIndex;
+        // CWalletTx
+        pwallet = wtx->pwallet;
+        for (auto it: wtx->mapValue)
+            mapValue.insert({it.first, it.second});
+        for (auto it: wtx->vOrderForm)
+            vOrderForm.push_back(std::pair<std::string, std::string>(it.first, it.second));
+        fTimeReceivedIsTxTime = wtx->fTimeReceivedIsTxTime;
+        nTimeReceived = wtx->nTimeReceived;
+        nTimeSmart = wtx->nTimeSmart;
+        fFromMe = wtx->fFromMe;
+        strFromAccount = wtx->strFromAccount;
+        nOrderPos = wtx->nOrderPos;
+        fDebitCached = wtx->fDebitCached;
+        fCreditCached = wtx->fCreditCached;
+        fStakedCreditCached = wtx->fStakedCreditCached;
+        fImmatureCreditCached = wtx->fImmatureCreditCached;
+        fAvailableCreditCached = wtx->fAvailableCreditCached;
+        fWatchDebitCached = wtx->fWatchDebitCached;
+        fWatchCreditCached = wtx->fWatchCreditCached;
+        fImmatureWatchCreditCached = wtx->fImmatureWatchCreditCached;
+        fAvailableWatchCreditCached = wtx->fAvailableWatchCreditCached;
+        fChangeCached = wtx->fChangeCached;
+        nDebitCached = wtx->nDebitCached;
+        nCreditCached = wtx->nCreditCached;
+        nStakedCreditCached = wtx->nStakedCreditCached;
+        nImmatureCreditCached = wtx->nImmatureCreditCached;
+        nAvailableCreditCached = wtx->nAvailableCreditCached;
+        nWatchDebitCached = wtx->nWatchDebitCached;
+        nWatchCreditCached = wtx->nWatchCreditCached;
+        nImmatureWatchCreditCached = wtx->nImmatureWatchCreditCached;
+        nAvailableWatchCreditCached = wtx->nAvailableWatchCreditCached;
+        nChangeCached = wtx->nChangeCached;
+    }
 };
 
 

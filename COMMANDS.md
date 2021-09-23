@@ -61,6 +61,7 @@ getblockchaininfo
 getblockcount
 getblockhash index
 getchaintips
+setactivechaintip
 getdifficulty
 getmempoolinfo
 getrawmempool ( verbose )
@@ -429,6 +430,10 @@ Wallet options:
        Specifies the number of blocks to keep a transaction in the mempool when its
        expiration value is set to zero. This interval is calculated from the height the
        transaction entered the mempool. Only applies to tickets for now.
+       
+  -maxdepthfornotification
+       The maximum depth of the blockchain fork on which a block is in order to be
+       notified to the node and peers.
 
 Debugging/Testing options:
 
