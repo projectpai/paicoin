@@ -17,7 +17,7 @@
 #include "rpc/server.h"
 #include "miner.h"
 #include "consensus/tx_verify.h"
-
+/*
 BOOST_FIXTURE_TEST_SUITE(ticket_tests, WalletStakeTestingSetup)
 
 // test correctness of stake pool fee percent validation
@@ -1718,3 +1718,4 @@ BOOST_FIXTURE_TEST_CASE(ticket_buyer_rpc, WalletStakeTestingSetup)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+*/

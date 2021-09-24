@@ -128,7 +128,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     {
         auto pblocktemplate = BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript);
         if (!pblocktemplate.get())
-            throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
+            throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Couldn't create new block");
         CBlock *pblock = &pblocktemplate->block;
 
         // add coinbase tx and update merkle root
@@ -229,7 +229,7 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
 
     CTxDestination destination = DecodeDestination(address);
     if (!IsValidDestination(destination)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error: Invalid address");
+        throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Error: Invalid address");
     }
 
     std::shared_ptr<CReserveScript> coinbaseScript = std::make_shared<CReserveScript>();
@@ -237,7 +237,7 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
 
     std::unique_ptr<CBlockTemplate> pblocktemplate = BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript);
     if (!pblocktemplate.get())
-        throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
+        throw JSONRPCError(RPCErrorCode::INTERNAL_ERROR, "Couldn't create new block");
     CBlock *pblock = &pblocktemplate->block;
 
     // add coinbase tx and update merkle root
@@ -531,10 +531,10 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     if (gArgs.GetBoolArg("-ignore-not-connected", false) == false)
     {
         if (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0)
-            throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "PAIcoin is not connected!");
+            throw JSONRPCError(RPCErrorCode::CLIENT_NOT_CONNECTED, "PAIcoin is not connected!");
 
         if (IsInitialBlockDownload())
-            throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "PAIcoin is downloading blocks...");
+            throw JSONRPCError(RPCErrorCode::CLIENT_IN_INITIAL_DOWNLOAD, "PAIcoin is downloading blocks...");
     }
 
     static unsigned int nTransactionsUpdatedLast;
@@ -734,13 +734,14 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         // we have enough votes, but some vote transactions may still be in transit,
         // return error while waiting for more votes in the specified time
+/*
         if ( !bTooFewVotes
            && pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight
            && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock
            && nTimeElapsed < nBlockAllVotesWaitTime) {
             throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Some vote transactions are not yet available, waiting <blockallvoteswaittime>");
         }
-
+*/
         // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
     }
@@ -889,7 +890,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     result.push_back(Pair("curtime", pblock->GetBlockTime()));
     result.push_back(Pair("bits", strprintf("%08x", pblock->nBits)));
     result.push_back(Pair("height", static_cast<int64_t>((pindexPrev->nHeight+1))));
-
+/*
     if (IsHybridConsensusForkEnabled(pindexPrev, Params().GetConsensus())) {
         // large values are not correctly interpreted by the miner, thus we use hex strings where needed
         result.push_back(Pair("stakedifficulty", strprintf("%016x", pblock->nStakeDifficulty)));
@@ -907,7 +908,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         result.push_back(Pair("stakeversion", static_cast<int64_t>(pblock->nStakeVersion)));
     }
-
+*/
     if (!pblocktemplate->vchCoinbaseCommitment.empty() && fSupportsSegwit) {
         result.push_back(Pair("default_witness_commitment", HexStr(pblocktemplate->vchCoinbaseCommitment)));
     }
@@ -916,7 +917,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     {
         const CTxDestination coinbaseScript = DecodeDestination(address);
         if (!IsValidDestination(coinbaseScript)) {
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error: Invalid coinbase payout address");
+            throw JSONRPCError(RPCErrorCode::INVALID_ADDRESS_OR_KEY, "Error: Invalid coinbase payout address");
         }
         const CScript scriptPubKey = GetScriptForDestination(coinbaseScript);
         CAmount nFees = 0;
@@ -1028,6 +1029,7 @@ UniValue submitblock(const JSONRPCRequest& request)
     return BIP22ValidationResult(sc.state);
 }
 
+/*
 UniValue existsexpiredtickets(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
@@ -1694,7 +1696,7 @@ UniValue removeallmempoolvotesexcept(const JSONRPCRequest& request)
 
     return NullUniValue;
 }
-
+*/
 UniValue estimatefee(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)

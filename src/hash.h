@@ -183,7 +183,7 @@ public:
 
 typedef THashWriter<CSha256D> CHashWriter;
 typedef THashWriter<CShake256> CBlockHashWriter;
-typedef THashWriter<CPaicoinHash> CPaicoinHashWriter;
+//typedef THashWriter<CPaicoinHash> CPaicoinHashWriter;
 
 /** Reads data from an underlying stream, while hashing the read data. */
 template<typename Source>

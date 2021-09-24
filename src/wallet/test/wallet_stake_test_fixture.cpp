@@ -18,6 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/algorithm/string.hpp>
 #include <univalue.h>
+/*
 
 WalletStakeTestingSetup::WalletStakeTestingSetup()
     : TestingSetup(CBaseChainParams::REGTEST)
@@ -617,7 +618,7 @@ CBlock WalletStakeTestingSetup::CreateAndProcessBlock()
     unsigned int extraNonce = 0;
     IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
 
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, block.nVersion, consensus)) ++block.nNonce;
+    while (!CheckProofOfWork(block, consensus)) ++block.nNonce;
 
     std::shared_ptr<const CBlock> sharedBlock = std::make_shared<const CBlock>(block);
     ProcessNewBlock(params, sharedBlock, true, nullptr);
@@ -755,7 +756,7 @@ void WalletStakeTestingSetup::CheckVote(const CTransaction& vote, const CTransac
     const CAmount& ticketPrice = ticket.vout[ticketStakeOutputIndex].nValue;
     const CAmount& voteSubsidy = GetVoterSubsidy(inMempool ? chainTip->nHeight + 1 : chainTip->nHeight, consensus);
 
-    std::vector<CAmount> remunerations = CalculateNetRemunerations(contributions, ticketPrice, voteSubsidy /*zero fees*/);
+    std::vector<CAmount> remunerations = CalculateNetRemunerations(contributions, ticketPrice, voteSubsidy); //zero fees
     BOOST_CHECK(remunerations.size() == contributions.size());
 
     for (unsigned i = voteRewardOutputIndex; i < vote.vout.size(); ++i) {
@@ -874,7 +875,7 @@ void WalletStakeTestingSetup::CheckRevocation(const CTransaction& revocation, co
 
     const CAmount& ticketPrice = ticket.vout[ticketStakeOutputIndex].nValue;
 
-    std::vector<CAmount> remunerations = CalculateNetRemunerations(contributions, ticketPrice, 0 /*zero fees*/);
+    std::vector<CAmount> remunerations = CalculateNetRemunerations(contributions, ticketPrice, 0); //zero fees
     BOOST_CHECK(remunerations.size() == contributions.size());
 
     for (unsigned i = revocationRefundOutputIndex; i < revocation.vout.size(); ++i) {
@@ -1143,3 +1144,4 @@ CKey WalletStakeTestingSetup::ForeignData::KeyForVsp(const uint256& ticketHash)
 
     return CKey();
 }
+*/

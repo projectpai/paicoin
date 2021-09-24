@@ -12,7 +12,7 @@
 #include "validation.h"
 #include "wallet/coincontrol.h"
 #include "rpc/server.h"
-
+/*
 BOOST_FIXTURE_TEST_SUITE(vote_tests, WalletStakeTestingSetup)
 
 // test the stakebase content verifier
@@ -1213,3 +1213,4 @@ BOOST_FIXTURE_TEST_CASE(auto_voter_rpc, WalletStakeTestingSetup)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+*/

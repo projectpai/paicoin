@@ -21,9 +21,11 @@ uint256 CBlockHeader::GetHash() const
     if (this->nVersion & HARDFORK_VERSION_BIT) {
         // between Hybrid PoW/PoS deployment and paicoin hasher deployment, use SHAKE-256;
         // afterwards, use paicoin hasher
+/*
         if (isPaicoinHashBlock())
             return SerializeHash<CPaicoinHashWriter>(*this);
         else
+*/
             return SerializeHash<CBlockHashWriter>(*this);
     }
     return SerializeHash<CHashWriter>(*this);
@@ -46,6 +48,7 @@ std::string CBlock::ToString() const
     return s.str();
 }
 
+/*
 void CBlockHeader::SetReadStakeDefaultBeforeFork()
 {
     nStakeDifficulty = Params().GetConsensus().nMinimumStakeDiff;
@@ -58,6 +61,7 @@ void CBlockHeader::SetReadStakeDefaultBeforeFork()
     extraData.SetNull();
     nStakeVersion = 0;
 }
+*/
 
 bool CBlockHeader::isPaicoinHashBlock() const
 {

@@ -27,12 +27,11 @@
  * To initialize the block chain by mining a new genesis block uncomment the following define.
  * WARNING: this should only be done once and prior to release in production!
  */
-//#define MINE_FOR_THE_GENESIS_BLOCK
 
 #define GENESIS_BLOCK_TIMESTAMP_STRING  "09/06/2017 - Create your own avatar twin that talks like you"
 #define GENESIS_BLOCK_REWARD            1470000000
 
-#define MAINNET_CONSENSUS_POW_LIMIT      uint256S("0x0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff");
+#define MAINNET_CONSENSUS_POW_LIMIT      uint256S("0x0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define MAINNET_GENESIS_BLOCK_POW_BITS   36 // 32
 #define MAINNET_GENESIS_BLOCK_NBITS      0x1c09fe61
 #define MAINNET_GENESIS_BLOCK_SIGNATURE  "95ba0161eb524f97d3847653057baaef7d7ba0ff"
@@ -42,7 +41,7 @@
 #define MAINNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x00000000018151b673df2356e5e25bfcfecbcd7cf888717f2458530461512343")
 #define MAINNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x585ac65f505138efceefb3255086b6d7f63c606219b01f115a2941bb93c8362b")
 
-#define MAINNET_HYBRID_CONSENSUS_POW_LIMIT          uint256S("000003e75d000000000000000000000000000000000000000000000000000000");
+#define MAINNET_HYBRID_CONSENSUS_POW_LIMIT          uint256S("000003e75d000000000000000000000000000000000000000000000000000000")
 #define MAINNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x1e03e75d
 
 #define MAINNET_PAICOIN_HASH_INITIAL_DIFFICULTY 0x1e03e75d
@@ -57,7 +56,7 @@
 #define TESTNET_CONSENSUS_HASH_GENESIS_BLOCK uint256S("0x0000000003976df1a1393912d10ea68fae1175ee2c7e6011a0dc4e05f18f8403")
 #define TESTNET_GENESIS_HASH_MERKLE_ROOT     uint256S("0x017c8b7b919c08887d2d5ddd4d301037ccd53eb887807f8c74f5f824120d8f19")
 
-#define TESTNET_HYBRID_CONSENSUS_POW_LIMIT   uint256S("000003e75d000000000000000000000000000000000000000000000000000000");
+#define TESTNET_HYBRID_CONSENSUS_POW_LIMIT   uint256S("000003e75d000000000000000000000000000000000000000000000000000000")
 #define TESTNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x1e03e75d
 
 #define TESTNET_PAICOIN_HASH_INITIAL_DIFFICULTY 0x1e03e75d
@@ -77,18 +76,60 @@
 
 #define REGTEST_PAICOIN_HASH_INITIAL_DIFFICULTY 0x207fffff
 
-#ifdef MINE_FOR_THE_GENESIS_BLOCK
-#   include "arith_uint256.h"
-#endif // MINE_FOR_THE_GENESIS_BLOCK
+#include "arith_uint256.h"
+
+uint256 GENESIS_UINT256(const char * name, uint256 value)
+{
+#ifdef PAI_BABY
+    return uint256S(gGenesisparams.GetArg(name, ""));
+#else
+    return value;
+#endif
+}
+
+uint32_t GENESIS_UINT32(const char * name, uint32_t value)
+{
+#ifdef PAI_BABY
+    return gGenesisparams.GetArg(name, (uint32_t) 0);
+#else
+    return value;
+#endif
+}
+
+uint256 CHAINPARAMS_UINT256(const char * name, uint256 value)
+{
+#ifdef PAI_BABY
+    return uint256S(gChainparams.GetArg(name, ""));
+#else
+    return value;
+#endif
+}
+
+uint32_t CHAINPARAMS_UINT32(const char * name, uint32_t value)
+{
+#ifdef PAI_BABY
+    return gChainparams.GetArg(name, (uint32_t) 0);
+#else
+    return value;
+#endif
+}
 
 std::string CHAINPARAMS_STR(const char * name, const std::string & value)
 {
+#ifdef PAI_BABY
+    return gChainparams.GetArg(name, "");
+#else
     return value;
+#endif
 }
 
 uint32_t CHAINPARAMS_XUINT32(const char * name, uint32_t value)
 {
+#ifdef PAI_BABY
+    return strtoll(gChainparams.GetArg(name, "").c_str(), nullptr, 16);
+#else
     return value;
+#endif
 }
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
@@ -104,11 +145,13 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     CBlock genesis;
     genesis.nTime    = nTime;
     genesis.nBits    = nBits;
+/*
     genesis.nStakeDifficulty = nStakeDiff;
     genesis.nVoteBits = VoteBits::rttAccepted;
     genesis.nTicketPoolSize = 0;
     std::fill(genesis.ticketLotteryState.begin(), genesis.ticketLotteryState.end(), 0);
     genesis.nStakeVersion = 0;
+*/
     genesis.nNonce   = nNonce;
     genesis.nVersion = nVersion;
     genesis.vtx.push_back(MakeTransactionRef(std::move(txNew)));
@@ -192,9 +235,9 @@ public:
         consensus.BIP34Height = 1;  // BIP34 is activated from the genesis block
         consensus.BIP65Height = 1;  // BIP65 is activated from the genesis block
         consensus.BIP66Height = 1;  // BIP66 is activated from the genesis block
-        consensus.powLimit = MAINNET_CONSENSUS_POW_LIMIT;
+        consensus.powLimit = CHAINPARAMS_UINT256("MAINNET_CONSENSUS_POW_LIMIT", MAINNET_CONSENSUS_POW_LIMIT);
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
-        consensus.nPowTargetSpacing = 10 * 60;
+        consensus.nPowTargetSpacing = CHAINPARAMS_UINT32("BLOCK_TIME", 10 * 60);
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1916; // 95% of 2016
@@ -286,9 +329,7 @@ public:
                 CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
             );
 
-        genesis = CreateGenesisBlock(MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, MAINNET_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, MAINNET_GENESIS_BLOCK_SIGNATURE);
-
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> MAINNET_GENESIS_BLOCK_POW_BITS);
+            arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_POW_BITS", MAINNET_GENESIS_BLOCK_POW_BITS));
 
         LogPrintf("Recalculating params for mainnet.\n");
         LogPrintf("- old mainnet genesis nonce: %u\n", genesis.nNonce);
@@ -305,8 +346,15 @@ public:
         consensus.BIP34Hash = consensus.hashGenesisBlock;
 
         LogPrintf("- new mainnet genesis block: %s\n", genesis.ToString().c_str());
+        SaveGenesisParams("MAINNET", genesis);
 
-#else
+        vFixedSeeds.clear();
+        vSeeds.clear();
+        // Note that of those with the service bits flag, most only support a subset of possible options
+        }
+        else
+        {
+            LoadGenesisParams();
 
             genesis = CreateGenesisBlock(
                 CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
@@ -317,17 +365,12 @@ public:
                 CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
             );
 
-        consensus.hashGenesisBlock = genesis.GetHash();
-        consensus.BIP34Hash = consensus.hashGenesisBlock;
+            consensus.hashGenesisBlock = genesis.GetHash();
+            consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-        assert(consensus.hashGenesisBlock == MAINNET_CONSENSUS_HASH_GENESIS_BLOCK);
-        assert(genesis.hashMerkleRoot == MAINNET_GENESIS_HASH_MERKLE_ROOT);
-
-#endif  // MINE_FOR_THE_GENESIS_BLOCK
-
-        vFixedSeeds.clear();
-        vSeeds.clear();
-        // Note that of those with the service bits flag, most only support a subset of possible options
+            assert(consensus.hashGenesisBlock == GENESIS_UINT256("MAINNET_CONSENSUS_HASH_GENESIS_BLOCK", MAINNET_CONSENSUS_HASH_GENESIS_BLOCK));
+            assert(genesis.hashMerkleRoot == GENESIS_UINT256("MAINNET_GENESIS_HASH_MERKLE_ROOT", MAINNET_GENESIS_HASH_MERKLE_ROOT));
+        }
 
         for (int index = 0; index < 3; ++index)
         {
@@ -351,41 +394,42 @@ public:
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
 
+#ifndef PAI_BABY
         checkpointData = (CCheckpointData) {
             {
                 {     0, MAINNET_CONSENSUS_HASH_GENESIS_BLOCK },
                 {   500, uint256S("0x0000000004d612f13cf5426902fb1533a659b16b2e349d941588d6b2de60f99c")},
                 { 15000, uint256S("0x00000000000031c7063e5c25c471474d8e983a0456944bef32a09ebfbe38adcd")},
-                { 25000, uint256S("0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec")},
-                { 50000, uint256S("0x000000000000003d4edeac906ef9f89754d41d13a6a899b6001c0fab6040c3e1")},
-                { 60000, uint256S("0x0000000000000058a109ea89e318e96742afcac4d7e255d24ca623c5d59438f5")},
-                { 70000, uint256S("0x00000000000000485bef5d43df2af26334cf4d8ada499932b6310d31b8304727")},
-                { 80000, uint256S("0x0000000000000048234cb97daa5dd2ade2134958c36b561c303f14f7aee19b84")},
-                { 90000, uint256S("0x00000000000000355d4cc5892252b99b497e6d004704da252e2c20147d6252de")},
-                { 100000, uint256S("0x000000000000001f63655bcc07ca1940e0413eae21129d55a314f6edcd11adf4")},
-                { 110000, uint256S("0x000000000000006276a6b130c48867c725cc46d2dce0b1fd85e57a03b8e62b51")},
-                { 120000, uint256S("0x000000000000009a81363c9b3ba2dfc722a7df8ac8a0a78e12eefb6dba9bfe5a")},
-                { 130000, uint256S("0x000000000000002a0f12ad179996aa0a5efed53717aa6854be34f9d94c8cef5a")},
-                { 140000, uint256S("0x000000000000004ea95aeaf16356c0061e530bcf796beccc657b931dad51ea2a")},
-                { 150000, uint256S("0x00000000000000dde450506496572c1825c1ccf682699398f4df8a8219bc33a2")},
-                { 160000, uint256S("0x000000000105bc6d4b40dfc85bcd9c550a99b34a8d75ccb9af785f3c0fccc6c7")},
-                { 170000, uint256S("0x000000000012c935fd985397c70aa95de80a1fdbcf83645a35445ef491709f64")},
-                { 180000, uint256S("0x0000000000038e385d5543673eeda56b96ea69e0676073d128419d606961e0dc")}
+                { 25000, uint256S("0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec")}
             }
         };
 
-        chainTxData = ChainTxData{
-      // tx hash = 6096bcf59a26d391bc87a92b4c9a4a1de6fff11ff924e233f2fb5f85bf2ba8fe
-      // block hash = 000000000000003d4edeac906ef9f89754d41d13a6a899b6001c0fab6040c3e1
-      // block index = 50000
-      // tx index = 212838
-      // tx timestamp = 1537710546
+        chainTxData = ChainTxData {
+            // tx hash = c54bee8227b2b009dcd4d53b1f01de328b86417b475a1f0540b8cca91797b256
+            // block hash = 0x000000000000000ca65878fd1ed20fb623c2c0f4eac208280dfedfed32765bec
+            // block index = 25000
+            // tx index = 25073
+            // tx timestamp = 1523981287
 
-            1537710546, // * UNIX timestamp of last known number of transactions
-            212838,     // * total number of transactions between genesis and that timestamp
+            1523981287, // * UNIX timestamp of last known number of transactions
+            25073,      // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
-            0.00368     // * estimated number of transactions per second after that timestamp
+            0.00179     // * estimated number of transactions per second after that timestamp
         };
+#else
+        checkpointData = (CCheckpointData) {
+            {
+                { 0, GENESIS_UINT256("MAINNET_CONSENSUS_HASH_GENESIS_BLOCK", MAINNET_CONSENSUS_HASH_GENESIS_BLOCK) }
+            }
+        };
+
+        chainTxData = ChainTxData {
+            CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP), // * UNIX timestamp of last known number of transactions
+            0,          // * total number of transactions between genesis and that timestamp
+                        //   (the tx=... number in the SetBestChain debug.log lines)
+            3.1         // * estimated number of transactions per second after that timestamp
+        };
+#endif
     }
 };
 
@@ -478,12 +522,7 @@ public:
         consensus.nOrganizationPkScriptVersion      = 0;
         consensus.vBlockOneLedger                   = {}; //TODO update with smtg resembling BlockOneLedgerTestNet3 in premine.go
 
-        pchMessageStart[0] = 0x0b;
-        pchMessageStart[1] = 0x09;
-        pchMessageStart[2] = 0x11;
-        pchMessageStart[3] = 0x07;
-
-        nDefaultPort = 18567;
+        nDefaultPort = CHAINPARAMS_UINT32("TESTNET_PORT", 18567);;
         nPruneAfterHeight = 1000;
 
         if (gArgs.IsArgSet("-mine-genesis-block"))
@@ -497,9 +536,7 @@ public:
                 CHAINPARAMS_STR("TESTNET_GENESIS_BLOCK_SIGNATURE", TESTNET_GENESIS_BLOCK_SIGNATURE)
             );
 
-        genesis = CreateGenesisBlock(TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, TESTNET_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, TESTNET_GENESIS_BLOCK_SIGNATURE);
-
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> TESTNET_GENESIS_BLOCK_POW_BITS);
+            arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_POW_BITS", TESTNET_GENESIS_BLOCK_POW_BITS));
 
         LogPrintf("Recalculating params for testnet.\n");
         LogPrintf("- old testnet genesis nonce: %u\n", genesis.nNonce);
@@ -533,10 +570,9 @@ public:
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-        assert(consensus.hashGenesisBlock == TESTNET_CONSENSUS_HASH_GENESIS_BLOCK);
-        assert(genesis.hashMerkleRoot == TESTNET_GENESIS_HASH_MERKLE_ROOT);
-
-#endif  // MINE_FOR_THE_GENESIS_BLOCK
+            assert(consensus.hashGenesisBlock == GENESIS_UINT256("TESTNET_CONSENSUS_HASH_GENESIS_BLOCK", TESTNET_CONSENSUS_HASH_GENESIS_BLOCK));
+            assert(genesis.hashMerkleRoot == GENESIS_UINT256("TESTNET_GENESIS_HASH_MERKLE_ROOT", TESTNET_GENESIS_HASH_MERKLE_ROOT));
+        }
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -556,9 +592,9 @@ public:
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 
         // same as for the CRegTestParams
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,CHAINPARAMS_UINT32("TESTNET_PUBKEY_ADDRESS", 51));
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,CHAINPARAMS_UINT32("TESTNET_SCRIPT_ADDRESS", 180));
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,CHAINPARAMS_UINT32("TESTNET_SECRET_KEY", 226));
         base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xE3, 0xC5, 0x26};  // ptpu
         base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xE3, 0xC5, 0x2D};  // ptpv
 
@@ -566,33 +602,43 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
 
+#ifndef PAI_BABY
         checkpointData = (CCheckpointData) {
             {
                 {    0, TESTNET_CONSENSUS_HASH_GENESIS_BLOCK },
-                 {    1, uint256S("0x0000000007f33c46116ced43fbb7eb0307080ab7071c134e4b9ccd1334c61177")},
-                 { 1000, uint256S("0x0000000008668e5c597a6f0a97c3aced17389a8bd842afe61dd2310b4f301c9a")},
-                 { 2000, uint256S("0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b")},
-                 {25000, uint256S("0x0000000001a2549ab5b9496082d269abfece06fdf156899f9163e86414613765")},
-                 {40000, uint256S("0x00000000071942d9765ecbf1fd5e267b747975bf3143bdaf58915eb52e595802")},
-                 {50000, uint256S("0x00000000000be7744de43a52e6830cafaec5bc2dfa6e446c2dfe0f59fa2c2ff0")},
-                 {60000, uint256S("0x00000000040ea839b380c6be96bf8584d6079e0e7c6f772f979d2cafe98f1043")},
-                 {70000, uint256S("0x000000000005f2259dfe38b1c2f63726c4c61224800966eacf400ffd2bb46be6")},
-                 {77839, uint256S("0x0000000000000ed9faec080ad18e821413f47ea055acc149ad03fba825e82537")} //Pre hybrid consensus checkpoint
+                {    1, uint256S("0x0000000007f33c46116ced43fbb7eb0307080ab7071c134e4b9ccd1334c61177")},
+                { 1000, uint256S("0x0000000008668e5c597a6f0a97c3aced17389a8bd842afe61dd2310b4f301c9a")},
+                { 2500, uint256S("0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b")}
             }
         };
 
         chainTxData = ChainTxData{
-      // tx hash = 5e018f1b6d7df6f25a6f6aad59e9176924d5af1390b4c56eee84ced31756519e
-      // block hash = 0x0000000001a2549ab5b9496082d269abfece06fdf156899f9163e86414613765
-      // block index = 25000
-      // tx index =
-      // tx timestamp = 1538415658
+            // tx hash = 0xd714e38737c9a4f2f0f59bdd6ffa6e527a6874a7f599849dfe042c8bd1f49ce5
+            // block hash = 0x00000000057ba272b77e932a86748252e69ef3bb77ae1756787d2e4240167a4b
+            // block index = 2500
+            // tx index = 3434
+            // tx timestamp = 1523601213
 
-            1538415658, // * UNIX timestamp of last known number of transactions
-            36432,      // * total number of transactions between genesis and that timestamp
+            1523601213, // * UNIX timestamp of last known number of transactions
+            3434,       // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
-            0.00293     // * estimated number of transactions per second after that timestamp
+            0.00052     // * estimated number of transactions per second after that timestamp
         };
+#else
+
+        checkpointData = (CCheckpointData) {
+            {
+                { 0, GENESIS_UINT256("TESTNET_CONSENSUS_HASH_GENESIS_BLOCK", TESTNET_CONSENSUS_HASH_GENESIS_BLOCK) }
+            }
+        };
+
+        chainTxData = ChainTxData{
+            CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP), // * UNIX timestamp of last known number of transactions
+            0,          // * total number of transactions between genesis and that timestamp
+                        //   (the tx=... number in the SetBestChain debug.log lines)
+            3.1         // * estimated number of transactions per second after that timestamp
+        };
+#endif
     }
 };
 
@@ -614,9 +660,9 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
-        consensus.powLimit = REGTEST_CONSENSUS_POW_LIMIT;
+        consensus.powLimit = CHAINPARAMS_UINT256("REGTEST_CONSENSUS_POW_LIMIT", REGTEST_CONSENSUS_POW_LIMIT);
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
-        consensus.nPowTargetSpacing = 10 * 60;
+        consensus.nPowTargetSpacing = CHAINPARAMS_UINT32("BLOCK_TIME", 10 * 60);
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
@@ -682,12 +728,7 @@ public:
         consensus.nOrganizationPkScriptVersion    = 0;
         consensus.vBlockOneLedger                 = {}; //TODO update with smtg resembling BlockOneLedgerRegNet in premine.go
 
-        pchMessageStart[0] = 0xff;
-        pchMessageStart[1] = 0xd1;
-        pchMessageStart[2] = 0xd6;
-        pchMessageStart[3] = 0xf3;
-
-        nDefaultPort = 19567;
+        nDefaultPort = CHAINPARAMS_UINT32("REGTEST_PORT", 19567);
         nPruneAfterHeight = 1000;
 
         if (gArgs.IsArgSet("-mine-genesis-block"))
@@ -701,9 +742,7 @@ public:
                 CHAINPARAMS_STR("REGTEST_GENESIS_BLOCK_SIGNATURE", REGTEST_GENESIS_BLOCK_SIGNATURE)
             );
 
-        genesis = CreateGenesisBlock(REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP, 0, REGTEST_GENESIS_BLOCK_NBITS, consensus.nMinimumStakeDiff, 4, GENESIS_BLOCK_REWARD * COIN, REGTEST_GENESIS_BLOCK_SIGNATURE);
-
-        arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> REGTEST_GENESIS_BLOCK_POW_BITS);
+            arith_uint256 bnProofOfWorkLimit(~arith_uint256() >> CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_POW_BITS", REGTEST_GENESIS_BLOCK_POW_BITS));
 
         LogPrintf("Recalculating params for regtest.\n");
         LogPrintf("- old regtest genesis nonce: %u\n", genesis.nNonce);
@@ -739,12 +778,11 @@ public:
         consensus.hashGenesisBlock = genesis.GetHash();
         consensus.BIP34Hash = consensus.hashGenesisBlock;
 
-        // TODO: Update the values below with the data from the above mining for the genesis block
-        //       This should only be done once, after the mining and prior to production release
-        assert(consensus.hashGenesisBlock == REGTEST_CONSENSUS_HASH_GENESIS_BLOCK);
-        assert(genesis.hashMerkleRoot == REGTEST_GENESIS_HASH_MERKLE_ROOT);
-
-#endif  // MINE_FOR_THE_GENESIS_BLOCK
+            // TODO: Update the values below with the data from the above mining for the genesis block
+            //       This should only be done once, after the mining and prior to production release
+            assert(consensus.hashGenesisBlock == GENESIS_UINT256("REGTEST_CONSENSUS_HASH_GENESIS_BLOCK", REGTEST_CONSENSUS_HASH_GENESIS_BLOCK));
+            assert(genesis.hashMerkleRoot == GENESIS_UINT256("REGTEST_GENESIS_HASH_MERKLE_ROOT", REGTEST_GENESIS_HASH_MERKLE_ROOT));
+        }
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
@@ -754,20 +792,20 @@ public:
         fMineBlocksOnDemand = true;
 
         // same as for the CTestNetParams
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,51);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,180);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,226);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,CHAINPARAMS_UINT32("REGTEST_PUBKEY_ADDRESS", 51));
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,CHAINPARAMS_UINT32("REGTEST_SCRIPT_ADDRESS", 180));
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,CHAINPARAMS_UINT32("REGTEST_SECRET_KEY", 226));
         base58Prefixes[EXT_PUBLIC_KEY] = {0x03, 0xE3, 0xC5, 0x26};  // ptpu
         base58Prefixes[EXT_SECRET_KEY] = {0x03, 0xE3, 0xC5, 0x2D};  // ptpv
 
         checkpointData = (CCheckpointData) {
             {
-                {0, REGTEST_CONSENSUS_HASH_GENESIS_BLOCK },
+                {0, GENESIS_UINT256("REGTEST_CONSENSUS_HASH_GENESIS_BLOCK", REGTEST_CONSENSUS_HASH_GENESIS_BLOCK) },
             }
         };
 
         chainTxData = ChainTxData{
-            REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP,
+            CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP", REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP),
             0,
             0
         };

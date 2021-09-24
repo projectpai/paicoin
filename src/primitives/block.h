@@ -67,7 +67,7 @@ public:
         }
     }
 
-    void SetReadStakeDefaultBeforeFork();
+    //void SetReadStakeDefaultBeforeFork();
 
     void SetNull()
     {
@@ -143,6 +143,7 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+/*
         block.nVoteBits      = nVoteBits;
         block.nStakeDifficulty = nStakeDifficulty;
         block.nTicketPoolSize = nTicketPoolSize;
@@ -152,6 +153,7 @@ public:
         block.nRevocations   = nRevocations;
         block.extraData      = extraData;
         block.nStakeVersion  = nStakeVersion;
+*/
         return block;
     }
 

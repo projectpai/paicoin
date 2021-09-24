@@ -523,7 +523,7 @@ CBlock Generator::NextBlock(const std::string& blockName
     unsigned int extraNonce = 0;
     IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
 
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, block.nVersion, chainparams.GetConsensus())) ++block.nNonce;
+    while (!CheckProofOfWork(block, chainparams.GetConsensus())) ++block.nNonce;
 
     std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
     submitblock_StateCatcher sc(shared_pblock->GetHash());

@@ -308,6 +308,7 @@ enum class FeeDistributionPolicy {
                         // as with equal fee, the first contributor will also pay any rounding errors
 };
 
+CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams);
 CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams);
 CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams);
 CAmount CalculateGrossRemuneration(CAmount contributedAmount, CAmount totalStake, CAmount subsidy, CAmount contributionSum);

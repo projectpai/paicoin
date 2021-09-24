@@ -11,7 +11,7 @@
 
 #include "validation.h"
 #include "rpc/server.h"
-
+/*
 BOOST_FIXTURE_TEST_SUITE(revoke_tests, WalletStakeTestingSetup)
 
 // test the revocation estimated sizes of declaration output and whole transaction
@@ -1481,3 +1481,4 @@ BOOST_FIXTURE_TEST_CASE(auto_revoker_rpc, WalletStakeTestingSetup)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+*/

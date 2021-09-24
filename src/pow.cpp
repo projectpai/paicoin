@@ -163,6 +163,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex *pindexPrev, const CBlockHead
         return pindexPrev->nBits;
     }
 
+
     if (IsHybridConsensusForkEnabled(pindexPrev, params)) {
         return GetNextCashWorkRequired(pindexPrev, pblock, params);
     }
@@ -246,7 +247,7 @@ bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params
     bnTarget.SetCompact(block.nBits, &fNegative, &fOverflow);
 
     // Check range
-    if (fNegative || bnTarget == 0 || fOverflow || bnTarget > ((nVersion & HARDFORK_VERSION_BIT) ? UintToArith256(params.hybridConsensusPowLimit) : UintToArith256(params.powLimit)))
+    if (fNegative || bnTarget == 0 || fOverflow || bnTarget > ((block.nVersion & HARDFORK_VERSION_BIT) ? UintToArith256(params.hybridConsensusPowLimit) : UintToArith256(params.powLimit)))
         return false;
 
     // Check proof of work matches claimed amount

@@ -472,7 +472,8 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
     }
 
     // do not check test transactions on the testnet chain that are before the hybrid consensus fork
-    bool fCheckStake = (!gArgs.GetBoolArg("-testnet", false)) || IsHybridConsensusForkEnabled(nSpendHeight, chainparams.GetConsensus());
+    //bool fCheckStake = (!gArgs.GetBoolArg("-testnet", false)) || IsHybridConsensusForkEnabled(nSpendHeight, chainparams.GetConsensus());
+    bool fCheckStake = gArgs.GetBoolArg("-testnet", false);
 
     // parse tx
     ETxClass txClass = fCheckStake ? ParseTxClass(tx) : TX_Regular;

@@ -175,6 +175,7 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("bits", strprintf("%08x", blockindex->nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
+/*
     if (IsHybridConsensusForkEnabled(blockindex, Params().GetConsensus())) {
         result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
         result.push_back(Pair("votebits", strprintf("%04x", blockindex->nVoteBits.getBits())));
@@ -183,7 +184,7 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
         result.push_back(Pair("freshstake", blockindex->nFreshStake));
         result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
     }
-
+*/
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
     CBlockIndex *pnext = chainActive.Next(blockindex);
@@ -228,7 +229,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
                 const auto& ticketHash = tx->vin[revocationStakeInputIndex].prevout.hash;
                 prevOutMap[ticketHash] = GetTicket(ticketHash);
             }
-            TxToUniv(*tx, uint256(), objTx, includeStake, true, RPCSerializationFlags(), &prevOutMap);
+            TxToUniv(*tx, uint256(), objTx, false, true, RPCSerializationFlags(), &prevOutMap);
             txs.push_back(objTx);
         }
         else
@@ -241,6 +242,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
+/*
     if (includeStake) {
         result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
         result.push_back(Pair("votebits", strprintf("%04x", blockindex->nVoteBits.getBits())));
@@ -249,7 +251,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
         result.push_back(Pair("freshstake", blockindex->nFreshStake));
         result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
     }
-
+*/
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
     CBlockIndex *pnext = chainActive.Next(blockindex);

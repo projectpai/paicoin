@@ -364,7 +364,7 @@ libpaicoin_consensus_a_SOURCES = \
   utilstrencodings.cpp \
   utilstrencodings.h \
   version.h
-libpaicoin_consensus_a_LDFLAGS = $(LIBPAICOINHASH)
+#libpaicoin_consensus_a_LDFLAGS = $(LIBPAICOINHASH)
 
 # common: shared between paicoind, and paicoin-qt and non-server tools
 libpaicoin_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(PAICOIN_INCLUDES)

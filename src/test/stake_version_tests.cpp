@@ -17,7 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-
+/*
 struct TestingSetup_TEST : public TestingSetup
 {
     explicit TestingSetup_TEST(const std::string& chainName = CBaseChainParams::TESTNET)
@@ -221,3 +221,4 @@ BOOST_FIXTURE_TEST_CASE(calc_stake_version_REG, TestingSetup_REG)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+*/
