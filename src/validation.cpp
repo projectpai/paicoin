@@ -314,26 +314,17 @@ bool IsCoinbaseConfiscated(const Coin &coin, const CCoinsViewCache& coins)
     return false;
 }
 
-bool IsFundedByConfiscatedCoinbase(const CTransaction &tx, const CCoinsViewCache& coins)
+bool IsFundedByConfiscatedCoinbase(const Coin &coin)
 {
-    const CChainParams& params = Params();
+    BlockMap::iterator mi = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [coin] (const std::pair<uint256, CBlockIndex*>& p) {
+        return coin.nHeight == p.second->nHeight;
+    });
 
-    for (auto& txIn: tx.vin) {
-        const COutPoint &prevout = txIn.prevout;
-        const Coin& coin = coins.AccessCoin(txIn.prevout);
-        assert(!coin.IsSpent());
+    if (mi == mapBlockIndex.end())
+        return false;
 
-        if (!params.HasGenesisBlockTxOutPoint(prevout) && coin.IsCoinBase()) {
-            BlockMap::iterator mi = std::find_if(std::begin(mapBlockIndex), std::end(mapBlockIndex), [coin] (const std::pair<uint256, CBlockIndex*>& p) {
-                return coin.nHeight == p.second->nHeight;
-            });
-            if (mi == mapBlockIndex.end())
-                continue;
-
-            if (mi->second->IsRttRejected())
-                return true;
-        }
-    }
+    if (mi->second->IsRttRejected())
+        return true;
 
     return false;
 }

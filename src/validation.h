@@ -390,12 +390,12 @@ bool IsCoinbaseConfiscated(const CTransaction &tx, const CCoinsViewCache& coins)
 bool IsCoinbaseConfiscated(const Coin &coin, const CCoinsViewCache& coins);
 
 /**
- * Check if the transaction has one or more inputs pointing to coinbase transactions
- * that have been confiscated by the votes in the next block.
+ * Check if the input points to a coinbase transaction
+ * that hsa been confiscated by the votes in the next block.
  *
  * Returns true if funded by confiscated coinbase, false otherwise.
  */
-bool IsFundedByConfiscatedCoinbase(const CTransaction &tx, const CCoinsViewCache& coins);
+bool IsFundedByConfiscatedCoinbase(const Coin &coin);
 
 /**
  * Test whether the LockPoints height and time are still valid on the current chain

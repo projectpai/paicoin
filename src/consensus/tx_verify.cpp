@@ -513,7 +513,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
                                          REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
                                          strprintf("tried to spend coinbase at depth %d", nSpendHeight - coin.nHeight));
 
-                if (IsFundedByConfiscatedCoinbase(tx, inputs))
+                if (IsFundedByConfiscatedCoinbase(coin))
                     return state.Invalid(false,
                                          REJECT_INVALID, "bad-txns-spend-of-confiscated-coinbase",
                                          strprintf("tried to spend confiscated coinbase from height %d", coin.nHeight));
