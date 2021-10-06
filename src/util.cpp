@@ -95,6 +95,15 @@ const char * const PAICOIN_CONF_FILENAME = "paicoin.conf";
 const char * const PAICOIN_PID_FILENAME = "paicoind.pid";
 
 ArgsManager gArgs;
+
+#ifdef PAI_BABY
+const char * const PAICOIN_CHAINPARAMS_CONF_FILENAME = "chainparams.conf";
+const char * const PAICOIN_GENESIS_CONF_FILENAME = "genesis.conf";
+
+ArgsManager gChainparams(false);
+ArgsManager gGenesisparams(false);
+#endif
+
 bool fPrintToConsole = false;
 bool fPrintToDebugLog = true;
 
@@ -604,7 +613,14 @@ void ArgsManager::ReadConfigFile(const std::string& confPath)
 {
     fs::ifstream streamConfig(GetConfigFile(confPath));
     if (!streamConfig.good())
-        return; // No paicoin.conf file is OK
+    {
+        if (main)
+        {
+            return; // No paicoin.conf file is OK
+        }
+
+        throw std::runtime_error(strerror(errno));
+    }
 
     {
         LOCK(cs_args);
@@ -614,7 +630,7 @@ void ArgsManager::ReadConfigFile(const std::string& confPath)
         for (boost::program_options::detail::config_file_iterator it(streamConfig, setOptions), end; it != end; ++it)
         {
             // Don't overwrite existing settings so command line settings override paicoin.conf
-            std::string strKey = std::string("-") + it->string_key;
+            std::string strKey = (main ? std::string("-") : std::string("")) + it->string_key;
             std::string strValue = it->value[0];
             InterpretNegativeSetting(strKey, strValue);
             if (mapArgs.count(strKey) == 0)
@@ -622,8 +638,12 @@ void ArgsManager::ReadConfigFile(const std::string& confPath)
             mapMultiArgs[strKey].push_back(strValue);
         }
     }
-    // If datadir is changed in .conf file:
-    ClearDatadirCache();
+
+    if (main)
+    {
+        // If datadir is changed in main .conf file:
+        ClearDatadirCache();
+    }
 }
 
 #ifndef WIN32

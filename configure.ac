@@ -104,6 +104,13 @@ AC_ARG_ENABLE([wallet],
   [enable_wallet=$enableval],
   [enable_wallet=yes])
 
+# Enable chainparams.conf
+AC_ARG_ENABLE([chainparams-conf],
+    [AS_HELP_STRING([--enable-chainparams-conf],
+                    [use chainparams.conf for PAI baby (default is no)])],
+    [enable_chainparams_conf=$enableval],
+    [enable_chainparams_conf=no])
+
 AC_ARG_WITH([miniupnpc],
   [AS_HELP_STRING([--with-miniupnpc],
   [enable UPNP (default is yes if libminiupnpc is found)])],
@@ -225,6 +232,10 @@ AC_ARG_ENABLE([werror],
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-Werror],[CXXFLAG_WERROR="-Werror"],[CXXFLAG_WERROR=""])
 
+if test "x$enable_chainparams_conf" = xyes; then
+    CPPFLAGS="$CPPFLAGS -DPAI_BABY"
+fi
+
 if test "x$enable_debug" = xyes; then
     CPPFLAGS="$CPPFLAGS -DDEBUG -DDEBUG_LOCKORDER"
     if test "x$GCC" = xyes; then
@@ -295,6 +306,12 @@ AC_ARG_WITH([utils],
   [build paicoin-cli paicoin-block-generator paicoin-tx (default=yes)])],
   [build_paicoin_utils=$withval],
   [build_paicoin_utils=yes])
+
+AC_ARG_WITH([libs],
+  [AS_HELP_STRING([--with-libs],
+  [build libraries (default=yes)])],
+  [build_paicoin_libs=$withval],
+  [build_paicoin_libs=yes])
 
 AC_ARG_WITH([daemon],
   [AS_HELP_STRING([--with-daemon],
@@ -1048,6 +1065,14 @@ AC_MSG_CHECKING([whether to build utils (paicoin-cli paicoin-block-generator pai
 AM_CONDITIONAL([BUILD_PAICOIN_UTILS], [test x$build_paicoin_utils = xyes])
 AC_MSG_RESULT($build_paicoin_utils)
 
+AC_MSG_CHECKING([whether to build libraries])
+AM_CONDITIONAL([BUILD_PAICOIN_LIBS], [test x$build_paicoin_libs = xyes])
+if test x$build_paicoin_libs = xyes; then
+  AC_DEFINE(HAVE_CONSENSUS_LIB, 1, [Define this symbol if the consensus lib has been built])
+  AC_CONFIG_FILES([libpaicoinconsensus.pc:libpaicoinconsensus.pc.in])
+fi
+AC_MSG_RESULT($build_paicoin_libs)
+
 AC_LANG_POP
 
 if test "x$use_ccache" != "xno"; then
@@ -1164,8 +1189,8 @@ else
   AC_MSG_RESULT([no])
 fi
 
-if test x$build_paicoin_utils$build_paicoind$paicoin_enable_qt$use_bench$use_tests = xnononononono; then
-  AC_MSG_ERROR([No targets! Please specify at least one of: --with-utils --with-daemon --with-gui --enable-bench or --enable-tests])
+if test x$build_paicoin_utils$build_paicoin_libs$build_paicoind$paicoin_enable_qt$use_bench$use_tests = xnononononono; then
+  AC_MSG_ERROR([No targets! Please specify at least one of: --with-utils --with-libs --with-daemon --with-gui --enable-bench or --enable-tests])
 fi
 
 AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])

@@ -13,6 +13,11 @@ endif
 GZIP_ENV="-9n"
 export PYTHONPATH
 
+if BUILD_PAICOIN_LIBS
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libpaicoinconsensus.pc
+endif
+
 PAICOIND_BIN=$(top_builddir)/src/$(PAICOIN_DAEMON_NAME)$(EXEEXT)
 PAICOIN_QT_BIN=$(top_builddir)/src/qt/$(PAICOIN_GUI_NAME)$(EXEEXT)
 PAICOIN_CLI_BIN=$(top_builddir)/src/$(PAICOIN_CLI_NAME)$(EXEEXT)
