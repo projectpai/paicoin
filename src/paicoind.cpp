@@ -177,8 +177,21 @@ bool AppInit(int argc, char* argv[])
         if (!AppInitSanityChecks())
         {
             // InitError will have been called with detailed error, which ends up on console
-            return false;
+            exit(EXIT_FAILURE);
         }
+#ifdef PAI_BABY
+        if (gArgs.IsArgSet("-mine-genesis-block"))
+        {
+            try
+            {
+                SaveGenesisConf(GetDataDir().string() + '/' + PAICOIN_GENESIS_CONF_FILENAME);
+            } catch (const std::exception& e) {
+                fprintf(stderr,"Error writting genesis configuration file: %s\n", e.what());
+                return false;
+            }
+            exit(0);
+        }
+#endif
         if (gArgs.GetBoolArg("-daemon", false))
         {
 #if HAVE_DECL_DAEMON
