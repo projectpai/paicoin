@@ -94,6 +94,9 @@ PAICOIN_CORE_H = \
   checkqueue.h \
   clientversion.h \
   coins.h \
+  coinbase/coinbase_destination.h \
+  coinbase/coinbase_destinations_index.h \
+  coinbase/coinbase_util.h \
   coinbase_addresses.h \
   compat.h \
   compat/byteswap.h \
@@ -199,6 +202,8 @@ libpaicoin_server_a_SOURCES = \
   bloom.cpp \
   blockencodings.cpp \
   checkpoints.cpp \
+  coinbase/coinbase_destination.cpp \
+  coinbase/coinbase_destinations_index.cpp \
   consensus/tx_verify.cpp \
   httprpc.cpp \
   httpserver.cpp \

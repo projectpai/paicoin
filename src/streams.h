@@ -478,6 +478,8 @@ public:
     CAutoFile(const CAutoFile&) = delete;
     CAutoFile& operator=(const CAutoFile&) = delete;
 
+    CAutoFile(CAutoFile&& other) : nType(other.nType), nVersion(other.nVersion), file(std::move(other.file)) {}
+
     void fclose()
     {
         if (file) {
