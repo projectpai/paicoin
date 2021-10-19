@@ -81,7 +81,6 @@ public:
         task_obj.push_back(Pair("dataset", response.dataset()));
         task_obj.push_back(Pair("initializer", response.initializer()));
         task_obj.push_back(Pair("loss_function", response.loss_function()));
-        task_obj.push_back(Pair("epochs", (uint64_t)response.epochs()));
         task_obj.push_back(Pair("tau", (float)response.tau()));
 
         auto evaluation_metrics = response.evaluation_metrics();
@@ -93,6 +92,30 @@ public:
         }
         
         task_obj.push_back(Pair("evaluation_metrics", evaluation_metrics_obj));
+
+        auto epochs_info = response.epochs_info();
+        UniValue epochs_info_obj(UniValue::VOBJ);
+        epochs_info_obj.push_back(Pair("total_epochs", (int)epochs_info.total_epochs()));
+        epochs_info_obj.push_back(Pair("completed_epochs", (int)epochs_info.completed_epochs()));
+        
+        UniValue epochs_metrics_obj(UniValue::VARR);
+        for (auto epoch_metric : epochs_info.epochs_metrics())
+        {
+            UniValue e_info_obj(UniValue::VOBJ);
+            e_info_obj.push_back(Pair("epoch_no", (int)epoch_metric.epoch_no()));
+            UniValue metric_values_obj(UniValue::VARR);
+            for (auto metric : epoch_metric.metrics())
+            {
+                UniValue m_info_obj(UniValue::VOBJ);
+                m_info_obj.push_back(Pair("metric", metric.metric()));
+                m_info_obj.push_back(Pair("avg_value", (float)metric.avg_value()));
+                metric_values_obj.push_back(m_info_obj);
+            }
+            e_info_obj.push_back(Pair("metrics", metric_values_obj));
+            epochs_metrics_obj.push_back(e_info_obj);
+        }
+        epochs_info_obj.push_back(Pair("epochs_metrics", epochs_metrics_obj));
+        task_obj.push_back(Pair("epochs_info", epochs_info_obj));
 
         return task_obj;
     }
