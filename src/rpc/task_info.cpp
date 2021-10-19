@@ -102,9 +102,9 @@ UniValue getTaskDetails(const JSONRPCRequest& request)
         "dataset  (string) Dataset type.\n"
         "initializer  (string) Initializer type for the optimizer.\n"
         "loss_function  (string) Loss function.\n"
-        "epochs  (numeric) Number of epochs.\n"
         "tau  (float) Quantization threshold for gradients.\n"
         "evaluation_metrics  (list) Evaluation metrics to decide upon best model.\n"
+        "epochs_info  (object) Average values for metrics for each epoch.\n"
     );
 
     std::string task_id;
