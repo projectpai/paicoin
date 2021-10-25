@@ -138,7 +138,7 @@ test_test_paicoin_fuzzy_LDADD = \
   $(LIBPAICOIN_CRYPTO) \
   $(LIBSECP256K1)
 
-test_test_paicoin_fuzzy_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
+test_test_paicoin_fuzzy_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS) $(GRPC_LIBS) $(PROTOC_LIBS) $(PROTOBUF_LIBS)
 #
 
 nodist_test_test_paicoin_SOURCES = $(GENERATED_TEST_FILES)
