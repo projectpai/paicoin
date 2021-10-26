@@ -638,6 +638,17 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+#ifdef PAI_BABY
+        try
+        {
+            gChainparams.ReadConfigFile(gArgs.GetArg("-chainparams-conf", PAICOIN_CHAINPARAMS_CONF_FILENAME));
+        } catch (const std::exception& e) {
+            QMessageBox::critical(0, QObject::tr(PACKAGE_NAME),
+                                  QObject::tr("Error reading chainparams configuration file: %1\n").arg(e.what()));
+            return EXIT_FAILURE;
+        }
+#endif
+
     /// 7. Determine network (and switch to network specific options)
     // - Do not call Params() before this step
     // - Do this after parsing the configuration file, as the network can be switched there
