@@ -278,6 +278,7 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
+        nVoteBits      = VoteBits::rttAccepted;
         powMsgHistoryId[0]    = '\0';
         powMsgId[0] = '\0';
     }
