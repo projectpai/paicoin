@@ -28,15 +28,24 @@ class CBlockHeader
 {
 public:
     // header
-    int32_t nVersion;
-    uint256 hashPrevBlock;
-    uint256 hashMerkleRoot;
-    uint32_t nTime;
-    uint32_t nBits;
-    uint32_t nNonce;
-    enum { MSG_ID_SIZE = 100 };
-    char powMsgHistoryId[MSG_ID_SIZE];
-    char powMsgId[MSG_ID_SIZE];
+    int32_t    nVersion;
+    uint256    hashPrevBlock;
+    uint256    hashMerkleRoot;
+    uint32_t   nTime;
+    uint32_t   nBits;
+    uint32_t   nNonce;
+    int64_t    nStakeDifficulty;
+    VoteBits   nVoteBits;
+    uint32_t   nTicketPoolSize;
+    uint48     ticketLotteryState;
+    uint16_t   nVoters;
+    uint8_t    nFreshStake;
+    uint8_t    nRevocations;
+    uint256    extraData;
+    uint32_t   nStakeVersion;
+    enum       { MSG_ID_SIZE = 100 };
+    char       powMsgHistoryId[MSG_ID_SIZE];
+    char       powMsgId[MSG_ID_SIZE];
 
     CBlockHeader()
     {
@@ -54,6 +63,23 @@ public:
         READWRITE(nBits);
         READWRITE(nNonce);
 
+        // serialization of stake fields activates when Hybrid PoW/PoS deploys
+        if (this->nVersion & HARDFORK_VERSION_BIT) {
+            READWRITE(nStakeDifficulty);
+            READWRITE(nVoteBits);
+            READWRITE(nTicketPoolSize);
+            READWRITE(ticketLotteryState);
+            READWRITE(nVoters);
+            READWRITE(nFreshStake);
+            READWRITE(nRevocations);
+            READWRITE(extraData);
+            READWRITE(nStakeVersion);
+        }
+        else if (ser_action.ForRead())
+        {
+            SetReadStakeDefaultBeforeFork();
+        }
+
         std::string strMsgHistoryId, strMsgId;
         if (!ser_action.ForRead()) {
             strMsgHistoryId = powMsgHistoryId;
@@ -67,7 +93,7 @@ public:
         }
     }
 
-    //void SetReadStakeDefaultBeforeFork();
+    void SetReadStakeDefaultBeforeFork();
 
     void SetNull()
     {
@@ -77,6 +103,15 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        nStakeDifficulty = 0;
+        nVoteBits = VoteBits::rttAccepted;
+        nTicketPoolSize = 0;
+        ticketLotteryState.SetNull();
+        nVoters = 0;
+        nFreshStake = 0;
+        nRevocations = 0;
+        extraData.SetNull();
+        nStakeVersion = 0;
         powMsgHistoryId[0] = '\0';
         powMsgId[0] = '\0';
     }
@@ -143,7 +178,6 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
-/*
         block.nVoteBits      = nVoteBits;
         block.nStakeDifficulty = nStakeDifficulty;
         block.nTicketPoolSize = nTicketPoolSize;
@@ -153,7 +187,6 @@ public:
         block.nRevocations   = nRevocations;
         block.extraData      = extraData;
         block.nStakeVersion  = nStakeVersion;
-*/
         return block;
     }
 

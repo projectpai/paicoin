@@ -226,10 +226,6 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
-    enum { MSG_ID_SIZE = 100 };
-    char powMsgHistoryId[MSG_ID_SIZE];
-    char powMsgId[MSG_ID_SIZE];
-
 
     int64_t  nStakeDifficulty;
 
@@ -242,6 +238,10 @@ public:
     uint8_t    nRevocations;
     uint256    extraData;
     uint32_t   nStakeVersion;
+
+    enum { MSG_ID_SIZE = 100 };
+    char powMsgHistoryId[MSG_ID_SIZE];
+    char powMsgId[MSG_ID_SIZE];
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t nSequenceId;
@@ -278,7 +278,15 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
+        nStakeDifficulty = 0;
         nVoteBits      = VoteBits::rttAccepted;
+        nTicketPoolSize = 0;
+        ticketLotteryState.SetNull();
+        nVoters = 0;
+        nFreshStake = 0;
+        nRevocations = 0;
+        extraData.SetNull();
+        nStakeVersion  = 0;
         powMsgHistoryId[0]    = '\0';
         powMsgId[0] = '\0';
     }
@@ -297,6 +305,15 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
+        nStakeDifficulty = block.nStakeDifficulty;
+        nVoteBits      = block.nVoteBits;
+        nTicketPoolSize = block.nTicketPoolSize;
+        ticketLotteryState = block.ticketLotteryState;
+        nVoters        = block.nVoters;
+        nFreshStake    = block.nFreshStake;
+        nRevocations   = block.nRevocations;
+        extraData      = block.extraData;
+        nStakeVersion  = block.nStakeVersion;
         strcpy(powMsgHistoryId, block.powMsgHistoryId);
         strcpy(powMsgId, block.powMsgId);
     }
@@ -338,6 +355,15 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.nStakeDifficulty = nStakeDifficulty;
+        block.nVoteBits      = nVoteBits;
+        block.nTicketPoolSize = nTicketPoolSize;
+        block.ticketLotteryState = ticketLotteryState;
+        block.nVoters        = nVoters;
+        block.nFreshStake    = nFreshStake;
+        block.nRevocations   = nRevocations;
+        block.extraData      = extraData;
+        block.nStakeVersion = nStakeVersion;
         strcpy(block.powMsgHistoryId, powMsgHistoryId);
         strcpy(block.powMsgId, powMsgId);
         return block;
@@ -467,6 +493,32 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+
+        if (this->nVersion & HARDFORK_VERSION_BIT) {
+            READWRITE(nStakeDifficulty);
+            READWRITE(nVoteBits);
+            READWRITE(nTicketPoolSize);
+            READWRITE(ticketLotteryState);
+            READWRITE(nVoters);
+            READWRITE(nFreshStake);
+            READWRITE(nRevocations);
+            READWRITE(extraData);
+            READWRITE(nStakeVersion);
+        }
+        else if (ser_action.ForRead())
+        {
+            nStakeDifficulty = Params().GetConsensus().nMinimumStakeDiff;
+            nVoteBits = VoteBits::rttAccepted;
+            nTicketPoolSize = 0;
+            ticketLotteryState.SetNull();
+            nVoters = 0;
+            nFreshStake = 0;
+            nRevocations = 0;
+            extraData.SetNull();
+            nStakeVersion = 0;
+        }
+        // READWRITE(nStakeDifficulty);
+
         std::string strMsgHistoryId, strMsgId;
         if (!ser_action.ForRead()) {
             strMsgHistoryId = powMsgHistoryId;
@@ -489,6 +541,15 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
+        block.nStakeDifficulty = nStakeDifficulty;
+        block.nVoteBits       = nVoteBits;
+        block.nTicketPoolSize = nTicketPoolSize;
+        block.ticketLotteryState = ticketLotteryState;
+        block.nVoters         = nVoters;
+        block.nFreshStake     = nFreshStake;
+        block.nRevocations    = nRevocations;
+        block.extraData       = extraData;
+        block.nStakeVersion   = nStakeVersion;
         strcpy(block.powMsgHistoryId, powMsgHistoryId);
         strcpy(block.powMsgId, powMsgId);
         return block.GetHash();

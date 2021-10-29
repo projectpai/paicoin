@@ -34,12 +34,15 @@ uint256 CBlockHeader::GetHash() const
 std::string CBlock::ToString() const
 {
     std::stringstream s;
-    s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, powMsgHistoryId=%s, powMsgId=%s, vtx=%u)\n",
+    s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u,"
+                    "nStakeDifficulty=%s, nVoteBits=%04x, nTicketPoolSize=%u, ticketLotteryState=%s, nFreshStake=%u, nStakeVersion=%u,"
+                    "powMsgHistoryId=%s, powMsgId=%s, vtx=%u)\n",
         GetHash().ToString(),
         nVersion,
         hashPrevBlock.ToString(),
         hashMerkleRoot.ToString(),
         nTime, nBits, nNonce,
+        std::to_string(nStakeDifficulty), nVoteBits.getBits(), nTicketPoolSize, StakeStateToString(ticketLotteryState), nFreshStake, nStakeVersion,
         powMsgHistoryId, powMsgId,
         vtx.size());
     for (const auto& tx : vtx) {
@@ -48,7 +51,6 @@ std::string CBlock::ToString() const
     return s.str();
 }
 
-/*
 void CBlockHeader::SetReadStakeDefaultBeforeFork()
 {
     nStakeDifficulty = Params().GetConsensus().nMinimumStakeDiff;
@@ -61,7 +63,6 @@ void CBlockHeader::SetReadStakeDefaultBeforeFork()
     extraData.SetNull();
     nStakeVersion = 0;
 }
-*/
 
 bool CBlockHeader::isPaicoinHashBlock() const
 {

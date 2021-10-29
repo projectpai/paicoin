@@ -161,13 +161,6 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("height", blockindex->nHeight));
     result.push_back(Pair("version", blockindex->nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", blockindex->nVersion)));
-    result.push_back(Pair("powMsgHistoryId", blockindex->powMsgHistoryId));
-    result.push_back(Pair("powMsgId", blockindex->powMsgId));
-
-    std::string taskInfoServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
-    TaskListClient client(grpc::CreateChannel(taskInfoServerAddress, grpc::InsecureChannelCredentials()));
-    result.push_back(Pair("taskId", client.GetTaskId(blockindex->powMsgId)));
-
     result.push_back(Pair("merkleroot", blockindex->hashMerkleRoot.GetHex()));
     result.push_back(Pair("time", static_cast<int64_t>(blockindex->nTime)));
     result.push_back(Pair("mediantime", static_cast<int64_t>(blockindex->GetMedianTimePast())));
@@ -175,7 +168,7 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("bits", strprintf("%08x", blockindex->nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-/*
+
     if (IsHybridConsensusForkEnabled(blockindex, Params().GetConsensus())) {
         result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
         result.push_back(Pair("votebits", strprintf("%04x", blockindex->nVoteBits.getBits())));
@@ -184,7 +177,14 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
         result.push_back(Pair("freshstake", blockindex->nFreshStake));
         result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
     }
-*/
+
+    result.push_back(Pair("powMsgHistoryId", blockindex->powMsgHistoryId));
+    result.push_back(Pair("powMsgId", blockindex->powMsgId));
+
+    std::string taskInfoServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
+    TaskListClient client(grpc::CreateChannel(taskInfoServerAddress, grpc::InsecureChannelCredentials()));
+    result.push_back(Pair("taskId", client.GetTaskId(blockindex->powMsgId)));
+
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
     CBlockIndex *pnext = chainActive.Next(blockindex);
@@ -210,14 +210,10 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("version", block.nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", block.nVersion)));
     result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
-    result.push_back(Pair("powMsgHistoryId", std::string(block.powMsgHistoryId)));
-    result.push_back(Pair("powMsgId", std::string(block.powMsgId)));
 
-    std::string taskInfoServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
-    TaskListClient client(grpc::CreateChannel(taskInfoServerAddress, grpc::InsecureChannelCredentials()));
-    result.push_back(Pair("taskId", client.GetTaskId(blockindex->powMsgId)));
+    bool includeStake = (!gArgs.GetBoolArg("-testnet", false)) || IsHybridConsensusForkEnabled(blockindex, Params().GetConsensus());
 
-    UniValue txs(UniValue::VARR);
+    UniValue txs{UniValue::VARR};
     for(const auto& tx : block.vtx)
     {
         if(txDetails)
@@ -229,7 +225,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
                 const auto& ticketHash = tx->vin[revocationStakeInputIndex].prevout.hash;
                 prevOutMap[ticketHash] = GetTicket(ticketHash);
             }
-            TxToUniv(*tx, uint256(), objTx, false, true, RPCSerializationFlags(), &prevOutMap);
+            TxToUniv(*tx, uint256(), objTx, includeStake, true, RPCSerializationFlags(), &prevOutMap);
             txs.push_back(objTx);
         }
         else
@@ -242,7 +238,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-/*
+
     if (includeStake) {
         result.push_back(Pair("stakedifficulty", std::to_string(blockindex->nStakeDifficulty)));
         result.push_back(Pair("votebits", strprintf("%04x", blockindex->nVoteBits.getBits())));
@@ -251,7 +247,14 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
         result.push_back(Pair("freshstake", blockindex->nFreshStake));
         result.push_back(Pair("stakeversion", strprintf("%08x", blockindex->nStakeVersion)));
     }
-*/
+
+    result.push_back(Pair("powMsgHistoryId", std::string(block.powMsgHistoryId)));
+    result.push_back(Pair("powMsgId", std::string(block.powMsgId)));
+
+    std::string taskInfoServerAddress = gArgs.GetArg("-verificationserver", "localhost:50051");
+    TaskListClient client(grpc::CreateChannel(taskInfoServerAddress, grpc::InsecureChannelCredentials()));
+    result.push_back(Pair("taskId", client.GetTaskId(blockindex->powMsgId)));
+
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
     CBlockIndex *pnext = chainActive.Next(blockindex);

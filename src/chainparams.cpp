@@ -132,7 +132,7 @@ uint32_t CHAINPARAMS_XUINT32(const char * name, uint32_t value)
 #endif
 }
 
-static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
+static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int64_t nStakeDiff, int32_t nVersion, const CAmount& genesisReward)
 {
     CMutableTransaction txNew;
     txNew.nVersion = 1;
@@ -145,13 +145,11 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     CBlock genesis;
     genesis.nTime    = nTime;
     genesis.nBits    = nBits;
-/*
     genesis.nStakeDifficulty = nStakeDiff;
     genesis.nVoteBits = VoteBits::rttAccepted;
     genesis.nTicketPoolSize = 0;
     std::fill(genesis.ticketLotteryState.begin(), genesis.ticketLotteryState.end(), 0);
     genesis.nStakeVersion = 0;
-*/
     genesis.nNonce   = nNonce;
     genesis.nVersion = nVersion;
     genesis.vtx.push_back(MakeTransactionRef(std::move(txNew)));
@@ -163,11 +161,11 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
 /**
  * Build the genesis block.
  */
-static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const std::string & signature)
+static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int64_t nStakeDiff, int32_t nVersion, const CAmount& genesisReward, const std::string & signature)
 {
     std::string sTimestamp = CHAINPARAMS_STR("GENESIS_BLOCK_TIMESTAMP_STRING", GENESIS_BLOCK_TIMESTAMP_STRING);
     const CScript genesisOutputScript = CScript() << OP_HASH160 << ParseHex(signature.c_str()) << OP_EQUAL;
-    return CreateGenesisBlock(sTimestamp.c_str(), genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
+    return CreateGenesisBlock(sTimestamp.c_str(), genesisOutputScript, nTime, nNonce, nBits, nStakeDiff, nVersion, genesisReward);
 }
 
 void CChainParams::UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout)
@@ -324,6 +322,7 @@ public:
                 CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
                 0,
                 CHAINPARAMS_XUINT32("MAINNET_GENESIS_BLOCK_NBITS", MAINNET_GENESIS_BLOCK_NBITS),
+                consensus.nMinimumStakeDiff,
                 4,
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
@@ -360,6 +359,7 @@ public:
                 CHAINPARAMS_UINT32("MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP", MAINNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
                 GENESIS_UINT32("MAINNET_GENESIS_BLOCK_NONCE", MAINNET_GENESIS_BLOCK_NONCE),
                 CHAINPARAMS_XUINT32("MAINNET_GENESIS_BLOCK_NBITS", MAINNET_GENESIS_BLOCK_NBITS),
+                consensus.nMinimumStakeDiff,
                 4,
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("MAINNET_GENESIS_BLOCK_SIGNATURE", MAINNET_GENESIS_BLOCK_SIGNATURE)
@@ -484,7 +484,7 @@ public:
         consensus.nCoinbaseWhitelistExpiration = 144; // one day
 
         // hybrid consensus fork parameters
-        consensus.nHybridConsensusHeight = 78600; // must be above coinbase maturity (>100)
+        consensus.nHybridConsensusHeight = 1500; // must be above coinbase maturity (>100)
         consensus.hybridConsensusPowLimit = TESTNET_HYBRID_CONSENSUS_POW_LIMIT;
         consensus.nHybridConsensusInitialDifficulty = TESTNET_HYBRID_CONSENSUS_INITIAL_DIFFICULTY;
         consensus.nHybridConsensusInitialDifficultyBlockCount = 10;
@@ -510,8 +510,8 @@ public:
         consensus.nStakeDiffWindows                 = 20;
         consensus.nStakeVersionInterval             = 144 * 2 * 7; // ~2 weeks
         consensus.nMaxFreshStakePerBlock            = 4 * consensus.nTicketsPerBlock;
-        consensus.nStakeEnabledHeight               = 78700;         // > nHybridConsensusHeight + nTicketMaturity
-        consensus.nStakeValidationHeight            = 78800;         // > CoinbaseMaturity (100) + nHybridConsensusHeight;
+        consensus.nStakeEnabledHeight               = consensus.nHybridConsensusHeight + consensus.nTicketMaturity + 1;         // > nHybridConsensusHeight + nTicketMaturity
+        consensus.nStakeValidationHeight            = consensus.nStakeEnabledHeight + 100;         // > CoinbaseMaturity (100) + nHybridConsensusHeight;
         consensus.stakeBaseSigScript                = CScript() << 0x00 << 0x00;
         consensus.nStakeMajorityMultiplier          = 3;
         consensus.nStakeMajorityDivisor             = 4;
@@ -531,6 +531,7 @@ public:
                 CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
                 0,
                 CHAINPARAMS_XUINT32("TESTNET_GENESIS_BLOCK_NBITS", TESTNET_GENESIS_BLOCK_NBITS),
+                consensus.nMinimumStakeDiff,
                 4,
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("TESTNET_GENESIS_BLOCK_SIGNATURE", TESTNET_GENESIS_BLOCK_SIGNATURE)
@@ -562,6 +563,7 @@ public:
                 CHAINPARAMS_UINT32("TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP", TESTNET_GENESIS_BLOCK_UNIX_TIMESTAMP),
                 GENESIS_UINT32("TESTNET_GENESIS_BLOCK_NONCE", TESTNET_GENESIS_BLOCK_NONCE),
                 CHAINPARAMS_XUINT32("TESTNET_GENESIS_BLOCK_NBITS", TESTNET_GENESIS_BLOCK_NBITS),
+                consensus.nMinimumStakeDiff,
                 4,
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("TESTNET_GENESIS_BLOCK_SIGNATURE", TESTNET_GENESIS_BLOCK_SIGNATURE)
@@ -737,6 +739,7 @@ public:
                 CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP", REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP),
                 0,
                 CHAINPARAMS_XUINT32("REGTEST_GENESIS_BLOCK_NBITS", REGTEST_GENESIS_BLOCK_NBITS),
+                consensus.nMinimumStakeDiff,
                 4,
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("REGTEST_GENESIS_BLOCK_SIGNATURE", REGTEST_GENESIS_BLOCK_SIGNATURE)
@@ -770,6 +773,7 @@ public:
                 CHAINPARAMS_UINT32("REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP", REGTEST_GENESIS_BLOCK_UNIX_TIMESTAMP),
                 GENESIS_UINT32("REGTEST_GENESIS_BLOCK_NONCE", REGTEST_GENESIS_BLOCK_NONCE),
                 CHAINPARAMS_XUINT32("REGTEST_GENESIS_BLOCK_NBITS", REGTEST_GENESIS_BLOCK_NBITS),
+                consensus.nMinimumStakeDiff,
                 4,
                 CHAINPARAMS_UINT32("GENESIS_BLOCK_REWARD", GENESIS_BLOCK_REWARD) * COIN,
                 CHAINPARAMS_STR("REGTEST_GENESIS_BLOCK_SIGNATURE", REGTEST_GENESIS_BLOCK_SIGNATURE)

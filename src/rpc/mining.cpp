@@ -890,7 +890,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     result.push_back(Pair("curtime", pblock->GetBlockTime()));
     result.push_back(Pair("bits", strprintf("%08x", pblock->nBits)));
     result.push_back(Pair("height", static_cast<int64_t>((pindexPrev->nHeight+1))));
-/*
+
     if (IsHybridConsensusForkEnabled(pindexPrev, Params().GetConsensus())) {
         // large values are not correctly interpreted by the miner, thus we use hex strings where needed
         result.push_back(Pair("stakedifficulty", strprintf("%016x", pblock->nStakeDifficulty)));
@@ -908,7 +908,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         result.push_back(Pair("stakeversion", static_cast<int64_t>(pblock->nStakeVersion)));
     }
-*/
+
     if (!pblocktemplate->vchCoinbaseCommitment.empty() && fSupportsSegwit) {
         result.push_back(Pair("default_witness_commitment", HexStr(pblocktemplate->vchCoinbaseCommitment)));
     }
