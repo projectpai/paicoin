@@ -138,14 +138,14 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     if (hybridForkEnabled) {
         pblock->nVersion |= HARDFORK_VERSION_BIT;
     }
-/*
+
     pblock->nStakeVersion = calcStakeVersion(pindexPrev, chainparams.GetConsensus());
     pblock->nStakeDifficulty = CalculateNextRequiredStakeDifficulty(pindexPrev,chainparams.GetConsensus());
     if (pindexPrev->pstakeNode != nullptr) {
         pblock->ticketLotteryState = pindexPrev->pstakeNode->FinalState();
         pblock->nTicketPoolSize = pindexPrev->pstakeNode->PoolSize();
     }
-*/
+
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
     if (chainparams.MineBlocksOnDemand())
@@ -159,7 +159,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
                        : pblock->GetBlockTime();
 
     // Votes should be present after this height.
-/*
     if (nHeight >= chainparams.GetConsensus().nStakeValidationHeight) {
         auto& voted_hash_index = mempool.mapTx.get<voted_block_hash>();
         auto votesForBlockHash = voted_hash_index.equal_range(pindexPrev->GetBlockHash());
@@ -295,7 +294,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         for (auto& reorderedTicketAncestorIter : reorderedTicketAncestors)
             AddToBlock(reorderedTicketAncestorIter);
     }
-*/
+
     // Decide whether to include witness transactions
     // This is only needed in case the witness softfork activation is reverted
     // (which would require a very deep reorganization) or when

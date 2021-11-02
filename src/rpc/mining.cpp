@@ -734,14 +734,13 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         // we have enough votes, but some vote transactions may still be in transit,
         // return error while waiting for more votes in the specified time
-/*
         if ( !bTooFewVotes
            && pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight
            && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock
            && nTimeElapsed < nBlockAllVotesWaitTime) {
             throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Some vote transactions are not yet available, waiting <blockallvoteswaittime>");
         }
-*/
+
         // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
     }
@@ -1029,7 +1028,6 @@ UniValue submitblock(const JSONRPCRequest& request)
     return BIP22ValidationResult(sc.state);
 }
 
-/*
 UniValue existsexpiredtickets(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
@@ -1696,7 +1694,7 @@ UniValue removeallmempoolvotesexcept(const JSONRPCRequest& request)
 
     return NullUniValue;
 }
-*/
+
 UniValue estimatefee(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
@@ -1902,12 +1900,27 @@ UniValue estimaterawfee(const JSONRPCRequest& request)
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
   //  --------------------- ------------------------  -----------------------  ----------
-    { "mining",             "getnetworkhashps",       &getnetworkhashps,       {"nblocks","height"} },
-    { "mining",             "getmininginfo",          &getmininginfo,          {} },
-    { "mining",             "prioritisetransaction",  &prioritisetransaction,  {"txid","dummy","fee_delta"} },
-    { "mining",             "getblocktemplate",       &getblocktemplate,       {"template_request"} },
-    { "mining",             "submitblock",            &submitblock,            {"hexdata","dummy"} },
-    { "mining",             "submitusefulwork",       &submitusefulwork,       {"submitusefulwork_request"} },
+    { "mining",             "getnetworkhashps",             &getnetworkhashps,              {"nblocks","height"} },
+    { "mining",             "getmininginfo",                &getmininginfo,                 {} },
+    { "mining",             "prioritisetransaction",        &prioritisetransaction,         {"txid","dummy","fee_delta"} },
+    { "mining",             "getblocktemplate",             &getblocktemplate,              {"template_request"} },
+    { "mining",             "submitblock",                  &submitblock,                   {"hexdata","dummy"} },
+
+    { "mining",             "submitusefulwork",             &submitusefulwork,              {"submitusefulwork_request"} },
+
+    { "mining",             "existsexpiredtickets",         &existsexpiredtickets,          {"txhashes"} },
+    { "mining",             "existsliveticket",             &existsliveticket,              {"txhash"} },
+    { "mining",             "existsmissedtickets",          &existsmissedtickets,           {"txhashes"} },
+    { "mining",             "existslivetickets",            &existslivetickets,             {"txhashes"} },
+    { "mining",             "getticketpoolvalue",           &getticketpoolvalue,            {} },
+    { "mining",             "livetickets",                  &livetickets,                   {"verbose", "blockheight"} },
+    { "mining",             "winningtickets",               &winningtickets,                {"blockheight"} },
+    { "mining",             "missedtickets",                &missedtickets,                 {"verbose", "blockheight"} },
+    { "mining",             "ticketfeeinfo",                &ticketfeeinfo,                 {"blocks","windows"} },
+    { "mining",             "ticketsforaddress",            &ticketsforaddress,             {"address"} },
+    { "mining",             "ticketvwap",                   &ticketvwap,                    {"start","stop"} },
+    { "mining",             "removemempoolvotes",           &removemempoolvotes,            {"blockhash"} },
+    { "mining",             "removeallmempoolvotesexcept",  &removeallmempoolvotesexcept,   {"blockhash"} },
 
     { "generating",         "generatetoaddress",            &generatetoaddress,             {"nblocks","address","maxtries"} },
 

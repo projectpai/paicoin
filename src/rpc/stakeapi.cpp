@@ -29,7 +29,6 @@ struct StakeVersions {
     VoteVersionVector votes;
 };
 
-/*
 
 std::vector<StakeVersions> GetStakeVersions(const CBlockIndex* const startIndex, int count)
 {
@@ -372,4 +371,3 @@ void RegisterStakeAPIRPCCommands(CRPCTable &t)
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
         t.appendCommand(commands[vcidx].name, &commands[vcidx]);
 }
-*/
