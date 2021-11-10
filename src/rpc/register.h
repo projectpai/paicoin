@@ -34,8 +34,8 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
     RegisterMiscRPCCommands(t);
     RegisterMiningRPCCommands(t);
     RegisterRawTransactionRPCCommands(t);
-    RegisterTaskInfoRPCCommands(t);
     RegisterStakeAPIRPCCommands(t);
+    RegisterTaskInfoRPCCommands(t);
 }
 
 #endif

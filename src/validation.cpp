@@ -5414,7 +5414,7 @@ bool LoadMempool()
             int64_t nHeight = 0;
             file >> tx;
             file >> nTime;
-            if (version == MEMPOOL_RESIDENCE_VERSION)
+            if (version >= MEMPOOL_RESIDENCE_VERSION)
                 file >> nHeight;
             file >> nFeeDelta;
 
