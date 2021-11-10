@@ -112,8 +112,8 @@ public:
         nRevocations = 0;
         extraData.SetNull();
         nStakeVersion = 0;
-        powMsgHistoryId[0] = '\0';
-        powMsgId[0] = '\0';
+        std::fill(powMsgHistoryId, powMsgHistoryId + MSG_ID_SIZE, 0);
+        std::fill(powMsgId, powMsgId + MSG_ID_SIZE, 0);
     }
 
     bool IsNull() const
@@ -187,6 +187,8 @@ public:
         block.nRevocations   = nRevocations;
         block.extraData      = extraData;
         block.nStakeVersion  = nStakeVersion;
+        strncpy(block.powMsgHistoryId, powMsgHistoryId, MSG_ID_SIZE);
+        strncpy(block.powMsgId, powMsgId, MSG_ID_SIZE);
         return block;
     }
 

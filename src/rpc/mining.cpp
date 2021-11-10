@@ -247,9 +247,9 @@ UniValue submitusefulwork(const JSONRPCRequest& request)
         IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
     }
 
-    pblock->powMsgHistoryId[0] = '\0';
+    std::fill(pblock->powMsgHistoryId, pblock->powMsgHistoryId + CBlock::MSG_ID_SIZE, 0);
     strncat(pblock->powMsgHistoryId, pow_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
-    pblock->powMsgId[0] = '\0';
+    std::fill(pblock->powMsgId, pblock->powMsgId + CBlock::MSG_ID_SIZE, 0);
     strncat(pblock->powMsgId, pow_next_msg_id.c_str(), CBlock::MSG_ID_SIZE - 1);
 
     pblock->nNonce = pow_nonce;

@@ -62,6 +62,8 @@ void CBlockHeader::SetReadStakeDefaultBeforeFork()
     nRevocations = 0;
     extraData.SetNull();
     nStakeVersion = 0;
+    std::fill(powMsgHistoryId, powMsgHistoryId + MSG_ID_SIZE, 0);
+    std::fill(powMsgId, powMsgId + MSG_ID_SIZE, 0);
 }
 
 bool CBlockHeader::isPaicoinHashBlock() const

@@ -287,8 +287,8 @@ public:
         nRevocations = 0;
         extraData.SetNull();
         nStakeVersion  = 0;
-        powMsgHistoryId[0]    = '\0';
-        powMsgId[0] = '\0';
+        std::fill(powMsgHistoryId, powMsgHistoryId + MSG_ID_SIZE, 0);
+        std::fill(powMsgId, powMsgId + MSG_ID_SIZE, 0);
     }
 
     CBlockIndex()
@@ -314,8 +314,8 @@ public:
         nRevocations   = block.nRevocations;
         extraData      = block.extraData;
         nStakeVersion  = block.nStakeVersion;
-        strcpy(powMsgHistoryId, block.powMsgHistoryId);
-        strcpy(powMsgId, block.powMsgId);
+        strncpy(powMsgHistoryId, block.powMsgHistoryId, MSG_ID_SIZE);
+        strncpy(powMsgId, block.powMsgId, MSG_ID_SIZE);
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -364,8 +364,8 @@ public:
         block.nRevocations   = nRevocations;
         block.extraData      = extraData;
         block.nStakeVersion = nStakeVersion;
-        strcpy(block.powMsgHistoryId, powMsgHistoryId);
-        strcpy(block.powMsgId, powMsgId);
+        strncpy(block.powMsgHistoryId, powMsgHistoryId, MSG_ID_SIZE);
+        strncpy(block.powMsgId, powMsgId, MSG_ID_SIZE);
         return block;
     }
 
@@ -550,8 +550,8 @@ public:
         block.nRevocations    = nRevocations;
         block.extraData       = extraData;
         block.nStakeVersion   = nStakeVersion;
-        strcpy(block.powMsgHistoryId, powMsgHistoryId);
-        strcpy(block.powMsgId, powMsgId);
+        strncpy(block.powMsgHistoryId, powMsgHistoryId, MSG_ID_SIZE);
+        strncpy(block.powMsgId, powMsgId, MSG_ID_SIZE);
         return block.GetHash();
     }
 
