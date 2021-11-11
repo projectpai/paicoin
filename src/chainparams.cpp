@@ -522,6 +522,10 @@ public:
         consensus.nOrganizationPkScriptVersion      = 0;
         consensus.vBlockOneLedger                   = {}; //TODO update with smtg resembling BlockOneLedgerTestNet3 in premine.go
 
+        pchMessageStart[0] = 0x0b;
+        pchMessageStart[1] = 0x09;
+        pchMessageStart[2] = 0x11;
+        pchMessageStart[3] = 0x07;
         nDefaultPort = CHAINPARAMS_UINT32("TESTNET_PORT", 18567);;
         nPruneAfterHeight = 1000;
 
@@ -730,6 +734,10 @@ public:
         consensus.nOrganizationPkScriptVersion    = 0;
         consensus.vBlockOneLedger                 = {}; //TODO update with smtg resembling BlockOneLedgerRegNet in premine.go
 
+        pchMessageStart[0] = 0xff;
+        pchMessageStart[1] = 0xd1;
+        pchMessageStart[2] = 0xd6;
+        pchMessageStart[3] = 0xf3;
         nDefaultPort = CHAINPARAMS_UINT32("REGTEST_PORT", 19567);
         nPruneAfterHeight = 1000;
 
