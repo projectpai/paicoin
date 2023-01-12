@@ -79,7 +79,7 @@ static const bool DEFAULT_WALLET_RBF = false;
 //! -autobuy default
 static const bool DEFAULT_AUTO_BUY = false;
 //! -autovote default
-static const bool DEFAULT_AUTO_VOTE = true;
+static const bool DEFAULT_AUTO_VOTE = false;
 //! -autorevoke default
 static const bool DEFAULT_AUTO_REVOKE = true;
 static const bool DEFAULT_WALLETBROADCAST = true;

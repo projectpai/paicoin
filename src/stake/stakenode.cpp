@@ -209,30 +209,31 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const uint256& lotteryIV, cons
         // Find the expiring tickets and drop them as well.  We already know what
         // the winners are from the cached information in the previous block, so
         // no drop the results of that here.
+        // When votes are not needed anymore, all tickets are expired.
         auto toExpireHeight = uint32_t{0};
-        if (connectedNode->height > connectedNode->params.nTicketExpiry) {
+        if (connectedNode->height > connectedNode->params.nTicketExpiry)
             toExpireHeight = connectedNode->height - connectedNode->params.nTicketExpiry;
-        }
-
+        if (connectedNode->height >= params.nVotesNotRequiredHeight)
+            toExpireHeight = connectedNode->height - 2;
         connectedNode->liveTickets.forEachByHeight(toExpireHeight + 1, [&connectedNode](const uint256& treapKey, const Value& value) {
-                // Make a copy of the value.
-                auto v = value;
-                v.missed = true;
-                v.expired = true;
-                connectedNode->liveTickets = connectedNode->liveTickets.deleteKey(treapKey);
-                connectedNode->missedTickets = connectedNode->missedTickets.put(treapKey, v);
+            // Make a copy of the value.
+            auto v = value;
+            v.missed = true;
+            v.expired = true;
+            connectedNode->liveTickets = connectedNode->liveTickets.deleteKey(treapKey);
+            connectedNode->missedTickets = connectedNode->missedTickets.put(treapKey, v);
 
-                connectedNode->databaseUndoUpdate.push_back(UndoTicketData{
-                    treapKey,
-                    v.height,
-                    v.missed,
-                    v.revoked,
-                    v.spent,
-                    v.expired
-                });
+            connectedNode->databaseUndoUpdate.push_back(UndoTicketData{
+                                                            treapKey,
+                                                            v.height,
+                                                            v.missed,
+                                                            v.revoked,
+                                                            v.spent,
+                                                            v.expired
+                                                        });
 
-                return true;
-            }
+            return true;
+        }
         );
 
         // Process all the revocations, moving them from the missed to the
@@ -280,25 +281,31 @@ std::shared_ptr<StakeNode> StakeNode::ConnectNode(const uint256& lotteryIV, cons
     // The first block voted on is at StakeValidationHeight, so begin calculating
     // winners at the block before StakeValidationHeight.
     if (connectedNode->height >= connectedNode->params.nStakeValidationHeight - 1 ) {
-        // Find the next set of winners.
+        if (connectedNode->height < params.nVotesNotRequiredHeight) {
+            // Find the next set of winners.
 
-        if (connectedNode->liveTickets.len() < connectedNode->params.nTicketsPerBlock)
-            // list size too small
-            return nullptr;
+            if (connectedNode->liveTickets.len() < connectedNode->params.nTicketsPerBlock)
+                // list size too small
+                return nullptr;
 
-        auto prng = Hash256PRNG(lotteryIV);
-        const auto& idxs = prng.FindTicketIdxs(connectedNode->liveTickets.len(), connectedNode->params.nTicketsPerBlock);
-        const auto& nextWinnerKeys = connectedNode->liveTickets.fetchWinners(idxs);
+            auto prng = Hash256PRNG(lotteryIV);
+            const auto& idxs = prng.FindTicketIdxs(connectedNode->liveTickets.len(), connectedNode->params.nTicketsPerBlock);
+            const auto& nextWinnerKeys = connectedNode->liveTickets.fetchWinners(idxs);
 
-        auto stateBuffer = HashVector{};
-        for(const auto& it : nextWinnerKeys){
-            connectedNode->nextWinners.push_back(it);
-            stateBuffer.push_back(it);
+            auto stateBuffer = HashVector{};
+            for(const auto& it : nextWinnerKeys){
+                connectedNode->nextWinners.push_back(it);
+                stateBuffer.push_back(it);
+            }
+
+            stateBuffer.push_back(prng.StateHash());
+            const auto& hex = Hash(stateBuffer.begin(),stateBuffer.end()).GetHex();
+            connectedNode->finalState.SetHex(hex);
+        } else {
+            // After stake termination, the winner and final state informations are irrelevant.
+            connectedNode->nextWinners.clear();
+            connectedNode->finalState.SetNull();
         }
-
-        stateBuffer.push_back(prng.StateHash());
-        const auto& hex = Hash(stateBuffer.begin(),stateBuffer.end()).GetHex();
-        connectedNode->finalState.SetHex(hex);
     }
 
     return connectedNode;

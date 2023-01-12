@@ -237,6 +237,12 @@ uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
         return params.nPaicoinHashInitialDifficulty;
     }
 
+    // if the block is just after the votes are no longer required,
+    // enforce the initial difficulty for this situation
+    if (pindexPrev->nHeight >= params.nVotesNotRequiredHeight - 1 && pindexPrev->nHeight < params.nVotesNotRequiredHeight + params.nVotesNotRequiredInitialDifficultyBlockCount - 1) {
+        return params.nVotesNotRequiredInitialDifficulty;
+    }
+
     // Special difficulty rule for testnet:
     // If the new block's timestamp is more than 2* 10 minutes then allow
     // mining of a min-difficulty block.
@@ -257,9 +263,12 @@ uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
     // Get the first suitable block of the difficulty interval.
     // Do not consider blocks before hybrid consensus takes effect.
     int nHeightFirst = 0;
-    if (pblock->isPaicoinHashBlock())
-        nHeightFirst = (nHeight - 144) < (nPaicoinHashHeight + 1) ? (nPaicoinHashHeight + 1) : (nHeight - 144);
-    else
+    if (pblock->isPaicoinHashBlock()) {
+        if (nHeight + 1 >= params.nVotesNotRequiredHeight)
+            nHeightFirst = (nHeight - 144) < params.nVotesNotRequiredHeight ? params.nVotesNotRequiredHeight : (nHeight - 144);
+        else
+            nHeightFirst = (nHeight - 144) < (nPaicoinHashHeight + 1) ? (nPaicoinHashHeight + 1) : (nHeight - 144);
+    } else
         nHeightFirst = (nHeight - 144) < (params.nHybridConsensusHeight + 1) ? (params.nHybridConsensusHeight + 1) : (nHeight - 144);
 
     const CBlockIndex *pindexFirst = GetSuitableBlock(pindexPrev->GetAncestor(nHeightFirst));
@@ -313,8 +322,7 @@ int64_t CalculateNextRequiredStakeDifficulty(const CBlockIndex* pindexLast, cons
     if (prevRetargetNode != nullptr) {
         prevPoolSize = prevRetargetNode->nTicketPoolSize;
     }
-    const auto& ticketMaturity = int64_t{params.nTicketMaturity};
-    const auto& prevImmatureTickets = SumPurchasedTickets(prevRetargetNode, ticketMaturity);
+    const auto& prevImmatureTickets = SumPurchasedTickets(prevRetargetNode, int64_t{params.nTicketMaturity});
 
     // Return the existing ticket price for the first few intervals to avoid
     // division by zero and encourage initial pool population.
@@ -324,7 +332,7 @@ int64_t CalculateNextRequiredStakeDifficulty(const CBlockIndex* pindexLast, cons
     }
 
     // Count the number of currently immature tickets.
-    const auto& immatureTickets = SumPurchasedTickets(pindexLast, ticketMaturity);
+    const auto& immatureTickets = SumPurchasedTickets(pindexLast, int64_t{params.nTicketMaturity});
 
     // Calculate and return the final next required difficulty.
     const auto& curPoolSizeAll = int64_t{pindexLast->nTicketPoolSize} + immatureTickets;
@@ -462,7 +470,6 @@ int64_t EstimateNextStakeDifficulty(const CBlockIndex* pindexLast, int newTicket
         curHeight = pindexLast->nHeight;
     }
 
-    const auto& ticketMaturity = int64_t{params.nTicketMaturity};
     const auto& intervalSize   = params.nStakeDiffWindowSize;
     const auto& blocksUntilRetarget = int64_t{intervalSize - curHeight % intervalSize};
     const auto& nextRetargetHeight  = curHeight + blocksUntilRetarget;
@@ -503,7 +510,7 @@ int64_t EstimateNextStakeDifficulty(const CBlockIndex* pindexLast, int newTicket
     if (prevRetargetNode != nullptr) {
         prevPoolSize = prevRetargetNode->nTicketPoolSize;
     }
-    const auto& prevImmatureTickets = SumPurchasedTickets(prevRetargetNode, ticketMaturity);
+    const auto& prevImmatureTickets = SumPurchasedTickets(prevRetargetNode, int64_t{params.nTicketMaturity});
 
     // Return the existing ticket price for the first few intervals to avoid
     // division by zero and encourage initial pool population.
@@ -522,14 +529,14 @@ int64_t EstimateNextStakeDifficulty(const CBlockIndex* pindexLast, int newTicket
     // therefore no possible remaining immature tickets from the blocks that
     // are not being estimated in that case.
     auto remainingImmatureTickets = int64_t{0};
-    const auto& nextMaturityFloor = nextRetargetHeight - ticketMaturity - 1;
+    const auto& nextMaturityFloor = nextRetargetHeight - int64_t{params.nTicketMaturity} - 1;
     if (curHeight > nextMaturityFloor) {
         remainingImmatureTickets = SumPurchasedTickets(pindexLast, curHeight-nextMaturityFloor);
     }
 
     // Add the number of tickets that will still be immature at the next
     // retarget based on the estimated data.
-    const auto& maxImmatureTickets = ticketMaturity * maxTicketsPerBlock;
+    const auto& maxImmatureTickets = int64_t{params.nTicketMaturity} * maxTicketsPerBlock;
     if (newTickets > maxImmatureTickets) {
         remainingImmatureTickets += maxImmatureTickets;
     } else {
@@ -548,7 +555,7 @@ int64_t EstimateNextStakeDifficulty(const CBlockIndex* pindexLast, int newTicket
         finalMaturingHeight = curHeight;
     }
     const auto& finalMaturingNode = pindexLast->GetAncestor(finalMaturingHeight);
-    const auto& firstMaturingHeight = curHeight - ticketMaturity;
+    const auto& firstMaturingHeight = curHeight - int64_t{params.nTicketMaturity};
     auto maturingTickets = SumPurchasedTickets(finalMaturingNode, finalMaturingHeight-firstMaturingHeight+1);
 
     // Add the number of tickets that will mature based on the estimated data.

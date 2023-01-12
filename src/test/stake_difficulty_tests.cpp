@@ -46,7 +46,6 @@ struct EstimateSDiffTest
 static void loopTicketInfo(CChain& fakeChain, const std::vector<TicketInfo>& vTicketInfo, const Consensus::Params& params)
 {
     const auto& stakeValidationHeight = params.nStakeValidationHeight;
-    const auto& ticketMaturity = params.nTicketMaturity;
     const auto& ticketsPerBlock = params.nTicketsPerBlock;
 
     // immatureTickets track which height the purchased tickets will
@@ -90,7 +89,7 @@ static void loopTicketInfo(CChain& fakeChain, const std::vector<TicketInfo>& vTi
 
             // Track maturity height for new ticket
             // purchases.
-            const auto& maturityHeight = nextHeight + ticketMaturity;
+            const auto& maturityHeight = nextHeight + params.nTicketMaturity;
             immatureTickets[maturityHeight] = ticketInfo.newTickets;
 
             // Update the chain to use the new fake node as

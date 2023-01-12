@@ -879,6 +879,8 @@ UniValue gettickets(const JSONRPCRequest& request)
             if (confirmations < 0)
                 continue;
 
+            const auto& height = chainActive.Tip()->nHeight - pwtx->GetDepthInMainChain();
+
             if (pwtx->isAbandoned())
                 continue;
 
@@ -2903,6 +2905,8 @@ static bool ticketMatured(const Consensus::Params& params, int txHeight, int cur
 }
 
 static bool ticketExpired(const Consensus::Params& params, int txHeight, int currentHeight) {
+    if (currentHeight >= params.nVotesNotRequiredHeight)
+        return true;
     return txHeight >= 0 && currentHeight-txHeight > static_cast<int>(params.nTicketMaturity + params.nTicketExpiry);
 }
 

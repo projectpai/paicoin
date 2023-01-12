@@ -1190,18 +1190,22 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
 
 CAmount GetMinerSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
-    // Miner subsidy is a portion of total block subsidy
+    // While votes are required, the miner subsidy is a portion of total block subsidy.
+    // Otherwise, the miner receives all the block subsidy.
     CAmount nTotalBlockSubsidy = GetTotalBlockSubsidy(nHeight, consensusParams);
-    return nHeight < consensusParams.nStakeValidationHeight ? nTotalBlockSubsidy :
-        (nTotalBlockSubsidy * consensusParams.nWorkSubsidyProportion) / consensusParams.TotalSubsidyProportions();
+    if (nHeight >= consensusParams.nStakeValidationHeight && nHeight < consensusParams.nVotesNotRequiredHeight)
+        return (nTotalBlockSubsidy * consensusParams.nWorkSubsidyProportion) / consensusParams.TotalSubsidyProportions();
+    return nTotalBlockSubsidy;
 }
 
 CAmount GetVoterSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
-    // Voter subsidy is a portion of total block subsidy
-    return nHeight < consensusParams.nStakeValidationHeight ? 0 :
-        (GetTotalBlockSubsidy(nHeight, consensusParams) * consensusParams.nStakeSubsidyProportion)
-        / (consensusParams.TotalSubsidyProportions() * consensusParams.nTicketsPerBlock);
+    // While votes are required, the voter subsidy is a portion of total block subsidy.
+    // Otherwise, the voter does not receive any subsidy.
+    CAmount nTotalBlockSubsidy = GetTotalBlockSubsidy(nHeight, consensusParams);
+    if (nHeight >= consensusParams.nStakeValidationHeight && nHeight < consensusParams.nVotesNotRequiredHeight)
+        return (nTotalBlockSubsidy * consensusParams.nStakeSubsidyProportion) / (consensusParams.TotalSubsidyProportions() * consensusParams.nTicketsPerBlock);
+    return 0;
 }
 
 // Calculate the remuneration of a contributor before any fees are subtracted
@@ -3536,7 +3540,8 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
 
     // Consensus checks rely on this assumption
     if (consensusParams.nHybridConsensusHeight > consensusParams.nStakeEnabledHeight ||
-        consensusParams.nStakeEnabledHeight > consensusParams.nStakeValidationHeight)
+        consensusParams.nStakeEnabledHeight > consensusParams.nStakeValidationHeight ||
+        consensusParams.nStakeValidationHeight > consensusParams.nVotesNotRequiredHeight)
         return state.Error("bad stake height consensus parameters");
 
     return true;
@@ -3891,15 +3896,21 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
             return state.DoS(50, false, REJECT_INVALID, "lottery-too-early", false, "ticket lottery state non-zero before stake validation time");
     }
 
-    // Check that the number of votes in a block is within limits
+    // Check that the number of votes in a block is within limits, but only as long as votes are mandatory
     if (nHeight >= consensusParams.nStakeValidationHeight)
     {
-        const auto& majority = (consensusParams.nTicketsPerBlock / 2) + 1;
-        if (numVotes < majority)
-            return state.DoS(50, false, REJECT_INVALID, "too-few-votes", false, "block does not contain the minimum required number of votes");
+        if (nHeight < consensusParams.nVotesNotRequiredHeight) {
+            const auto& majority = (consensusParams.nTicketsPerBlock / 2) + 1;
+            if (numVotes < majority)
+                return state.DoS(50, false, REJECT_INVALID, "too-few-votes", false, "block does not contain the minimum required number of votes");
+        }
         if (numVotes > consensusParams.nTicketsPerBlock)
             return state.DoS(50, false, REJECT_INVALID, "too-many-votes", false, "block contains more than the maximum allowed number of votes");
     }
+
+    if (nHeight >= consensusParams.nVotesNotRequiredHeight
+            && block.nVoteBits != VoteBits::rttAccepted)   // after votes not required height, blocks must all have voteBits set to 1 (simple approval)
+        return state.DoS(50, false, REJECT_INVALID, "voteBits-too-late", false, "voteBits present after votes not being required");
 
     // After coinbase must come stake transactions, followed by regular transactions
     unsigned firstRegularTxIndex = 1 + numStakeTx;
@@ -3934,8 +3945,10 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
 
     }
 
-    // Block header voteBits must match actual votes contained in the block
-    if (nHeight >= consensusParams.nStakeValidationHeight) {
+    // Block header voteBits must match actual votes contained in the block,
+    // but only as long as votes are mandatory
+    if (nHeight >= consensusParams.nStakeValidationHeight
+            && nHeight < consensusParams.nVotesNotRequiredHeight) {
         int numNoVotes = numVotes - numYesVotes;
         bool votesApprovePrevBlock = numYesVotes > numNoVotes;
         bool headerApprovesPrevBlock = block.nVoteBits.isRttAccepted();
@@ -5558,11 +5571,12 @@ void MaybeFetchNewTickets(CBlockIndex* pindex, const Consensus::Params& params)
 
     // Calculate block number for where new tickets matured from and retrieve
     // its block from DB.
+    // After votes are no longer necessary, all tickets mature
     const auto matureBlockIndex = pindex->GetAncestor(pindex->nHeight - params.nTicketMaturity);
     if (matureBlockIndex == nullptr) {
         assert(!"Unable to obtian ancestor");
         // return fmt.Errorf("unable to obtain ancestor %d blocks prior to %s "+
-        //     "(height %d)", b.chainParams.TicketMaturity, node.hash, node.height)
+        //     "(height %d)", b.chainParams.nTicketMaturity, node.hash, node.height)
     }
 
     CBlock matureBlock;

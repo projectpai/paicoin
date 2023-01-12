@@ -64,6 +64,10 @@ void CAutoVoter::DoVote(const CBlockIndex *pindexNew)
     if (tipHeight < Params().GetConsensus().nStakeValidationHeight - 1)
         return;
 
+    // do not try to vote when votes are not required anymore
+    if (tipHeight >= Params().GetConsensus().nVotesNotRequiredHeight)
+        return;
+
     std::vector<std::string> voteHashes;
     std::string voteHash;
     CWalletError we;

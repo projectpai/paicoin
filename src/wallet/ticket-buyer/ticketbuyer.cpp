@@ -120,6 +120,10 @@ void CTicketBuyer::mainLoop()
         if (height < Params().GetConsensus().nStakeEnabledHeight - Params().GetConsensus().nTicketMaturity)
             continue;
 
+        // do not try to purchase tickets when votes are not required anymore
+        if (height >= Params().GetConsensus().nVotesNotRequiredHeight - 1)
+            continue;
+
         // unlock wallet
         shouldRelock = pwallet->IsLocked();
         if (shouldRelock && ! pwallet->Unlock(config.passphrase)) {

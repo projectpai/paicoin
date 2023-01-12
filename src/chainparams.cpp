@@ -47,6 +47,8 @@
 
 #define MAINNET_PAICOIN_HASH_INITIAL_DIFFICULTY 0x1e03e75d
 
+#define MAINNET_VOTES_NOT_REQUIRED_INITIAL_DIFFICULTY 0x1d07ffff
+
 #define TESTNET_CONSENSUS_POW_LIMIT      uint256S("0000000009fe61ffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define TESTNET_GENESIS_BLOCK_POW_BITS   36 // 24
 #define TESTNET_GENESIS_BLOCK_NBITS      0x1c09fe61 // 0x1e00ffff
@@ -62,6 +64,8 @@
 
 #define TESTNET_PAICOIN_HASH_INITIAL_DIFFICULTY 0x1e03e75d
 
+#define TESTNET_VOTES_NOT_REQUIRED_INITIAL_DIFFICULTY 0x1e03e75d
+
 #define REGTEST_CONSENSUS_POW_LIMIT      uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 #define REGTEST_GENESIS_BLOCK_POW_BITS   1
 #define REGTEST_GENESIS_BLOCK_NBITS      0x207fffff
@@ -76,6 +80,8 @@
 #define REGTEST_HYBRID_CONSENSUS_INITIAL_DIFFICULTY 0x207fffff
 
 #define REGTEST_PAICOIN_HASH_INITIAL_DIFFICULTY 0x207fffff
+
+#define REGTEST_VOTES_NOT_REQUIRED_INITIAL_DIFFICULTY 0x207fffff
 
 #ifdef MINE_FOR_THE_GENESIS_BLOCK
 #   include "arith_uint256.h"
@@ -198,6 +204,11 @@ public:
         consensus.nPaicoinHashMaximumActivationHeight = 220000;
         consensus.nPaicoinHashInitialDifficulty = MAINNET_PAICOIN_HASH_INITIAL_DIFFICULTY;
         consensus.nPaicoinHashInitialDifficultyBlockCount = 10;
+
+        // parameters after the votes are no longer required
+        consensus.nVotesNotRequiredHeight = 264770;
+        consensus.nVotesNotRequiredInitialDifficulty = MAINNET_VOTES_NOT_REQUIRED_INITIAL_DIFFICULTY;
+        consensus.nVotesNotRequiredInitialDifficultyBlockCount = 10;
 
         // stake parameters
         consensus.nMinimumStakeDiff                 = COIN * 2;
@@ -401,6 +412,11 @@ public:
         consensus.nPaicoinHashInitialDifficulty = TESTNET_PAICOIN_HASH_INITIAL_DIFFICULTY;
         consensus.nPaicoinHashInitialDifficultyBlockCount = 10;
 
+        // parameters after the votes are no longer required
+        consensus.nVotesNotRequiredHeight = 88170;
+        consensus.nVotesNotRequiredInitialDifficulty = TESTNET_VOTES_NOT_REQUIRED_INITIAL_DIFFICULTY;
+        consensus.nVotesNotRequiredInitialDifficultyBlockCount = 10;
+
         // stake parameters
         consensus.nMinimumStakeDiff                 = COIN * 0.2;
         consensus.nTicketPoolSize                   = 1024;
@@ -581,6 +597,11 @@ public:
         consensus.nPaicoinHashMaximumActivationHeight = 2100;
         consensus.nPaicoinHashInitialDifficulty = REGTEST_PAICOIN_HASH_INITIAL_DIFFICULTY;
         consensus.nPaicoinHashInitialDifficultyBlockCount = 10;
+
+        // parameters after the votes are no longer required
+        consensus.nVotesNotRequiredHeight = 2200;
+        consensus.nVotesNotRequiredInitialDifficulty = REGTEST_VOTES_NOT_REQUIRED_INITIAL_DIFFICULTY;
+        consensus.nVotesNotRequiredInitialDifficultyBlockCount = 10;
 
         // stake paramters
         consensus.nMinimumStakeDiff               = 20000;

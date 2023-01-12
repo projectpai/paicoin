@@ -2244,6 +2244,11 @@ std::pair<std::string, CWalletError> CWallet::Vote(const uint256& ticketHash, co
         return std::make_pair(voteHash, error);
     }
 
+    if (blockHeight >= consensus.nVotesNotRequiredHeight) {
+        error.Load(CWalletError::INVALID_PARAMETER, "Height is higher than expected (after the votes not required height)");
+        return std::make_pair(voteHash, error);
+    }
+
     LOCK2(cs_main, cs_wallet);
 
     if (IsLocked()) {
@@ -3252,7 +3257,8 @@ void CWallet::GetStakedBalances(CAmount& total, CAmount& mempool, CAmount& immat
             if (wtx->InMempool())
                 mempool += stakedCredit;
 
-            if (wtx->GetDepthInMainChain() < consensus.nTicketMaturity)
+            const auto& depth = wtx->GetDepthInMainChain();
+            if (depth < consensus.nTicketMaturity)
                 immature += stakedCredit;
 
             const uint256& hash = tx->GetHash();

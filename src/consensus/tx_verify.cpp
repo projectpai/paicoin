@@ -398,10 +398,13 @@ bool checkVoteOrRevokeTicketInputs(const CTransaction& tx, bool vote, CValidatio
     // NOTE: A ticket stake can only be spent in the block AFTER the entire ticket maturity has passed, hence the +1.
     // In case of revocations, the ticket must have been missed which can't possibly
     // happen for another block after that, hence the +2.
-    int maturityAdd = vote ? 1 : 2;
-    int ticketMaturity = chainparams.GetConsensus().nTicketMaturity + maturityAdd;
-    if (nSpendHeight - coin.nHeight < ticketMaturity)
-        return state.DoS(100, false, REJECT_INVALID, badTxin + what + "-ticketstake-immature");
+    // If votes are not required, tickets can be revoked at anytime.
+    if (vote || nSpendHeight < chainparams.GetConsensus().nVotesNotRequiredHeight) {
+        int maturityAdd = vote ? 1 : 2;
+        int ticketMaturity = chainparams.GetConsensus().nTicketMaturity + maturityAdd;
+        if (nSpendHeight - coin.nHeight < ticketMaturity)
+            return state.DoS(100, false, REJECT_INVALID, badTxin + what + "-ticketstake-immature");
+    }
 
     // Ensure that the number of payment outputs matches the number of ticket stake contributions.
     auto numVotePayments = tx.vout.size() - 1;

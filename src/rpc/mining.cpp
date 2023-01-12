@@ -536,7 +536,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         const int& tipHeight = chainActive.Tip()->nHeight;
         auto maxVotes = 0;
         const auto& majority = (consensusParams.nTicketsPerBlock / 2) + 1;
-        if (tipHeight >= Params().GetConsensus().nStakeValidationHeight - 1) {
+        if (tipHeight >= consensusParams.nStakeValidationHeight - 1
+                && tipHeight < consensusParams.nVotesNotRequiredHeight - 1) {
             CBlockIndex* selectedIndex = nullptr;
             const auto& setTips = GetChainTips();
             if (setTips.size() == 0)
@@ -652,8 +653,9 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         // we have enough votes, but some vote transactions may still be in transit,
         // return error while waiting for more votes in the specified time
         if ( !bTooFewVotes
-           && pindexPrevNew->nHeight + 1 >= Params().GetConsensus().nStakeValidationHeight
-           && pblocktemplate->block.nVoters < Params().GetConsensus().nTicketsPerBlock
+           && pindexPrevNew->nHeight + 1 >= consensusParams.nStakeValidationHeight
+           && pindexPrevNew->nHeight + 1 < consensusParams.nVotesNotRequiredHeight
+           && pblocktemplate->block.nVoters < consensusParams.nTicketsPerBlock
            && nTimeElapsed < nBlockAllVotesWaitTime) {
             throw JSONRPCError(RPCErrorCode::VERIFY_ERROR, "Some vote transactions are not yet available, waiting <blockallvoteswaittime>");
         }
@@ -807,7 +809,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     result.push_back(Pair("bits", strprintf("%08x", pblock->nBits)));
     result.push_back(Pair("height", static_cast<int64_t>((pindexPrev->nHeight+1))));
 
-    if (IsHybridConsensusForkEnabled(pindexPrev, Params().GetConsensus())) {
+    if (IsHybridConsensusForkEnabled(pindexPrev, consensusParams)) {
         // large values are not correctly interpreted by the miner, thus we use hex strings where needed
         result.push_back(Pair("stakedifficulty", strprintf("%016x", pblock->nStakeDifficulty)));
         result.push_back(Pair("votebits", pblock->nVoteBits.getBits()));
@@ -1273,7 +1275,7 @@ UniValue missedtickets(const JSONRPCRequest& request)
             info.push_back(Pair("cause", bExpired ? "expiration" : "missed_vote"));
             if (!bExpired) {
                 auto missedHeight = nHeight - 1;
-                for (; missedHeight > purchaseHeight + Params().GetConsensus().nTicketMaturity 
+                for (; missedHeight > purchaseHeight + Params().GetConsensus().nTicketMaturity
                        && chainActive[missedHeight]->pstakeNode->ExistsMissedTicket(txhash); --missedHeight);
                 info.push_back(Pair("missed_height", missedHeight + 1));
             } else {

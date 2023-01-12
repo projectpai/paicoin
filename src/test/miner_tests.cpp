@@ -969,7 +969,6 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
     const auto& stakeEnabledHeight = chainparams.GetConsensus().nStakeEnabledHeight;
     const auto& stakeValidationHeight = chainparams.GetConsensus().nStakeValidationHeight;
     const auto& minimumStakeDiff = chainparams.GetConsensus().nMinimumStakeDiff;
-    const auto& ticketExpiry = chainparams.GetConsensus().nTicketExpiry;
     const auto& maxFreshTicketsPerBlock = chainparams.GetConsensus().nMaxFreshStakePerBlock;
 
     // create a stake key
@@ -1184,7 +1183,7 @@ BOOST_FIXTURE_TEST_CASE( CreateNewBlock_stake_REGTEST, TestChain100Setup_p2pkh)
     numberLiveTickets -= 5/*used as winners in last block*/;
     BOOST_CHECK_EQUAL(chainActive.Tip()->pstakeNode->LiveTickets().size(), numberLiveTickets);
 
-    const auto& heightExpiredBecomeMissed = (int)(ticketExpiry) + stakeEnabledHeight;
+    auto heightExpiredBecomeMissed = (int)(chainparams.GetConsensus().nTicketExpiry + stakeEnabledHeight);
     while(chainActive.Tip()->nHeight < heightExpiredBecomeMissed + 10/*add to pass the expiration height*/) {
         // create a second block to include also revocations
         const auto& blockHeightToVoteOn = chainActive.Tip()->nHeight;
@@ -1402,7 +1401,7 @@ BOOST_FIXTURE_TEST_CASE( FakeChainGenerator_stake_REGTEST, Generator)
     }
 
     const auto& missesPerBlock = ConsensusParams().nTicketsPerBlock - majority;
-    const auto& heightExpiredBecomeMissed = static_cast<int>(ConsensusParams().nTicketExpiry + ConsensusParams().nStakeEnabledHeight);
+    auto heightExpiredBecomeMissed = static_cast<int>(ConsensusParams().nTicketExpiry + ConsensusParams().nStakeEnabledHeight);
     while (Tip()->nHeight < heightExpiredBecomeMissed + 10 /*add to pass the expiration height*/)
     {
         const auto& nRevocations = Tip()->pstakeNode->MissedTickets().size(); 

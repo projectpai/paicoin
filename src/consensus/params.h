@@ -107,6 +107,14 @@ struct Params {
     // Number of blocks to apply the initial Paicoin Hash difficulty to
     int nPaicoinHashInitialDifficultyBlockCount;
 
+    /** Parameters after the votes are no longer required */
+    // Block height at which votes are no longer mandatory and tickets expire automatically
+    int nVotesNotRequiredHeight;
+    // Difficulty of the first blocks after the votes are no longer required
+    uint32_t nVotesNotRequiredInitialDifficulty;
+    // Number of blocks to apply the initial difficulty to
+    int nVotesNotRequiredInitialDifficultyBlockCount;
+
     /** Proof of stake parameters */
 
     // MinimumStakeDiff if the minimum amount of Atoms required to purchase a
