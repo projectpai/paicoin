@@ -287,21 +287,10 @@ public:
 
         vFixedSeeds.clear();
         vSeeds.clear();
-        // Note that of those with the service bits flag, most only support a subset of possible options
-        vSeeds.emplace_back("seed.projectpai.com", false);  //Project PAI Foundation - Fallback DNS
-        vSeeds.emplace_back("us-west-seed.projectpai.com", false);  //Project PAI Foundation
-        vSeeds.emplace_back("us-east-seed.projectpai.com", false); //Project PAI Foundation
-        vSeeds.emplace_back("seoul-seed.projectpai.com", false); //Project PAI Foundation
-        vSeeds.emplace_back("sing-seed.projectpai.com", false); //Project PAI Foundation
-        vSeeds.emplace_back("china-seed.projectpai.com", false); //Project PAI Foundation
-        vSeeds.emplace_back("painode.lanier.ai", false); //Lanier AI Labs
-        vSeeds.emplace_back("painode.everchain.site", false); //Ever Chain
-        vSeeds.emplace_back("relay.j1149.com", false); //J1149
-        vSeeds.emplace_back("pai-seed-ohio-1.paico.in", false); //MJH Technologies
-        vSeeds.emplace_back("pai-seed-china-1.paico.in", false); //MJH Technologies
-        vSeeds.emplace_back("paiseed.upandrunningsoftware.com", false); //Up and Running Software
-        vSeeds.emplace_back("paiseed.oben.me", false); //ObEN
 
+        // Note that of those with the service bits flag, most only support a subset of possible options
+        vSeeds.emplace_back("13.250.136.239", false);  // Mainnet seed
+        vSeeds.emplace_back("13.124.177.237", false);  // Mainnet seed
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
@@ -491,10 +480,6 @@ public:
         vSeeds.clear();
 
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.emplace_back("34.212.218.239", false);
-        vSeeds.emplace_back("13.59.205.159", false);
-        vSeeds.emplace_back("52.78.224.215", false);
-        vSeeds.emplace_back("13.251.4.241", false);
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 
